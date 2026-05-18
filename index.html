@@ -1,0 +1,391 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formulário de Agendamento</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2318244d'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle' fill='white' font-family='Arial'%3EB%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">B</div>
+        
+      </div>
+
+      <div class="top-actions">
+        <label class="status-select">
+          <span>Status</span>
+          <select id="statusOperacao"></select>
+        </label>
+        <div id="recordIdBox" class="record-id" hidden>
+          <span>ID</span>
+          <strong id="recordIdText"></strong>
+        </div>
+        <button id="saveButton" class="primary-action" type="button">
+          <span class="icon">OK</span>
+          <span id="saveButtonText">Agendar serviços</span>
+        </button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Seções do formulário">
+      <button class="tab is-active" type="button" data-tab="details"><span>01</span>Detalhes</button>
+      <button class="tab" type="button" data-tab="bd" id="tabBd"><span>02</span>Banco de Dados</button>
+      <button class="tab" type="button" data-tab="return" id="tabReturn"><span>03</span>Retorno</button>
+      <button class="tab" type="button" data-tab="repeat" id="tabRepeat"><span>04</span>Repetir</button>
+    </nav>
+
+    <main class="content">
+      <section id="tab-panel-details" class="panel is-active" data-panel="details">
+        <div class="section-head">
+          <h2>Detalhes do serviço</h2>
+          <p>Dados operacionais para criar ou editar a reserva no Dataverse.</p>
+        </div>
+
+        <div class="panel-stack">
+          <section class="form-section" aria-labelledby="servicoTitle">
+            <div class="form-section-title">
+              <h3 id="servicoTitle">Agenda e rota</h3>
+              <p>Horário, tipo de serviço e trajeto principal.</p>
+            </div>
+
+            <div class="form-grid">
+              <label class="field span-2">
+                <span>Data e horário de saída*</span>
+                <div class="inline-time">
+                  <input id="saidaData" type="date">
+                  <select id="saidaHora"></select>
+                  <span class="time-separator">:</span>
+                  <select id="saidaMinuto"></select>
+                </div>
+              </label>
+
+              <label class="field">
+                <span>Hr prev de retorno</span>
+                <div class="inline-time">
+                  <select id="retPrevHora"></select>
+                  <span class="time-separator">:</span>
+                  <select id="retPrevMinuto"></select>
+                </div>
+              </label>
+
+              <label class="field">
+                <span>Tipo do serviço*</span>
+                <select id="tipoServico"></select>
+              </label>
+
+              <label class="field">
+                <span>Tipo do veículo*</span>
+                <select id="tipoVeiculo"></select>
+              </label>
+
+              <label class="field">
+                <span>Motorista</span>
+                <select id="motorista"></select>
+              </label>
+
+              <label class="field span-2">
+                <span>Trajeto*</span>
+                <input id="trajeto" type="text" autocomplete="off">
+              </label>
+            </div>
+          </section>
+
+          <section class="form-section" aria-labelledby="pessoasTitle">
+            <div class="form-section-title">
+              <h3 id="pessoasTitle">Cliente e comunicação</h3>
+              <p>Solicitante, observações e dados para operação.</p>
+            </div>
+
+            <div class="form-grid">
+              <label class="field">
+                <span>Cliente*</span>
+                <select id="cliente"></select>
+              </label>
+
+              <label class="field">
+                <span>Solicitante*</span>
+                <select id="solicitante"></select>
+              </label>
+
+              <fieldset class="field span-2 obs-field">
+                <legend>Observação</legend>
+                <div class="segmented" role="tablist" aria-label="Tipo de observação">
+                  <button type="button" class="seg is-active" data-obs="motorista">Mot</button>
+                  <button type="button" class="seg" data-obs="interna">Interna</button>
+                  <button type="button" class="seg" data-obs="final">Final</button>
+                  <button type="button" class="seg" data-obs="passageiro">Pref Pax</button>
+                </div>
+                <textarea id="observacao" rows="4"></textarea>
+              </fieldset>
+            </div>
+          </section>
+
+          <section class="form-section" aria-labelledby="financeiroTitle">
+            <div class="form-section-title">
+              <h3 id="financeiroTitle">Faturamento</h3>
+              <p>Status, pagamento e referências financeiras.</p>
+            </div>
+
+            <div class="form-grid">
+              <label class="toggle-field">
+                <input id="receber" type="checkbox">
+                <span>Receber?</span>
+              </label>
+
+              <label class="field">
+                <span>Status de faturamento</span>
+                <select id="statusFaturamento"></select>
+              </label>
+
+              <label class="field">
+                <span>Cotação</span>
+                <input id="cotacao" type="number" min="0" step="0.01">
+              </label>
+
+              <label class="field" id="opWrap">
+                <span>OP</span>
+                <select id="op"></select>
+              </label>
+
+              <label class="field">
+                <span>Forma de pagamento</span>
+                <select id="formaPagamento"></select>
+              </label>
+
+              <label class="field">
+                <span>CR</span>
+                <input id="cr" type="text" autocomplete="off">
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <section class="passenger-block" aria-labelledby="passageirosTitle">
+          <div class="block-title">
+            <div>
+              <h3 id="passageirosTitle">Passageiros selecionados</h3>
+              <p>Ordem, nome e endereço de saída por passageiro.</p>
+            </div>
+            <div class="icon-actions">
+              <button id="toggleEnderecoPersonalizado" type="button" class="icon-button" title="Alternar endereço personalizado">Adr</button>
+              <button id="addPassenger" type="button" class="icon-button success" title="Adicionar passageiro">+</button>
+            </div>
+          </div>
+          <div id="passengerRows" class="passenger-rows"></div>
+
+          <label id="customAddressWrap" class="field custom-address" hidden>
+            <span>Endereço de saída</span>
+            <textarea id="enderecoPersonalizado" rows="5"></textarea>
+          </label>
+        </section>
+
+        <section class="form-section compact-section" aria-labelledby="destinoTitle">
+          <div class="form-section-title">
+            <h3 id="destinoTitle">Destino e contatos</h3>
+            <p>Resumo calculado para conferência antes de salvar.</p>
+          </div>
+
+          <div class="form-grid compact">
+            <label class="field span-2">
+              <span>Telefones</span>
+              <textarea id="telefonesPreview" rows="3" readonly></textarea>
+            </label>
+
+            <label class="field span-2">
+              <span>Destino*</span>
+              <textarea id="destino" rows="3"></textarea>
+            </label>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-panel-bd" class="panel" data-panel="bd">
+        <div class="section-head">
+          <h2>Novo passageiro</h2>
+          <p>Cadastro rápido no Banco de Dados sem sair do fluxo de agendamento.</p>
+        </div>
+
+        <section class="form-section">
+          <div class="form-grid">
+            <label class="field">
+              <span>Status*</span>
+              <select id="bdStatus"></select>
+            </label>
+            <label class="field span-2">
+              <span>Nome do passageiro*</span>
+              <input id="bdNome" type="text" autocomplete="off">
+            </label>
+            <label class="field">
+              <span>Telefone</span>
+              <input id="bdTelefone" type="tel" autocomplete="off">
+            </label>
+            <label class="field span-2">
+              <span>Endereço de saída</span>
+              <input id="bdEndereco" type="text" autocomplete="off">
+            </label>
+            <label class="field span-2">
+              <span>Email</span>
+              <input id="bdEmail" type="email" autocomplete="off">
+            </label>
+            <label class="field">
+              <span>Classificação*</span>
+              <select id="bdClassificacao"></select>
+            </label>
+            <label class="field">
+              <span>Cliente*</span>
+              <select id="bdCliente"></select>
+            </label>
+            <label class="field">
+              <span>Sexo</span>
+              <select id="bdSexo"></select>
+            </label>
+            <label class="field">
+              <span>Idioma*</span>
+              <select id="bdIdioma"></select>
+            </label>
+            <label class="field">
+              <span>CR</span>
+              <input id="bdCr" type="text" autocomplete="off">
+            </label>
+            <label class="field">
+              <span>Departamento</span>
+              <input id="bdDepartamento" type="text" autocomplete="off">
+            </label>
+            <label class="field">
+              <span>Cargo</span>
+              <select id="bdCargo"></select>
+            </label>
+            <label class="field">
+              <span>Data de nascimento</span>
+              <input id="bdNascimento" type="date">
+            </label>
+            <label class="field span-2">
+              <span>Perfil do passageiro</span>
+              <input id="bdPreferencias" type="text" autocomplete="off">
+            </label>
+            <label class="field">
+              <span>Tipo de veículo</span>
+              <select id="bdTipoVeiculo"></select>
+            </label>
+          </div>
+        </section>
+
+        <div class="footer-actions">
+          <button id="createPassenger" type="button" class="primary-action">
+            <span class="icon">+</span>
+            <span>Cadastrar</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="tab-panel-return" class="panel" data-panel="return">
+        <div class="section-head inline">
+          <div>
+            <h2>Agendar retorno</h2>
+            <p>Disponível apenas na criação.</p>
+          </div>
+          <label class="switch">
+            <input id="agendarRetorno" type="checkbox">
+            <span>Ativado</span>
+          </label>
+        </div>
+
+        <section class="form-section">
+          <div class="form-grid">
+            <label class="field span-2">
+              <span>Data de retorno</span>
+              <div class="inline-time">
+                <input id="retornoData" type="date">
+                <select id="retornoHora"></select>
+                <span class="time-separator">:</span>
+                <select id="retornoMinuto"></select>
+              </div>
+            </label>
+            <label class="field span-2">
+              <span>Endereço de saída</span>
+              <textarea id="retornoEndereco" rows="3"></textarea>
+            </label>
+            <label class="field span-2">
+              <span>Destino</span>
+              <textarea id="retornoDestino" rows="3"></textarea>
+            </label>
+            <fieldset class="field span-2 obs-field">
+              <legend>Observação</legend>
+              <div class="segmented" role="tablist" aria-label="Tipo de observação retorno">
+                <button type="button" class="seg is-active" data-ret-obs="motorista">Mot</button>
+                <button type="button" class="seg" data-ret-obs="interna">Interna</button>
+                <button type="button" class="seg" data-ret-obs="final">Final</button>
+                <button type="button" class="seg" data-ret-obs="passageiro">Pref Pax</button>
+              </div>
+              <textarea id="retornoObservacao" rows="4"></textarea>
+            </fieldset>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-panel-repeat" class="panel" data-panel="repeat">
+        <div class="section-head inline">
+          <div>
+            <h2>Serviços frequentes</h2>
+            <p>Disponível apenas na criação.</p>
+          </div>
+          <label class="switch">
+            <input id="repetirServico" type="checkbox">
+            <span>Ativado</span>
+          </label>
+        </div>
+
+        <section class="form-section">
+          <div class="form-grid">
+            <label class="field">
+              <span>Data de inicio</span>
+              <input id="frequenteInicio" type="date">
+            </label>
+            <label class="field">
+              <span>Data de fim</span>
+              <input id="frequenteFim" type="date">
+            </label>
+            <label class="field">
+              <span>Tipo</span>
+              <select id="frequenteTipo">
+                <option value=""></option>
+                <option value="Ida">Ida</option>
+                <option value="Retorno">Retorno</option>
+                <option value="Ida e retorno">Ida e retorno</option>
+              </select>
+            </label>
+            <label class="toggle-field">
+              <input id="contabilizarFds" type="checkbox" checked>
+              <span>Contabilizar Sáb e Dom?</span>
+            </label>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <aside id="toastStack" class="toast-stack" aria-live="polite"></aside>
+
+    <div id="loadingOverlay" class="overlay" hidden>
+      <div class="dialog">
+        <div class="spinner"></div>
+        <strong>Carregando...</strong>
+      </div>
+    </div>
+
+    <div id="successOverlay" class="overlay" hidden>
+      <div class="dialog success-dialog">
+        <strong>Concluído!</strong>
+        <p id="successMessage">Serviço solicitado com sucesso.</p>
+        <button id="closeSuccess" type="button" class="primary-action">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
