@@ -30,4 +30,4 @@ Nao parecer formulario legado de intranet. Nao parecer dashboard SaaS generico. 
 
 ## Accessibility & Inclusion
 
-Base WCAG AA. Respeitar `prefers-reduced-motion`, foco visivel, contraste suficiente, alvos de toque confortaveis e leitura eficiente em desktop, tablet e mobile.
+Base WCAG AA.Foco visivel, contraste suficiente, alvos de toque confortaveis e leitura eficiente em desktop, tablet e mobile.

@@ -12,7 +12,10 @@
     <header class="topbar">
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">B</div>
-        
+        <div class="brand-text">
+          <p class="eyebrow">Betinhos Executive Service</p>
+          <h1>Formulário de Agendamento</h1>
+        </div>
       </div>
 
       <div class="top-actions">
@@ -25,15 +28,15 @@
           <strong id="recordIdText"></strong>
         </div>
         <button id="saveButton" class="primary-action" type="button">
-          <span class="icon">OK</span>
           <span id="saveButtonText">Agendar serviços</span>
         </button>
       </div>
     </header>
+    <p class="required-note">Campos com <strong>*</strong> são obrigatórios para salvar.</p>
 
     <nav class="tabs" aria-label="Seções do formulário">
-      <button class="tab is-active" type="button" data-tab="details"><span>01</span>Detalhes</button>
-      <button class="tab" type="button" data-tab="bd" id="tabBd"><span>02</span>Banco de Dados</button>
+      <button class="tab is-active" type="button" data-tab="details" aria-current="page"><span>01</span>Detalhes</button>
+      <button class="tab" type="button" data-tab="bd" id="tabBd"><span>02</span>Cadastrar Passageiro</button>
       <button class="tab" type="button" data-tab="return" id="tabReturn"><span>03</span>Retorno</button>
       <button class="tab" type="button" data-tab="repeat" id="tabRepeat"><span>04</span>Repetir</button>
     </nav>
@@ -47,19 +50,19 @@
 
         <div class="panel-stack">
           <section class="form-section" aria-labelledby="servicoTitle">
-            <div class="form-section-title">
+            <div class="form-section-title" data-step="01">
               <h3 id="servicoTitle">Agenda e rota</h3>
               <p>Horário, tipo de serviço e trajeto principal.</p>
             </div>
 
             <div class="form-grid">
-              <label class="field span-2">
-                <span>Data e horário de saída*</span>
+              <label class="field span-2 required">
+                <span>Data e horário de saída</span>
                 <div class="inline-time">
-                  <input id="saidaData" type="date">
-                  <select id="saidaHora"></select>
+                  <input id="saidaData" type="date" required aria-required="true">
+                  <select id="saidaHora" required aria-required="true"></select>
                   <span class="time-separator">:</span>
-                  <select id="saidaMinuto"></select>
+                  <select id="saidaMinuto" required aria-required="true"></select>
                 </div>
               </label>
 
@@ -72,14 +75,14 @@
                 </div>
               </label>
 
-              <label class="field">
-                <span>Tipo do serviço*</span>
-                <select id="tipoServico"></select>
+              <label class="field required">
+                <span>Tipo do serviço</span>
+                <select id="tipoServico" required aria-required="true"></select>
               </label>
 
-              <label class="field">
-                <span>Tipo do veículo*</span>
-                <select id="tipoVeiculo"></select>
+              <label class="field required">
+                <span>Tipo do veículo</span>
+                <select id="tipoVeiculo" required aria-required="true"></select>
               </label>
 
               <label class="field">
@@ -87,28 +90,47 @@
                 <select id="motorista"></select>
               </label>
 
-              <label class="field span-2">
-                <span>Trajeto*</span>
+              <label class="field span-2 required">
+                <span>Trajeto</span>
                 <input id="trajeto" type="text" autocomplete="off">
               </label>
             </div>
           </section>
 
+          <section class="passenger-block" aria-labelledby="passageirosTitle">
+            <div class="block-title" data-step="02">
+              <div>
+                <h3 id="passageirosTitle">Passageiros selecionados</h3>
+                <p>Ordem, nome e endereço de saída por passageiro.</p>
+              </div>
+              <div class="icon-actions">
+                <button id="toggleEnderecoPersonalizado" type="button" class="icon-button" title="Alternar endereço personalizado">Adr</button>
+                <button id="addPassenger" type="button" class="icon-button success" title="Adicionar passageiro">+</button>
+              </div>
+            </div>
+            <div id="passengerRows" class="passenger-rows"></div>
+
+            <label id="customAddressWrap" class="field custom-address" hidden>
+              <span>Endereço de saída</span>
+              <textarea id="enderecoPersonalizado" rows="5"></textarea>
+            </label>
+          </section>
+
           <section class="form-section" aria-labelledby="pessoasTitle">
-            <div class="form-section-title">
+            <div class="form-section-title" data-step="03">
               <h3 id="pessoasTitle">Cliente e comunicação</h3>
               <p>Solicitante, observações e dados para operação.</p>
             </div>
 
             <div class="form-grid">
-              <label class="field">
-                <span>Cliente*</span>
-                <select id="cliente"></select>
+              <label class="field required">
+                <span>Cliente</span>
+                <select id="cliente" required aria-required="true"></select>
               </label>
 
-              <label class="field">
-                <span>Solicitante*</span>
-                <select id="solicitante"></select>
+              <label class="field required">
+                <span>Solicitante</span>
+                <select id="solicitante" required aria-required="true"></select>
               </label>
 
               <fieldset class="field span-2 obs-field">
@@ -125,7 +147,7 @@
           </section>
 
           <section class="form-section" aria-labelledby="financeiroTitle">
-            <div class="form-section-title">
+            <div class="form-section-title" data-step="04">
               <h3 id="financeiroTitle">Faturamento</h3>
               <p>Status, pagamento e referências financeiras.</p>
             </div>
@@ -164,27 +186,8 @@
           </section>
         </div>
 
-        <section class="passenger-block" aria-labelledby="passageirosTitle">
-          <div class="block-title">
-            <div>
-              <h3 id="passageirosTitle">Passageiros selecionados</h3>
-              <p>Ordem, nome e endereço de saída por passageiro.</p>
-            </div>
-            <div class="icon-actions">
-              <button id="toggleEnderecoPersonalizado" type="button" class="icon-button" title="Alternar endereço personalizado">Adr</button>
-              <button id="addPassenger" type="button" class="icon-button success" title="Adicionar passageiro">+</button>
-            </div>
-          </div>
-          <div id="passengerRows" class="passenger-rows"></div>
-
-          <label id="customAddressWrap" class="field custom-address" hidden>
-            <span>Endereço de saída</span>
-            <textarea id="enderecoPersonalizado" rows="5"></textarea>
-          </label>
-        </section>
-
         <section class="form-section compact-section" aria-labelledby="destinoTitle">
-          <div class="form-section-title">
+          <div class="form-section-title" data-step="05">
             <h3 id="destinoTitle">Destino e contatos</h3>
             <p>Resumo calculado para conferência antes de salvar.</p>
           </div>
@@ -195,8 +198,8 @@
               <textarea id="telefonesPreview" rows="3" readonly></textarea>
             </label>
 
-            <label class="field span-2">
-              <span>Destino*</span>
+            <label class="field span-2 required">
+              <span>Destino</span>
               <textarea id="destino" rows="3"></textarea>
             </label>
           </div>
@@ -211,13 +214,13 @@
 
         <section class="form-section">
           <div class="form-grid">
-            <label class="field">
-              <span>Status*</span>
-              <select id="bdStatus"></select>
+            <label class="field required">
+              <span>Status</span>
+              <select id="bdStatus" required aria-required="true"></select>
             </label>
-            <label class="field span-2">
-              <span>Nome do passageiro*</span>
-              <input id="bdNome" type="text" autocomplete="off">
+            <label class="field span-2 required">
+              <span>Nome do passageiro</span>
+              <input id="bdNome" type="text" autocomplete="off" required aria-required="true">
             </label>
             <label class="field">
               <span>Telefone</span>
@@ -231,21 +234,21 @@
               <span>Email</span>
               <input id="bdEmail" type="email" autocomplete="off">
             </label>
-            <label class="field">
-              <span>Classificação*</span>
-              <select id="bdClassificacao"></select>
+            <label class="field required">
+              <span>Classificação</span>
+              <select id="bdClassificacao" required aria-required="true"></select>
             </label>
-            <label class="field">
-              <span>Cliente*</span>
-              <select id="bdCliente"></select>
+            <label class="field required">
+              <span>Cliente</span>
+              <select id="bdCliente" required aria-required="true"></select>
             </label>
             <label class="field">
               <span>Sexo</span>
               <select id="bdSexo"></select>
             </label>
-            <label class="field">
-              <span>Idioma*</span>
-              <select id="bdIdioma"></select>
+            <label class="field required">
+              <span>Idioma</span>
+              <select id="bdIdioma" required aria-required="true"></select>
             </label>
             <label class="field">
               <span>CR</span>
@@ -388,4 +391,3 @@
   <script src="app.js"></script>
 </body>
 </html>
-

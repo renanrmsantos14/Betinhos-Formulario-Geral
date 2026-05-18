@@ -1373,7 +1373,11 @@
       return;
     }
     state.currentTab = tab;
-    el.tabs.forEach((button) => button.classList.toggle("is-active", button.dataset.tab === tab));
+    el.tabs.forEach((button) => {
+      const isActive = button.dataset.tab === tab;
+      button.classList.toggle("is-active", isActive);
+      button.toggleAttribute("aria-current", isActive);
+    });
     el.panels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === tab));
     if (tab === "return") syncReturnDefaults();
   }
@@ -1634,6 +1638,7 @@
     const validation = validateContext(context);
     if (validation) {
       toast(validation, "error", 7000);
+      focusInvalidField(validation);
       return;
     }
 
@@ -2018,6 +2023,75 @@
     refreshCustomSelect(select);
   }
 
+  function focusInvalidField(message) {
+    const text = normalize(String(message || "")).replace(/\s+/g, " ");
+    if (text.includes("horario") && text.includes("saida")) {
+      focusField(el.saidaData);
+      return;
+    }
+    if (text.includes("tipo do servico")) {
+      focusField(el.tipoServico);
+      return;
+    }
+    if (text.includes("tipo do veiculo")) {
+      focusField(el.tipoVeiculo);
+      return;
+    }
+    if (text.includes("trajeto")) {
+      focusField(el.trajeto);
+      return;
+    }
+    if (text.includes("pelo menos um passageiro")) {
+      if (el.addPassenger) {
+        el.addPassenger.focus();
+      } else {
+        focusField(el.passengerRows);
+      }
+      return;
+    }
+    if (text.includes("endereco de saida")) {
+      if (el.enderecoPersonalizadoAtivo && el.enderecoPersonalizado) {
+        focusField(el.enderecoPersonalizado);
+      } else if (state.selectedPassengers?.length) {
+        focusField(el.passengerRows);
+      } else {
+        focusField(el.trajeto);
+      }
+      return;
+    }
+    if (text.includes("destino")) {
+      focusField(el.destino);
+      return;
+    }
+    if (text.includes("data de retorno") || text.includes("destino - retorno")) {
+      focusField(el.retornoData);
+      return;
+    }
+    if (text.includes("data de inicio") || text.includes("data de fim")) {
+      focusField(el.frequenteInicio);
+      return;
+    }
+    if (text.includes("tipo de serviço frequente") || text.includes("tipo de servico frequente")) {
+      focusField(el.frequenteTipo);
+      return;
+    }
+  }
+
+  function focusField(element) {
+    if (!element) return;
+    const state = customSelectRoots.get(element);
+    if (state && state.trigger) {
+      state.trigger.focus();
+      return;
+    }
+    try {
+      element.focus();
+      return;
+    } catch (_) {
+      // noop
+    }
+  }
+
   function findOptionValue(key, label) {
     const wanted = normalize(label);
     return state.options[key].find((item) => normalize(item.label) === wanted)?.value || "";
@@ -2077,7 +2151,19 @@
   function toast(message, type = "info", timeout = 5000) {
     const item = document.createElement("div");
     item.className = `toast ${type}`;
-    item.textContent = message;
+
+    const msg = document.createElement("span");
+    msg.className = "toast-message";
+    msg.textContent = message;
+
+    const close = document.createElement("button");
+    close.className = "toast-close";
+    close.type = "button";
+    close.setAttribute("aria-label", "Fechar notificação");
+    close.textContent = "×";
+    close.addEventListener("click", () => item.remove());
+
+    item.append(msg, close);
     el.toastStack.appendChild(item);
     window.setTimeout(() => item.remove(), timeout);
   }
