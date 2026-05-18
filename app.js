@@ -93,6 +93,7 @@
   const QUERY_MOCK_MODE = (URL_PARAMS.get("mock") === "1" || URL_PARAMS.get("mockData") === "1");
   const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
+  const PASSENGER_RECENCY_KEY = "formulario_geral_passenger_recency_v1";
 
   const FALLBACK = {
     statusOperacao: [
@@ -216,9 +217,6 @@
     enderecoPersonalizado: $("enderecoPersonalizado"),
     telefonesPreview: $("telefonesPreview"),
     destino: $("destino"),
-    scheduleBatchBlock: $("scheduleBatchBlock"),
-    scheduleDraftRows: $("scheduleDraftRows"),
-    addScheduleDraft: $("addScheduleDraft"),
     bdStatus: $("bdStatus"),
     bdNome: $("bdNome"),
     bdTelefone: $("bdTelefone"),
@@ -266,9 +264,6 @@
     saveLogList: $("saveLogList"),
     draftStatus: $("draftStatus"),
     clearDraftButton: $("clearDraftButton"),
-    reviewOverlay: $("reviewOverlay"),
-    reviewSummaryList: $("reviewSummaryList"),
-    reviewRiskList: $("reviewRiskList"),
     confirmSaveButton: $("confirmSaveButton"),
     cancelReviewButton: $("cancelReviewButton")
   };
@@ -287,6 +282,7 @@
     motoristas: [],
     ordensPagamento: [],
     relacoes: [],
+    passengerSelectionRecency: [],
     selectedPassengers: [],
     scheduleDrafts: [],
     enderecoRascunho: [],
@@ -342,6 +338,7 @@
     setLoading(true);
     bindStaticEvents();
     populateTimeSelects();
+    loadPassengerSelectionRecency();
     await loadReferenceData();
     await loadCurrentRecord();
     hydrateForm();
@@ -385,35 +382,83 @@
     return String(value || "").replace(/[{}]/g, "").trim();
   }
 
+  function loadPassengerSelectionRecency() {
+    const stored = readPassengerSelectionRecency();
+    state.passengerSelectionRecency = stored;
+  }
+
+  function readPassengerSelectionRecency() {
+    try {
+      const raw = window.localStorage.getItem(PASSENGER_RECENCY_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(parsed)) return [];
+      const normalized = parsed.map((item) => cleanGuid(item).toLowerCase()).filter(Boolean);
+      return Array.from(new Set(normalized)).slice(0, 20);
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function persistPassengerSelectionRecency() {
+    try {
+      window.localStorage.setItem(PASSENGER_RECENCY_KEY, JSON.stringify(state.passengerSelectionRecency));
+    } catch (_) {
+      // noop
+    }
+  }
+
+  function touchPassengerSelectionRecency(passengerId) {
+    const id = cleanGuid(passengerId).toLowerCase();
+    if (!id) return;
+    const recents = state.passengerSelectionRecency.filter((item) => item !== id);
+    recents.unshift(id);
+    state.passengerSelectionRecency = recents.slice(0, 20);
+    persistPassengerSelectionRecency();
+  }
+
+  function getPassengerSelectionRecencyIndex(passengerId) {
+    const id = cleanGuid(passengerId).toLowerCase();
+    if (!id) return Number.MAX_SAFE_INTEGER;
+    const index = state.passengerSelectionRecency.indexOf(id);
+    return index === -1 ? Number.MAX_SAFE_INTEGER : index;
+  }
+
+  function hydratePassengerSelectionRecencyFromRows(rows) {
+    if (!Array.isArray(rows)) return;
+    rows.forEach((row) => {
+      touchPassengerSelectionRecency(row?.guid);
+    });
+  }
+
   function bindStaticEvents() {
     el.tabs.forEach((button) => {
-      button.addEventListener("click", () => setTab(button.dataset.tab));
+      button?.addEventListener("click", () => setTab(button.dataset.tab));
     });
-    el.closeSuccess.addEventListener("click", () => {
+    el.closeSuccess?.addEventListener("click", () => {
       el.success.hidden = true;
     });
-    el.saveButton.addEventListener("click", saveForm);
-    el.createPassenger.addEventListener("click", createPassenger);
-    el.bdPassengerSearch.addEventListener("input", renderPassengerDirectory);
-    el.bdPassengerDirectory.addEventListener("click", handlePassengerDirectoryAction);
-    el.bdExistingPassenger.addEventListener("change", () => {
+    el.saveButton?.addEventListener("click", saveForm);
+    el.createPassenger?.addEventListener("click", createPassenger);
+    el.bdPassengerSearch?.addEventListener("input", renderPassengerDirectory);
+    el.bdPassengerDirectory?.addEventListener("click", handlePassengerDirectoryAction);
+    el.bdExistingPassenger?.addEventListener("change", () => {
       if (el.bdExistingPassenger.value) openPassengerEdit(el.bdExistingPassenger.value);
     });
-    el.loadPassengerForEdit.addEventListener("click", loadPassengerForEdit);
-    el.updatePassenger.addEventListener("click", updatePassenger);
-    el.passengerEditToggle.addEventListener("click", togglePassengerEditMode);
-    el.passengerEditClose.addEventListener("click", closePassengerEditPopup);
-    el.passengerEditOverlay.addEventListener("click", (event) => {
+    el.loadPassengerForEdit?.addEventListener("click", loadPassengerForEdit);
+    el.updatePassenger?.addEventListener("click", updatePassenger);
+    el.passengerEditToggle?.addEventListener("click", togglePassengerEditMode);
+    el.passengerEditClose?.addEventListener("click", closePassengerEditPopup);
+    el.passengerEditOverlay?.addEventListener("click", (event) => {
       if (event.target === el.passengerEditOverlay) {
         closePassengerEditPopup();
       }
     });
-    el.passengerEditFields.addEventListener("input", handlePassengerEditInput);
-    el.passengerEditFields.addEventListener("change", handlePassengerEditInput);
+    el.passengerEditFields?.addEventListener("input", handlePassengerEditInput);
+    el.passengerEditFields?.addEventListener("change", handlePassengerEditInput);
     const markPassengerEditEmptySignals = () => requestAnimationFrame(applyPassengerEditEmptySignals);
-    el.passengerEditFields.addEventListener("input", markPassengerEditEmptySignals);
-    el.passengerEditFields.addEventListener("change", markPassengerEditEmptySignals);
-    el.passengerEditFields.addEventListener("click", (event) => {
+    el.passengerEditFields?.addEventListener("input", markPassengerEditEmptySignals);
+    el.passengerEditFields?.addEventListener("change", markPassengerEditEmptySignals);
+    el.passengerEditFields?.addEventListener("click", (event) => {
       if (event.target.closest(".custom-select-option") || event.target.closest(".custom-select-search")) {
         setTimeout(markPassengerEditEmptySignals, 0);
       }
@@ -427,66 +472,57 @@
     passengerEditObserver.observe(el.passengerEditOverlay, { attributes: true, attributeFilter: ["hidden"] });
     passengerEditFieldsObserver.observe(el.passengerEditFields, { childList: true, subtree: true });
     markPassengerEditEmptySignals();
-    el.clearDraftButton.addEventListener("click", () => clearDraftSnapshot(true));
-    el.confirmSaveButton.addEventListener("click", performSave);
-    el.cancelReviewButton.addEventListener("click", () => closeReviewOverlay(true));
-    el.reviewOverlay.addEventListener("click", (event) => {
-      if (event.target === el.reviewOverlay) closeReviewOverlay(true);
-    });
-    el.addPassenger.addEventListener("click", addPassengerRow);
-    el.addScheduleDraft.addEventListener("click", addScheduleDraft);
-    el.scheduleDraftRows.addEventListener("click", handleScheduleDraftAction);
-    el.scheduleDraftRows.addEventListener("change", handleScheduleDraftChange);
-    el.scheduleDraftRows.addEventListener("input", handleScheduleDraftChange);
-    el.passengerRows.addEventListener("click", handlePassengerRowAction);
-    el.passengerRows.addEventListener("input", handlePassengerRowInput);
-    el.passengerRows.addEventListener("pointerover", handlePassengerPreviewEnter);
-    el.passengerRows.addEventListener("pointerout", handlePassengerPreviewLeave);
-    el.passengerRows.addEventListener("focusin", handlePassengerPreviewFocusIn);
-    el.passengerRows.addEventListener("focusout", handlePassengerPreviewFocusOut);
-    el.passengerPickerClose.addEventListener("click", closePassengerPicker);
-    el.passengerPickerCancel.addEventListener("click", closePassengerPicker);
-    el.passengerPickerOverlay.addEventListener("click", (event) => {
+    el.clearDraftButton?.addEventListener("click", () => clearDraftSnapshot(true));
+    el.addPassenger?.addEventListener("click", addPassengerRow);
+    el.passengerRows?.addEventListener("click", handlePassengerRowAction);
+    el.passengerRows?.addEventListener("input", handlePassengerRowInput);
+    el.passengerRows?.addEventListener("pointerover", handlePassengerPreviewEnter);
+    el.passengerRows?.addEventListener("pointerout", handlePassengerPreviewLeave);
+    el.passengerRows?.addEventListener("focusin", handlePassengerPreviewFocusIn);
+    el.passengerRows?.addEventListener("focusout", handlePassengerPreviewFocusOut);
+    el.passengerPickerClose?.addEventListener("click", closePassengerPicker);
+    el.passengerPickerCancel?.addEventListener("click", closePassengerPicker);
+    el.passengerPickerOverlay?.addEventListener("click", (event) => {
       if (event.target === el.passengerPickerOverlay) {
         closePassengerPicker();
       }
     });
-    el.passengerPickerSearch.addEventListener("input", renderPassengerPickerResults);
-    el.passengerPickerSearch.addEventListener("keydown", handlePassengerPickerKeydown);
-    el.passengerPickerResults.addEventListener("click", handlePassengerPickerAction);
-    el.toggleEnderecoPersonalizado.addEventListener("click", toggleEnderecoPersonalizado);
-    el.cliente.addEventListener("change", () => {
+    el.passengerPickerSearch?.addEventListener("input", renderPassengerPickerResults);
+    el.passengerPickerSearch?.addEventListener("keydown", handlePassengerPickerKeydown);
+    el.passengerPickerResults?.addEventListener("click", handlePassengerPickerAction);
+    el.toggleEnderecoPersonalizado?.addEventListener("click", toggleEnderecoPersonalizado);
+    el.cliente?.addEventListener("change", () => {
       applyStatusFaturamentoDefault();
       renderStatusFaturamento();
     });
-    el.destino.addEventListener("input", syncReturnDefaults);
-    el.enderecoPersonalizado.addEventListener("input", () => {
+    el.destino?.addEventListener("input", syncReturnDefaults);
+    el.enderecoPersonalizado?.addEventListener("input", () => {
       state.customAddressText = el.enderecoPersonalizado.value;
     });
-    el.agendarRetorno.addEventListener("change", () => {
+    el.agendarRetorno?.addEventListener("change", () => {
       syncReturnDefaults();
       renderTabBadges();
     });
-    el.repetirServico.addEventListener("change", renderTabBadges);
-    el.saidaData.addEventListener("change", syncRepeatDefaultDates);
-    el.saidaHora.addEventListener("change", syncReturnDefaults);
-    el.saidaMinuto.addEventListener("change", syncReturnDefaults);
+    el.repetirServico?.addEventListener("change", renderTabBadges);
+    el.saidaData?.addEventListener("change", syncRepeatDefaultDates);
+    el.saidaHora?.addEventListener("change", syncReturnDefaults);
+    el.saidaMinuto?.addEventListener("change", syncReturnDefaults);
     document.querySelectorAll("[data-obs]").forEach((button) => {
-      button.addEventListener("click", () => switchObs(button.dataset.obs, false));
+      button?.addEventListener("click", () => switchObs(button.dataset.obs, false));
     });
     document.querySelectorAll("[data-ret-obs]").forEach((button) => {
-      button.addEventListener("click", () => switchObs(button.dataset.retObs, true));
+      button?.addEventListener("click", () => switchObs(button.dataset.retObs, true));
     });
-    document.addEventListener("click", handleGlobalCustomSelectClick);
-    document.addEventListener("keydown", handleGlobalCustomSelectKeydown);
-    document.addEventListener("scroll", handleGlobalCustomSelectScroll, { capture: true });
-    document.addEventListener("scroll", repositionPassengerPreview, { capture: true });
-    window.addEventListener("resize", repositionOpenCustomSelectPanels);
-    window.addEventListener("resize", repositionPassengerPreview);
-    window.addEventListener("resize", syncPassengerNameColumnWidth);
+    document?.addEventListener("click", handleGlobalCustomSelectClick);
+    document?.addEventListener("keydown", handleGlobalCustomSelectKeydown);
+    document?.addEventListener("scroll", handleGlobalCustomSelectScroll, { capture: true });
+    document?.addEventListener("scroll", repositionPassengerPreview, { capture: true });
+    window?.addEventListener("resize", repositionOpenCustomSelectPanels);
+    window?.addEventListener("resize", repositionPassengerPreview);
+    window?.addEventListener("resize", syncPassengerNameColumnWidth);
     const appRoot = $("app");
-    appRoot.addEventListener("input", handleOperationalInput);
-    appRoot.addEventListener("change", handleOperationalInput);
+    appRoot?.addEventListener("input", handleOperationalInput);
+    appRoot?.addEventListener("change", handleOperationalInput);
   }
 
   function initializeCustomSelects() {
@@ -565,16 +601,16 @@
     customSelectRoots.set(select, state);
 
     const onNativeChange = () => refreshCustomSelect(select);
-    select.addEventListener("change", onNativeChange);
+    select?.addEventListener("change", onNativeChange);
 
-    trigger.addEventListener("click", (event) => {
+    trigger?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       if (select.disabled) return;
       toggleCustomSelect(select);
     });
 
-    trigger.addEventListener("keydown", (event) => {
+    trigger?.addEventListener("keydown", (event) => {
       if (event.key === " " || event.key === "Enter" || event.key === "ArrowDown") {
         event.preventDefault();
         event.stopPropagation();
@@ -588,15 +624,15 @@
       }
     });
 
-    searchInput.addEventListener("click", (event) => {
+    searchInput?.addEventListener("click", (event) => {
       event.stopPropagation();
     });
 
-    searchInput.addEventListener("input", () => {
+    searchInput?.addEventListener("input", () => {
       renderCustomSelectOptions(select, state.searchInput.value);
     });
 
-    searchInput.addEventListener("keydown", (event) => {
+    searchInput?.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
         event.preventDefault();
         closeCustomSelect(select);
@@ -679,7 +715,7 @@
         button.setAttribute("aria-selected", "false");
       }
 
-      button.addEventListener("click", (event) => {
+      button?.addEventListener("click", (event) => {
         event.preventDefault();
         event.stopPropagation();
         if (nativeSelect.disabled || option.disabled) return;
@@ -989,6 +1025,367 @@
         cargo: 73,
         nascimento: "",
         departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
+      },
+      {
+        id: "pax-3",
+        label: "Juliana Lima",
+        telefone: "(11) 97777-3333",
+        email: "juliana.lima@example.com",
+        endereco: "Alameda Santos, 700 - São Paulo/SP",
+        preferencias: "Silêncio no trajeto",
+        preferencias: "Ar ligado leve",
+        cr: "CR003",
+        clienteId: "cliente-holding",
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
       }
     ];
     state.motoristas = [
@@ -1109,6 +1506,7 @@
           };
         })
       : [];
+    hydratePassengerSelectionRecencyFromRows(state.selectedPassengers);
     state.enderecoRascunho = state.selectedPassengers.map((item) => ({
       ordem: item.ordem,
       endereco: item.enderecoEditado || ""
@@ -1228,6 +1626,7 @@
           };
         })
       : [emptyPassenger(1)];
+    hydratePassengerSelectionRecencyFromRows(state.selectedPassengers);
 
     state.enderecoRascunho = state.selectedPassengers.map((item) => ({
       ordem: item.ordem,
@@ -1243,7 +1642,6 @@
     el.tabBd.hidden = !state.isNew;
     el.tabReturn.hidden = !state.isNew;
     el.tabRepeat.hidden = !state.isNew;
-    el.scheduleBatchBlock.hidden = !state.isNew;
     el.opWrap.hidden = state.isNew;
     el.recordIdBox.hidden = state.isNew;
     el.recordIdText.textContent = r[f.readableId] || "";
@@ -1319,6 +1717,7 @@
   }
 
   function renderChoiceSelect(select, options) {
+    if (!select) return;
     const previous = select.value;
     select.innerHTML = '<option value=""></option>';
     options.forEach((item) => {
@@ -1335,6 +1734,7 @@
   }
 
   function renderLookupSelect(select, rows) {
+    if (!select) return;
     const previous = select.value;
     select.innerHTML = '<option value=""></option>';
     rows.forEach((item) => {
@@ -1785,6 +2185,7 @@
   }
 
   function renderScheduleDrafts() {
+    if (!el.scheduleDraftRows) return;
     if (!state.isNew) {
       el.scheduleDraftRows.innerHTML = "";
       return;
@@ -2118,7 +2519,7 @@
     if (!row.isConnected) return;
     row.classList.remove("is-enter");
     row.classList.add("is-leave");
-    row.addEventListener(
+    row?.addEventListener(
       "animationend",
       () => {
         if (row.isConnected) {
@@ -2211,8 +2612,8 @@
     portal.setAttribute("role", "status");
     portal.setAttribute("aria-live", "polite");
     portal.setAttribute("aria-hidden", "true");
-    portal.addEventListener("pointerenter", clearPassengerPreviewCloseTimer);
-    portal.addEventListener("pointerleave", () => schedulePassengerPreviewClose());
+    portal?.addEventListener("pointerenter", clearPassengerPreviewCloseTimer);
+    portal?.addEventListener("pointerleave", () => schedulePassengerPreviewClose());
     document.body.appendChild(portal);
     return portal;
   }
@@ -2364,7 +2765,6 @@
     if (target?.classList?.contains("custom-select-search")) return;
     if (target === el.passengerPickerSearch) return;
     if (target === el.bdPassengerSearch) return;
-    if (target?.closest?.("#reviewOverlay")) return;
     if (target?.closest?.("#passengerEditOverlay")) return;
 
     captureObsState();
@@ -2410,15 +2810,6 @@
     if (el.agendarRetorno.checked && !context.dataHoraRetorno) risks.push("Retorno ativo sem data/hora completa.");
     if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) risks.push("Servico frequente ativo sem periodo completo.");
     if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) risks.push("Periodo frequente com data final anterior a inicial.");
-
-    context.additionalSchedules.forEach((item) => {
-      const label = `Agendamento ${item.index + 2}`;
-      if (!item.dataHora) risks.push(`${label}: data/hora incompleta.`);
-      if (!item.tipoServico && !isTroca) risks.push(`${label}: tipo de servico vazio.`);
-      if (!item.tipoVeiculo && !isTroca) risks.push(`${label}: tipo de veiculo vazio.`);
-      if (!item.trajeto && !isTroca) risks.push(`${label}: trajeto vazio.`);
-      if (!item.destino && !isTroca) risks.push(`${label}: destino vazio.`);
-    });
 
     return risks;
   }
@@ -2468,21 +2859,10 @@
   }
 
   function openReviewBeforeSave(context) {
-    if (!el.reviewOverlay) {
-      performSave();
-      return;
-    }
-
-    renderReviewSummary(context);
-    renderReviewRisks(context);
-    el.reviewOverlay.hidden = false;
-    requestAnimationFrame(() => {
-      if (el.confirmSaveButton) el.confirmSaveButton.focus();
-    });
+    performSave();
   }
 
   function closeReviewOverlay(clearContext) {
-    if (el.reviewOverlay) el.reviewOverlay.hidden = true;
     if (clearContext) state.pendingSaveContext = null;
   }
 
@@ -2497,7 +2877,6 @@
       ["Trajeto", context.trajeto || "Nao informado"],
       ["Destino", el.destino.value.trim() || "Nao informado"],
       ["Passageiros", String(context.colOrdemPassageiros.length)],
-      ["Adicionais", String(context.additionalSchedules.length)],
       ["Retorno", el.agendarRetorno.checked ? "Sim" : "Nao"],
       ["Frequente", el.repetirServico.checked ? "Sim" : "Nao"]
     ];
@@ -2608,7 +2987,7 @@
         enderecoEditado: item.enderecoEditado
       })),
       enderecoRascunho: state.enderecoRascunho.map((item) => ({ ...item })),
-      scheduleDrafts: state.scheduleDrafts.map((item) => ({ ...item }))
+      scheduleDrafts: []
     };
   }
 
@@ -2663,9 +3042,10 @@
       state.obsAtual = snapshot.obsAtual || "motorista";
       state.retObsAtual = snapshot.retObsAtual || "motorista";
       state.enderecoPersonalizadoAtivo = !!snapshot.enderecoPersonalizadoAtivo;
-      state.scheduleDrafts = Array.isArray(snapshot.scheduleDrafts) ? snapshot.scheduleDrafts.map((item) => ({ ...item })) : [];
+      state.scheduleDrafts = [];
       state.enderecoRascunho = Array.isArray(snapshot.enderecoRascunho) ? snapshot.enderecoRascunho.map((item) => ({ ...item })) : [];
       state.selectedPassengers = restoreDraftPassengers(snapshot.selectedPassengers || []);
+      hydratePassengerSelectionRecencyFromRows(state.selectedPassengers);
 
       el.observacao.value = state.obs[state.obsAtual] || fields.observacao || "";
       el.retornoObservacao.value = state.obsRet[state.retObsAtual] || fields.retornoObservacao || "";
@@ -2861,14 +3241,7 @@
   }
 
   function addScheduleDraft() {
-    if (!state.isNew) {
-      toast("Agendamentos adicionais só na criação.", "error");
-      return;
-    }
-    state.scheduleDrafts.push(mainScheduleSnapshot());
-    renderScheduleDrafts();
-    renderRiskPanel();
-    markDraftDirty();
+    state.scheduleDrafts = [];
   }
 
   function handleScheduleDraftAction(event) {
@@ -2884,7 +3257,6 @@
       renderScheduleDrafts();
       renderRiskPanel();
       markDraftDirty();
-      toast("Agendamento adicional removido", "success", 3000);
       return;
     }
 
@@ -2923,7 +3295,12 @@
     return state.passageiros
       .filter((pax) => !usedIds.has(cleanGuid(pax.id).toLowerCase()))
       .slice()
-      .sort((a, b) => (a.label || "").localeCompare(b.label || "", "pt-BR"));
+      .sort((a, b) => {
+        const aIndex = getPassengerSelectionRecencyIndex(a.id);
+        const bIndex = getPassengerSelectionRecencyIndex(b.id);
+        if (aIndex !== bIndex) return aIndex - bIndex;
+        return (a.label || "").localeCompare(b.label || "", "pt-BR");
+      });
   }
 
   async function openPassengerPicker(targetOrder = null) {
@@ -3014,8 +3391,8 @@
       }
       const subtitle = document.createElement("small");
       subtitle.className = "passenger-picker-id";
-      subtitle.textContent = pax.clienteLabel || "Sem cliente vinculado";
-      item.append(head, meta);
+      subtitle.textContent = pax.clienteLabel || "-";
+      item.append(head);
       item.appendChild(subtitle);
       el.passengerPickerResults.appendChild(item);
     });
@@ -3118,6 +3495,7 @@
         state.enderecoRascunho.push({ ordem: nextOrder, endereco: selected.endereco || "" });
       }
     }
+    touchPassengerSelectionRecency(selected.id);
     applyPassengerDefaults(true);
     closePassengerPicker();
     renderPassengers();
@@ -3468,14 +3846,6 @@
         await replacePassengerRelations(principal.id, context.colOrdemPassageiros, context, true);
         addSaveLog("success", "Passageiros vinculados", "Principal.");
 
-        for (const schedule of context.additionalSchedules) {
-          addSaveLog("info", `Criando adicional ${schedule.index + 2}`, formatDateTime(schedule.dataHora));
-          const saved = await saveReserva(buildReservaPayload(context, "adicional", schedule.dataHora, schedule));
-          results.push({ tipo: `Adicional ${schedule.index + 2}`, data: schedule.dataHora, result: saved });
-          await replacePassengerRelations(saved.id, context.colOrdemPassageiros, context, true);
-          addSaveLog("success", `Adicional ${schedule.index + 2} salvo`, saved.id);
-        }
-
         if (el.repetirServico.checked) {
           addSaveLog("info", "Criando recorrência", "Gerando serviços frequentes.");
           const frequent = await createFrequentServices(context);
@@ -3537,7 +3907,7 @@
       guid: item.guid,
       enderecoSaidaBD: getDraftAddress(item.ordem) || item.enderecoEditado || ""
     }));
-    const additionalSchedules = buildAdditionalScheduleContexts(dataHoraPrincipal);
+    const additionalSchedules = [];
 
     return {
       dataHoraPrincipal,
@@ -3583,7 +3953,6 @@
   function validateContext(context) {
     const statusLabel = optionLabel("statusOperacao", el.statusOperacao.value);
     const isTroca = statusLabel === "Troca de Veiculos" || statusLabel === "Troca de Veículos";
-    if (!state.isNew && state.scheduleDrafts.length) return "Agendamentos adicionais só podem ser criados em registro novo.";
     if (!context.dataHoraPrincipal || !el.saidaHora.value || !el.saidaMinuto.value) return "'Data e horário de saída' são obrigatórios.";
     if (!el.tipoServico.value && !isTroca) return "'Tipo do Serviço' é obrigatório.";
     if (!el.tipoVeiculo.value && !isTroca) return "'Tipo do Veículo' é obrigatório.";
@@ -3597,14 +3966,6 @@
     if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) return "'Data de início e fim - Serviços Frequentes' são obrigatórios.";
     if (el.repetirServico.checked && !el.frequenteTipo.value) return "'Tipo de Serviço Frequente' é obrigatório.";
     if (state.isNew && el.repetirServico.checked && el.agendarRetorno.checked) return "Não é possível usar 'Serviços Frequentes' e 'Agendar Retorno' ao mesmo tempo. Escolha apenas um.";
-    for (const item of context.additionalSchedules) {
-      const label = `Agendamento ${item.index + 2}`;
-      if (!item.dataHora) return `${label}: data e horário são obrigatórios.`;
-      if (!item.tipoServico && !isTroca) return `${label}: tipo do serviço é obrigatório.`;
-      if (!item.tipoVeiculo && !isTroca) return `${label}: tipo do veículo é obrigatório.`;
-      if (!item.trajeto && !isTroca) return `${label}: trajeto é obrigatório.`;
-      if (!item.destino && !isTroca) return `${label}: destino é obrigatório.`;
-    }
     if (hasDuplicatePassengers()) return "Erro: passageiro duplicado na lista. Remova as duplicatas.";
     return "";
   }
@@ -3891,6 +4252,7 @@
   }
 
   function setSelectValue(select, value, fallback = "") {
+    if (!select) return;
     const stringValue = value === null || value === undefined ? "" : String(value);
     if (stringValue && [...select.options].some((option) => option.value === stringValue)) {
       select.value = stringValue;
@@ -4078,7 +4440,7 @@
     close.type = "button";
     close.setAttribute("aria-label", "Fechar notificação");
     close.textContent = "×";
-    close.addEventListener("click", () => item.remove());
+    close?.addEventListener("click", () => item.remove());
 
     item.append(msg, close);
     el.toastStack.appendChild(item);
