@@ -117,6 +117,7 @@ O novo formulario sera publicado como web resource e usado dentro de um Model-dr
 - Fluxo de passageiros com lista dinâmica, ordem, validação de duplicidade e remoção por linha.
 - `Endereco de saida` por passageiro com modo de endereço personalizado no serviço principal.
 - Retorno e repetição tratados como blocos separados, com validações independentes.
+- Agendamentos adicionais no mesmo ato: cada item herda passageiros/faturamento do principal e permite editar data, horario, tipo, veiculo, motorista, trajeto, destino e observacao antes de salvar.
 - `mock mode` ativável via `?mock=1` / `?mockData=1` para execução fora do host do Dataverse.
 - Salvar principal/retorno e serviços frequentes respeitando as regras:
   - retorno e repetição só no contexto de criação;
@@ -124,6 +125,7 @@ O novo formulario sera publicado como web resource e usado dentro de um Model-dr
   - na edição, remove e recria relações de passageiros.
 - Feedback operacional com overlay de carregamento, toast stack e overlay de sucesso.
 - Favicon embutido no HTML para evitar 404 em ambiente local.
+- Conferencia antes de salvar com resumo executivo, painel de riscos, log tecnico de salvamento, rascunho local automatico e edicao direta de passageiro existente na aba Banco de Dados.
 
 ## Telas / abas replicadas
 

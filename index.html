@@ -32,7 +32,6 @@
         </button>
       </div>
     </header>
-    <p class="required-note">Campos com <strong>*</strong> são obrigatórios para salvar.</p>
 
     <nav class="tabs" aria-label="Seções do formulário">
       <button class="tab is-active" type="button" data-tab="details" aria-current="page"><span>01</span>Detalhes</button>
@@ -60,18 +59,22 @@
                 <span>Data e horário de saída</span>
                 <div class="inline-time">
                   <input id="saidaData" type="date" required aria-required="true">
-                  <select id="saidaHora" required aria-required="true"></select>
-                  <span class="time-separator">:</span>
-                  <select id="saidaMinuto" required aria-required="true"></select>
+                  <div class="time-group">
+                    <select id="saidaHora" required aria-required="true"></select>
+                    <span class="time-separator">:</span>
+                    <select id="saidaMinuto" required aria-required="true"></select>
+                  </div>
                 </div>
               </label>
 
               <label class="field">
                 <span>Hr prev de retorno</span>
                 <div class="inline-time">
-                  <select id="retPrevHora"></select>
-                  <span class="time-separator">:</span>
-                  <select id="retPrevMinuto"></select>
+                  <div class="time-group">
+                    <select id="retPrevHora"></select>
+                    <span class="time-separator">:</span>
+                    <select id="retPrevMinuto"></select>
+                  </div>
                 </div>
               </label>
 
@@ -97,18 +100,39 @@
             </div>
           </section>
 
+          <section id="scheduleBatchBlock" class="schedule-batch" aria-labelledby="scheduleBatchTitle">
+            <div class="block-title" data-step="02A">
+              <div>
+                <h3 id="scheduleBatchTitle">Agendamentos adicionais</h3>
+                <p>Crie outros servicos no mesmo ato. Passageiros e faturamento seguem o principal.</p>
+              </div>
+              <div class="icon-actions">
+                <button id="addScheduleDraft" type="button" class="secondary-action small-action">Adicionar servico</button>
+              </div>
+            </div>
+            <div id="scheduleDraftRows" class="schedule-drafts" aria-live="polite" tabindex="-1"></div>
+          </section>
+
           <section class="passenger-block" aria-labelledby="passageirosTitle">
             <div class="block-title" data-step="02">
               <div>
                 <h3 id="passageirosTitle">Passageiros selecionados</h3>
-                <p>Ordem, nome e endereço de saída por passageiro.</p>
+                <p>Cadastre a ordem operacional e o passageiro na sequência de embarque.</p>
               </div>
-              <div class="icon-actions">
-                <button id="toggleEnderecoPersonalizado" type="button" class="icon-button" title="Alternar endereço personalizado">Adr</button>
-                <button id="addPassenger" type="button" class="icon-button success" title="Adicionar passageiro">+</button>
+              <div class="passenger-toolbar">
+                <div class="icon-actions">
+                  <button id="toggleEnderecoPersonalizado" type="button" class="secondary-action passenger-toolbar-action" title="Alternar endereço compartilhado por passageiros">Endereço único</button>
+                  <button id="addPassenger" type="button" class="secondary-action passenger-toolbar-action success" title="Adicionar passageiro">Adicionar</button>
+                </div>
               </div>
             </div>
+            <div id="passengerListHead" class="passenger-list-head" aria-hidden="true">
+              <span>Passageiro</span>
+              <span>Endereço de saída</span>
+              <span>Ação</span>
+            </div>
             <div id="passengerRows" class="passenger-rows"></div>
+            <p id="passengerEmpty" class="passenger-empty" hidden>Adicione ao menos um passageiro para seguir com o agendamento.</p>
 
             <label id="customAddressWrap" class="field custom-address" hidden>
               <span>Endereço de saída</span>
@@ -204,15 +228,59 @@
             </label>
           </div>
         </section>
+
+        <section id="riskPanel" class="ops-panel" aria-labelledby="riskPanelTitle">
+          <div class="ops-panel-head">
+            <div>
+              <h3 id="riskPanelTitle">Conferência operacional</h3>
+              <p>Riscos, rascunho e log técnico do formulário.</p>
+            </div>
+            <div class="draft-actions">
+              <span id="draftStatus" class="draft-status">Sem rascunho salvo.</span>
+              <button id="clearDraftButton" type="button" class="secondary-action small-action">Limpar rascunho</button>
+            </div>
+          </div>
+          <div class="ops-grid">
+            <div class="ops-box">
+              <strong>Riscos</strong>
+              <ul id="riskList" class="ops-list"></ul>
+            </div>
+            <div class="ops-box">
+              <strong>Log de salvamento</strong>
+              <ol id="saveLogList" class="ops-list save-log-list"></ol>
+            </div>
+          </div>
+        </section>
       </section>
 
       <section id="tab-panel-bd" class="panel" data-panel="bd">
         <div class="section-head">
-          <h2>Novo passageiro</h2>
-          <p>Cadastro rápido no Banco de Dados sem sair do fluxo de agendamento.</p>
+          <h2>Banco de Dados</h2>
+          <p>Cadastro e manutenção de passageiro sem sair do fluxo de agendamento.</p>
         </div>
 
         <section class="form-section">
+          <div class="form-section-title" data-step="02A">
+            <h3>Editar passageiro existente</h3>
+            <p>Clique em um registro. O popup salva cada campo automaticamente.</p>
+          </div>
+          <div class="passenger-maintenance">
+            <label class="field passenger-maintenance-search">
+              <span>Buscar passageiro</span>
+              <input id="bdPassengerSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Nome, telefone, email ou cliente">
+            </label>
+            <div id="bdPassengerDirectory" class="passenger-directory" role="listbox" aria-label="Passageiros cadastrados"></div>
+            <select id="bdExistingPassenger" hidden aria-hidden="true"></select>
+            <button id="loadPassengerForEdit" type="button" class="secondary-action legacy-edit-action" hidden>Carregar</button>
+            <button id="updatePassenger" type="button" class="primary-action legacy-edit-action" hidden>Atualizar</button>
+          </div>
+        </section>
+
+        <section class="form-section">
+          <div class="form-section-title" data-step="02B">
+            <h3>Novo passageiro</h3>
+            <p>Cadastro rápido no Banco de Dados.</p>
+          </div>
           <div class="form-grid">
             <label class="field required">
               <span>Status</span>
@@ -303,9 +371,11 @@
               <span>Data de retorno</span>
               <div class="inline-time">
                 <input id="retornoData" type="date">
-                <select id="retornoHora"></select>
-                <span class="time-separator">:</span>
-                <select id="retornoMinuto"></select>
+                <div class="time-group">
+                  <select id="retornoHora"></select>
+                  <span class="time-separator">:</span>
+                  <select id="retornoMinuto"></select>
+                </div>
               </div>
             </label>
             <label class="field span-2">
@@ -384,6 +454,86 @@
         <strong>Concluído!</strong>
         <p id="successMessage">Serviço solicitado com sucesso.</p>
         <button id="closeSuccess" type="button" class="primary-action">OK</button>
+      </div>
+    </div>
+
+    <div id="reviewOverlay" class="overlay" hidden>
+      <div class="dialog review-dialog" role="dialog" aria-labelledby="reviewTitle" aria-modal="true">
+        <div class="review-head">
+          <div>
+            <p class="passenger-picker-eyebrow">Conferência</p>
+            <h3 id="reviewTitle">Revisar antes de salvar</h3>
+          </div>
+          <button id="cancelReviewButton" type="button" class="icon-button" aria-label="Cancelar revisão">×</button>
+        </div>
+        <div class="review-grid">
+          <section>
+            <h4>Resumo</h4>
+            <dl id="reviewSummaryList" class="review-list"></dl>
+          </section>
+          <section>
+            <h4>Riscos</h4>
+            <ul id="reviewRiskList" class="ops-list"></ul>
+          </section>
+        </div>
+        <div class="picker-actions">
+          <button id="confirmSaveButton" type="button" class="primary-action">Confirmar e salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="passengerPickerOverlay" class="overlay" hidden>
+      <div class="dialog passenger-picker-dialog" role="dialog" aria-labelledby="passengerPickerTitle" aria-modal="true">
+        <header class="passenger-picker-head">
+          <div class="passenger-picker-head-text">
+            <span class="passenger-picker-eyebrow">Banco de dados</span>
+            <h3 id="passengerPickerTitle">Selecionar passageiro</h3>
+          </div>
+          <button id="passengerPickerClose" type="button" class="passenger-picker-icon-action" aria-label="Fechar seleção de passageiro">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M6.7 5.3 12 10.6l5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z"></path>
+            </svg>
+          </button>
+        </header>
+        <label class="passenger-picker-field">
+          <span class="passenger-picker-label">Busca</span>
+          <span class="passenger-picker-input-wrap">
+            <svg class="passenger-picker-search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M10.8 4a6.8 6.8 0 0 1 5.4 10.9l3.4 3.4-1.3 1.3-3.4-3.4A6.8 6.8 0 1 1 10.8 4Zm0 1.8a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"></path>
+            </svg>
+            <input id="passengerPickerSearch" type="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Nome, telefone ou email" />
+          </span>
+        </label>
+        <section class="passenger-picker-list" aria-label="Resultados de passageiros">
+          <div id="passengerPickerResults" class="passenger-picker-results" role="listbox" tabindex="0" aria-live="polite"></div>
+        </section>
+        <footer class="picker-actions">
+          <button id="passengerPickerCancel" type="button" class="passenger-picker-cancel">Cancelar</button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="passengerEditOverlay" class="overlay" hidden>
+      <div class="dialog passenger-edit-dialog" role="dialog" aria-labelledby="passengerEditTitle" aria-modal="true">
+        <div class="passenger-edit-head">
+          <div>
+            <p class="passenger-picker-eyebrow">Passageiro</p>
+            <h3 id="passengerEditTitle">Editar passageiro</h3>
+            <p id="passengerEditStatus" class="passenger-edit-status" aria-live="polite"></p>
+          </div>
+          <div class="passenger-edit-actions">
+            <button id="passengerEditToggle" type="button" class="icon-button passenger-edit-toggle" aria-label="Habilitar edição">
+              <svg class="passenger-edit-icon-edit" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 16.8V20h3.2L17.7 9.5l-3.2-3.2L4 16.8Zm12-12 3.2 3.2 1.2-1.2a1.8 1.8 0 0 0 0-2.5l-.7-.7a1.8 1.8 0 0 0-2.5 0L16 4.8Z"></path>
+              </svg>
+              <svg class="passenger-edit-icon-lock" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h1Zm2 0h6V7a3 3 0 0 0-6 0v3Zm3 3.4a1.7 1.7 0 0 0-.8 3.2V18h1.6v-1.4a1.7 1.7 0 0 0-.8-3.2Z"></path>
+              </svg>
+            </button>
+            <button id="passengerEditClose" type="button" class="icon-button" aria-label="Fechar edição de passageiro">×</button>
+          </div>
+        </div>
+        <div id="passengerEditFields" class="passenger-edit-fields"></div>
       </div>
     </div>
   </div>

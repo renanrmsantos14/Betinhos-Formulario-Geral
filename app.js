@@ -92,6 +92,7 @@
   const URL_PARAMS = new URLSearchParams(window.location.search);
   const QUERY_MOCK_MODE = (URL_PARAMS.get("mock") === "1" || URL_PARAMS.get("mockData") === "1");
   const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
+  const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
 
   const FALLBACK = {
     statusOperacao: [
@@ -202,12 +203,22 @@
     formaPagamento: $("formaPagamento"),
     cr: $("cr"),
     passengerRows: $("passengerRows"),
+    passengerEmpty: $("passengerEmpty"),
+    passengerListHead: $("passengerListHead"),
     toggleEnderecoPersonalizado: $("toggleEnderecoPersonalizado"),
     addPassenger: $("addPassenger"),
+    passengerPickerOverlay: $("passengerPickerOverlay"),
+    passengerPickerSearch: $("passengerPickerSearch"),
+    passengerPickerResults: $("passengerPickerResults"),
+    passengerPickerClose: $("passengerPickerClose"),
+    passengerPickerCancel: $("passengerPickerCancel"),
     customAddressWrap: $("customAddressWrap"),
     enderecoPersonalizado: $("enderecoPersonalizado"),
     telefonesPreview: $("telefonesPreview"),
     destino: $("destino"),
+    scheduleBatchBlock: $("scheduleBatchBlock"),
+    scheduleDraftRows: $("scheduleDraftRows"),
+    addScheduleDraft: $("addScheduleDraft"),
     bdStatus: $("bdStatus"),
     bdNome: $("bdNome"),
     bdTelefone: $("bdTelefone"),
@@ -223,6 +234,17 @@
     bdNascimento: $("bdNascimento"),
     bdPreferencias: $("bdPreferencias"),
     bdTipoVeiculo: $("bdTipoVeiculo"),
+    bdPassengerSearch: $("bdPassengerSearch"),
+    bdPassengerDirectory: $("bdPassengerDirectory"),
+    bdExistingPassenger: $("bdExistingPassenger"),
+    loadPassengerForEdit: $("loadPassengerForEdit"),
+    updatePassenger: $("updatePassenger"),
+    passengerEditOverlay: $("passengerEditOverlay"),
+    passengerEditTitle: $("passengerEditTitle"),
+    passengerEditStatus: $("passengerEditStatus"),
+    passengerEditFields: $("passengerEditFields"),
+    passengerEditToggle: $("passengerEditToggle"),
+    passengerEditClose: $("passengerEditClose"),
     createPassenger: $("createPassenger"),
     agendarRetorno: $("agendarRetorno"),
     retornoData: $("retornoData"),
@@ -238,7 +260,17 @@
     contabilizarFds: $("contabilizarFds"),
     tabBd: $("tabBd"),
     tabReturn: $("tabReturn"),
-    tabRepeat: $("tabRepeat")
+    tabRepeat: $("tabRepeat"),
+    riskPanel: $("riskPanel"),
+    riskList: $("riskList"),
+    saveLogList: $("saveLogList"),
+    draftStatus: $("draftStatus"),
+    clearDraftButton: $("clearDraftButton"),
+    reviewOverlay: $("reviewOverlay"),
+    reviewSummaryList: $("reviewSummaryList"),
+    reviewRiskList: $("reviewRiskList"),
+    confirmSaveButton: $("confirmSaveButton"),
+    cancelReviewButton: $("cancelReviewButton")
   };
 
   const state = {
@@ -256,6 +288,7 @@
     ordensPagamento: [],
     relacoes: [],
     selectedPassengers: [],
+    scheduleDrafts: [],
     enderecoRascunho: [],
     enderecoPersonalizadoAtivo: false,
     obs: { motorista: "", interna: "", final: "", passageiro: "" },
@@ -274,11 +307,27 @@
       bdTipoVeiculo: []
     },
     mockMode: false,
-    passengerRowSeq: 0
+    passengerRowSeq: 0,
+    scheduleDraftSeq: 0,
+    pendingSaveContext: null,
+    saveLog: [],
+    draftTimer: null,
+    draftRestoring: false,
+    lastDraftSavedAt: null
   };
   const customSelectRoots = new WeakMap();
   let activeCustomSelect = null;
   let customSelectSeq = 0;
+  let activePassengerPreview = null;
+  let passengerPreviewPositionRaf = null;
+  let passengerPreviewCloseTimer = null;
+  let passengerPickerTargetOrder = null;
+  let passengerCatalogLoadPromise = null;
+  let passengerCatalogLoaded = false;
+  let activePassengerEditId = "";
+  let passengerEditEnabled = false;
+  let passengerEditStatusTimer = null;
+  const passengerEditSaveTimers = new Map();
 
   state.mockMode = QUERY_MOCK_MODE || state.xrm === null;
 
@@ -297,6 +346,7 @@
     await loadCurrentRecord();
     hydrateForm();
     renderAll();
+    restoreDraftSnapshot();
     initializeCustomSelects();
     setLoading(false);
     if (state.mockMode) {
@@ -344,10 +394,66 @@
     });
     el.saveButton.addEventListener("click", saveForm);
     el.createPassenger.addEventListener("click", createPassenger);
+    el.bdPassengerSearch.addEventListener("input", renderPassengerDirectory);
+    el.bdPassengerDirectory.addEventListener("click", handlePassengerDirectoryAction);
+    el.bdExistingPassenger.addEventListener("change", () => {
+      if (el.bdExistingPassenger.value) openPassengerEdit(el.bdExistingPassenger.value);
+    });
+    el.loadPassengerForEdit.addEventListener("click", loadPassengerForEdit);
+    el.updatePassenger.addEventListener("click", updatePassenger);
+    el.passengerEditToggle.addEventListener("click", togglePassengerEditMode);
+    el.passengerEditClose.addEventListener("click", closePassengerEditPopup);
+    el.passengerEditOverlay.addEventListener("click", (event) => {
+      if (event.target === el.passengerEditOverlay) {
+        closePassengerEditPopup();
+      }
+    });
+    el.passengerEditFields.addEventListener("input", handlePassengerEditInput);
+    el.passengerEditFields.addEventListener("change", handlePassengerEditInput);
+    const markPassengerEditEmptySignals = () => requestAnimationFrame(applyPassengerEditEmptySignals);
+    el.passengerEditFields.addEventListener("input", markPassengerEditEmptySignals);
+    el.passengerEditFields.addEventListener("change", markPassengerEditEmptySignals);
+    el.passengerEditFields.addEventListener("click", (event) => {
+      if (event.target.closest(".custom-select-option") || event.target.closest(".custom-select-search")) {
+        setTimeout(markPassengerEditEmptySignals, 0);
+      }
+    });
+    const passengerEditObserver = new MutationObserver(() => {
+      if (!el.passengerEditOverlay.hidden) markPassengerEditEmptySignals();
+    });
+    const passengerEditFieldsObserver = new MutationObserver(() => {
+      if (!el.passengerEditOverlay.hidden) markPassengerEditEmptySignals();
+    });
+    passengerEditObserver.observe(el.passengerEditOverlay, { attributes: true, attributeFilter: ["hidden"] });
+    passengerEditFieldsObserver.observe(el.passengerEditFields, { childList: true, subtree: true });
+    markPassengerEditEmptySignals();
+    el.clearDraftButton.addEventListener("click", () => clearDraftSnapshot(true));
+    el.confirmSaveButton.addEventListener("click", performSave);
+    el.cancelReviewButton.addEventListener("click", () => closeReviewOverlay(true));
+    el.reviewOverlay.addEventListener("click", (event) => {
+      if (event.target === el.reviewOverlay) closeReviewOverlay(true);
+    });
     el.addPassenger.addEventListener("click", addPassengerRow);
+    el.addScheduleDraft.addEventListener("click", addScheduleDraft);
+    el.scheduleDraftRows.addEventListener("click", handleScheduleDraftAction);
+    el.scheduleDraftRows.addEventListener("change", handleScheduleDraftChange);
+    el.scheduleDraftRows.addEventListener("input", handleScheduleDraftChange);
     el.passengerRows.addEventListener("click", handlePassengerRowAction);
-    el.passengerRows.addEventListener("change", handlePassengerRowChange);
     el.passengerRows.addEventListener("input", handlePassengerRowInput);
+    el.passengerRows.addEventListener("pointerover", handlePassengerPreviewEnter);
+    el.passengerRows.addEventListener("pointerout", handlePassengerPreviewLeave);
+    el.passengerRows.addEventListener("focusin", handlePassengerPreviewFocusIn);
+    el.passengerRows.addEventListener("focusout", handlePassengerPreviewFocusOut);
+    el.passengerPickerClose.addEventListener("click", closePassengerPicker);
+    el.passengerPickerCancel.addEventListener("click", closePassengerPicker);
+    el.passengerPickerOverlay.addEventListener("click", (event) => {
+      if (event.target === el.passengerPickerOverlay) {
+        closePassengerPicker();
+      }
+    });
+    el.passengerPickerSearch.addEventListener("input", renderPassengerPickerResults);
+    el.passengerPickerSearch.addEventListener("keydown", handlePassengerPickerKeydown);
+    el.passengerPickerResults.addEventListener("click", handlePassengerPickerAction);
     el.toggleEnderecoPersonalizado.addEventListener("click", toggleEnderecoPersonalizado);
     el.cliente.addEventListener("change", () => {
       applyStatusFaturamentoDefault();
@@ -374,18 +480,25 @@
     document.addEventListener("click", handleGlobalCustomSelectClick);
     document.addEventListener("keydown", handleGlobalCustomSelectKeydown);
     document.addEventListener("scroll", handleGlobalCustomSelectScroll, { capture: true });
+    document.addEventListener("scroll", repositionPassengerPreview, { capture: true });
     window.addEventListener("resize", repositionOpenCustomSelectPanels);
+    window.addEventListener("resize", repositionPassengerPreview);
+    window.addEventListener("resize", syncPassengerNameColumnWidth);
+    const appRoot = $("app");
+    appRoot.addEventListener("input", handleOperationalInput);
+    appRoot.addEventListener("change", handleOperationalInput);
   }
 
   function initializeCustomSelects() {
     document.querySelectorAll("select").forEach((select) => {
+      if (select.hidden) return;
       ensureCustomSelect(select);
       refreshCustomSelect(select);
     });
   }
 
   function ensureCustomSelect(select) {
-    if (!select || select.tagName !== "SELECT" || select.dataset.customSelectReady === "1") return;
+    if (!select || select.tagName !== "SELECT" || select.hidden || select.dataset.customSelectReady === "1") return;
     const wrapper = document.createElement("div");
     wrapper.className = "custom-select";
 
@@ -707,6 +820,22 @@
       loadChoices(CONFIG.entities.passageiro, CONFIG.fields.passageiro.tipoVeiculo, "bdTipoVeiculo", FALLBACK.bdTipoVeiculo),
       loadLookups()
     ]);
+    passengerCatalogLoaded = true;
+  }
+
+  async function ensurePassengerCatalogLoaded() {
+    if (passengerCatalogLoaded && state.passageiros.length > 0) return;
+    if (passengerCatalogLoadPromise) {
+      await passengerCatalogLoadPromise;
+      return;
+    }
+    passengerCatalogLoadPromise = loadLookups();
+    try {
+      await passengerCatalogLoadPromise;
+      passengerCatalogLoaded = true;
+    } finally {
+      passengerCatalogLoadPromise = null;
+    }
   }
 
   async function loadChoices(entity, attribute, targetKey, fallback) {
@@ -764,6 +893,13 @@
           f.passageiro.enderecoSaida,
           f.passageiro.preferencias,
           f.passageiro.cr,
+          f.passageiro.status,
+          f.passageiro.classificacao,
+          f.passageiro.sexo,
+          f.passageiro.idioma,
+          f.passageiro.cargo,
+          f.passageiro.nascimento,
+          f.passageiro.departamento,
           f.passageiro.tipoVeiculo,
           "_cr40f_cliente_value"
         ].join(","),
@@ -808,7 +944,14 @@
         preferencias: "Sem janela na volta",
         cr: "CR001",
         clienteId: "cliente-demo",
-        tipoVeiculo: "Sedan"
+        tipoVeiculo: "Sedan",
+        status: 30,
+        classificacao: 40,
+        sexo: 51,
+        idioma: 60,
+        cargo: 70,
+        nascimento: "",
+        departamento: "Diretoria"
       },
       {
         id: "pax-2",
@@ -819,7 +962,14 @@
         preferencias: "Silêncio no trajeto",
         cr: "CR002",
         clienteId: "cliente-betalabs",
-        tipoVeiculo: "SUV"
+        tipoVeiculo: "SUV",
+        status: 30,
+        classificacao: 42,
+        sexo: 50,
+        idioma: 60,
+        cargo: 72,
+        nascimento: "",
+        departamento: "Compras"
       },
       {
         id: "pax-3",
@@ -831,7 +981,14 @@
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
-        tipoVeiculo: "VAN"
+        tipoVeiculo: "VAN",
+        status: 30,
+        classificacao: 41,
+        sexo: 51,
+        idioma: 61,
+        cargo: 73,
+        nascimento: "",
+        departamento: "Operacoes"
       }
     ];
     state.motoristas = [
@@ -844,6 +1001,7 @@
       { id: "op-2", label: "OP-1099" },
       { id: "op-3", label: "OP-1134" }
     ];
+    passengerCatalogLoaded = true;
   }
 
   function getMockDb() {
@@ -919,8 +1077,8 @@
       toast(`Registro ${recordId} não encontrado no mock db. Abrindo como novo`, "warning", 5000);
       state.isNew = true;
       state.recordId = "";
-      state.selectedPassengers = [emptyPassenger(1)];
-      state.enderecoRascunho = [{ ordem: 1, endereco: "" }];
+      state.selectedPassengers = [];
+      state.enderecoRascunho = [];
       return;
     }
 
@@ -950,7 +1108,7 @@
             enderecoEditado: state.enderecoPersonalizadoAtivo ? "" : (rel.endereco || pax.endereco || "")
           };
         })
-      : [emptyPassenger(1)];
+      : [];
     state.enderecoRascunho = state.selectedPassengers.map((item) => ({
       ordem: item.ordem,
       endereco: item.enderecoEditado || ""
@@ -968,6 +1126,13 @@
       endereco: record[f.enderecoSaida] || "",
       preferencias: record[f.preferencias] || "",
       cr: record[f.cr] || "",
+      status: record[f.status] || "",
+      classificacao: record[f.classificacao] || "",
+      sexo: record[f.sexo] || "",
+      idioma: record[f.idioma] || "",
+      cargo: record[f.cargo] || "",
+      nascimento: record[f.nascimento] || "",
+      departamento: record[f.departamento] || "",
       tipoVeiculo: record[f.tipoVeiculo] || "",
       tipoVeiculoLabel: record[`${f.tipoVeiculo}@OData.Community.Display.V1.FormattedValue`] || "",
       clienteId: record[clienteLookup] || "",
@@ -1078,6 +1243,7 @@
     el.tabBd.hidden = !state.isNew;
     el.tabReturn.hidden = !state.isNew;
     el.tabRepeat.hidden = !state.isNew;
+    el.scheduleBatchBlock.hidden = !state.isNew;
     el.opWrap.hidden = state.isNew;
     el.recordIdBox.hidden = state.isNew;
     el.recordIdText.textContent = r[f.readableId] || "";
@@ -1127,6 +1293,7 @@
     renderLookupSelect(el.cliente, state.clientes);
     renderLookupSelect(el.bdCliente, state.clientes);
     renderLookupSelect(el.solicitante, state.passageiros);
+    renderLookupSelect(el.bdExistingPassenger, state.passageiros);
     renderLookupSelect(el.motorista, state.motoristas);
     renderLookupSelect(el.op, state.ordensPagamento);
     renderChoiceSelect(el.bdStatus, state.options.bdStatus);
@@ -1135,9 +1302,14 @@
     renderChoiceSelect(el.bdIdioma, state.options.bdIdioma);
     renderChoiceSelect(el.bdCargo, state.options.bdCargo);
     renderChoiceSelect(el.bdTipoVeiculo, state.options.bdTipoVeiculo);
+    renderPassengerDirectory();
     hydrateForm();
+    renderScheduleDrafts();
     renderPassengers();
     renderTabBadges();
+    renderRiskPanel();
+    renderSaveLog();
+    renderDraftStatus();
   }
 
   function renderStatusFaturamento() {
@@ -1156,8 +1328,10 @@
       select.appendChild(option);
     });
     if (previous) select.value = previous;
-    ensureCustomSelect(select);
-    refreshCustomSelect(select);
+    if (!select.hidden) {
+      ensureCustomSelect(select);
+      refreshCustomSelect(select);
+    }
   }
 
   function renderLookupSelect(select, rows) {
@@ -1170,13 +1344,619 @@
       select.appendChild(option);
     });
     if (previous) select.value = previous;
+    if (!select.hidden) {
+      ensureCustomSelect(select);
+      refreshCustomSelect(select);
+    }
+  }
+
+  function getPassengerById(passengerId) {
+    return state.passageiros.find((item) => sameId(item.id, passengerId)) || null;
+  }
+
+  function getPassengerEditFields() {
+    const f = CONFIG.fields.passageiro;
+    return [
+      { key: "status", label: "Status", kind: "choice", required: true, stateKey: "status", payloadField: f.status, optionsKey: "bdStatus" },
+      { key: "label", label: "Nome do passageiro", kind: "text", required: true, span: "wide", stateKey: "label", payloadField: f.nome, inputType: "text" },
+      { key: "telefone", label: "Telefone", kind: "text", stateKey: "telefone", payloadField: f.telefone, inputType: "tel" },
+      { key: "email", label: "Email", kind: "text", span: "wide", stateKey: "email", payloadField: f.email, inputType: "email" },
+      { key: "endereco", label: "Endereco de saida", kind: "textarea", span: "wide", stateKey: "endereco", payloadField: f.enderecoSaida },
+      { key: "clienteId", label: "Cliente", kind: "lookup", required: true, stateKey: "clienteId", navName: CONFIG.nav.cliente, entitySet: CONFIG.entitySets.cliente, rowsKey: "clientes" },
+      { key: "classificacao", label: "Classificacao", kind: "choice", required: true, stateKey: "classificacao", payloadField: f.classificacao, optionsKey: "bdClassificacao" },
+      { key: "idioma", label: "Idioma", kind: "choice", required: true, stateKey: "idioma", payloadField: f.idioma, optionsKey: "bdIdioma" },
+      { key: "sexo", label: "Sexo", kind: "choice", stateKey: "sexo", payloadField: f.sexo, optionsKey: "bdSexo" },
+      { key: "cargo", label: "Cargo", kind: "choice", stateKey: "cargo", payloadField: f.cargo, optionsKey: "bdCargo" },
+      { key: "departamento", label: "Departamento", kind: "text", stateKey: "departamento", payloadField: f.departamento, inputType: "text" },
+      { key: "cr", label: "CR", kind: "text", stateKey: "cr", payloadField: f.cr, inputType: "text" },
+      { key: "nascimento", label: "Data de nascimento", kind: "date", stateKey: "nascimento", payloadField: f.nascimento },
+      { key: "preferencias", label: "Perfil do passageiro", kind: "textarea", span: "wide", stateKey: "preferencias", payloadField: f.preferencias },
+      { key: "tipoVeiculo", label: "Tipo de veiculo", kind: "choice", stateKey: "tipoVeiculo", payloadField: f.tipoVeiculo, optionsKey: "bdTipoVeiculo" }
+    ];
+  }
+
+  function getPassengerEditField(fieldKey) {
+    return getPassengerEditFields().find((field) => field.key === fieldKey) || null;
+  }
+
+  function renderPassengerDirectory() {
+    if (!el.bdPassengerDirectory) return;
+    const query = normalize(el.bdPassengerSearch?.value || "");
+    const rows = state.passageiros
+      .filter((passenger) => {
+        if (!query) return true;
+        const haystack = normalize([
+          passenger.label,
+          passenger.telefone,
+          passenger.email,
+          passenger.clienteLabel,
+          passenger.cr,
+          passenger.departamento
+        ].filter(Boolean).join(" "));
+        return haystack.includes(query);
+      })
+      .slice()
+      .sort((a, b) => (a.label || "").localeCompare(b.label || "", "pt-BR"));
+
+    el.bdPassengerDirectory.innerHTML = "";
+    if (!rows.length) {
+      const empty = document.createElement("p");
+      empty.className = "passenger-directory-empty";
+      empty.textContent = state.passageiros.length ? "Nenhum passageiro encontrado." : "Nenhum passageiro carregado.";
+      el.bdPassengerDirectory.appendChild(empty);
+      return;
+    }
+
+    rows.forEach((passenger) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "passenger-directory-item";
+      button.dataset.passengerId = passenger.id;
+      button.setAttribute("role", "option");
+
+      const name = document.createElement("strong");
+      name.textContent = passenger.label || "Passageiro sem nome";
+
+      const meta = document.createElement("span");
+      meta.textContent = [
+        passenger.telefone,
+        passenger.email,
+        passenger.clienteLabel
+      ].filter(Boolean).join(" | ") || "Sem contato cadastrado";
+
+      const extra = document.createElement("small");
+      extra.textContent = [
+        optionLabel("bdStatus", passenger.status),
+        optionLabel("bdClassificacao", passenger.classificacao),
+        passenger.cr ? `CR ${passenger.cr}` : ""
+      ].filter(Boolean).join(" | ") || "Sem classificacao";
+
+      button.append(name, meta, extra);
+      el.bdPassengerDirectory.appendChild(button);
+    });
+  }
+
+  function handlePassengerDirectoryAction(event) {
+    const item = event.target.closest("[data-passenger-id]");
+    if (!item || !el.bdPassengerDirectory.contains(item)) return;
+    openPassengerEdit(item.dataset.passengerId);
+  }
+
+  function openPassengerEdit(passengerOrId) {
+    const passenger = typeof passengerOrId === "object"
+      ? passengerOrId
+      : getPassengerById(passengerOrId);
+    const passengerId = cleanGuid(passenger?.id || passengerOrId);
+    if (!passenger || !passengerId) {
+      toast("Passageiro nao encontrado para edicao.", "error");
+      return;
+    }
+    if (!getPassengerById(passengerId)) {
+      toast("Passageiro fora da lista local. Recarregue a tela antes de editar.", "error", 6000);
+      return;
+    }
+
+    if (activePassengerEditId && !sameId(activePassengerEditId, passengerId)) {
+      flushPassengerEditSaves(activePassengerEditId);
+    }
+    activePassengerEditId = passengerId;
+    passengerEditEnabled = false;
+    setSelectValue(el.bdExistingPassenger, passengerId);
+    renderPassengerEditHeader(passenger);
+    renderPassengerEditFields(passenger);
+    setPassengerEditMode(false);
+    el.passengerEditOverlay.hidden = false;
+  }
+
+  function renderPassengerEditHeader(passenger, preserveStatus = false) {
+    if (el.passengerEditTitle) {
+      el.passengerEditTitle.textContent = passenger.label || "Passageiro sem nome";
+    }
+    if (!preserveStatus) {
+      setPassengerEditStatus("", "");
+    }
+  }
+
+  function renderPassengerEditFields(passenger) {
+    if (!el.passengerEditFields) return;
+    el.passengerEditFields.innerHTML = "";
+    const fields = getPassengerEditFields();
+    const layout = resolvePassengerEditLayout(fields);
+    fields.forEach((field, index) => {
+      const row = document.createElement("div");
+      row.className = "passenger-edit-field";
+      row.classList.toggle("is-wide", layout[index] === "wide");
+      row.classList.toggle("is-multiline", field.kind === "textarea");
+      row.dataset.fieldKey = field.key;
+
+      const head = document.createElement("div");
+      head.className = "passenger-edit-field-head";
+
+      const label = document.createElement("span");
+      label.textContent = field.required ? `${field.label} *` : field.label;
+
+      head.append(label);
+
+      const control = buildPassengerEditControl(field, passenger);
+
+      row.append(head, control);
+      el.passengerEditFields.appendChild(row);
+
+      if (control.tagName === "SELECT") {
+        ensureCustomSelect(control);
+        refreshCustomSelect(control);
+      }
+    });
+  }
+
+  function resolvePassengerEditLayout(fields) {
+    const layout = Array(fields.length).fill("single");
+    let pendingSingleIndex = null;
+
+    fields.forEach((field, index) => {
+      if (field.span === "wide") {
+        if (pendingSingleIndex !== null) {
+          layout[pendingSingleIndex] = "wide";
+          pendingSingleIndex = null;
+        }
+        layout[index] = "wide";
+        return;
+      }
+
+      if (pendingSingleIndex === null) {
+        pendingSingleIndex = index;
+        return;
+      }
+
+      layout[pendingSingleIndex] = "single";
+      layout[index] = "single";
+      pendingSingleIndex = null;
+    });
+
+    if (pendingSingleIndex !== null) {
+      layout[pendingSingleIndex] = "wide";
+    }
+
+    return layout;
+  }
+
+  function buildPassengerEditControl(field, passenger) {
+    let control;
+    if (field.kind === "textarea") {
+      control = document.createElement("textarea");
+      control.rows = 3;
+      control.readOnly = true;
+    } else if (field.kind === "choice" || field.kind === "lookup") {
+      control = document.createElement("select");
+      control.disabled = true;
+      fillPassengerEditSelect(control, field);
+    } else {
+      control = document.createElement("input");
+      control.type = field.kind === "date" ? "date" : (field.inputType || "text");
+      control.readOnly = true;
+    }
+
+    const value = getPassengerEditValue(passenger, field);
+    control.className = "passenger-edit-control";
+    control.dataset.passengerEditControl = field.key;
+    control.dataset.savedValue = value;
+    control.value = value;
+    return control;
+  }
+
+  function fillPassengerEditSelect(select, field) {
+    select.innerHTML = '<option value=""></option>';
+    const rows = field.kind === "lookup"
+      ? state[field.rowsKey] || []
+      : state.options[field.optionsKey] || [];
+    rows.forEach((item) => {
+      const option = document.createElement("option");
+      option.value = String(item.value ?? item.id ?? "");
+      option.textContent = item.label || "";
+      select.appendChild(option);
+    });
+  }
+
+  function getPassengerEditValue(passenger, field) {
+    const raw = passenger?.[field.stateKey] ?? "";
+    if (field.kind === "date" && raw) return String(raw).slice(0, 10);
+    return raw === null || raw === undefined ? "" : String(raw);
+  }
+
+  function togglePassengerEditMode() {
+    setPassengerEditMode(!passengerEditEnabled);
+  }
+
+  function setPassengerEditMode(enabled) {
+    passengerEditEnabled = !!enabled;
+    if (el.passengerEditOverlay) {
+      el.passengerEditOverlay.dataset.editing = passengerEditEnabled ? "true" : "false";
+    }
+    if (el.passengerEditToggle) {
+      el.passengerEditToggle.classList.toggle("is-active", passengerEditEnabled);
+      el.passengerEditToggle.setAttribute("aria-pressed", String(passengerEditEnabled));
+      el.passengerEditToggle.setAttribute("aria-label", passengerEditEnabled ? "Bloquear edição" : "Habilitar edição");
+    }
+    el.passengerEditFields?.querySelectorAll("[data-passenger-edit-control]").forEach((control) => {
+      if (control.tagName === "SELECT") {
+        control.disabled = !passengerEditEnabled;
+        refreshCustomSelect(control);
+      } else {
+        control.readOnly = !passengerEditEnabled;
+      }
+    });
+  }
+
+  function handlePassengerEditInput(event) {
+    const control = event.target.closest("[data-passenger-edit-control]");
+    if (!control || !el.passengerEditFields.contains(control)) return;
+    if (control.disabled || control.readOnly) return;
+    const delay = event.type === "input" && control.tagName !== "SELECT" ? 550 : 0;
+    schedulePassengerEditSave(control.dataset.passengerEditControl, control, delay);
+  }
+
+  function schedulePassengerEditSave(fieldKey, control, delay) {
+    const existing = passengerEditSaveTimers.get(fieldKey);
+    if (existing) window.clearTimeout(existing.timer);
+    setPassengerFieldStatus(control, "saving");
+    setPassengerEditStatus("Salvando...", "saving");
+    const timer = window.setTimeout(() => {
+      passengerEditSaveTimers.delete(fieldKey);
+      savePassengerEditField(fieldKey, control, activePassengerEditId);
+    }, delay);
+    passengerEditSaveTimers.set(fieldKey, { timer, fieldKey, control });
+  }
+
+  function flushPassengerEditSaves(passengerId) {
+    const entries = [...passengerEditSaveTimers.values()];
+    passengerEditSaveTimers.clear();
+    entries.forEach((entry) => window.clearTimeout(entry.timer));
+    entries.forEach((entry) => {
+      savePassengerEditField(entry.fieldKey, entry.control, passengerId);
+    });
+  }
+
+  async function savePassengerEditField(fieldKey, control, passengerId) {
+    const field = getPassengerEditField(fieldKey);
+    const cleanPassengerId = cleanGuid(passengerId || activePassengerEditId);
+    const index = state.passageiros.findIndex((item) => sameId(item.id, cleanPassengerId));
+    if (!field || index < 0) return;
+
+    const value = readPassengerEditControlValue(control, field);
+    if (field.required && !value) {
+      setPassengerFieldStatus(control, "error");
+      setPassengerEditStatus("Campo obrigatorio.", "error");
+      return;
+    }
+    if (value === (control.dataset.savedValue || "")) {
+      setPassengerFieldStatus(control, "");
+      setPassengerEditStatus("", "");
+      return;
+    }
+
+    try {
+      const payload = buildPassengerEditPayload(field, value);
+      if (state.xrm && !state.mockMode) {
+        await state.xrm.WebApi.updateRecord(CONFIG.entities.passageiro, cleanPassengerId, payload);
+      }
+
+      const updatedPassenger = applyPassengerFieldToState(cleanPassengerId, field, value);
+      control.dataset.savedValue = value;
+      setPassengerFieldStatus(control, "saved");
+      setPassengerEditStatus("Atualizado.", "saved");
+      if (updatedPassenger) renderPassengerEditHeader(updatedPassenger, true);
+      refreshPassengerDependentViews(cleanPassengerId);
+    } catch (error) {
+      console.error(error);
+      setPassengerFieldStatus(control, "error");
+      setPassengerEditStatus(`Falha ao atualizar ${field.label}.`, "error");
+      toast(`Falha ao salvar ${field.label}. ${error.message || ""}`, "error", 8000);
+    }
+  }
+
+  function readPassengerEditControlValue(control, field) {
+    if (!control) return "";
+    if (field.kind === "text" || field.kind === "textarea") return control.value.trim();
+    return control.value || "";
+  }
+
+  function buildPassengerEditPayload(field, value) {
+    const payload = {};
+    if (field.kind === "lookup") {
+      payload[`${field.navName}@odata.bind`] = value
+        ? `/${field.entitySet}(${cleanGuid(value)})`
+        : null;
+      return payload;
+    }
+    if (field.kind === "choice") {
+      payload[field.payloadField] = value === "" ? null : (Number.isFinite(Number(value)) ? Number(value) : value);
+      return payload;
+    }
+    if (field.kind === "date") {
+      payload[field.payloadField] = value || null;
+      return payload;
+    }
+    payload[field.payloadField] = value;
+    return payload;
+  }
+
+  function applyPassengerFieldToState(passengerId, field, value) {
+    const index = state.passageiros.findIndex((item) => sameId(item.id, passengerId));
+    if (index < 0) return null;
+
+    const updatedPassenger = {
+      ...state.passageiros[index],
+      [field.stateKey]: value
+    };
+    if (field.key === "clienteId") {
+      updatedPassenger.clienteLabel = state.clientes.find((item) => sameId(item.id, value))?.label || "";
+    }
+    if (field.key === "tipoVeiculo") {
+      updatedPassenger.tipoVeiculoLabel = optionLabel("bdTipoVeiculo", value);
+    }
+
+    state.passageiros[index] = updatedPassenger;
+    state.passageiros.sort((a, b) => (a.label || "").localeCompare(b.label || "", "pt-BR"));
+    state.selectedPassengers = state.selectedPassengers.map((item) => (
+      sameId(item.guid, passengerId)
+        ? {
+            ...item,
+            passageiro: updatedPassenger,
+            telefone: updatedPassenger.telefone,
+            enderecoEditado: getDraftAddress(item.ordem) || updatedPassenger.endereco || ""
+          }
+        : item
+    ));
+    return updatedPassenger;
+  }
+
+  function refreshPassengerDependentViews(passengerId) {
+    const currentSolicitante = el.solicitante.value;
+    renderLookupSelect(el.solicitante, state.passageiros);
+    setSelectValue(el.solicitante, currentSolicitante);
+    renderLookupSelect(el.bdExistingPassenger, state.passageiros);
+    setSelectValue(el.bdExistingPassenger, passengerId);
+    renderPassengerDirectory();
+    renderPassengers();
+    renderRiskPanel();
+    markDraftDirty();
+  }
+
+  function setPassengerEditStatus(text, status) {
+    if (!el.passengerEditStatus) return;
+    if (passengerEditStatusTimer) {
+      window.clearTimeout(passengerEditStatusTimer);
+      passengerEditStatusTimer = null;
+    }
+    el.passengerEditStatus.textContent = text || "";
+    el.passengerEditStatus.dataset.status = status || "";
+    if (status === "saved") {
+      passengerEditStatusTimer = window.setTimeout(() => {
+        passengerEditStatusTimer = null;
+        if (el.passengerEditStatus?.dataset.status === "saved") {
+          setPassengerEditStatus("", "");
+        }
+      }, 1400);
+    }
+  }
+
+  function setPassengerFieldStatus(control, status) {
+    const row = control?.closest?.(".passenger-edit-field");
+    if (!row) return;
+    row.classList.remove("is-saving", "is-saved", "is-error");
+    if (status) row.classList.add(`is-${status}`);
+    if (status === "saved") {
+      window.setTimeout(() => {
+        if (row.isConnected) row.classList.remove("is-saved");
+      }, 1200);
+    }
+  }
+
+  function closePassengerEditPopup() {
+    if (activePassengerEditId) {
+      flushPassengerEditSaves(activePassengerEditId);
+    }
+    closeAllCustomSelects();
+    if (el.passengerEditOverlay) el.passengerEditOverlay.hidden = true;
+    if (el.passengerEditFields) el.passengerEditFields.replaceChildren();
+    activePassengerEditId = "";
+    passengerEditEnabled = false;
+    setPassengerEditStatus("", "");
+  }
+
+  function renderScheduleDrafts() {
+    if (!state.isNew) {
+      el.scheduleDraftRows.innerHTML = "";
+      return;
+    }
+
+    const existingRows = new Map(
+      [...el.scheduleDraftRows.children].map((row) => [row.dataset.scheduleKey, row])
+    );
+    const keepRows = [];
+    const activeKeys = new Set();
+
+    state.scheduleDrafts.forEach((item, index) => {
+      if (!item.key) item.key = nextScheduleDraftKey();
+      const row = existingRows.get(item.key) || buildScheduleDraftRow(item);
+      hydrateScheduleDraftRow(row, item, index);
+      keepRows.push(row);
+      activeKeys.add(item.key);
+    });
+
+    [...el.scheduleDraftRows.children].forEach((row) => {
+      if (!activeKeys.has(row.dataset.scheduleKey)) row.remove();
+    });
+
+    keepRows.forEach((row) => el.scheduleDraftRows.appendChild(row));
+    el.scheduleDraftRows.classList.toggle("is-empty", state.scheduleDrafts.length === 0);
+  }
+
+  function buildScheduleDraftRow(item) {
+    const row = document.createElement("div");
+    row.className = "schedule-draft";
+    row.dataset.scheduleKey = item.key;
+    row.innerHTML = `
+      <div class="schedule-draft-head">
+        <strong data-schedule-title></strong>
+        <div class="schedule-actions">
+          <button type="button" class="text-action" data-schedule-action="copy">Copiar principal</button>
+          <button type="button" class="remove-row" data-schedule-action="remove" title="Remover agendamento">X</button>
+        </div>
+      </div>
+      <div class="schedule-draft-grid">
+        <label class="field span-2 required">
+          <span>Data e horário</span>
+          <div class="inline-time">
+            <input type="date" data-schedule-field="data">
+            <div class="time-group">
+              <select data-schedule-field="hora"></select>
+              <span class="time-separator">:</span>
+              <select data-schedule-field="minuto"></select>
+            </div>
+          </div>
+        </label>
+        <label class="field">
+          <span>Hr prev retorno</span>
+          <div class="inline-time">
+            <div class="time-group">
+              <select data-schedule-field="retPrevHora"></select>
+              <span class="time-separator">:</span>
+              <select data-schedule-field="retPrevMinuto"></select>
+            </div>
+          </div>
+        </label>
+        <label class="field required">
+          <span>Tipo serviço</span>
+          <select data-schedule-field="tipoServico"></select>
+        </label>
+        <label class="field required">
+          <span>Tipo veículo</span>
+          <select data-schedule-field="tipoVeiculo"></select>
+        </label>
+        <label class="field">
+          <span>Motorista</span>
+          <select data-schedule-field="motorista"></select>
+        </label>
+        <label class="field span-2 required">
+          <span>Trajeto</span>
+          <input type="text" data-schedule-field="trajeto" autocomplete="off">
+        </label>
+        <label class="field span-2 required">
+          <span>Destino</span>
+          <textarea rows="3" data-schedule-field="destino"></textarea>
+        </label>
+        <label class="field span-2">
+          <span>Observação motorista</span>
+          <textarea rows="3" data-schedule-field="obsMotorista"></textarea>
+        </label>
+      </div>
+    `;
+    return row;
+  }
+
+  function hydrateScheduleDraftRow(row, item, index) {
+    row.dataset.scheduleKey = item.key;
+    row.querySelector("[data-schedule-title]").textContent = `Agendamento ${index + 2}`;
+    setScheduleInput(row, "data", item.data);
+    fillScheduleTimeSelect(row, "hora", true, item.hora);
+    fillScheduleTimeSelect(row, "minuto", false, item.minuto);
+    fillScheduleTimeSelect(row, "retPrevHora", true, item.retPrevHora, true);
+    fillScheduleTimeSelect(row, "retPrevMinuto", false, item.retPrevMinuto, true);
+    fillScheduleOptions(row, "tipoServico", state.options.tipoServico, item.tipoServico);
+    fillScheduleOptions(row, "tipoVeiculo", state.options.tipoVeiculo, item.tipoVeiculo);
+    fillScheduleLookup(row, "motorista", state.motoristas, item.motorista);
+    setScheduleInput(row, "trajeto", item.trajeto);
+    setScheduleInput(row, "destino", item.destino);
+    setScheduleInput(row, "obsMotorista", item.obsMotorista);
+  }
+
+  function fillScheduleTimeSelect(row, field, isHour, value) {
+    const base = isHour
+      ? Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"))
+      : ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
+    fillScheduleOptions(row, field, base.map((item) => ({ value: item, label: item })), value);
+  }
+
+  function fillScheduleOptions(row, field, options, value) {
+    const select = row.querySelector(`[data-schedule-field="${field}"]`);
+    if (!select) return;
+    select.innerHTML = '<option value=""></option>';
+    options.forEach((item) => {
+      const option = document.createElement("option");
+      option.value = String(item.value);
+      option.textContent = item.label;
+      select.appendChild(option);
+    });
+    select.value = value ? String(value) : "";
     ensureCustomSelect(select);
     refreshCustomSelect(select);
   }
 
+  function fillScheduleLookup(row, field, rows, value) {
+    const select = row.querySelector(`[data-schedule-field="${field}"]`);
+    if (!select) return;
+    select.innerHTML = '<option value=""></option>';
+    rows.forEach((item) => {
+      const option = document.createElement("option");
+      option.value = item.id;
+      option.textContent = item.label;
+      select.appendChild(option);
+    });
+    select.value = value || "";
+    ensureCustomSelect(select);
+    refreshCustomSelect(select);
+  }
+
+  function setScheduleInput(row, field, value) {
+    const input = row.querySelector(`[data-schedule-field="${field}"]`);
+    if (input) input.value = value || "";
+  }
+
   function renderPassengers() {
+    const passengerTotal = state.selectedPassengers.length;
+    const hasUnfilledPassenger = state.selectedPassengers.some((item) => !item.passageiro || !item.guid);
+    const hasCandidates = getAvailablePassengers().length > 0;
+    if (el.passengerEmpty) {
+      el.passengerEmpty.hidden = passengerTotal > 0;
+    }
+    if (el.passengerListHead) {
+      el.passengerListHead.classList.toggle("is-hidden-address", state.enderecoPersonalizadoAtivo);
+    }
     el.customAddressWrap.hidden = !state.enderecoPersonalizadoAtivo;
-    el.toggleEnderecoPersonalizado.textContent = state.enderecoPersonalizadoAtivo ? "Linha" : "Adr";
+    if (el.toggleEnderecoPersonalizado) {
+      el.toggleEnderecoPersonalizado.textContent = state.enderecoPersonalizadoAtivo ? "Endereços por linha" : "Endereço único";
+      el.toggleEnderecoPersonalizado.title = state.enderecoPersonalizadoAtivo ? "Usar endereço por passageiro" : "Usar endereço único para todos";
+      el.toggleEnderecoPersonalizado.setAttribute("aria-pressed", String(state.enderecoPersonalizadoAtivo));
+    }
+    if (el.addPassenger) {
+      el.addPassenger.disabled = !hasCandidates || hasUnfilledPassenger;
+      el.addPassenger.title = hasUnfilledPassenger
+        ? "Conclua o passageiro pendente antes de adicionar outro."
+        : (hasCandidates
+          ? "Adicionar novo passageiro"
+          : "Sem passageiros disponíveis para adicionar.");
+    }
     sortPassengers();
 
     const existingRows = new Map(
@@ -1212,7 +1992,22 @@
     if (state.enderecoPersonalizadoAtivo && !el.enderecoPersonalizado.value) {
       el.enderecoPersonalizado.value = composeEnderecoCompleto();
     }
+    syncPassengerNameColumnWidth();
     syncReturnDefaults();
+  }
+
+  function syncPassengerNameColumnWidth() {
+    if (!el.passengerRows) return;
+    const labels = [...el.passengerRows.querySelectorAll(".row-label")];
+    const targets = [el.passengerRows, el.passengerListHead].filter(Boolean);
+    targets.forEach((target) => target.style.removeProperty("--passenger-name-width"));
+
+    if (!labels.length) return;
+
+    const maxWidth = Math.max(...labels.map((label) => Math.ceil(label.getBoundingClientRect().width)));
+    if (!Number.isFinite(maxWidth) || maxWidth <= 0) return;
+
+    targets.forEach((target) => target.style.setProperty("--passenger-name-width", `${maxWidth}px`));
   }
 
   function buildPassengerRow(item) {
@@ -1223,69 +2018,100 @@
 
     const label = document.createElement("div");
     label.className = "row-label";
+    const rowIndex = document.createElement("span");
+    rowIndex.className = "row-index";
+    rowIndex.textContent = String(item.ordem).padStart(2, "0");
+    rowIndex.setAttribute("aria-hidden", "true");
 
-    const paxField = document.createElement("label");
-    paxField.className = "field";
-    paxField.innerHTML = "<span>Nome</span>";
-    const paxSelect = document.createElement("select");
-    paxSelect.className = "passenger-select";
-    paxSelect.dataset.passengerField = "select";
-    ensureCustomSelect(paxSelect);
+    const titleWrap = document.createElement("span");
+    titleWrap.className = "row-title-wrap";
+    const rowTitle = document.createElement("button");
+    rowTitle.type = "button";
+    rowTitle.className = "row-title passenger-name-button";
+    rowTitle.dataset.passengerAction = "open-record";
+    rowTitle.textContent = "Passageiro sem seleção";
+
+    const rowPreview = document.createElement("div");
+    rowPreview.className = "passenger-preview";
+    rowPreview.setAttribute("role", "status");
+    rowPreview.setAttribute("aria-live", "polite");
+    rowPreview.setAttribute("aria-hidden", "true");
+
+    titleWrap.append(rowTitle, rowPreview);
+    label.append(rowIndex, titleWrap);
 
     const addressField = document.createElement("label");
     addressField.className = "field address-cell";
-    addressField.innerHTML = "<span>Ed de Saida 1</span>";
-    const addressInput = document.createElement("input");
-    addressInput.type = "text";
+    addressField.innerHTML = "<span>Endereço de saída</span>";
+    const addressInput = document.createElement("textarea");
     addressInput.placeholder = "Endereço de saída";
+    addressInput.rows = 2;
+    addressInput.wrap = "soft";
     addressInput.className = "passenger-address";
     addressInput.dataset.passengerField = "address";
 
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "remove-row";
-    remove.textContent = "x";
+    remove.textContent = "X";
     remove.title = "Remover passageiro";
+    remove.setAttribute("aria-label", "Remover passageiro");
 
-    paxField.appendChild(paxSelect);
     addressField.appendChild(addressInput);
-    row.append(label, paxField, addressField, remove);
+    row.append(label, addressField, remove);
     return row;
   }
 
   function hydratePassengerRow(row, item, index = 0) {
     const label = row.querySelector(".row-label");
-    const select = row.querySelector(".passenger-select");
     const addressInput = row.querySelector(".passenger-address");
     const addressLabel = addressInput.closest("label");
     const remove = row.querySelector(".remove-row");
+    const rowIndex = label.querySelector(".row-index");
+    const rowTitle = label.querySelector(".row-title");
+    const rowPreview = row.querySelector(".passenger-preview");
+    const addressField = addressInput.closest(".field");
+    const hasPassenger = !!item.passageiro && !!item.guid;
 
     row.dataset.rowKey = item.rowKey;
     row.dataset.ordem = String(item.ordem);
     row.style.setProperty("--row-index", String(index));
-    label.textContent = `Passageiro ${item.ordem}`;
-    fillPassengerOptions(select, item.guid || "");
-    refreshCustomSelect(select);
-    addressLabel.querySelector("span").textContent = `Ed de Saida ${item.ordem}`;
+    const selectedName = item.passageiro?.label || "";
+    if (rowIndex) {
+      rowIndex.textContent = String(item.ordem).padStart(2, "0");
+    }
+    if (rowTitle) {
+      const visibleName = selectedName ? firstName(selectedName) : "";
+      rowTitle.textContent = visibleName || selectedName || "Selecionar passageiro";
+      rowTitle.title = selectedName || (hasPassenger ? "Registro do passageiro" : "Selecione o passageiro pelo botão Adicionar");
+      rowTitle.setAttribute(
+        "aria-label",
+        selectedName
+          ? `Abrir registro: ${selectedName}`
+          : "Selecione o passageiro pelo botão Adicionar"
+      );
+      rowTitle.disabled = false;
+      rowTitle.setAttribute("aria-disabled", String(!hasPassenger));
+      rowTitle.dataset.passengerId = item.guid || "";
+      rowTitle.title = hasPassenger
+        ? "Abrir registro do passageiro"
+        : "Selecione o passageiro pelo botão Adicionar";
+    }
+    renderPassengerPreview(rowPreview, item.passageiro || null);
+    const addressLabelText = addressLabel.querySelector("span");
+    if (addressLabelText) {
+      addressLabelText.textContent = "Endereço de saída";
+    }
     addressInput.value = getDraftAddress(item.ordem) || item.enderecoEditado || "";
     addressInput.disabled = state.enderecoPersonalizadoAtivo;
-    addressInput.hidden = state.enderecoPersonalizadoAtivo;
+    if (addressField) {
+      addressField.hidden = state.enderecoPersonalizadoAtivo;
+    }
     remove.hidden = state.selectedPassengers.length <= 1;
     row.classList.remove("is-leave");
     row.classList.remove("is-enter");
-  }
-
-  function fillPassengerOptions(select, selectedValue) {
-    select.innerHTML = "<option value=\"\"></option>";
-    state.passageiros.forEach((pax) => {
-      const option = document.createElement("option");
-      option.value = pax.id;
-      option.textContent = pax.label;
-      select.appendChild(option);
-    });
-    select.value = selectedValue || "";
-    ensureCustomSelect(select);
-    refreshCustomSelect(select);
+    row.classList.toggle("is-shared-address", state.enderecoPersonalizadoAtivo);
+    row.classList.toggle("is-incomplete", !item.passageiro);
   }
 
   function animatePassengerRowRemoval(row) {
@@ -1309,6 +2135,21 @@
   }
 
   function handlePassengerRowAction(event) {
+    const openRecord = event.target.closest("[data-passenger-action='open-record']");
+    if (openRecord) {
+      const row = openRecord.closest(".passenger-row");
+      if (!row) return;
+      const ordem = Number(row.dataset.ordem);
+      if (Number.isNaN(ordem)) return;
+      const item = state.selectedPassengers.find((selected) => selected.ordem === ordem);
+      if (!item || !item.passageiro) {
+        openPassengerPicker(ordem);
+        return;
+      }
+      openPassengerRecord(item.passageiro);
+      return;
+    }
+
     const remove = event.target.closest(".remove-row");
     if (!remove) return;
     const row = remove.closest(".passenger-row");
@@ -1316,16 +2157,6 @@
     const ordem = Number(row.dataset.ordem);
     if (Number.isNaN(ordem)) return;
     removePassengerRow(ordem);
-  }
-
-  function handlePassengerRowChange(event) {
-    const select = event.target.closest("[data-passenger-field='select']");
-    if (!select) return;
-    const row = select.closest(".passenger-row");
-    if (!row) return;
-    const ordem = Number(row.dataset.ordem);
-    if (Number.isNaN(ordem)) return;
-    selectPassenger(ordem, select.value);
   }
 
   function handlePassengerRowInput(event) {
@@ -1339,9 +2170,600 @@
     el.telefonesPreview.value = composePassageirosTelefones();
   }
 
+  function handlePassengerPreviewEnter(event) {
+    const wrap = event.target.closest(".row-title-wrap");
+    if (!wrap || !el.passengerRows.contains(wrap)) return;
+    if (event.relatedTarget && wrap.contains(event.relatedTarget)) return;
+    clearPassengerPreviewCloseTimer();
+    openPassengerPreview(wrap);
+  }
+
+  function handlePassengerPreviewLeave(event) {
+    const wrap = event.target.closest(".row-title-wrap");
+    if (!wrap || !el.passengerRows.contains(wrap)) return;
+    if (event.relatedTarget && wrap.contains(event.relatedTarget)) return;
+    if (activePassengerPreview?.portal.contains(event.relatedTarget)) return;
+    schedulePassengerPreviewClose(wrap);
+  }
+
+  function handlePassengerPreviewFocusIn(event) {
+    const wrap = event.target.closest(".row-title-wrap");
+    if (!wrap || !el.passengerRows.contains(wrap)) return;
+    openPassengerPreview(wrap);
+  }
+
+  function handlePassengerPreviewFocusOut(event) {
+    const wrap = event.target.closest(".row-title-wrap");
+    if (!wrap || !el.passengerRows.contains(wrap)) return;
+    window.setTimeout(() => {
+      if (!wrap.contains(document.activeElement)) {
+        closePassengerPreview(wrap);
+      }
+    }, 0);
+  }
+
+  function ensurePassengerPreviewPortal() {
+    let portal = document.getElementById("passengerPreviewPortal");
+    if (portal) return portal;
+    portal = document.createElement("div");
+    portal.id = "passengerPreviewPortal";
+    portal.className = "passenger-preview passenger-preview-floating";
+    portal.setAttribute("role", "status");
+    portal.setAttribute("aria-live", "polite");
+    portal.setAttribute("aria-hidden", "true");
+    portal.addEventListener("pointerenter", clearPassengerPreviewCloseTimer);
+    portal.addEventListener("pointerleave", () => schedulePassengerPreviewClose());
+    document.body.appendChild(portal);
+    return portal;
+  }
+
+  function openPassengerPreview(wrap) {
+    const source = wrap.querySelector(".passenger-preview");
+    const anchor = wrap.querySelector(".row-title") || wrap;
+    if (anchor.disabled) return;
+    if (!source || !source.childNodes.length) return;
+    const portal = ensurePassengerPreviewPortal();
+    closeAllCustomSelects();
+    document.body.appendChild(portal);
+    portal.replaceChildren(...Array.from(source.childNodes).map((node) => node.cloneNode(true)));
+    portal.classList.add("is-open");
+    portal.setAttribute("aria-hidden", "false");
+    activePassengerPreview = { wrap, anchor, portal };
+    updatePassengerPreviewPosition();
+  }
+
+  function closePassengerPreview(wrap = null) {
+    if (!activePassengerPreview) return;
+    if (wrap && activePassengerPreview.wrap !== wrap) return;
+    clearPassengerPreviewCloseTimer();
+    activePassengerPreview.portal.classList.remove("is-open");
+    activePassengerPreview.portal.setAttribute("aria-hidden", "true");
+    activePassengerPreview = null;
+  }
+
+  function schedulePassengerPreviewClose(wrap = null) {
+    clearPassengerPreviewCloseTimer();
+    passengerPreviewCloseTimer = window.setTimeout(() => {
+      closePassengerPreview(wrap);
+    }, 120);
+  }
+
+  function clearPassengerPreviewCloseTimer() {
+    if (!passengerPreviewCloseTimer) return;
+    window.clearTimeout(passengerPreviewCloseTimer);
+    passengerPreviewCloseTimer = null;
+  }
+
+  function repositionPassengerPreview() {
+    if (!activePassengerPreview || passengerPreviewPositionRaf) return;
+    passengerPreviewPositionRaf = requestAnimationFrame(() => {
+      passengerPreviewPositionRaf = null;
+      updatePassengerPreviewPosition();
+    });
+  }
+
+  function updatePassengerPreviewPosition() {
+    if (!activePassengerPreview) return;
+    const { anchor, portal } = activePassengerPreview;
+    if (!anchor.isConnected) {
+      closePassengerPreview();
+      return;
+    }
+    const rect = anchor.getBoundingClientRect();
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const gap = 8;
+    const safeGap = 10;
+    const width = Math.min(360, Math.max(280, viewportWidth - safeGap * 2));
+    const height = Math.min(portal.scrollHeight || 120, viewportHeight - safeGap * 2);
+    const showAbove = rect.bottom + gap + height > viewportHeight && rect.top > viewportHeight - rect.bottom;
+    const top = showAbove
+      ? Math.max(safeGap, rect.top - height - gap)
+      : Math.min(viewportHeight - height - safeGap, rect.bottom + gap);
+    const left = Math.max(safeGap, Math.min(rect.left, viewportWidth - width - safeGap));
+
+    portal.style.width = `${width}px`;
+    portal.style.left = `${left}px`;
+    portal.style.top = `${Math.max(safeGap, top)}px`;
+  }
+
+  function renderPassengerPreview(container, passenger) {
+    if (!container) return;
+    container.replaceChildren();
+    if (!passenger) {
+      const empty = document.createElement("p");
+      empty.className = "passenger-preview-empty";
+      empty.textContent = "Sem informações disponíveis.";
+      container.appendChild(empty);
+      return;
+    }
+    const rows = [
+      ["Telefone", passenger.telefone],
+      ["Email", passenger.email],
+      ["Cliente", passenger.clienteLabel],
+      ["Preferências", passenger.preferencias]
+    ].filter((item) => (item[1] || "").toString().trim());
+    if (!rows.length) {
+      const empty = document.createElement("p");
+      empty.className = "passenger-preview-empty";
+      empty.textContent = "Sem informações adicionais.";
+      container.appendChild(empty);
+      return;
+    }
+    const list = document.createElement("div");
+    list.className = "passenger-preview-list";
+    rows.forEach(([label, value]) => {
+      const line = document.createElement("div");
+      line.className = "passenger-preview-line";
+      const key = document.createElement("span");
+      key.className = "passenger-preview-key";
+      key.textContent = label;
+      const valueEl = document.createElement("span");
+      valueEl.className = "passenger-preview-value";
+      valueEl.textContent = value;
+      line.append(key, valueEl);
+      list.appendChild(line);
+    });
+    container.appendChild(list);
+  }
+
+  function openPassengerRecord(passageiro) {
+    if (!passageiro) return;
+    const passengerId = cleanGuid(passageiro.guid || passageiro.id);
+    if (!passengerId) {
+      toast("Passageiro sem identificador para abrir registro.", "error");
+      return;
+    }
+    openPassengerEdit(passengerId);
+    return;
+    if (state.xrm && state.xrm.Navigation && typeof state.xrm.Navigation.openForm === "function") {
+      state.xrm.Navigation.openForm({
+        entityName: CONFIG.entities.passageiro,
+        entityId: passengerId
+      }).catch((error) => {
+        console.error(error);
+        toast("Não foi possível abrir o registro do passageiro.", "error", 7000);
+      });
+      return;
+    }
+    if (state.mockMode) {
+      toast(`Mock ativo: ${passageiro.label || "Passageiro"}`, "warning", 3000);
+      return;
+    }
+    toast("Abra este formulário dentro do Dataverse para editar o registro.", "warning", 7000);
+  }
+
   function renderTabBadges() {
     el.tabReturn.classList.toggle("is-marked", el.agendarRetorno.checked);
     el.tabRepeat.classList.toggle("is-marked", el.repetirServico.checked);
+  }
+
+  function handleOperationalInput(event) {
+    if (state.draftRestoring) return;
+    const target = event.target;
+    if (target?.classList?.contains("custom-select-search")) return;
+    if (target === el.passengerPickerSearch) return;
+    if (target === el.bdPassengerSearch) return;
+    if (target?.closest?.("#reviewOverlay")) return;
+    if (target?.closest?.("#passengerEditOverlay")) return;
+
+    captureObsState();
+    renderTabBadges();
+    renderRiskPanel();
+    markDraftDirty();
+  }
+
+  function renderRiskPanel() {
+    if (!el.riskList) return;
+    const risks = collectOperationalRisks();
+    el.riskList.innerHTML = "";
+
+    if (!risks.length) {
+      const item = document.createElement("li");
+      item.textContent = "Sem risco operacional critico detectado.";
+      el.riskList.appendChild(item);
+      return;
+    }
+
+    risks.forEach((risk) => {
+      const item = document.createElement("li");
+      item.textContent = risk;
+      el.riskList.appendChild(item);
+    });
+  }
+
+  function collectOperationalRisks(context = buildSaveContext()) {
+    const risks = [];
+    const statusLabel = optionLabel("statusOperacao", el.statusOperacao.value);
+    const isTroca = statusLabel === "Troca de Veiculos" || statusLabel === "Troca de VeÃ­culos";
+
+    if (!el.cliente.value) risks.push("Cliente vazio.");
+    if (!el.solicitante.value) risks.push("Solicitante vazio.");
+    if (!el.motorista.value) risks.push("Motorista vazio. A operacao precisara programar manualmente.");
+    if (!context.dataHoraPrincipal) risks.push("Data e horario de saida incompletos.");
+    if (!context.trajeto && !isTroca) risks.push("Trajeto vazio.");
+    if (!el.destino.value.trim() && !isTroca) risks.push("Destino vazio.");
+    if (!context.colOrdemPassageiros.length && !isTroca) risks.push("Nenhum passageiro selecionado.");
+    if (hasDuplicatePassengers()) risks.push("Passageiro duplicado na lista.");
+    if (state.enderecoPersonalizadoAtivo && !el.enderecoPersonalizado.value.trim() && !isTroca) risks.push("Endereco unico ativo, mas vazio.");
+    if (!state.enderecoPersonalizadoAtivo && context.colOrdemPassageiros.some((item) => !item.enderecoSaidaBD) && !isTroca) risks.push("Ha passageiro sem endereco de saida.");
+    if (el.agendarRetorno.checked && !context.dataHoraRetorno) risks.push("Retorno ativo sem data/hora completa.");
+    if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) risks.push("Servico frequente ativo sem periodo completo.");
+    if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) risks.push("Periodo frequente com data final anterior a inicial.");
+
+    context.additionalSchedules.forEach((item) => {
+      const label = `Agendamento ${item.index + 2}`;
+      if (!item.dataHora) risks.push(`${label}: data/hora incompleta.`);
+      if (!item.tipoServico && !isTroca) risks.push(`${label}: tipo de servico vazio.`);
+      if (!item.tipoVeiculo && !isTroca) risks.push(`${label}: tipo de veiculo vazio.`);
+      if (!item.trajeto && !isTroca) risks.push(`${label}: trajeto vazio.`);
+      if (!item.destino && !isTroca) risks.push(`${label}: destino vazio.`);
+    });
+
+    return risks;
+  }
+
+  function renderSaveLog() {
+    if (!el.saveLogList) return;
+    el.saveLogList.innerHTML = "";
+
+    if (!state.saveLog.length) {
+      const item = document.createElement("li");
+      item.textContent = "Nenhum salvamento executado nesta sessao.";
+      el.saveLogList.appendChild(item);
+      return;
+    }
+
+    state.saveLog.forEach((entry) => {
+      const item = document.createElement("li");
+      item.className = `save-log-entry ${entry.type || "info"}`;
+
+      const title = document.createElement("strong");
+      title.textContent = entry.title || "Evento";
+
+      const detail = document.createElement("span");
+      detail.textContent = entry.detail || "";
+
+      const time = document.createElement("small");
+      time.textContent = entry.at ? formatTime(entry.at) : "";
+
+      item.append(title, detail, time);
+      el.saveLogList.appendChild(item);
+    });
+  }
+
+  function clearSaveLog() {
+    state.saveLog = [];
+    renderSaveLog();
+  }
+
+  function addSaveLog(type, title, detail) {
+    state.saveLog.push({
+      type,
+      title,
+      detail,
+      at: new Date().toISOString()
+    });
+    renderSaveLog();
+  }
+
+  function openReviewBeforeSave(context) {
+    if (!el.reviewOverlay) {
+      performSave();
+      return;
+    }
+
+    renderReviewSummary(context);
+    renderReviewRisks(context);
+    el.reviewOverlay.hidden = false;
+    requestAnimationFrame(() => {
+      if (el.confirmSaveButton) el.confirmSaveButton.focus();
+    });
+  }
+
+  function closeReviewOverlay(clearContext) {
+    if (el.reviewOverlay) el.reviewOverlay.hidden = true;
+    if (clearContext) state.pendingSaveContext = null;
+  }
+
+  function renderReviewSummary(context) {
+    if (!el.reviewSummaryList) return;
+    const rows = [
+      ["Status", optionLabel("statusOperacao", el.statusOperacao.value) || "Nao informado"],
+      ["Saida", context.dataHoraPrincipal ? formatDateTime(context.dataHoraPrincipal) : "Nao informado"],
+      ["Cliente", selectedText(el.cliente) || "Nao informado"],
+      ["Solicitante", selectedText(el.solicitante) || "Nao informado"],
+      ["Motorista", selectedText(el.motorista) || "Nao informado"],
+      ["Trajeto", context.trajeto || "Nao informado"],
+      ["Destino", el.destino.value.trim() || "Nao informado"],
+      ["Passageiros", String(context.colOrdemPassageiros.length)],
+      ["Adicionais", String(context.additionalSchedules.length)],
+      ["Retorno", el.agendarRetorno.checked ? "Sim" : "Nao"],
+      ["Frequente", el.repetirServico.checked ? "Sim" : "Nao"]
+    ];
+
+    el.reviewSummaryList.innerHTML = "";
+    rows.forEach(([label, value]) => {
+      const term = document.createElement("dt");
+      term.textContent = label;
+      const description = document.createElement("dd");
+      description.textContent = value;
+      el.reviewSummaryList.append(term, description);
+    });
+  }
+
+  function renderReviewRisks(context) {
+    if (!el.reviewRiskList) return;
+    const risks = collectOperationalRisks(context);
+    el.reviewRiskList.innerHTML = "";
+
+    if (!risks.length) {
+      const item = document.createElement("li");
+      item.textContent = "Sem risco operacional critico detectado.";
+      el.reviewRiskList.appendChild(item);
+      return;
+    }
+
+    risks.forEach((risk) => {
+      const item = document.createElement("li");
+      item.textContent = risk;
+      el.reviewRiskList.appendChild(item);
+    });
+  }
+
+  function markDraftDirty() {
+    if (state.draftRestoring) return;
+    if (state.draftTimer) window.clearTimeout(state.draftTimer);
+    renderDraftStatus("Salvando rascunho...");
+    state.draftTimer = window.setTimeout(() => {
+      state.draftTimer = null;
+      saveDraftSnapshot();
+    }, 400);
+  }
+
+  function saveDraftSnapshot() {
+    if (state.draftRestoring) return;
+    try {
+      captureObsState();
+      const snapshot = createDraftSnapshot();
+      window.localStorage.setItem(DRAFT_STORE_KEY, JSON.stringify(snapshot));
+      state.lastDraftSavedAt = snapshot.updatedAt;
+      renderDraftStatus();
+    } catch (error) {
+      console.warn("Falha ao salvar rascunho local", error);
+      renderDraftStatus("Rascunho nao salvo.");
+    }
+  }
+
+  function createDraftSnapshot() {
+    return {
+      version: 1,
+      recordId: state.recordId || "",
+      updatedAt: new Date().toISOString(),
+      currentTab: state.currentTab,
+      obsAtual: state.obsAtual,
+      retObsAtual: state.retObsAtual,
+      enderecoPersonalizadoAtivo: state.enderecoPersonalizadoAtivo,
+      fields: {
+        statusOperacao: el.statusOperacao.value,
+        statusFaturamento: el.statusFaturamento.value,
+        saidaData: el.saidaData.value,
+        saidaHora: el.saidaHora.value,
+        saidaMinuto: el.saidaMinuto.value,
+        retPrevHora: el.retPrevHora.value,
+        retPrevMinuto: el.retPrevMinuto.value,
+        cliente: el.cliente.value,
+        solicitante: el.solicitante.value,
+        tipoServico: el.tipoServico.value,
+        tipoVeiculo: el.tipoVeiculo.value,
+        motorista: el.motorista.value,
+        trajeto: el.trajeto.value,
+        observacao: el.observacao.value,
+        receber: el.receber.checked,
+        cotacao: el.cotacao.value,
+        op: el.op.value,
+        formaPagamento: el.formaPagamento.value,
+        cr: el.cr.value,
+        enderecoPersonalizado: el.enderecoPersonalizado.value,
+        destino: el.destino.value,
+        agendarRetorno: el.agendarRetorno.checked,
+        retornoData: el.retornoData.value,
+        retornoHora: el.retornoHora.value,
+        retornoMinuto: el.retornoMinuto.value,
+        retornoEndereco: el.retornoEndereco.value,
+        retornoDestino: el.retornoDestino.value,
+        retornoObservacao: el.retornoObservacao.value,
+        repetirServico: el.repetirServico.checked,
+        frequenteInicio: el.frequenteInicio.value,
+        frequenteFim: el.frequenteFim.value,
+        frequenteTipo: el.frequenteTipo.value,
+        contabilizarFds: el.contabilizarFds.checked
+      },
+      obs: { ...state.obs },
+      obsRet: { ...state.obsRet },
+      selectedPassengers: state.selectedPassengers.map((item) => ({
+        ordem: item.ordem,
+        guid: item.guid,
+        telefone: item.telefone,
+        enderecoEditado: item.enderecoEditado
+      })),
+      enderecoRascunho: state.enderecoRascunho.map((item) => ({ ...item })),
+      scheduleDrafts: state.scheduleDrafts.map((item) => ({ ...item }))
+    };
+  }
+
+  function restoreDraftSnapshot() {
+    const snapshot = readDraftSnapshot();
+    if (!snapshot) {
+      renderDraftStatus();
+      return;
+    }
+    if ((snapshot.recordId || "") !== (state.recordId || "")) {
+      renderDraftStatus();
+      return;
+    }
+
+    state.draftRestoring = true;
+    try {
+      const fields = snapshot.fields || {};
+      setSelectValue(el.statusOperacao, fields.statusOperacao || "");
+      setSelectValue(el.statusFaturamento, fields.statusFaturamento || "");
+      setFieldValue(el.saidaData, fields.saidaData);
+      setSelectValue(el.saidaHora, fields.saidaHora || "");
+      setSelectValue(el.saidaMinuto, fields.saidaMinuto || "");
+      setSelectValue(el.retPrevHora, fields.retPrevHora || "");
+      setSelectValue(el.retPrevMinuto, fields.retPrevMinuto || "");
+      setSelectValue(el.cliente, fields.cliente || "");
+      setSelectValue(el.solicitante, fields.solicitante || "");
+      setSelectValue(el.tipoServico, fields.tipoServico || "");
+      setSelectValue(el.tipoVeiculo, fields.tipoVeiculo || "");
+      setSelectValue(el.motorista, fields.motorista || "");
+      setFieldValue(el.trajeto, fields.trajeto);
+      setFieldValue(el.receber, fields.receber);
+      setFieldValue(el.cotacao, fields.cotacao);
+      setSelectValue(el.op, fields.op || "");
+      setSelectValue(el.formaPagamento, fields.formaPagamento || "");
+      setFieldValue(el.cr, fields.cr);
+      setFieldValue(el.enderecoPersonalizado, fields.enderecoPersonalizado);
+      setFieldValue(el.destino, fields.destino);
+      setFieldValue(el.agendarRetorno, fields.agendarRetorno);
+      setFieldValue(el.retornoData, fields.retornoData);
+      setSelectValue(el.retornoHora, fields.retornoHora || "");
+      setSelectValue(el.retornoMinuto, fields.retornoMinuto || "");
+      setFieldValue(el.retornoEndereco, fields.retornoEndereco);
+      setFieldValue(el.retornoDestino, fields.retornoDestino);
+      setFieldValue(el.repetirServico, fields.repetirServico);
+      setFieldValue(el.frequenteInicio, fields.frequenteInicio);
+      setFieldValue(el.frequenteFim, fields.frequenteFim);
+      setSelectValue(el.frequenteTipo, fields.frequenteTipo || "");
+      setFieldValue(el.contabilizarFds, fields.contabilizarFds);
+
+      state.obs = { ...state.obs, ...(snapshot.obs || {}) };
+      state.obsRet = { ...state.obsRet, ...(snapshot.obsRet || {}) };
+      state.obsAtual = snapshot.obsAtual || "motorista";
+      state.retObsAtual = snapshot.retObsAtual || "motorista";
+      state.enderecoPersonalizadoAtivo = !!snapshot.enderecoPersonalizadoAtivo;
+      state.scheduleDrafts = Array.isArray(snapshot.scheduleDrafts) ? snapshot.scheduleDrafts.map((item) => ({ ...item })) : [];
+      state.enderecoRascunho = Array.isArray(snapshot.enderecoRascunho) ? snapshot.enderecoRascunho.map((item) => ({ ...item })) : [];
+      state.selectedPassengers = restoreDraftPassengers(snapshot.selectedPassengers || []);
+
+      el.observacao.value = state.obs[state.obsAtual] || fields.observacao || "";
+      el.retornoObservacao.value = state.obsRet[state.retObsAtual] || fields.retornoObservacao || "";
+
+      renderScheduleDrafts();
+      renderPassengers();
+      renderTabBadges();
+      renderRiskPanel();
+      renderDraftStatus();
+      setTab(state.isNew ? (snapshot.currentTab || "details") : "details");
+    } catch (error) {
+      console.warn("Falha ao restaurar rascunho local", error);
+      renderDraftStatus("Rascunho invalido.");
+    } finally {
+      state.draftRestoring = false;
+    }
+  }
+
+  function restoreDraftPassengers(rows) {
+    return rows
+      .map((item, index) => {
+        const passenger = state.passageiros.find((pax) => sameId(pax.id, item.guid));
+        if (!passenger) return null;
+        return {
+          rowKey: nextPassengerRowKey(),
+          ordem: Number(item.ordem) || index + 1,
+          passageiro: passenger,
+          guid: passenger.id,
+          telefone: item.telefone || passenger.telefone || "",
+          enderecoEditado: item.enderecoEditado || passenger.endereco || ""
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function clearDraftSnapshot(showToast) {
+    if (state.draftTimer) {
+      window.clearTimeout(state.draftTimer);
+      state.draftTimer = null;
+    }
+    try {
+      window.localStorage.removeItem(DRAFT_STORE_KEY);
+    } catch (error) {
+      console.warn("Falha ao remover rascunho local", error);
+    }
+    state.lastDraftSavedAt = null;
+    renderDraftStatus();
+    if (showToast) toast("Rascunho local removido.", "success", 2500);
+  }
+
+  function renderDraftStatus(forcedText = "") {
+    if (!el.draftStatus) return;
+    if (forcedText) {
+      el.draftStatus.textContent = forcedText;
+      return;
+    }
+
+    const snapshot = readDraftSnapshot();
+    const updatedAt = state.lastDraftSavedAt || snapshot?.updatedAt || "";
+    if (!updatedAt) {
+      el.draftStatus.textContent = "Sem rascunho salvo.";
+      if (el.clearDraftButton) el.clearDraftButton.disabled = true;
+      return;
+    }
+
+    el.draftStatus.textContent = `Rascunho salvo as ${formatTime(updatedAt)}.`;
+    if (el.clearDraftButton) el.clearDraftButton.disabled = false;
+  }
+
+  function readDraftSnapshot() {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_STORE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function setFieldValue(element, value) {
+    if (!element) return;
+    if (element.type === "checkbox") {
+      element.checked = !!value;
+      return;
+    }
+    element.value = value ?? "";
+  }
+
+  function selectedText(select) {
+    return select?.selectedOptions?.[0]?.textContent?.trim() || "";
+  }
+
+  function formatTime(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Intl.DateTimeFormat("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(date);
   }
 
   function populateTimeSelects() {
@@ -1416,19 +2838,306 @@
     return `px-${state.passengerRowSeq}-${Date.now().toString(36)}`;
   }
 
+  function nextScheduleDraftKey() {
+    state.scheduleDraftSeq += 1;
+    return `svc-${state.scheduleDraftSeq}-${Date.now().toString(36)}`;
+  }
+
+  function mainScheduleSnapshot() {
+    return {
+      key: nextScheduleDraftKey(),
+      data: el.saidaData.value,
+      hora: el.saidaHora.value,
+      minuto: el.saidaMinuto.value,
+      retPrevHora: el.retPrevHora.value,
+      retPrevMinuto: el.retPrevMinuto.value,
+      tipoServico: el.tipoServico.value,
+      tipoVeiculo: el.tipoVeiculo.value,
+      motorista: el.motorista.value,
+      trajeto: el.trajeto.value.trim(),
+      destino: el.destino.value.trim(),
+      obsMotorista: state.obsAtual === "motorista" ? el.observacao.value : state.obs.motorista
+    };
+  }
+
+  function addScheduleDraft() {
+    if (!state.isNew) {
+      toast("Agendamentos adicionais só na criação.", "error");
+      return;
+    }
+    state.scheduleDrafts.push(mainScheduleSnapshot());
+    renderScheduleDrafts();
+    renderRiskPanel();
+    markDraftDirty();
+  }
+
+  function handleScheduleDraftAction(event) {
+    const button = event.target.closest("[data-schedule-action]");
+    if (!button) return;
+    const row = button.closest(".schedule-draft");
+    if (!row) return;
+    const key = row.dataset.scheduleKey;
+    const action = button.dataset.scheduleAction;
+
+    if (action === "remove") {
+      state.scheduleDrafts = state.scheduleDrafts.filter((item) => item.key !== key);
+      renderScheduleDrafts();
+      renderRiskPanel();
+      markDraftDirty();
+      toast("Agendamento adicional removido", "success", 3000);
+      return;
+    }
+
+    if (action === "copy") {
+      const current = state.scheduleDrafts.find((item) => item.key === key);
+      if (!current) return;
+      Object.assign(current, mainScheduleSnapshot(), { key });
+      renderScheduleDrafts();
+      renderRiskPanel();
+      markDraftDirty();
+      toast("Dados do principal copiados", "success", 2500);
+    }
+  }
+
+  function handleScheduleDraftChange(event) {
+    const field = event.target.closest("[data-schedule-field]");
+    if (!field) return;
+    const row = field.closest(".schedule-draft");
+    if (!row) return;
+    const item = state.scheduleDrafts.find((draft) => draft.key === row.dataset.scheduleKey);
+    if (!item) return;
+    item[field.dataset.scheduleField] = field.value;
+  }
+
   function sortPassengers() {
     state.selectedPassengers.sort((a, b) => a.ordem - b.ordem);
   }
 
-  function addPassengerRow() {
-    if (state.selectedPassengers.some((item) => !item.guid)) {
-      toast("Termine de preencher os passageiros em aberto antes de adicionar um novo.", "error");
+  function getAvailablePassengers() {
+    const usedIds = new Set(
+      state.selectedPassengers
+        .map((item) => cleanGuid(item.guid || ""))
+        .filter(Boolean)
+        .map((id) => id.toLowerCase())
+    );
+    return state.passageiros
+      .filter((pax) => !usedIds.has(cleanGuid(pax.id).toLowerCase()))
+      .slice()
+      .sort((a, b) => (a.label || "").localeCompare(b.label || "", "pt-BR"));
+  }
+
+  async function openPassengerPicker(targetOrder = null) {
+    const normalizedOrder = Number(targetOrder);
+    passengerPickerTargetOrder = Number.isFinite(normalizedOrder) && normalizedOrder > 0 ? normalizedOrder : null;
+    if (!el.passengerPickerOverlay || !el.passengerPickerSearch || !el.passengerPickerResults) return;
+    if (!state.passageiros.length) {
+      try {
+        await ensurePassengerCatalogLoaded();
+      } catch (error) {
+        console.warn("Falha ao recarregar passageiros", error);
+        toast("Não foi possível carregar passageiros agora. Tente novamente.", "error", 2500);
+        return;
+      }
+    }
+    const candidates = getAvailablePassengers();
+    if (!candidates.length) {
+      passengerPickerTargetOrder = null;
+      const label = state.passageiros.length
+        ? "Sem passageiros disponíveis para adicionar (todos já estão vinculados)."
+        : "Nenhum passageiro encontrado no cadastro.";
+      toast(label, "error");
       return;
     }
-    const nextOrder = Math.max(0, ...state.selectedPassengers.map((item) => item.ordem)) + 1;
-    state.selectedPassengers.push(emptyPassenger(nextOrder));
-    state.enderecoRascunho.push({ ordem: nextOrder, endereco: "" });
+    renderPassengerPickerResults();
+    el.passengerPickerOverlay.hidden = false;
+    requestAnimationFrame(() => {
+      if (el.passengerPickerSearch) el.passengerPickerSearch.focus();
+    });
+  }
+
+  function closePassengerPicker() {
+    passengerPickerTargetOrder = null;
+    if (!el.passengerPickerOverlay) return;
+    el.passengerPickerOverlay.hidden = true;
+    if (el.passengerPickerSearch) el.passengerPickerSearch.value = "";
+    if (el.passengerPickerResults) {
+      el.passengerPickerResults.textContent = "";
+      el.passengerPickerResults.scrollTop = 0;
+    }
+  }
+
+  function renderPassengerPickerResults() {
+    if (!el.passengerPickerSearch || !el.passengerPickerResults) return;
+    const query = el.passengerPickerSearch.value.trim().toLowerCase();
+    const base = getAvailablePassengers();
+    const list = query
+      ? base.filter((pax) => {
+        const haystack = [
+          pax.label,
+          pax.telefone,
+          pax.email,
+          pax.clienteLabel
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(query);
+      })
+      : base;
+    el.passengerPickerResults.innerHTML = "";
+    if (!list.length) {
+      const empty = document.createElement("p");
+      empty.className = "passenger-picker-empty";
+      empty.textContent = base.length ? "Nenhum passageiro encontrado." : "Sem passageiros disponíveis.";
+      el.passengerPickerResults.appendChild(empty);
+      return;
+    }
+    list.forEach((pax) => {
+      const item = document.createElement("button");
+      item.type = "button";
+      item.className = "passenger-picker-item";
+      item.dataset.passengerAction = "add-passenger";
+      item.dataset.passengerId = pax.id;
+      item.setAttribute("role", "option");
+      item.setAttribute("aria-selected", "false");
+      item.setAttribute("tabindex", "0");
+
+      const head = document.createElement("strong");
+      head.className = "passenger-picker-name";
+      head.textContent = pax.label || "Passageiro sem nome";
+
+      const meta = document.createElement("span");
+      meta.className = "passenger-picker-meta";
+      meta.textContent = [pax.telefone, pax.email].filter(Boolean).join(" • ");
+      if (!meta.textContent) {
+        meta.textContent = "Sem contatos";
+      }
+      const subtitle = document.createElement("small");
+      subtitle.className = "passenger-picker-id";
+      subtitle.textContent = pax.clienteLabel || "Sem cliente vinculado";
+      item.append(head, meta);
+      item.appendChild(subtitle);
+      el.passengerPickerResults.appendChild(item);
+    });
+    const first = el.passengerPickerResults.querySelector(".passenger-picker-item");
+    if (first) {
+      first.classList.add("is-active");
+      first.setAttribute("aria-selected", "true");
+    }
+  }
+
+  function handlePassengerPickerAction(event) {
+    const action = event.target.closest("[data-passenger-action='add-passenger']");
+    if (!action) return;
+    const passengerId = action.dataset.passengerId;
+    if (!passengerId) return;
+    addPassengerFromId(passengerId);
+  }
+
+  function handlePassengerPickerKeydown(event) {
+    if (!el.passengerPickerOverlay || el.passengerPickerOverlay.hidden) return;
+    if (event.key === "Escape") {
+      closePassengerPicker();
+      event.preventDefault();
+      return;
+    }
+    if (event.key === "Enter") {
+      const first = el.passengerPickerResults.querySelector(".passenger-picker-item.is-active") || el.passengerPickerResults.querySelector("[data-passenger-action='add-passenger']");
+      if (first) {
+        event.preventDefault();
+        addPassengerFromId(first.dataset.passengerId);
+      }
+      return;
+    }
+
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    const items = [...el.passengerPickerResults.querySelectorAll("[data-passenger-action='add-passenger']")];
+    if (!items.length) return;
+    event.preventDefault();
+    let current = items.findIndex((item) => item.classList.contains("is-active"));
+    if (current < 0) {
+      current = items.indexOf(document.activeElement);
+    }
+    let next = 0;
+    if (event.key === "ArrowDown") {
+      next = current >= items.length - 1 ? 0 : current + 1;
+    } else {
+      next = current <= 0 ? items.length - 1 : current - 1;
+    }
+    items.forEach((item, index) => {
+      item.classList.toggle("is-active", index === next);
+      item.setAttribute("aria-selected", String(index === next));
+    });
+    items[next].focus();
+    items[next].scrollIntoView({ block: "nearest" });
+  }
+
+  function addPassengerFromId(passengerId) {
+    const selected = state.passageiros.find((item) => sameId(item.id, passengerId)) || null;
+    if (!selected) {
+      toast("Passageiro não encontrado para seleção.", "error");
+      closePassengerPicker();
+      return;
+    }
+    const alreadyAdded = state.selectedPassengers.some((item) => sameId(item.guid, selected.id));
+    if (alreadyAdded) {
+      toast("Esse passageiro já está na lista.", "warning", 2500);
+      closePassengerPicker();
+      renderPassengers();
+      return;
+    }
+    const targetOrder = Number(passengerPickerTargetOrder);
+    const targetIndex = Number.isFinite(targetOrder)
+      ? state.selectedPassengers.findIndex((item) => item.ordem === targetOrder && (!item.passageiro || !item.guid))
+      : -1;
+    passengerPickerTargetOrder = null;
+    if (targetIndex >= 0) {
+      const current = state.selectedPassengers[targetIndex];
+      state.selectedPassengers[targetIndex] = {
+        ...current,
+        passageiro: selected,
+        guid: selected.id,
+        telefone: selected.telefone || "",
+        enderecoEditado: state.enderecoPersonalizadoAtivo ? "" : selected.endereco || ""
+      };
+      if (!state.enderecoPersonalizadoAtivo) {
+        setDraftAddress(current.ordem, selected.endereco || "");
+      }
+    } else {
+      const nextOrder = Math.max(0, ...state.selectedPassengers.map((item) => item.ordem)) + 1;
+      state.selectedPassengers.push({
+        rowKey: nextPassengerRowKey(),
+        ordem: nextOrder,
+        passageiro: selected,
+        guid: selected.id,
+        telefone: selected.telefone || "",
+        enderecoEditado: state.enderecoPersonalizadoAtivo ? "" : selected.endereco || ""
+      });
+      if (!state.enderecoPersonalizadoAtivo) {
+        setDraftAddress(nextOrder, selected.endereco || "");
+        state.enderecoRascunho.push({ ordem: nextOrder, endereco: selected.endereco || "" });
+      }
+    }
+    applyPassengerDefaults(true);
+    closePassengerPicker();
     renderPassengers();
+    renderRiskPanel();
+    markDraftDirty();
+    toast(`${selected.label || "Passageiro"} adicionado.`, "success", 2200);
+  }
+
+  function addPassengerRow() {
+    const hasUnfilledPassenger = state.selectedPassengers.some((item) => !item.passageiro || !item.guid);
+    if (hasUnfilledPassenger) {
+      toast("Preencha o passageiro pendente antes de adicionar outro.", "error");
+      return;
+    }
+    const hasCandidates = getAvailablePassengers().length > 0;
+    if (!hasCandidates) {
+      toast("Sem passageiros disponíveis para adicionar.", "error");
+      return;
+    }
+    openPassengerPicker();
   }
 
   function removePassengerRow(ordem) {
@@ -1437,6 +3146,8 @@
     reindexPassengers();
     renderPassengers();
     applyPassengerDefaults(false);
+    renderRiskPanel();
+    markDraftDirty();
     toast(`Passageiro ${ordem} removido`, "success", 3000);
   }
 
@@ -1447,26 +3158,6 @@
       ordem: item.ordem,
       endereco: getDraftAddress(item.ordem) || item.enderecoEditado || ""
     }));
-  }
-
-  function selectPassenger(ordem, passengerId) {
-    const selected = state.passageiros.find((item) => sameId(item.id, passengerId)) || null;
-    const item = state.selectedPassengers.find((row) => row.ordem === ordem);
-    if (!item) return;
-    const duplicate = selected && state.selectedPassengers.some((row) => row.ordem !== ordem && sameId(row.guid, selected.id));
-    if (duplicate) {
-      toast("Erro: passageiro duplicado na lista. Remova as duplicatas.", "error");
-      renderPassengers();
-      return;
-    }
-    item.passageiro = selected;
-    item.guid = selected?.id || "";
-    item.telefone = selected?.telefone || "";
-    item.enderecoEditado = selected?.endereco || "";
-    setDraftAddress(ordem, selected?.endereco || "");
-    if (!el.cliente.value && selected?.clienteId) el.cliente.value = selected.clienteId;
-    applyPassengerDefaults(true);
-    renderPassengers();
   }
 
   function toggleEnderecoPersonalizado() {
@@ -1485,6 +3176,8 @@
       state.enderecoPersonalizadoAtivo = true;
     }
     renderPassengers();
+    renderRiskPanel();
+    markDraftDirty();
   }
 
   function setDraftAddress(ordem, endereco) {
@@ -1582,7 +3275,7 @@
       bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, el.bdCliente.value);
 
       let created;
-      if (state.xrm) {
+      if (state.xrm && !state.mockMode) {
         created = await state.xrm.WebApi.createRecord(CONFIG.entities.passageiro, payload);
       } else {
         created = { id: `local-${Date.now()}` };
@@ -1590,20 +3283,17 @@
 
       const newPassenger = {
         id: cleanGuid(created.id),
-        label: el.bdNome.value.trim(),
-        telefone: el.bdTelefone.value.trim(),
-        email: el.bdEmail.value.trim(),
-        endereco: el.bdEndereco.value.trim(),
-        preferencias: el.bdPreferencias.value.trim(),
-        cr: el.bdCr.value.trim(),
-        clienteId: el.bdCliente.value,
-        tipoVeiculo: el.bdTipoVeiculo.value
+        ...passengerFormState()
       };
       state.passageiros.push(newPassenger);
       state.passageiros.sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
       clearPassengerCreateForm();
       renderLookupSelect(el.solicitante, state.passageiros);
+      renderLookupSelect(el.bdExistingPassenger, state.passageiros);
+      renderPassengerDirectory();
       renderPassengers();
+      renderRiskPanel();
+      markDraftDirty();
       setTab("details");
       toast(`Cadastro criado para ${newPassenger.label}!`, "success");
     } catch (error) {
@@ -1627,9 +3317,123 @@
     ].forEach((input) => {
       input.value = "";
     });
-    [el.bdStatus, el.bdClassificacao, el.bdCliente, el.bdSexo, el.bdIdioma, el.bdCargo, el.bdTipoVeiculo].forEach((select) => {
+    [el.bdStatus, el.bdClassificacao, el.bdCliente, el.bdSexo, el.bdIdioma, el.bdCargo, el.bdTipoVeiculo, el.bdExistingPassenger].forEach((select) => {
       select.value = "";
     });
+    refreshCustomSelect(el.bdExistingPassenger);
+  }
+
+  function passengerFormState() {
+    return {
+      label: el.bdNome.value.trim(),
+      telefone: el.bdTelefone.value.trim(),
+      email: el.bdEmail.value.trim(),
+      endereco: el.bdEndereco.value.trim(),
+      preferencias: el.bdPreferencias.value.trim(),
+      cr: el.bdCr.value.trim(),
+      clienteId: el.bdCliente.value,
+      status: el.bdStatus.value,
+      classificacao: el.bdClassificacao.value,
+      sexo: el.bdSexo.value,
+      idioma: el.bdIdioma.value,
+      cargo: el.bdCargo.value,
+      nascimento: el.bdNascimento.value,
+      departamento: el.bdDepartamento.value.trim(),
+      tipoVeiculo: el.bdTipoVeiculo.value
+    };
+  }
+
+  function passengerPayloadFromForm(includeCadastro) {
+    const payload = {
+      [CONFIG.fields.passageiro.nome]: el.bdNome.value.trim(),
+      [CONFIG.fields.passageiro.telefone]: el.bdTelefone.value.trim(),
+      [CONFIG.fields.passageiro.enderecoSaida]: el.bdEndereco.value.trim(),
+      [CONFIG.fields.passageiro.preferencias]: el.bdPreferencias.value.trim(),
+      [CONFIG.fields.passageiro.email]: el.bdEmail.value.trim(),
+      [CONFIG.fields.passageiro.cr]: el.bdCr.value.trim(),
+      [CONFIG.fields.passageiro.departamento]: el.bdDepartamento.value.trim()
+    };
+    if (includeCadastro) payload[CONFIG.fields.passageiro.cadastro] = new Date().toISOString().slice(0, 10);
+    setChoice(payload, CONFIG.fields.passageiro.status, el.bdStatus.value);
+    setChoice(payload, CONFIG.fields.passageiro.cargo, el.bdCargo.value);
+    setChoice(payload, CONFIG.fields.passageiro.sexo, el.bdSexo.value);
+    setChoice(payload, CONFIG.fields.passageiro.idioma, el.bdIdioma.value);
+    setChoice(payload, CONFIG.fields.passageiro.classificacao, el.bdClassificacao.value);
+    setChoice(payload, CONFIG.fields.passageiro.tipoVeiculo, el.bdTipoVeiculo.value);
+    if (el.bdNascimento.value) payload[CONFIG.fields.passageiro.nascimento] = el.bdNascimento.value;
+    bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, el.bdCliente.value);
+    return payload;
+  }
+
+  function loadPassengerForEdit() {
+    const passenger = state.passageiros.find((item) => sameId(item.id, el.bdExistingPassenger.value));
+    if (!passenger) {
+      toast("Selecione um passageiro para editar.", "error");
+      return;
+    }
+    openPassengerEdit(passenger.id);
+  }
+
+  async function updatePassenger() {
+    const passengerId = cleanGuid(el.bdExistingPassenger.value);
+    const index = state.passageiros.findIndex((item) => sameId(item.id, passengerId));
+    if (index < 0) {
+      toast("Selecione e carregue um passageiro existente.", "error");
+      return;
+    }
+    openPassengerEdit(passengerId);
+    toast("Edicao agora salva automaticamente por campo.", "warning", 3500);
+    return;
+    const required = [
+      [el.bdStatus.value, "'Status' é obrigatório."],
+      [el.bdNome.value.trim(), "'Nome do Passageiro' é obrigatório."],
+      [el.bdCliente.value, "'Cliente' é obrigatório."],
+      [el.bdIdioma.value, "'Idioma' é obrigatório."],
+      [el.bdClassificacao.value, "'Classificação' é obrigatório."]
+    ];
+    const missing = required.find(([value]) => !value);
+    if (missing) {
+      toast(missing[1], "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const payload = passengerPayloadFromForm(false);
+      if (state.xrm && !state.mockMode) {
+        await state.xrm.WebApi.updateRecord(CONFIG.entities.passageiro, passengerId, payload);
+      }
+      const updatedPassenger = {
+        ...state.passageiros[index],
+        ...passengerFormState(),
+        id: passengerId
+      };
+      state.passageiros[index] = updatedPassenger;
+      state.passageiros.sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+      state.selectedPassengers = state.selectedPassengers.map((item) => (
+        sameId(item.guid, passengerId)
+          ? {
+              ...item,
+              passageiro: updatedPassenger,
+              telefone: updatedPassenger.telefone,
+              enderecoEditado: getDraftAddress(item.ordem) || updatedPassenger.endereco || ""
+            }
+          : item
+      ));
+      renderLookupSelect(el.solicitante, state.passageiros);
+      renderLookupSelect(el.bdExistingPassenger, state.passageiros);
+      setSelectValue(el.bdExistingPassenger, passengerId);
+      renderPassengers();
+      renderRiskPanel();
+      markDraftDirty();
+      toast(`Cadastro atualizado: ${updatedPassenger.label}`, "success");
+    } catch (error) {
+      console.error(error);
+      toast(`Falha ao atualizar passageiro. ${error.message || ""}`, "error", 9000);
+    } finally {
+      setLoading(false);
+      renderRiskPanel();
+    }
   }
 
   async function saveForm() {
@@ -1642,42 +3446,74 @@
       return;
     }
 
+    state.pendingSaveContext = context;
+    openReviewBeforeSave(context);
+  }
+
+  async function performSave() {
+    const context = state.pendingSaveContext || buildSaveContext();
+    closeReviewOverlay(false);
+    clearSaveLog();
+    addSaveLog("success", "Validação concluída", "Campos obrigatórios aprovados.");
     setLoading(true);
     try {
       const results = [];
 
       if (state.isNew) {
+        addSaveLog("info", "Criando principal", formatDateTime(context.dataHoraPrincipal));
         const principal = await saveReserva(buildReservaPayload(context, "principal", context.dataHoraPrincipal));
         results.push({ tipo: "Principal", data: context.dataHoraPrincipal, result: principal });
+        addSaveLog("success", "Principal salvo", principal.id);
+        addSaveLog("info", "Vinculando passageiros", `${context.colOrdemPassageiros.length} passageiro(s).`);
         await replacePassengerRelations(principal.id, context.colOrdemPassageiros, context, true);
+        addSaveLog("success", "Passageiros vinculados", "Principal.");
+
+        for (const schedule of context.additionalSchedules) {
+          addSaveLog("info", `Criando adicional ${schedule.index + 2}`, formatDateTime(schedule.dataHora));
+          const saved = await saveReserva(buildReservaPayload(context, "adicional", schedule.dataHora, schedule));
+          results.push({ tipo: `Adicional ${schedule.index + 2}`, data: schedule.dataHora, result: saved });
+          await replacePassengerRelations(saved.id, context.colOrdemPassageiros, context, true);
+          addSaveLog("success", `Adicional ${schedule.index + 2} salvo`, saved.id);
+        }
 
         if (el.repetirServico.checked) {
+          addSaveLog("info", "Criando recorrência", "Gerando serviços frequentes.");
           const frequent = await createFrequentServices(context);
           results.push(...frequent);
+          addSaveLog("success", "Recorrência salva", `${frequent.length} serviço(s).`);
         }
 
         if (el.agendarRetorno.checked) {
+          addSaveLog("info", "Criando retorno", formatDateTime(context.dataHoraRetorno));
           const retorno = await saveReserva(buildReservaPayload(context, "retorno", context.dataHoraRetorno));
           results.push({ tipo: "Retorno", data: context.dataHoraRetorno, result: retorno });
           await replacePassengerRelations(retorno.id, context.colOrdemPassageiros, context, false);
+          addSaveLog("success", "Retorno salvo", retorno.id);
         }
       } else {
         if (el.agendarRetorno.checked || el.repetirServico.checked) {
       throw new Error("Agendamento de retorno e serviços frequentes só na criação.");
         }
+        addSaveLog("info", "Atualizando reserva", state.recordId);
         const updated = await saveReserva(buildReservaPayload(context, "edicao", context.dataHoraPrincipal), state.recordId);
+        addSaveLog("info", "Recriando vínculos", `${context.colOrdemPassageiros.length} passageiro(s).`);
         await replacePassengerRelations(state.recordId, context.colOrdemPassageiros, context, true, true);
         results.push({ tipo: "Edicao", data: context.dataHoraPrincipal, result: updated });
+        addSaveLog("success", "Edição salva", state.recordId);
       }
 
       const total = results.length;
       const message = state.isNew
         ? `${total} serviço(s) solicitado(s) com sucesso!`
         : `Serviço editado com sucesso! Data: ${formatDateTime(context.dataHoraPrincipal)}   Trajeto: ${context.trajeto}   Tipo do Veículo: ${optionLabel("tipoVeiculo", el.tipoVeiculo.value)}`;
+      addSaveLog("success", "Fluxo concluído", message);
       showSuccess(message);
+      clearDraftSnapshot(false);
+      state.pendingSaveContext = null;
       resetAfterSuccess();
     } catch (error) {
       console.error(error);
+      addSaveLog("error", "Falha no salvamento", error.message || "Erro desconhecido.");
       toast(error.message || "Falha ao salvar formulário.", "error", 9000);
     } finally {
       setLoading(false);
@@ -1701,6 +3537,7 @@
       guid: item.guid,
       enderecoSaidaBD: getDraftAddress(item.ordem) || item.enderecoEditado || ""
     }));
+    const additionalSchedules = buildAdditionalScheduleContexts(dataHoraPrincipal);
 
     return {
       dataHoraPrincipal,
@@ -1712,13 +3549,41 @@
       passageirosTelefones: composePassageirosTelefones(),
       preferencias: composePreferencias(),
       emailPassageiro: firstPassengerValue("email"),
-      colOrdemPassageiros
+      colOrdemPassageiros,
+      additionalSchedules
     };
+  }
+
+  function buildAdditionalScheduleContexts(mainDateTime) {
+    return state.scheduleDrafts.map((item, index) => {
+      const dataHora = combineDateTime(item.data, item.hora, item.minuto);
+      return {
+        index,
+        dataHora,
+        retornoPrevisto: buildScheduleRetornoPrevisto(item, dataHora || mainDateTime),
+        tipoServico: item.tipoServico || "",
+        tipoVeiculo: item.tipoVeiculo || "",
+        motorista: item.motorista || "",
+        trajeto: String(item.trajeto || "").trim(),
+        destino: String(item.destino || "").trim(),
+        obsMotorista: String(item.obsMotorista || "").trim()
+      };
+    });
+  }
+
+  function buildScheduleRetornoPrevisto(item, baseDateTime) {
+    if (!baseDateTime || !item.retPrevHora || !item.retPrevMinuto || !item.hora || !item.minuto) return null;
+    const saidaTime = timeFromParts(item.hora, item.minuto);
+    const retornoTime = timeFromParts(item.retPrevHora, item.retPrevMinuto);
+    const base = new Date(baseDateTime);
+    if (retornoTime.minutesTotal < saidaTime.minutesTotal) base.setDate(base.getDate() + 1);
+    return withClock(base, retornoTime.hours, retornoTime.minutes);
   }
 
   function validateContext(context) {
     const statusLabel = optionLabel("statusOperacao", el.statusOperacao.value);
     const isTroca = statusLabel === "Troca de Veiculos" || statusLabel === "Troca de Veículos";
+    if (!state.isNew && state.scheduleDrafts.length) return "Agendamentos adicionais só podem ser criados em registro novo.";
     if (!context.dataHoraPrincipal || !el.saidaHora.value || !el.saidaMinuto.value) return "'Data e horário de saída' são obrigatórios.";
     if (!el.tipoServico.value && !isTroca) return "'Tipo do Serviço' é obrigatório.";
     if (!el.tipoVeiculo.value && !isTroca) return "'Tipo do Veículo' é obrigatório.";
@@ -1732,42 +3597,53 @@
     if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) return "'Data de início e fim - Serviços Frequentes' são obrigatórios.";
     if (el.repetirServico.checked && !el.frequenteTipo.value) return "'Tipo de Serviço Frequente' é obrigatório.";
     if (state.isNew && el.repetirServico.checked && el.agendarRetorno.checked) return "Não é possível usar 'Serviços Frequentes' e 'Agendar Retorno' ao mesmo tempo. Escolha apenas um.";
+    for (const item of context.additionalSchedules) {
+      const label = `Agendamento ${item.index + 2}`;
+      if (!item.dataHora) return `${label}: data e horário são obrigatórios.`;
+      if (!item.tipoServico && !isTroca) return `${label}: tipo do serviço é obrigatório.`;
+      if (!item.tipoVeiculo && !isTroca) return `${label}: tipo do veículo é obrigatório.`;
+      if (!item.trajeto && !isTroca) return `${label}: trajeto é obrigatório.`;
+      if (!item.destino && !isTroca) return `${label}: destino é obrigatório.`;
+    }
     if (hasDuplicatePassengers()) return "Erro: passageiro duplicado na lista. Remova as duplicatas.";
     return "";
   }
 
-  function buildReservaPayload(context, kind, dataHora) {
+  function buildReservaPayload(context, kind, dataHora, scheduleOverride = null) {
     const f = CONFIG.fields.reserva;
     const isReturn = kind === "retorno" || kind === "frequenteRetorno";
+    const retornoPrevisto = scheduleOverride ? scheduleOverride.retornoPrevisto : context.retornoPrevisto;
+    const trajeto = scheduleOverride ? scheduleOverride.trajeto : context.trajeto;
+    const destino = scheduleOverride ? scheduleOverride.destino : el.destino.value.trim();
     const payload = {
       [f.enderecoView]: isReturn ? el.retornoEndereco.value.trim() : context.enderecoCompleto,
-      [f.destino]: isReturn ? el.retornoDestino.value.trim() : el.destino.value.trim(),
+      [f.destino]: isReturn ? el.retornoDestino.value.trim() : destino,
       [f.dataSaida]: dataHora.toISOString(),
-      [f.obsOperacao]: isReturn ? state.obsRet.motorista : state.obs.motorista,
+      [f.obsOperacao]: isReturn ? state.obsRet.motorista : (scheduleOverride?.obsMotorista ?? state.obs.motorista),
       [f.obsInterna]: isReturn ? state.obsRet.interna : state.obs.interna,
       [f.obsFinal]: isReturn ? state.obsRet.final : state.obs.final,
       [f.perfilPassageiro]: context.preferencias,
       [f.email]: context.emailPassageiro || "",
-      [f.trajeto]: isReturn ? invertTrajeto(context.trajeto) : context.trajeto,
+      [f.trajeto]: isReturn ? invertTrajeto(context.trajeto) : trajeto,
       [f.paxView]: context.passageirosTelefones,
       [f.cotacao]: parseNumber(el.cotacao.value),
       [f.receber]: !!el.receber.checked,
       [f.cr]: el.cr.value.trim()
     };
 
-    if (!isReturn && context.retornoPrevisto) payload[f.previsaoRetorno] = context.retornoPrevisto.toISOString();
+    if (!isReturn && retornoPrevisto) payload[f.previsaoRetorno] = retornoPrevisto.toISOString();
     if (!isReturn) payload[f.enderecoPersonalizado] = state.enderecoPersonalizadoAtivo ? el.enderecoPersonalizado.value.trim() : null;
     if (isReturn) payload["cr40f_enderecodesaida1"] = el.retornoEndereco.value.trim();
 
     setChoice(payload, f.status, el.statusOperacao.value);
     setChoice(payload, f.statusFaturamento, el.statusFaturamento.value);
-    setChoice(payload, f.tipoServico, el.tipoServico.value);
-    setChoice(payload, f.tipoVeiculo, el.tipoVeiculo.value);
+    setChoice(payload, f.tipoServico, scheduleOverride ? scheduleOverride.tipoServico : el.tipoServico.value);
+    setChoice(payload, f.tipoVeiculo, scheduleOverride ? scheduleOverride.tipoVeiculo : el.tipoVeiculo.value);
     setChoice(payload, f.formaPagamento, el.formaPagamento.value);
 
     bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, el.cliente.value);
     bindLookup(payload, CONFIG.nav.solicitante, CONFIG.entitySets.passageiro, el.solicitante.value);
-    bindLookup(payload, CONFIG.nav.motorista, CONFIG.entitySets.funcionario, el.motorista.value);
+    bindLookup(payload, CONFIG.nav.motorista, CONFIG.entitySets.funcionario, scheduleOverride ? scheduleOverride.motorista : el.motorista.value);
     bindLookup(payload, CONFIG.nav.financeiro, CONFIG.entitySets.financeiro, el.op.value);
     return payload;
   }
@@ -1870,8 +3746,9 @@
   function resetAfterSuccess() {
     if (!state.isNew) return;
     state.enderecoPersonalizadoAtivo = false;
-    state.selectedPassengers = [emptyPassenger(1)];
-    state.enderecoRascunho = [{ ordem: 1, endereco: "" }];
+    state.selectedPassengers = [];
+    state.scheduleDrafts = [];
+    state.enderecoRascunho = [];
     state.obs = { motorista: "", interna: "", final: "", passageiro: "" };
     state.obsRet = { motorista: "", interna: "", final: "", passageiro: "" };
     [
@@ -1894,6 +3771,7 @@
       input.checked = false;
     });
     hydrateForm();
+    renderScheduleDrafts();
     renderPassengers();
     setTab("details");
   }
@@ -2025,6 +3903,10 @@
 
   function focusInvalidField(message) {
     const text = normalize(String(message || "")).replace(/\s+/g, " ");
+    if (text.includes("agendamento")) {
+      focusField(el.scheduleDraftRows);
+      return;
+    }
     if (text.includes("horario") && text.includes("saida")) {
       focusField(el.saidaData);
       return;
@@ -2090,6 +3972,41 @@
     } catch (_) {
       // noop
     }
+  }
+
+  function applyPassengerEditEmptySignals() {
+    if (!el.passengerEditFields || !el.passengerEditFields.childElementCount) return;
+    const rows = el.passengerEditFields.querySelectorAll(".passenger-edit-field");
+    rows.forEach((row) => {
+      const controls = row.querySelectorAll(
+        "input.passenger-edit-control:not([type='checkbox']), " +
+          "textarea.passenger-edit-control, " +
+          "select.passenger-edit-control, " +
+          ".custom-select-trigger"
+      );
+      if (!controls.length) return;
+      let allEmpty = true;
+      controls.forEach((control) => {
+        const empty = isPassengerEditControlEmpty(control);
+        control.classList.toggle("is-empty", empty);
+        if (!empty) allEmpty = false;
+      });
+      row.classList.toggle("is-empty", allEmpty);
+    });
+  }
+
+  function isPassengerEditControlEmpty(control) {
+    if (control.matches(".custom-select-trigger")) {
+      const root = control.closest(".custom-select");
+      const source = root ? root.querySelector("select") : null;
+      if (!source) return false;
+      return String(source.value || "").trim().length === 0;
+    }
+    if (!control) return true;
+    if (control.tagName === "SELECT") {
+      return String(control.value || "").trim().length === 0;
+    }
+    return String(control.value || "").trim().length === 0;
   }
 
   function findOptionValue(key, label) {
