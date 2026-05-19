@@ -65,6 +65,8 @@ O novo formulario sera publicado como web resource e usado dentro de um Model-dr
 - Comportamento mobile/tablet, se existir.
 - Popups, paineis laterais, etapas, abas ou componentes reutilizados.
 - Identidade visual desejada para a nova tela.
+- O formulario deve usar 100% do espaco disponivel do web resource; nao usar `max-width` no shell/conteudo principal.
+- Topbar, menu lateral e titulos devem ser compactos para otimizar area util de preenchimento.
 
 ## Regras de implementacao
 

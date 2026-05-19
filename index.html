@@ -144,18 +144,23 @@
                 </div>
               </div>
             </div>
-            <div id="passengerListHead" class="passenger-list-head" aria-hidden="true">
-              <span>Passageiro</span>
-              <span>Endereço de saída</span>
-              <span>Ação</span>
-            </div>
-            <div id="passengerRows" class="passenger-rows"></div>
-            <p id="passengerEmpty" class="passenger-empty" hidden>Adicione ao menos um passageiro para seguir com o agendamento.</p>
+            <div class="passenger-address-grid">
+              <div class="passenger-stack">
+                <div id="passengerListHead" class="passenger-list-head" aria-hidden="true">
+                  <span>Passageiro</span>
+                  <span>Endereço de saída</span>
+                  <span>Ação</span>
+                </div>
+                <div id="passengerRows" class="passenger-rows"></div>
+                <p id="passengerEmpty" class="passenger-empty" hidden>Adicione ao menos um passageiro para seguir com o agendamento.</p>
+              </div>
 
-            <label id="customAddressWrap" class="field custom-address" hidden>
-              <span>Endereço de saída</span>
-              <textarea id="enderecoPersonalizado" rows="5"></textarea>
-            </label>
+              <label id="customAddressWrap" class="field custom-address" hidden>
+                <span>Endereço único de saída</span>
+                <textarea id="enderecoPersonalizado" rows="5" placeholder="Informe o endereço que será aplicado a todos os passageiros selecionados."></textarea>
+                <small>Será aplicado a todos os passageiros selecionados.</small>
+              </label>
+            </div>
           </section>
 
           <section class="form-section" aria-labelledby="pessoasTitle">

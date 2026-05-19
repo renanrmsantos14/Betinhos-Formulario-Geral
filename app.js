@@ -208,6 +208,7 @@
     passengerRows: $("passengerRows"),
     passengerEmpty: $("passengerEmpty"),
     passengerListHead: $("passengerListHead"),
+    passengerBlock: document.querySelector(".passenger-block"),
     toggleEnderecoPersonalizado: $("toggleEnderecoPersonalizado"),
     addPassenger: $("addPassenger"),
     passengerPickerOverlay: $("passengerPickerOverlay"),
@@ -2382,6 +2383,9 @@
     if (el.passengerListHead) {
       el.passengerListHead.classList.toggle("is-hidden-address", state.enderecoPersonalizadoAtivo);
     }
+    if (el.passengerBlock) {
+      el.passengerBlock.classList.toggle("is-shared-address", state.enderecoPersonalizadoAtivo);
+    }
     el.customAddressWrap.hidden = !state.enderecoPersonalizadoAtivo;
     if (el.toggleEnderecoPersonalizado) {
       el.toggleEnderecoPersonalizado.textContent = state.enderecoPersonalizadoAtivo ? "Endereços por linha" : "Endereço único";
@@ -2445,7 +2449,14 @@
 
     if (!labels.length) return;
 
-    const maxWidth = Math.max(...labels.map((label) => Math.ceil(label.getBoundingClientRect().width)));
+    const maxWidth = Math.max(
+      ...labels.map((label) => {
+        const title = label.querySelector(".row-title");
+        const styles = window.getComputedStyle(label);
+        const horizontalPadding = parseFloat(styles.paddingLeft) + parseFloat(styles.paddingRight);
+        return Math.ceil((title?.scrollWidth || label.scrollWidth) + horizontalPadding);
+      })
+    );
     if (!Number.isFinite(maxWidth) || maxWidth <= 0) return;
 
     targets.forEach((target) => target.style.setProperty("--passenger-name-width", `${maxWidth}px`));
@@ -2882,6 +2893,7 @@
     if (target === el.bdPassengerSearch) return;
     if (target?.closest?.("#passengerEditOverlay")) return;
 
+    clearFieldValidation(target);
     captureObsState();
     renderTabBadges();
     renderRiskPanel();
@@ -3731,6 +3743,7 @@
   }
 
   async function createPassenger() {
+    clearValidationStates();
     const required = [
       [el.bdStatus.value, "'Status' é obrigatório."],
       [el.bdNome.value.trim(), "'Nome do Passageiro' é obrigatório."],
@@ -3738,14 +3751,24 @@
       [el.bdIdioma.value, "'Idioma' é obrigatório."],
       [el.bdClassificacao.value, "'Classificação' é obrigatório."]
     ];
-    const missing = required.find(([value]) => !value);
+    const requiredControls = [el.bdStatus, el.bdNome, el.bdCliente, el.bdIdioma, el.bdClassificacao];
+    const missingIndex = required.findIndex(([value]) => !value);
+    const missing = missingIndex >= 0 ? required[missingIndex] : null;
     if (missing) {
       toast(missing[1], "error");
+      revealInvalidField(requiredControls[missingIndex], missing[1], { tab: "bd" });
+      return;
+    }
+
+    if (el.bdEmail.value.trim() && !el.bdEmail.checkValidity()) {
+      toast("'Email' inválido.", "error");
+      revealInvalidField(el.bdEmail, "Informe um email valido.", { tab: "bd" });
       return;
     }
 
     const exists = state.passageiros.some((item) => item.label.trim().toLowerCase() === el.bdNome.value.trim().toLowerCase());
     if (exists) {
+      revealInvalidField(el.bdNome, "Passageiro ja cadastrado.", { tab: "bd" });
       toast(`Já existe um passageiro com o nome ${el.bdNome.value.trim()}!`, "error");
       return;
     }
@@ -3812,12 +3835,12 @@
       el.bdNascimento,
       el.bdPreferencias
     ].forEach((input) => {
-      input.value = "";
+      setFieldValue(input, "");
     });
     [el.bdStatus, el.bdClassificacao, el.bdCliente, el.bdSexo, el.bdIdioma, el.bdCargo, el.bdTipoVeiculo, el.bdExistingPassenger].forEach((select) => {
-      select.value = "";
+      setSelectValue(select, "");
     });
-    refreshCustomSelect(el.bdExistingPassenger);
+    clearValidationStates();
   }
 
   function passengerFormState() {
@@ -3936,6 +3959,7 @@
   async function saveForm() {
     captureObsState();
     const context = buildSaveContext();
+    clearValidationStates();
     const validation = validateContext(context);
     if (validation) {
       toast(validation, "error", 7000);
@@ -4079,10 +4103,13 @@
     if (context.colOrdemPassageiros.length === 0 && !isTroca) return "É obrigatório selecionar pelo menos um passageiro.";
     if (!context.enderecoCompleto && !isTroca) return "'Endereço de saída' é obrigatório.";
     if (!el.destino.value.trim() && !isTroca) return "'Destino' é obrigatório.";
+    if (!el.cliente.value) return "'Cliente' é obrigatório.";
+    if (!el.solicitante.value) return "'Solicitante' é obrigatório.";
     if (el.agendarRetorno.checked && !el.retornoData.value) return "'Data de retorno' é obrigatória.";
     if (el.agendarRetorno.checked && !el.retornoEndereco.value.trim()) return "'Endereço de Saída - Retorno' é obrigatório.";
     if (el.agendarRetorno.checked && !el.retornoDestino.value.trim()) return "'Destino - Retorno' é obrigatório.";
     if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) return "'Data de início e fim - Serviços Frequentes' são obrigatórios.";
+    if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) return "'Data final' não pode ser anterior à data inicial.";
     if (el.repetirServico.checked && !el.frequenteTipo.value) return "'Tipo de Serviço Frequente' é obrigatório.";
     if (state.isNew && el.repetirServico.checked && el.agendarRetorno.checked) return "Não é possível usar 'Serviços Frequentes' e 'Agendar Retorno' ao mesmo tempo. Escolha apenas um.";
     if (hasDuplicatePassengers()) return "Erro: passageiro duplicado na lista. Remova as duplicatas.";
@@ -4231,28 +4258,53 @@
     state.enderecoRascunho = [];
     state.obs = { motorista: "", interna: "", final: "", passageiro: "" };
     state.obsRet = { motorista: "", interna: "", final: "", passageiro: "" };
+    state.obsAtual = "motorista";
+    state.retObsAtual = "motorista";
     [
       el.trajeto,
       el.observacao,
       el.cotacao,
       el.cr,
       el.destino,
+      el.telefonesPreview,
       el.retornoEndereco,
       el.retornoDestino,
       el.retornoObservacao,
+      el.retornoData,
+      el.frequenteInicio,
+      el.frequenteFim,
       el.enderecoPersonalizado
     ].forEach((input) => {
-      input.value = "";
+      setFieldValue(input, "");
     });
-    [el.tipoServico, el.tipoVeiculo, el.motorista, el.formaPagamento, el.cliente, el.solicitante, el.op].forEach((select) => {
-      select.value = "";
+    [
+      el.tipoServico,
+      el.tipoVeiculo,
+      el.motorista,
+      el.formaPagamento,
+      el.cliente,
+      el.solicitante,
+      el.op,
+      el.retornoHora,
+      el.retornoMinuto,
+      el.frequenteTipo
+    ].forEach((select) => {
+      setSelectValue(select, "");
     });
     [el.agendarRetorno, el.repetirServico, el.receber].forEach((input) => {
-      input.checked = false;
+      setFieldValue(input, false);
     });
+    setFieldValue(el.contabilizarFds, true);
+    clearPassengerCreateForm();
+    closePassengerPicker();
+    closePassengerEditPopup();
+    clearValidationStates();
     hydrateForm();
     renderScheduleDrafts();
     renderPassengers();
+    renderPassengerDirectory();
+    renderRiskPanel();
+    renderTabBadges();
     setTab("details");
   }
 
@@ -4384,6 +4436,8 @@
 
   function focusInvalidField(message) {
     const text = normalize(String(message || "")).replace(/\s+/g, " ");
+    const revealed = revealInvalidFieldByMessage(text, message);
+    if (revealed) return;
     if (text.includes("agendamento")) {
       focusField(el.scheduleDraftRows);
       return;
@@ -4438,6 +4492,144 @@
       focusField(el.frequenteTipo);
       return;
     }
+  }
+
+  function revealInvalidFieldByMessage(text, message) {
+    if (text.includes("agendamento")) {
+      revealInvalidField(el.scheduleDraftRows, message, { tab: "repeat" });
+      return true;
+    }
+    if (text.includes("horario") && text.includes("saida")) {
+      revealInvalidField(el.saidaData, message, { related: [el.saidaHora, el.saidaMinuto] });
+      return true;
+    }
+    if (text.includes("tipo do servico")) {
+      revealInvalidField(el.tipoServico, message);
+      return true;
+    }
+    if (text.includes("tipo do veiculo")) {
+      revealInvalidField(el.tipoVeiculo, message);
+      return true;
+    }
+    if (text.includes("trajeto")) {
+      revealInvalidField(el.trajeto, message);
+      return true;
+    }
+    if (text.includes("pelo menos um passageiro")) {
+      revealInvalidField(el.passengerBlock || el.passengerRows || el.addPassenger, message);
+      return true;
+    }
+    if (text.includes("endereco de saida")) {
+      if (state.enderecoPersonalizadoAtivo && el.enderecoPersonalizado) {
+        revealInvalidField(el.enderecoPersonalizado, message);
+        return true;
+      }
+      if (state.selectedPassengers?.length) {
+        const row = [...(el.passengerRows?.querySelectorAll(".passenger-row") || [])]
+          .find((item) => {
+            const ordem = Number(item.dataset.ordem || 0);
+            const selected = state.selectedPassengers.find((passenger) => passenger.ordem === ordem);
+            return selected && !(getDraftAddress(ordem) || selected.enderecoEditado || "");
+          });
+        revealInvalidField(row?.querySelector(".passenger-address") || el.passengerRows, message);
+        return true;
+      }
+      revealInvalidField(el.trajeto, message);
+      return true;
+    }
+    if (text.includes("data de retorno")) {
+      revealInvalidField(el.retornoData, message, { tab: "return", related: [el.retornoHora, el.retornoMinuto] });
+      return true;
+    }
+    if (text.includes("destino - retorno")) {
+      revealInvalidField(el.retornoDestino, message, { tab: "return" });
+      return true;
+    }
+    if (text.includes("destino")) {
+      revealInvalidField(el.destino, message);
+      return true;
+    }
+    if (text.includes("cliente")) {
+      revealInvalidField(el.cliente, message);
+      return true;
+    }
+    if (text.includes("solicitante")) {
+      revealInvalidField(el.solicitante, message);
+      return true;
+    }
+    if (text.includes("data de inicio") || text.includes("data de fim")) {
+      revealInvalidField(el.frequenteInicio, message, { tab: "repeat", related: [el.frequenteFim] });
+      return true;
+    }
+    if (text.includes("data final")) {
+      revealInvalidField(el.frequenteFim, message, { tab: "repeat", related: [el.frequenteInicio] });
+      return true;
+    }
+    if (text.includes("tipo de servico frequente")) {
+      revealInvalidField(el.frequenteTipo, message, { tab: "repeat" });
+      return true;
+    }
+    return false;
+  }
+
+  function revealInvalidField(element, message, options = {}) {
+    const target = element || document.querySelector(".panel.is-active .field");
+    const related = [target, ...(options.related || [])].filter(Boolean);
+    const tab = options.tab || tabForElement(target);
+    if (tab && state.currentTab !== tab) setTab(tab);
+    related.forEach((item) => markFieldInvalid(item, message));
+    window.setTimeout(() => {
+      const scrollTarget = getValidationShell(target);
+      scrollTarget?.scrollIntoView?.({ behavior: "smooth", block: "center", inline: "nearest" });
+      window.setTimeout(() => focusField(target), 180);
+    }, 40);
+  }
+
+  function markFieldInvalid(element, message) {
+    if (!element) return;
+    const shell = getValidationShell(element);
+    if (shell) {
+      shell.classList.add("is-invalid");
+      shell.dataset.validationMessage = message || "Campo obrigatorio.";
+    }
+    const control = getValidationControl(element);
+    control?.setAttribute?.("aria-invalid", "true");
+    const custom = customSelectRoots.get(control);
+    custom?.trigger?.setAttribute("aria-invalid", "true");
+  }
+
+  function clearFieldValidation(element) {
+    if (!element) return;
+    const shell = getValidationShell(element);
+    shell?.classList?.remove("is-invalid");
+    if (shell?.dataset) delete shell.dataset.validationMessage;
+    const control = getValidationControl(element);
+    control?.removeAttribute?.("aria-invalid");
+    const custom = customSelectRoots.get(control);
+    custom?.trigger?.removeAttribute("aria-invalid");
+  }
+
+  function clearValidationStates() {
+    document.querySelectorAll(".is-invalid").forEach((item) => {
+      item.classList.remove("is-invalid");
+      if (item.dataset) delete item.dataset.validationMessage;
+    });
+    document.querySelectorAll("[aria-invalid='true']").forEach((item) => item.removeAttribute("aria-invalid"));
+  }
+
+  function getValidationShell(element) {
+    if (!element) return null;
+    return element.closest?.(".field, .passenger-row, .passenger-block, .schedule-draft") || element;
+  }
+
+  function getValidationControl(element) {
+    if (!element) return null;
+    if (element.matches?.("input, select, textarea, button")) return element;
+    return element.querySelector?.("input, select, textarea, button") || null;
+  }
+
+  function tabForElement(element) {
+    return element?.closest?.(".panel")?.dataset?.panel || "";
   }
 
   function focusField(element) {
