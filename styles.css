@@ -571,23 +571,6 @@ h3 {
   position: relative;
 }
 
-.form-section-title::before,
-.passenger-block .block-title::before {
-  content: attr(data-step);
-  margin-right: 4px;
-  min-width: 24px;
-  height: 20px;
-  border: 1px solid var(--line-strong);
-  border-radius: 999px;
-  display: inline-grid;
-  place-items: center;
-  color: var(--accent);
-  background: var(--accent-soft);
-  font-size: 11px;
-  font-weight: 760;
-  flex: 0 0 auto;
-}
-
 .form-section-title p,
 .block-title p {
   max-width: 560px;
@@ -1538,8 +1521,53 @@ h3 {
 
 .passenger-preview-value {
   min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  display: inline-block;
+  justify-self: start;
+  max-width: 100%;
+  color: inherit;
+  text-align: left;
+  font: inherit;
   word-break: break-word;
   white-space: normal;
+  cursor: copy;
+}
+
+.passenger-preview-value:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.copy-notice {
+  position: fixed;
+  z-index: 2147483647;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--success) 16%, #ffffff 84%);
+  color: color-mix(in srgb, var(--success) 72%, #183024);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate3d(-4px, 0, 0) scale(0.98);
+  transition:
+    opacity 140ms var(--ease-out),
+    transform 140ms var(--ease-out);
+  border: 1px solid color-mix(in srgb, var(--success) 24%, #d8e7de);
+  box-shadow: 0 4px 10px rgb(15 23 37 / 0.08);
+}
+
+.copy-notice.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.copy-notice.is-error {
+  background: color-mix(in srgb, var(--danger) 88%, #1f2937);
 }
 
 .passenger-preview-empty {
@@ -2203,6 +2231,21 @@ h3 {
   font-size: 13px;
   font-weight: 760;
   animation: toast-in 210ms var(--ease-out) both;
+}
+
+.toast.toast-floating {
+  position: fixed;
+  z-index: 2147483647;
+  width: auto;
+  min-width: 0;
+  max-width: min(220px, calc(100vw - 24px));
+  padding: 8px 10px;
+  pointer-events: none;
+  box-shadow: 0 16px 30px rgb(15 23 37 / 0.28);
+}
+
+.toast.toast-floating .toast-close {
+  display: none;
 }
 
 .toast-message {

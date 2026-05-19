@@ -102,9 +102,9 @@
       { value: 202410004, label: "Solicitado" },
       { value: 202410001, label: "Confirmado" },
       { value: 202410005, label: "Programado" },
-      { value: 202410006, label: "Em Execucao" },
+      { value: 202410006, label: "Em Execução" },
     { value: 202410008, label: "Concluído" },
-      { value: 100000001, label: "Requer Analise" },
+      { value: 100000001, label: "Requer Análise" },
       { value: 202410002, label: "Cancelado" }
     ],
     statusFaturamento: [
@@ -117,7 +117,7 @@
       { value: 3, label: "Viagem executiva" },
       { value: 4, label: "Reuniao corporativa" },
       { value: 5, label: "Escala interna" },
-      { value: 6, label: "Troca de veiculos" }
+      { value: 6, label: "Troca de veículos" },
     ],
     tipoVeiculo: [
       { value: 10, label: "SEDAN" },
@@ -128,7 +128,7 @@
     ],
     formaPagamento: [
       { value: 20, label: "Conta Betinhos" },
-      { value: 21, label: "Cartao corporativo" },
+      { value: 21, label: "Cartão corporativo" },
       { value: 22, label: "Faturado" },
       { value: 23, label: "A definir" }
     ],
@@ -148,8 +148,8 @@
       { value: 52, label: "Outro" }
     ],
     bdIdioma: [
-      { value: 60, label: "Portugues" },
-      { value: 61, label: "Ingles" },
+      { value: 60, label: "Português" },
+      { value: 61, label: "Inglês" },
       { value: 62, label: "Espanhol" },
       { value: 63, label: "Italiano" }
     ],
@@ -1794,9 +1794,9 @@
       { key: "label", label: "Nome do passageiro", kind: "text", required: true, span: "wide", stateKey: "label", payloadField: f.nome, inputType: "text" },
       { key: "telefone", label: "Telefone", kind: "text", stateKey: "telefone", payloadField: f.telefone, inputType: "tel" },
       { key: "email", label: "Email", kind: "text", span: "wide", stateKey: "email", payloadField: f.email, inputType: "email" },
-      { key: "endereco", label: "Endereco de saida", kind: "textarea", span: "wide", stateKey: "endereco", payloadField: f.enderecoSaida },
+      { key: "endereco", label: "Endereço de saída", kind: "textarea", span: "wide", stateKey: "endereco", payloadField: f.enderecoSaida },
       { key: "clienteId", label: "Cliente", kind: "lookup", required: true, stateKey: "clienteId", navName: CONFIG.nav.cliente, entitySet: CONFIG.entitySets.cliente, rowsKey: "clientes" },
-      { key: "classificacao", label: "Classificacao", kind: "choice", required: true, stateKey: "classificacao", payloadField: f.classificacao, optionsKey: "bdClassificacao" },
+      { key: "classificacao", label: "Classificação", kind: "choice", required: true, stateKey: "classificacao", payloadField: f.classificacao, optionsKey: "bdClassificacao" },
       { key: "idioma", label: "Idioma", kind: "choice", required: true, stateKey: "idioma", payloadField: f.idioma, optionsKey: "bdIdioma" },
       { key: "sexo", label: "Sexo", kind: "choice", stateKey: "sexo", payloadField: f.sexo, optionsKey: "bdSexo" },
       { key: "cargo", label: "Cargo", kind: "choice", stateKey: "cargo", payloadField: f.cargo, optionsKey: "bdCargo" },
@@ -1804,7 +1804,7 @@
       { key: "cr", label: "CR", kind: "text", stateKey: "cr", payloadField: f.cr, inputType: "text" },
       { key: "nascimento", label: "Data de nascimento", kind: "date", stateKey: "nascimento", payloadField: f.nascimento },
       { key: "preferencias", label: "Perfil do passageiro", kind: "textarea", span: "wide", stateKey: "preferencias", payloadField: f.preferencias },
-      { key: "tipoVeiculo", label: "Tipo de veiculo", kind: "choice", stateKey: "tipoVeiculo", payloadField: f.tipoVeiculo, optionsKey: "bdTipoVeiculo" }
+      { key: "tipoVeiculo", label: "Tipo de veículo", kind: "choice", stateKey: "tipoVeiculo", payloadField: f.tipoVeiculo, optionsKey: "bdTipoVeiculo" }
     ];
   }
 
@@ -1862,7 +1862,7 @@
         optionLabel("bdStatus", passenger.status),
         optionLabel("bdClassificacao", passenger.classificacao),
         passenger.cr ? `CR ${passenger.cr}` : ""
-      ].filter(Boolean).join(" | ") || "Sem classificacao";
+      ].filter(Boolean).join(" | ") || "Sem classificação";
 
       button.append(name, meta, extra);
       el.bdPassengerDirectory.appendChild(button);
@@ -1881,7 +1881,7 @@
       : getPassengerById(passengerOrId);
     const passengerId = cleanGuid(passenger?.id || passengerOrId);
     if (!passenger || !passengerId) {
-      toast("Passageiro nao encontrado para edicao.", "error");
+      toast("Passageiro não encontrado para edição.", "error");
       return;
     }
     if (!getPassengerById(passengerId)) {
@@ -2371,6 +2371,11 @@
     const passengerTotal = state.selectedPassengers.length;
     const hasUnfilledPassenger = state.selectedPassengers.some((item) => !item.passageiro || !item.guid);
     const hasCandidates = getAvailablePassengers().length > 0;
+    const previousRects = new Map(
+      [...el.passengerRows.children]
+        .filter((row) => row.dataset.rowKey)
+        .map((row) => [row.dataset.rowKey, row.getBoundingClientRect()])
+    );
     if (el.passengerEmpty) {
       el.passengerEmpty.hidden = passengerTotal > 0;
     }
@@ -2413,7 +2418,8 @@
 
     [...el.passengerRows.children].forEach((row) => {
       if (!activeKeys.has(row.dataset.rowKey)) {
-        animatePassengerRowRemoval(row);
+        closePassengerPreview(row.querySelector(".row-title-wrap"));
+        row.remove();
       }
     });
 
@@ -2421,6 +2427,7 @@
       row.style.setProperty("--row-index", String(index));
       el.passengerRows.appendChild(row);
     });
+    animatePassengerRowReflow(previousRects, keepRows);
 
     el.telefonesPreview.value = composePassageirosTelefones();
     if (state.enderecoPersonalizadoAtivo && !el.enderecoPersonalizado.value) {
@@ -2541,31 +2548,71 @@
     if (addressField) {
       addressField.hidden = state.enderecoPersonalizadoAtivo;
     }
-    remove.hidden = state.selectedPassengers.length <= 1;
+    remove.hidden = false;
     row.classList.remove("is-leave");
     row.classList.remove("is-enter");
     row.classList.toggle("is-shared-address", state.enderecoPersonalizadoAtivo);
     row.classList.toggle("is-incomplete", !item.passageiro);
   }
 
-  function animatePassengerRowRemoval(row) {
-    if (!row.isConnected) return;
-    row.classList.remove("is-enter");
-    row.classList.add("is-leave");
-    row?.addEventListener(
-      "animationend",
-      () => {
-        if (row.isConnected) {
-          row.remove();
-        }
-      },
-      { once: true }
+  function animatePassengerRowExit(row) {
+    if (!row?.isConnected) return;
+    const rect = row.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+    const ghost = row.cloneNode(true);
+    const sourceFields = row.querySelectorAll("input, textarea, select");
+    const ghostFields = ghost.querySelectorAll("input, textarea, select");
+    sourceFields.forEach((field, index) => {
+      const ghostField = ghostFields[index];
+      if (!ghostField) return;
+      if ("value" in ghostField) ghostField.value = field.value;
+      if ("checked" in ghostField) ghostField.checked = field.checked;
+    });
+    ghost.classList.remove("is-enter", "is-leave");
+    ghost.style.position = "fixed";
+    ghost.style.left = `${rect.left}px`;
+    ghost.style.top = `${rect.top}px`;
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.height = `${rect.height}px`;
+    ghost.style.margin = "0";
+    ghost.style.boxSizing = "border-box";
+    ghost.style.pointerEvents = "none";
+    ghost.style.zIndex = "2147483646";
+    document.body.appendChild(ghost);
+
+    const animation = ghost.animate(
+      [
+        { opacity: 1, transform: "translate3d(0, 0, 0) scale(1)", filter: "blur(0)" },
+        { opacity: 0, transform: "translate3d(18px, -4px, 0) scale(0.985)", filter: "blur(1px)" }
+      ],
+      { duration: 220, easing: "cubic-bezier(0.22, 1, 0.36, 1)", fill: "forwards" }
     );
-    window.setTimeout(() => {
-      if (row.isConnected) {
-        row.remove();
-      }
-    }, 280);
+    animation.addEventListener("finish", () => ghost.remove(), { once: true });
+    window.setTimeout(() => ghost.remove(), 320);
+  }
+
+  function animatePassengerRowReflow(previousRects, rows) {
+    rows.forEach((row, index) => {
+      if (!row?.isConnected || row.classList.contains("is-enter")) return;
+      const previousRect = previousRects.get(row.dataset.rowKey);
+      if (!previousRect) return;
+      const nextRect = row.getBoundingClientRect();
+      const deltaX = previousRect.left - nextRect.left;
+      const deltaY = previousRect.top - nextRect.top;
+      if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return;
+
+      row.animate(
+        [
+          { transform: `translate3d(${deltaX}px, ${deltaY}px, 0)` },
+          { transform: "translate3d(0, 0, 0)" }
+        ],
+        {
+          duration: 260,
+          delay: Math.min(index, 3) * 18,
+          easing: "cubic-bezier(0.22, 1, 0.36, 1)"
+        }
+      );
+    });
   }
 
   function handlePassengerRowAction(event) {
@@ -2590,7 +2637,7 @@
     if (!row) return;
     const ordem = Number(row.dataset.ordem);
     if (Number.isNaN(ordem)) return;
-    removePassengerRow(ordem);
+    removePassengerRow(ordem, row);
   }
 
   function handlePassengerRowInput(event) {
@@ -2647,6 +2694,17 @@
     portal.setAttribute("aria-hidden", "true");
     portal?.addEventListener("pointerenter", clearPassengerPreviewCloseTimer);
     portal?.addEventListener("pointerleave", () => schedulePassengerPreviewClose());
+    portal?.addEventListener("click", async (event) => {
+      const valueEl = event.target.closest(".passenger-preview-value");
+      if (!valueEl) return;
+      const value = valueEl.dataset.copyValue || valueEl.textContent || "";
+      try {
+        await copyTextToClipboard(value);
+        showCopyNotice(valueEl, "Copiado!");
+      } catch (error) {
+        showCopyNotice(valueEl, "Falha ao copiar.", true);
+      }
+    });
     document.body.appendChild(portal);
     return portal;
   }
@@ -2670,6 +2728,7 @@
     if (!activePassengerPreview) return;
     if (wrap && activePassengerPreview.wrap !== wrap) return;
     clearPassengerPreviewCloseTimer();
+    clearCopyNotice();
     activePassengerPreview.portal.classList.remove("is-open");
     activePassengerPreview.portal.setAttribute("aria-hidden", "true");
     activePassengerPreview = null;
@@ -2731,10 +2790,21 @@
       container.appendChild(empty);
       return;
     }
+    const previewValue = (value, optionsKey) => {
+      const raw = (value || "").toString().trim();
+      if (!raw) return "";
+      return optionsKey ? optionLabel(optionsKey, raw) || raw : raw;
+    };
     const rows = [
+      ["Cliente", passenger.clienteLabel],
+      ["Tipo de veículo", passenger.tipoVeiculoLabel || previewValue(passenger.tipoVeiculo, "bdTipoVeiculo")],
+      ["Cargo", previewValue(passenger.cargo, "bdCargo")],
+      ["Idioma", previewValue(passenger.idioma, "bdIdioma")],
+      ["Sexo", previewValue(passenger.sexo, "bdSexo")],
+      ["Classificação", previewValue(passenger.classificacao, "bdClassificacao")],
+      ["Endereço", passenger.endereco],
       ["Telefone", passenger.telefone],
       ["Email", passenger.email],
-      ["Cliente", passenger.clienteLabel],
       ["Preferências", passenger.preferencias]
     ].filter((item) => (item[1] || "").toString().trim());
     if (!rows.length) {
@@ -2752,9 +2822,21 @@
       const key = document.createElement("span");
       key.className = "passenger-preview-key";
       key.textContent = label;
-      const valueEl = document.createElement("span");
+      const valueEl = document.createElement("button");
+      valueEl.type = "button";
       valueEl.className = "passenger-preview-value";
       valueEl.textContent = value;
+      valueEl.dataset.copyValue = value;
+      valueEl.title = `Copiar ${label}`;
+      valueEl.setAttribute("aria-label", `Copiar ${label}`);
+      valueEl.addEventListener("click", async (event) => {
+        try {
+          await copyTextToClipboard(value);
+          showCopyNotice(event.currentTarget, "Copiado!");
+        } catch (error) {
+          showCopyNotice(event.currentTarget, "Falha ao copiar.", true);
+        }
+      });
       line.append(key, valueEl);
       list.appendChild(line);
     });
@@ -2813,7 +2895,7 @@
 
     if (!risks.length) {
       const item = document.createElement("li");
-      item.textContent = "Sem risco operacional critico detectado.";
+      item.textContent = "Sem risco operacional crítico detectado.";
       el.riskList.appendChild(item);
       return;
     }
@@ -2828,21 +2910,21 @@
   function collectOperationalRisks(context = buildSaveContext()) {
     const risks = [];
     const statusLabel = optionLabel("statusOperacao", el.statusOperacao.value);
-    const isTroca = statusLabel === "Troca de Veiculos" || statusLabel === "Troca de VeÃ­culos";
+    const isTroca = statusLabel === "Troca de Veículos";
 
     if (!el.cliente.value) risks.push("Cliente vazio.");
     if (!el.solicitante.value) risks.push("Solicitante vazio.");
-    if (!el.motorista.value) risks.push("Motorista vazio. A operacao precisara programar manualmente.");
-    if (!context.dataHoraPrincipal) risks.push("Data e horario de saida incompletos.");
+    if (!el.motorista.value) risks.push("Motorista vazio. A operação precisará programar manualmente.");
+    if (!context.dataHoraPrincipal) risks.push("Data e horário de saída incompletos.");
     if (!context.trajeto && !isTroca) risks.push("Trajeto vazio.");
     if (!el.destino.value.trim() && !isTroca) risks.push("Destino vazio.");
     if (!context.colOrdemPassageiros.length && !isTroca) risks.push("Nenhum passageiro selecionado.");
     if (hasDuplicatePassengers()) risks.push("Passageiro duplicado na lista.");
-    if (state.enderecoPersonalizadoAtivo && !el.enderecoPersonalizado.value.trim() && !isTroca) risks.push("Endereco unico ativo, mas vazio.");
-    if (!state.enderecoPersonalizadoAtivo && context.colOrdemPassageiros.some((item) => !item.enderecoSaidaBD) && !isTroca) risks.push("Ha passageiro sem endereco de saida.");
+    if (state.enderecoPersonalizadoAtivo && !el.enderecoPersonalizado.value.trim() && !isTroca) risks.push("Endereço único ativo, mas vazio.");
+    if (!state.enderecoPersonalizadoAtivo && context.colOrdemPassageiros.some((item) => !item.enderecoSaidaBD) && !isTroca) risks.push("Há passageiro sem endereço de saída.");
     if (el.agendarRetorno.checked && !context.dataHoraRetorno) risks.push("Retorno ativo sem data/hora completa.");
-    if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) risks.push("Servico frequente ativo sem periodo completo.");
-    if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) risks.push("Periodo frequente com data final anterior a inicial.");
+    if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) risks.push("Serviço frequente ativo sem período completo.");
+    if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) risks.push("Período frequente com data final anterior à inicial.");
 
     return risks;
   }
@@ -2853,7 +2935,7 @@
 
     if (!state.saveLog.length) {
       const item = document.createElement("li");
-      item.textContent = "Nenhum salvamento executado nesta sessao.";
+      item.textContent = "Nenhum salvamento executado nesta sessão.";
       el.saveLogList.appendChild(item);
       return;
     }
@@ -2902,16 +2984,16 @@
   function renderReviewSummary(context) {
     if (!el.reviewSummaryList) return;
     const rows = [
-      ["Status", optionLabel("statusOperacao", el.statusOperacao.value) || "Nao informado"],
-      ["Saida", context.dataHoraPrincipal ? formatDateTime(context.dataHoraPrincipal) : "Nao informado"],
-      ["Cliente", selectedText(el.cliente) || "Nao informado"],
-      ["Solicitante", selectedText(el.solicitante) || "Nao informado"],
-      ["Motorista", selectedText(el.motorista) || "Nao informado"],
-      ["Trajeto", context.trajeto || "Nao informado"],
-      ["Destino", el.destino.value.trim() || "Nao informado"],
+      ["Status", optionLabel("statusOperacao", el.statusOperacao.value) || "Não informado"],
+      ["Saída", context.dataHoraPrincipal ? formatDateTime(context.dataHoraPrincipal) : "Não informado"],
+      ["Cliente", selectedText(el.cliente) || "Não informado"],
+      ["Solicitante", selectedText(el.solicitante) || "Não informado"],
+      ["Motorista", selectedText(el.motorista) || "Não informado"],
+      ["Trajeto", context.trajeto || "Não informado"],
+      ["Destino", el.destino.value.trim() || "Não informado"],
       ["Passageiros", String(context.colOrdemPassageiros.length)],
-      ["Retorno", el.agendarRetorno.checked ? "Sim" : "Nao"],
-      ["Frequente", el.repetirServico.checked ? "Sim" : "Nao"]
+      ["Retorno", el.agendarRetorno.checked ? "Sim" : "Não"],
+      ["Frequente", el.repetirServico.checked ? "Sim" : "Não"]
     ];
 
     el.reviewSummaryList.innerHTML = "";
@@ -2931,7 +3013,7 @@
 
     if (!risks.length) {
       const item = document.createElement("li");
-      item.textContent = "Sem risco operacional critico detectado.";
+      item.textContent = "Sem risco operacional crítico detectado.";
       el.reviewRiskList.appendChild(item);
       return;
     }
@@ -2963,7 +3045,7 @@
       renderDraftStatus();
     } catch (error) {
       console.warn("Falha ao salvar rascunho local", error);
-      renderDraftStatus("Rascunho nao salvo.");
+    renderDraftStatus("Rascunho não salvo.");
     }
   }
 
@@ -3551,7 +3633,11 @@
     openPassengerPicker();
   }
 
-  function removePassengerRow(ordem) {
+  function removePassengerRow(ordem, row = null) {
+    if (row) {
+      closePassengerPreview(row.querySelector(".row-title-wrap"));
+      animatePassengerRowExit(row);
+    }
     state.selectedPassengers = state.selectedPassengers.filter((item) => item.ordem !== ordem);
     state.enderecoRascunho = state.enderecoRascunho.filter((item) => item.ordem !== ordem);
     reindexPassengers();
@@ -3660,7 +3746,7 @@
 
     const exists = state.passageiros.some((item) => item.label.trim().toLowerCase() === el.bdNome.value.trim().toLowerCase());
     if (exists) {
-      toast(`Ja existe um passageiro com o nome ${el.bdNome.value.trim()}!`, "error");
+      toast(`Já existe um passageiro com o nome ${el.bdNome.value.trim()}!`, "error");
       return;
     }
 
@@ -3793,7 +3879,7 @@
       return;
     }
     openPassengerEdit(passengerId);
-    toast("Edicao agora salva automaticamente por campo.", "warning", 3500);
+    toast("Edição agora salva automaticamente por campo.", "warning", 3500);
     return;
     const required = [
       [el.bdStatus.value, "'Status' é obrigatório."],
@@ -3901,7 +3987,7 @@
         const updated = await saveReserva(buildReservaPayload(context, "edicao", context.dataHoraPrincipal), state.recordId);
         addSaveLog("info", "Recriando vínculos", `${context.colOrdemPassageiros.length} passageiro(s).`);
         await replacePassengerRelations(state.recordId, context.colOrdemPassageiros, context, true, true);
-        results.push({ tipo: "Edicao", data: context.dataHoraPrincipal, result: updated });
+        results.push({ tipo: "Edição", data: context.dataHoraPrincipal, result: updated });
         addSaveLog("success", "Edição salva", state.recordId);
       }
 
@@ -3985,7 +4071,7 @@
 
   function validateContext(context) {
     const statusLabel = optionLabel("statusOperacao", el.statusOperacao.value);
-    const isTroca = statusLabel === "Troca de Veiculos" || statusLabel === "Troca de Veículos";
+    const isTroca = statusLabel === "Troca de Veículos";
     if (!context.dataHoraPrincipal || !el.saidaHora.value || !el.saidaMinuto.value) return "'Data e horário de saída' são obrigatórios.";
     if (!el.tipoServico.value && !isTroca) return "'Tipo do Serviço' é obrigatório.";
     if (!el.tipoVeiculo.value && !isTroca) return "'Tipo do Veículo' é obrigatório.";
@@ -4302,11 +4388,11 @@
       focusField(el.scheduleDraftRows);
       return;
     }
-    if (text.includes("horario") && text.includes("saida")) {
+    if (text.includes("horário") && text.includes("saída")) {
       focusField(el.saidaData);
       return;
     }
-    if (text.includes("tipo do servico")) {
+    if (text.includes("tipo do serviço")) {
       focusField(el.tipoServico);
       return;
     }
@@ -4326,7 +4412,7 @@
       }
       return;
     }
-    if (text.includes("endereco de saida")) {
+    if (text.includes("endereço de saída")) {
       if (el.enderecoPersonalizadoAtivo && el.enderecoPersonalizado) {
         focusField(el.enderecoPersonalizado);
       } else if (state.selectedPassengers?.length) {
@@ -4344,11 +4430,11 @@
       focusField(el.retornoData);
       return;
     }
-    if (text.includes("data de inicio") || text.includes("data de fim")) {
+    if (text.includes("data de início") || text.includes("data de fim")) {
       focusField(el.frequenteInicio);
       return;
     }
-    if (text.includes("tipo de serviço frequente") || text.includes("tipo de servico frequente")) {
+    if (text.includes("tipo de serviço frequente") || text.includes("tipo de serviço frequente")) {
       focusField(el.frequenteTipo);
       return;
     }
@@ -4413,6 +4499,65 @@
     return state.options[key].find((item) => String(item.value) === String(value))?.label || "";
   }
 
+  async function copyTextToClipboard(value) {
+    const text = String(value || "").trim();
+    if (!text) return;
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+    const input = document.createElement("textarea");
+    input.value = text;
+    input.setAttribute("readonly", "readonly");
+    input.style.position = "fixed";
+    input.style.opacity = "0";
+    input.style.pointerEvents = "none";
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand("copy");
+    input.remove();
+  }
+
+  function clearCopyNotice() {
+    document.querySelectorAll(".copy-notice").forEach((node) => node.remove());
+  }
+
+  function showCopyNotice(anchor, message, isError = false) {
+    if (!anchor?.getBoundingClientRect) return;
+    clearCopyNotice();
+    const range = document.createRange();
+    range.selectNodeContents(anchor);
+    const rects = [...range.getClientRects()].filter((item) => item.width || item.height);
+    const textRect = rects[rects.length - 1] || anchor.getBoundingClientRect();
+    const notice = document.createElement("div");
+    notice.className = `copy-notice${isError ? " is-error" : ""}`;
+    notice.textContent = message;
+    document.body.appendChild(notice);
+
+    const gap = 6;
+    const width = notice.offsetWidth || 72;
+    const height = notice.offsetHeight || 22;
+    const preferredLeft = textRect.right + gap;
+    const fallbackLeft = textRect.left - width - gap;
+    const left = preferredLeft + width + 12 <= window.innerWidth
+      ? preferredLeft
+      : Math.max(12, fallbackLeft);
+    const top = Math.max(12, Math.min(textRect.top + (textRect.height - height) / 2, window.innerHeight - height - 12));
+
+    notice.style.left = `${left}px`;
+    notice.style.top = `${top}px`;
+
+    requestAnimationFrame(() => {
+      notice.classList.add("is-visible");
+    });
+
+    window.setTimeout(() => {
+      if (!notice.isConnected) return;
+      notice.classList.remove("is-visible");
+      window.setTimeout(() => notice.remove(), 180);
+    }, 900);
+  }
+
   function sameId(a, b) {
     return cleanGuid(a).toLowerCase() === cleanGuid(b).toLowerCase();
   }
@@ -4460,7 +4605,7 @@
     el.success.hidden = false;
   }
 
-  function toast(message, type = "info", timeout = 5000) {
+  function toast(message, type = "info", timeout = 5000, anchor = null) {
     const item = document.createElement("div");
     item.className = `toast ${type}`;
 
@@ -4476,7 +4621,14 @@
     close?.addEventListener("click", () => item.remove());
 
     item.append(msg, close);
-    el.toastStack.appendChild(item);
+    if (anchor && Number.isFinite(anchor.clientX) && Number.isFinite(anchor.clientY)) {
+      item.classList.add("toast-floating");
+      item.style.left = `${Math.max(12, anchor.clientX + 14)}px`;
+      item.style.top = `${Math.max(12, anchor.clientY - 18)}px`;
+      document.body.appendChild(item);
+    } else {
+      el.toastStack.appendChild(item);
+    }
     window.setTimeout(() => item.remove(), timeout);
   }
 })();
