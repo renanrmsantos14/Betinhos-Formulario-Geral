@@ -207,7 +207,6 @@
     cr: $("cr"),
     passengerRows: $("passengerRows"),
     passengerEmpty: $("passengerEmpty"),
-    passengerListHead: $("passengerListHead"),
     passengerBlock: document.querySelector(".passenger-block"),
     toggleEnderecoPersonalizado: $("toggleEnderecoPersonalizado"),
     addPassenger: $("addPassenger"),
@@ -320,6 +319,7 @@
   let activePassengerPreview = null;
   let passengerPreviewPositionRaf = null;
   let passengerPreviewCloseTimer = null;
+  const passengerRowHoverSuppressTimers = new WeakMap();
   let passengerPickerTargetOrder = null;
   let passengerCatalogLoadPromise = null;
   let passengerCatalogLoaded = false;
@@ -508,6 +508,7 @@
     markPassengerEditEmptySignals();
     el.clearDraftButton?.addEventListener("click", () => clearDraftSnapshot(true));
     el.addPassenger?.addEventListener("click", addPassengerRow);
+    el.passengerRows?.addEventListener("pointerdown", handlePassengerRowPointerDown);
     el.passengerRows?.addEventListener("click", handlePassengerRowAction);
     el.passengerRows?.addEventListener("input", handlePassengerRowInput);
     el.passengerRows?.addEventListener("pointerover", handlePassengerPreviewEnter);
@@ -2380,15 +2381,12 @@
     if (el.passengerEmpty) {
       el.passengerEmpty.hidden = passengerTotal > 0;
     }
-    if (el.passengerListHead) {
-      el.passengerListHead.classList.toggle("is-hidden-address", state.enderecoPersonalizadoAtivo);
-    }
     if (el.passengerBlock) {
       el.passengerBlock.classList.toggle("is-shared-address", state.enderecoPersonalizadoAtivo);
     }
     el.customAddressWrap.hidden = !state.enderecoPersonalizadoAtivo;
     if (el.toggleEnderecoPersonalizado) {
-      el.toggleEnderecoPersonalizado.textContent = state.enderecoPersonalizadoAtivo ? "Endereços por linha" : "Endereço único";
+      el.toggleEnderecoPersonalizado.textContent = state.enderecoPersonalizadoAtivo ? "Endereço por passageiro" : "Endereço único";
       el.toggleEnderecoPersonalizado.title = state.enderecoPersonalizadoAtivo ? "Usar endereço por passageiro" : "Usar endereço único para todos";
       el.toggleEnderecoPersonalizado.setAttribute("aria-pressed", String(state.enderecoPersonalizadoAtivo));
     }
@@ -2444,7 +2442,7 @@
   function syncPassengerNameColumnWidth() {
     if (!el.passengerRows) return;
     const labels = [...el.passengerRows.querySelectorAll(".row-label")];
-    const targets = [el.passengerRows, el.passengerListHead].filter(Boolean);
+    const targets = [el.passengerRows].filter(Boolean);
     targets.forEach((target) => target.style.removeProperty("--passenger-name-width"));
 
     if (!labels.length) return;
@@ -2631,6 +2629,7 @@
     if (openRecord) {
       const row = openRecord.closest(".passenger-row");
       if (!row) return;
+      suppressPassengerRowHover(row);
       const ordem = Number(row.dataset.ordem);
       if (Number.isNaN(ordem)) return;
       const item = state.selectedPassengers.find((selected) => selected.ordem === ordem);
@@ -2649,6 +2648,14 @@
     const ordem = Number(row.dataset.ordem);
     if (Number.isNaN(ordem)) return;
     removePassengerRow(ordem, row);
+  }
+
+  function handlePassengerRowPointerDown(event) {
+    const openRecord = event.target.closest("[data-passenger-action='open-record']");
+    if (!openRecord) return;
+    const row = openRecord.closest(".passenger-row");
+    if (!row) return;
+    suppressPassengerRowHover(row);
   }
 
   function handlePassengerRowInput(event) {
@@ -2756,6 +2763,30 @@
     if (!passengerPreviewCloseTimer) return;
     window.clearTimeout(passengerPreviewCloseTimer);
     passengerPreviewCloseTimer = null;
+  }
+
+  function suppressPassengerRowHover(row) {
+    if (!row) return;
+    closePassengerPreview(row.querySelector(".row-title-wrap"));
+    row.classList.add("is-opening-record");
+    const currentTimer = passengerRowHoverSuppressTimers.get(row);
+    if (currentTimer) {
+      window.clearTimeout(currentTimer);
+    }
+    const release = () => {
+      const activeTimer = passengerRowHoverSuppressTimers.get(row);
+      if (activeTimer) {
+        window.clearTimeout(activeTimer);
+      }
+      passengerRowHoverSuppressTimers.delete(row);
+      row.classList.remove("is-opening-record");
+      row.removeEventListener("pointerleave", release);
+      row.removeEventListener("pointercancel", release);
+    };
+    row.addEventListener("pointerleave", release, { once: true });
+    row.addEventListener("pointercancel", release, { once: true });
+    const timer = window.setTimeout(release, 600);
+    passengerRowHoverSuppressTimers.set(row, timer);
   }
 
   function repositionPassengerPreview() {

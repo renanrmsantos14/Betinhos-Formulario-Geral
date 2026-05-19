@@ -134,6 +134,8 @@ Inputs, selects e textareas:
 - Fundo branco.
 - Borda fria.
 - Sem outline nativo.
+- Campos especiais não ganham card próprio. Se forem input, textarea ou select, usam a mesma casca visual dos demais campos.
+- O campo `Endereço único de saída` segue esse mesmo padrão. O diferencial fica no layout do bloco, não no controle.
 
 Campos obrigatórios usam asterisco vermelho no label. Erros devem ser diretos e perto do campo afetado.
 
