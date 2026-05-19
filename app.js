@@ -94,6 +94,7 @@
   const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
   const PASSENGER_RECENCY_KEY = "formulario_geral_passenger_recency_v1";
+  const BRAND_LOGO_WEBRESOURCE = "cr40f_LogoBetinhosB";
 
   const FALLBACK = {
     statusOperacao: [
@@ -172,6 +173,7 @@
   const $ = (id) => document.getElementById(id);
 
   const el = {
+    brandLogo: $("brandLogo"),
     loading: $("loadingOverlay"),
     success: $("successOverlay"),
     successMessage: $("successMessage"),
@@ -336,6 +338,7 @@
   async function init() {
     state.isNew = !state.recordId;
     setLoading(true);
+    applyBrandLogo();
     bindStaticEvents();
     populateTimeSelects();
     loadPassengerSelectionRecency();
@@ -376,6 +379,36 @@
     } catch (_) {
       return "";
     }
+  }
+
+  function resolveEnvironmentBaseUrl() {
+    if (state.xrm?.Utility?.getGlobalContext) {
+      try {
+        return state.xrm.Utility.getGlobalContext().getClientUrl();
+      } catch (_) {
+      }
+    }
+    const origin = window.location.origin || "";
+    if (/^https:\/\/[^/]+\.crm\d*\.dynamics\.com$/i.test(origin)) return origin;
+    return "";
+  }
+
+  function buildBrandLogoUrl() {
+    const baseUrl = resolveEnvironmentBaseUrl();
+    return baseUrl ? `${baseUrl}/WebResources/${BRAND_LOGO_WEBRESOURCE}` : "";
+  }
+
+  function applyBrandLogo() {
+    const logo = el.brandLogo;
+    if (!logo) return;
+    const logoUrl = buildBrandLogoUrl();
+    if (!logoUrl) return;
+
+    logo.hidden = false;
+    logo.src = logoUrl;
+    logo.addEventListener("error", () => {
+      logo.hidden = true;
+    }, { once: true });
   }
 
   function cleanGuid(value) {
