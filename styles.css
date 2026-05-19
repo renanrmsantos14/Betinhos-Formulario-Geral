@@ -672,8 +672,7 @@ h3 {
 }
 
 .status-select .custom-select-trigger {
-  border-color: rgb(255 255 255 / 0.14);
-  color: #ffffff;
+  border: 2px solid var(--accent);
 }
 
 .field .status-select,
@@ -742,12 +741,44 @@ h3 {
 
 .status-select .custom-select-trigger .custom-select-value,
 .status-select .custom-select-trigger .custom-select-value.is-placeholder {
-  color: #ffffff;
+  color: inherit;
 }
 
 .status-select .custom-select-trigger {
-  background: #0f1725;
+  background: #ffffff;
+  color: var(--text);
+  box-shadow: var(--shadow-control);
 }
+
+.status-select .custom-select-trigger:hover {
+  border-color: var(--accent-strong);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.92), 0 6px 16px rgb(33 89 210 / 0.12);
+}
+
+.status-select .custom-select-trigger:focus-visible {
+  border-color: var(--accent-strong);
+  box-shadow: var(--shadow-focus);
+}
+
+.status-select .custom-select.is-open .custom-select-trigger {
+  border-color: var(--accent-strong);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.92),
+    0 10px 20px rgb(33 89 210 / 0.12),
+    0 0 0 3px rgb(33 89 210 / 0.12);
+}
+
+/* .status-select .custom-select-caret {
+  color: var(--text);
+  transition:
+    transform 160ms var(--ease-out),
+    color 160ms var(--ease-out);
+} */
+
+/* .status-select .custom-select-trigger:hover .custom-select-caret,
+.status-select .custom-select.is-open .custom-select-caret {
+  color: var(--accent);
+} */
 
 .custom-select-caret {
   width: 8px;
@@ -864,40 +895,41 @@ h3 {
 .status-select .custom-select-panel .custom-select-option,
 .custom-select-panel.is-status,
 .custom-select-panel.is-status .custom-select-option {
-  background: #0f1725;
-  color: #ffffff;
+  background: #ffffff;
+  color: var(--text);
 }
 
 .status-select .custom-select-panel .custom-select-option,
 .custom-select-panel.is-status .custom-select-option {
-  border-color: rgb(255 255 255 / 0.12);
+  border-color: var(--line);
 }
 
 .status-select .custom-select-search {
-  background: #13223c;
-  color: #ffffff;
-  border-color: rgb(255 255 255 / 0.25);
+  background: #ffffff;
+  color: var(--text);
+  border-color: var(--line);
 }
 
 .status-select .custom-select-search::placeholder {
-  color: rgb(255 255 255 / 0.56);
+  color: var(--muted);
 }
 
 .status-select .custom-select-search:focus-visible {
-  background: #10213a;
-  border-color: rgb(255 255 255 / 0.48);
+  background: #ffffff;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
 }
 
 .status-select .custom-select-panel .custom-select-option:hover,
 .status-select .custom-select-panel .custom-select-option:focus-visible,
 .status-select .custom-select-panel .custom-select-option.is-active {
-  background: rgb(38 82 196 / 0.35);
+  background: #edf4ff;
 }
 
 .custom-select-panel.is-status .custom-select-option:hover,
 .custom-select-panel.is-status .custom-select-option:focus-visible,
 .custom-select-panel.is-status .custom-select-option.is-active {
-  background: rgb(38 82 196 / 0.35);
+  background: #edf4ff;
 }
 
 .status-select .custom-select-panel,
@@ -1237,12 +1269,14 @@ h3 {
   min-width: 32px;
   min-height: 32px;
   padding: 0;
+  position: absolute;
+  top: 10px;
+  right: 10px;
   border-radius: 8px;
-  align-self: start;
-  justify-self: end;
   font-size: 17px;
   line-height: 1;
   font-weight: 820;
+  z-index: 3;
 }
 
 .passenger-rows {
@@ -1256,11 +1290,11 @@ h3 {
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: var(--passenger-name-width, auto) minmax(0, 1fr) 32px;
+  grid-template-columns: var(--passenger-name-width, auto) minmax(0, 1fr);
   gap: 10px;
   align-items: start;
   justify-content: center;
-  padding: 10px;
+  padding: 10px 52px 10px 10px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -1293,7 +1327,7 @@ h3 {
 }
 
 .passenger-row.is-shared-address {
-  grid-template-columns: var(--passenger-name-width, auto) minmax(0, 1fr) 32px;
+  grid-template-columns: var(--passenger-name-width, auto) minmax(0, 1fr);
 }
 
 .passenger-row.is-incomplete {
@@ -2410,11 +2444,11 @@ h3 {
   }
 
   .passenger-row {
-    grid-template-columns: auto minmax(0, 1fr) 32px;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .passenger-row .address-cell {
-    grid-column: 2 / 4;
+    grid-column: 2 / -1;
   }
 
   .passenger-list-head {
@@ -2515,7 +2549,7 @@ h3 {
   }
 
   .passenger-row {
-    grid-template-columns: minmax(0, 1fr) 32px;
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
   }
 
@@ -2525,7 +2559,7 @@ h3 {
 
   .passenger-row .row-label,
   .passenger-row .address-cell {
-    grid-column: 1 / 2;
+    grid-column: 1 / -1;
   }
 
   .passenger-row .address-cell {
