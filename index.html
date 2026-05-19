@@ -490,6 +490,23 @@
         <div id="passengerEditFields" class="passenger-edit-fields"></div>
       </div>
     </div>
+
+    <div id="passengerMatchOverlay" class="overlay" hidden>
+      <div class="dialog passenger-match-dialog" role="dialog" aria-labelledby="passengerMatchTitle" aria-modal="true">
+        <header class="passenger-match-head">
+          <div>
+            <p class="passenger-picker-eyebrow">Possível duplicidade</p>
+            <h3 id="passengerMatchTitle">Certeza que este não é o passageiro desejado?</h3>
+            <p>Compare os registros encontrados antes de criar um novo cadastro.</p>
+          </div>
+        </header>
+        <div id="passengerMatchList" class="passenger-match-list"></div>
+        <footer class="passenger-match-actions">
+          <button id="passengerMatchCancel" type="button" class="secondary-action">Voltar e revisar</button>
+          <button id="passengerMatchContinue" type="button" class="secondary-action danger">Criar novo mesmo assim</button>
+        </footer>
+      </div>
+    </div>
   </div>
 
   <script src="app.js"></script>

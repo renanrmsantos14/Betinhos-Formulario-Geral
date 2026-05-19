@@ -95,80 +95,118 @@
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
   const PASSENGER_RECENCY_KEY = "formulario_geral_passenger_recency_v1";
   const BRAND_LOGO_WEBRESOURCE = "cr40f_LogoBetinhosB";
+  const MIN_PASSENGER_SEARCH_LENGTH = 2;
+  const MAX_FREQUENT_SERVICE_DAYS = 90;
+  const MAX_FREQUENT_SERVICE_RECORDS = 120;
 
-  const FALLBACK = {
-    statusOperacao: [
-      { value: 202410000, label: "Pre-reserva" },
-      { value: 202410004, label: "Solicitado" },
-      { value: 202410001, label: "Confirmado" },
-      { value: 202410005, label: "Programado" },
-      { value: 202410006, label: "Em Execução" },
-    { value: 202410008, label: "Concluído" },
-      { value: 100000001, label: "Requer Análise" },
-      { value: 202410002, label: "Cancelado" }
-    ],
-    statusFaturamento: [
-      { value: 202410000, label: "Pendente" },
-      { value: 202410008, label: "Faturamento Mensal" }
-    ],
-    tipoServico: [
-      { value: 1, label: "Aeroporto ida e volta" },
-      { value: 2, label: "Aeroporto só ida" },
-      { value: 3, label: "Viagem executiva" },
-      { value: 4, label: "Reuniao corporativa" },
-      { value: 5, label: "Escala interna" },
-      { value: 6, label: "Troca de veículos" },
-    ],
-    tipoVeiculo: [
-      { value: 10, label: "SEDAN" },
-      { value: 11, label: "SUV" },
-      { value: 12, label: "VAN" },
-      { value: 13, label: "LIMOSINE" },
-      { value: 14, label: "MINIBUS" }
-    ],
-    formaPagamento: [
-      { value: 20, label: "Conta Betinhos" },
-      { value: 21, label: "Cartão corporativo" },
-      { value: 22, label: "Faturado" },
-      { value: 23, label: "A definir" }
-    ],
-    bdStatus: [
-      { value: 30, label: "Ativo" },
-      { value: 31, label: "Inativo" }
-    ],
-    bdClassificacao: [
-      { value: 40, label: "VIP" },
-      { value: 41, label: "Regular" },
-      { value: 42, label: "Executivo" },
-      { value: 43, label: "Executiva" }
-    ],
-    bdSexo: [
-      { value: 50, label: "Masculino" },
-      { value: 51, label: "Feminino" },
-      { value: 52, label: "Outro" }
-    ],
-    bdIdioma: [
-      { value: 60, label: "Português" },
-      { value: 61, label: "Inglês" },
-      { value: 62, label: "Espanhol" },
-      { value: 63, label: "Italiano" }
-    ],
-    bdCargo: [
-      { value: 70, label: "Executivo" },
-      { value: 71, label: "Diretor" },
-      { value: 72, label: "Gerente" },
-      { value: 73, label: "Coordenador" },
-      { value: 74, label: "Assessor" }
-    ],
-    bdTipoVeiculo: [
-      { value: 80, label: "Sedan" },
-      { value: 81, label: "SUV" },
-      { value: 82, label: "Hatch" },
-      { value: 83, label: "Limousine" },
-      { value: 84, label: "VAN" }
-    ],
-    simple: []
-  };
+  const FALLBACK = buildFallbackChoices();
+
+  function buildFallbackChoices() {
+    return {
+      statusOperacao: [
+        { value: 202410002, label: "Cancelado" },
+        { value: 100000001, label: "Requer Analise" },
+        { value: 202410010, label: "Cancelado com Ressalvas" },
+        { value: 202410000, label: "Pre-reserva" },
+        { value: 202410004, label: "Solicitado" },
+        { value: 202410001, label: "Confirmado" },
+        { value: 202410005, label: "Programado" },
+        { value: 202410006, label: "Em Execucao" },
+        { value: 202410008, label: "Concluido" }
+      ],
+      statusFaturamento: [
+        { value: 202410011, label: "Nao Faturavel" },
+        { value: 202410005, label: "Pendente" },
+        { value: 100000001, label: "Composicao Realizada" },
+        { value: 202410000, label: "Cancelado Sem Taxa" },
+        { value: 202410002, label: "Cancelado Com Taxa" },
+        { value: 202410003, label: "Cortesia" },
+        { value: 202410004, label: "Permuta" },
+        { value: 202410006, label: "Pagante em Viagem" },
+        { value: 202410007, label: "Pagamento Pendente" },
+        { value: 202410012, label: "Pagamento Em Atraso" },
+        { value: 202410008, label: "Faturamento Mensal" },
+        { value: 202410010, label: "Pago" }
+      ],
+      tipoServico: [
+        { value: 202410000, label: "Guarulhos" },
+        { value: 202410001, label: "Sao Paulo" },
+        { value: 202410002, label: "Outras Cidades" },
+        { value: 202410003, label: "Vale do Paraiba" },
+        { value: 202410004, label: "Rio de Janeiro" },
+        { value: 202410005, label: "Pindamonhangaba" },
+        { value: 202410006, label: "Sao Jose dos Campos" },
+        { value: 202410007, label: "Congonhas" },
+        { value: 202410008, label: "Campinas" },
+        { value: 202410009, label: "Dentro de Sao Paulo" },
+        { value: 202410010, label: "Litoral" },
+        { value: 202410011, label: "Regiao dos Lagos" },
+        { value: 202410012, label: "Extrema" },
+        { value: 202410013, label: "Nova Odessa" },
+        { value: 202410014, label: "Baixada Santista" },
+        { value: 202410015, label: "Minas Gerais" },
+        { value: 202410016, label: "GPX" }
+      ],
+      tipoVeiculo: [
+        { value: 202410000, label: "Basico" },
+        { value: 202410001, label: "Executivo" },
+        { value: 202410002, label: "Blindado" },
+        { value: 202410003, label: "Van" },
+        { value: 202410004, label: "Van Blindado" },
+        { value: 202410005, label: "Spin" },
+        { value: 202410006, label: "Somente Motorista" }
+      ],
+      formaPagamento: [
+        { value: 202410000, label: "Cartao de credito" },
+        { value: 202410001, label: "Pedido de compra" },
+        { value: 202410002, label: "Pix" }
+      ],
+      bdStatus: [
+        { value: 202410000, label: "Pre-reserva" },
+        { value: 202410004, label: "Solicitado" },
+        { value: 202410001, label: "Confirmado" }
+      ],
+      bdClassificacao: [
+        { value: 202410000, label: "Passageiro Frequente" },
+        { value: 202410001, label: "Visitante" },
+        { value: 202410002, label: "Solicitante" },
+        { value: 202410003, label: "Grupo" },
+        { value: 202410004, label: "Lead" }
+      ],
+      bdSexo: [
+        { value: 202410000, label: "Masculino" },
+        { value: 202410001, label: "Feminino" }
+      ],
+      bdIdioma: [
+        { value: 202410000, label: "Portugues" },
+        { value: 202410001, label: "Ingles" },
+        { value: 202410002, label: "Espanhol" }
+      ],
+      bdCargo: [
+        { value: 202410000, label: "C-Level" },
+        { value: 202410001, label: "Presidente" },
+        { value: 202410002, label: "Vice Presidente" },
+        { value: 202410003, label: "Diretor" },
+        { value: 202410004, label: "Assistente Executiva" },
+        { value: 202410005, label: "Gerente" },
+        { value: 202410006, label: "Supervisor" },
+        { value: 202410007, label: "Analista" },
+        { value: 202410008, label: "Comprador" },
+        { value: 202410009, label: "Engenheiro" },
+        { value: 100000001, label: "Conselheiro" }
+      ],
+      bdTipoVeiculo: [
+        { value: 202410000, label: "Basico" },
+        { value: 202410001, label: "Executivo" },
+        { value: 202410002, label: "Blindado" },
+        { value: 202410003, label: "Van" },
+        { value: 202410004, label: "Van Blindado" },
+        { value: 202410005, label: "Spin" },
+        { value: 202410006, label: "Somente Motorista" }
+      ],
+      simple: []
+    };
+  }
 
   const $ = (id) => document.getElementById(id);
 
@@ -234,17 +272,16 @@
     bdNascimento: $("bdNascimento"),
     bdPreferencias: $("bdPreferencias"),
     bdTipoVeiculo: $("bdTipoVeiculo"),
-    bdPassengerSearch: $("bdPassengerSearch"),
-    bdPassengerDirectory: $("bdPassengerDirectory"),
-    bdExistingPassenger: $("bdExistingPassenger"),
-    loadPassengerForEdit: $("loadPassengerForEdit"),
-    updatePassenger: $("updatePassenger"),
     passengerEditOverlay: $("passengerEditOverlay"),
     passengerEditTitle: $("passengerEditTitle"),
     passengerEditStatus: $("passengerEditStatus"),
     passengerEditFields: $("passengerEditFields"),
     passengerEditToggle: $("passengerEditToggle"),
     passengerEditClose: $("passengerEditClose"),
+    passengerMatchOverlay: $("passengerMatchOverlay"),
+    passengerMatchList: $("passengerMatchList"),
+    passengerMatchCancel: $("passengerMatchCancel"),
+    passengerMatchContinue: $("passengerMatchContinue"),
     createPassenger: $("createPassenger"),
     agendarRetorno: $("agendarRetorno"),
     retornoData: $("retornoData"),
@@ -260,14 +297,7 @@
     contabilizarFds: $("contabilizarFds"),
     tabBd: $("tabBd"),
     tabReturn: $("tabReturn"),
-    tabRepeat: $("tabRepeat"),
-    riskPanel: $("riskPanel"),
-    riskList: $("riskList"),
-    saveLogList: $("saveLogList"),
-    draftStatus: $("draftStatus"),
-    clearDraftButton: $("clearDraftButton"),
-    confirmSaveButton: $("confirmSaveButton"),
-    cancelReviewButton: $("cancelReviewButton")
+    tabRepeat: $("tabRepeat")
   };
 
   const state = {
@@ -321,12 +351,14 @@
   let passengerPreviewCloseTimer = null;
   const passengerRowHoverSuppressTimers = new WeakMap();
   let passengerPickerTargetOrder = null;
-  let passengerCatalogLoadPromise = null;
-  let passengerCatalogLoaded = false;
+  let passengerPickerSearchTimer = null;
+  let passengerPickerSearchSeq = 0;
   let activePassengerEditId = "";
   let passengerEditEnabled = false;
   let passengerEditStatusTimer = null;
   const passengerEditSaveTimers = new Map();
+  let passengerMatchResolve = null;
+  let passengerMatchCandidates = [];
 
   state.mockMode = QUERY_MOCK_MODE || state.xrm === null;
 
@@ -347,7 +379,7 @@
     await loadCurrentRecord();
     hydrateForm();
     renderAll();
-    restoreDraftSnapshot();
+    await restoreDraftSnapshot();
     initializeCustomSelects();
     setLoading(false);
     if (state.mockMode) {
@@ -473,13 +505,6 @@
     });
     el.saveButton?.addEventListener("click", saveForm);
     el.createPassenger?.addEventListener("click", createPassenger);
-    el.bdPassengerSearch?.addEventListener("input", renderPassengerDirectory);
-    el.bdPassengerDirectory?.addEventListener("click", handlePassengerDirectoryAction);
-    el.bdExistingPassenger?.addEventListener("change", () => {
-      if (el.bdExistingPassenger.value) openPassengerEdit(el.bdExistingPassenger.value);
-    });
-    el.loadPassengerForEdit?.addEventListener("click", loadPassengerForEdit);
-    el.updatePassenger?.addEventListener("click", updatePassenger);
     el.passengerEditToggle?.addEventListener("click", togglePassengerEditMode);
     el.passengerEditClose?.addEventListener("click", closePassengerEditPopup);
     el.passengerEditOverlay?.addEventListener("click", (event) => {
@@ -487,6 +512,14 @@
         closePassengerEditPopup();
       }
     });
+    el.passengerMatchCancel?.addEventListener("click", () => resolvePassengerMatchReview({ action: "cancel" }));
+    el.passengerMatchContinue?.addEventListener("click", () => resolvePassengerMatchReview({ action: "continue" }));
+    el.passengerMatchOverlay?.addEventListener("click", (event) => {
+      if (event.target === el.passengerMatchOverlay) {
+        resolvePassengerMatchReview({ action: "cancel" });
+      }
+    });
+    el.passengerMatchList?.addEventListener("click", handlePassengerMatchAction);
     el.passengerEditFields?.addEventListener("input", handlePassengerEditInput);
     el.passengerEditFields?.addEventListener("change", handlePassengerEditInput);
     const markPassengerEditEmptySignals = () => requestAnimationFrame(applyPassengerEditEmptySignals);
@@ -506,7 +539,6 @@
     passengerEditObserver.observe(el.passengerEditOverlay, { attributes: true, attributeFilter: ["hidden"] });
     passengerEditFieldsObserver.observe(el.passengerEditFields, { childList: true, subtree: true });
     markPassengerEditEmptySignals();
-    el.clearDraftButton?.addEventListener("click", () => clearDraftSnapshot(true));
     el.addPassenger?.addEventListener("click", addPassengerRow);
     el.passengerRows?.addEventListener("pointerdown", handlePassengerRowPointerDown);
     el.passengerRows?.addEventListener("click", handlePassengerRowAction);
@@ -522,7 +554,7 @@
         closePassengerPicker();
       }
     });
-    el.passengerPickerSearch?.addEventListener("input", renderPassengerPickerResults);
+    el.passengerPickerSearch?.addEventListener("input", schedulePassengerPickerSearch);
     el.passengerPickerSearch?.addEventListener("keydown", handlePassengerPickerKeydown);
     el.passengerPickerResults?.addEventListener("click", handlePassengerPickerAction);
     el.toggleEnderecoPersonalizado?.addEventListener("click", toggleEnderecoPersonalizado);
@@ -891,22 +923,6 @@
       loadChoices(CONFIG.entities.passageiro, CONFIG.fields.passageiro.tipoVeiculo, "bdTipoVeiculo", FALLBACK.bdTipoVeiculo),
       loadLookups()
     ]);
-    passengerCatalogLoaded = true;
-  }
-
-  async function ensurePassengerCatalogLoaded() {
-    if (passengerCatalogLoaded && state.passageiros.length > 0) return;
-    if (passengerCatalogLoadPromise) {
-      await passengerCatalogLoadPromise;
-      return;
-    }
-    passengerCatalogLoadPromise = loadLookups();
-    try {
-      await passengerCatalogLoadPromise;
-      passengerCatalogLoaded = true;
-    } finally {
-      passengerCatalogLoadPromise = null;
-    }
   }
 
   async function loadChoices(entity, attribute, targetKey, fallback) {
@@ -953,37 +969,13 @@
     }
 
     const f = CONFIG.fields;
-    const [passageiros, clientes, motoristas, ops] = await Promise.all([
-      retrieveAll(CONFIG.entities.passageiro, [
-        "?$select=",
-        [
-          f.passageiro.id,
-          f.passageiro.nome,
-          f.passageiro.telefone,
-          f.passageiro.email,
-          f.passageiro.enderecoSaida,
-          f.passageiro.preferencias,
-          f.passageiro.cr,
-          f.passageiro.status,
-          f.passageiro.classificacao,
-          f.passageiro.sexo,
-          f.passageiro.idioma,
-          f.passageiro.cargo,
-          f.passageiro.nascimento,
-          f.passageiro.departamento,
-          f.passageiro.tipoVeiculo,
-          "_cr40f_cliente_value"
-        ].join(","),
-        "&$orderby=",
-        f.passageiro.nome,
-        " asc&$top=5000"
-      ].join("")),
+    const [clientes, motoristas, ops] = await Promise.all([
       retrieveAll(CONFIG.entities.cliente, `?$select=${f.cliente.id},${f.cliente.nome}&$orderby=${f.cliente.nome} asc&$top=5000`),
       retrieveAll(CONFIG.entities.funcionario, `?$select=${f.funcionario.id},${f.funcionario.nome}&$orderby=${f.funcionario.nome} asc&$top=5000`),
       retrieveAll(CONFIG.entities.financeiro, `?$select=${f.financeiro.id},${f.financeiro.label},createdon&$orderby=createdon desc&$top=500`)
     ]);
 
-    state.passageiros = passageiros.map(mapPassageiro);
+    state.passageiros = [];
     state.clientes = clientes.map((r) => ({
       id: r[f.cliente.id],
       label: r[f.cliente.nome] || "(cliente)"
@@ -996,6 +988,125 @@
       id: r[f.financeiro.id],
       label: r[f.financeiro.label] || r[f.financeiro.id]
     }));
+  }
+
+  function passengerSelectFields() {
+    const f = CONFIG.fields.passageiro;
+    return [
+      f.id,
+      f.nome,
+      f.telefone,
+      f.email,
+      f.enderecoSaida,
+      f.preferencias,
+      f.cr,
+      f.status,
+      f.classificacao,
+      f.sexo,
+      f.idioma,
+      f.cargo,
+      f.nascimento,
+      f.departamento,
+      f.tipoVeiculo,
+      "_cr40f_cliente_value"
+    ].join(",");
+  }
+
+  async function searchPassengersServer(term, limit = 25) {
+    const search = String(term || "").trim();
+    if (!state.xrm || state.mockMode) {
+      return searchPassengersLocal(search, limit);
+    }
+    if (normalize(search).length < MIN_PASSENGER_SEARCH_LENGTH) return [];
+
+    const f = CONFIG.fields.passageiro;
+    const escaped = escapeODataString(search);
+    const digits = onlyDigits(search);
+    const filters = [
+      `contains(${f.nome},'${escaped}')`,
+      `contains(${f.email},'${escaped}')`,
+      `contains(${f.telefone},'${escaped}')`,
+      `contains(${f.cr},'${escaped}')`
+    ];
+    if (digits.length >= 4) {
+      filters.push(`contains(${f.telefone},'${escapeODataString(digits.slice(-4))}')`);
+    }
+    if (digits.length >= 8) {
+      filters.push(`contains(${f.telefone},'${escapeODataString(digits.slice(-8))}')`);
+    }
+    if (digits.length >= 4 && digits !== search) {
+      filters.push(`contains(${f.telefone},'${escapeODataString(digits)}')`);
+    }
+
+    const rows = await retrieveAll(
+      CONFIG.entities.passageiro,
+      `?$select=${passengerSelectFields()}&$filter=${filters.join(" or ")}&$orderby=${f.nome} asc&$top=${limit}`
+    );
+    return mergePassengerRecords(rows.map(mapPassageiro));
+  }
+
+  function searchPassengersLocal(term, limit = 25) {
+    const query = normalize(term);
+    const digits = onlyDigits(term);
+    const rows = state.passageiros.filter((passenger) => {
+      if (!query && !digits) return true;
+      const haystack = normalize([
+        passenger.label,
+        passenger.telefone,
+        passenger.email,
+        passenger.clienteLabel,
+        passenger.cr,
+        passenger.departamento
+      ].filter(Boolean).join(" "));
+      return haystack.includes(query) || (digits && onlyDigits(passenger.telefone).includes(digits));
+    });
+    return rows.slice(0, limit);
+  }
+
+  async function ensurePassengersByIds(ids) {
+    const requested = Array.from(new Set((ids || []).map(cleanGuid).filter(Boolean)));
+    const missing = requested.filter((id) => !state.passageiros.some((passenger) => sameId(passenger.id, id)));
+    if (!missing.length) return [];
+    if (!state.xrm || state.mockMode) {
+      return state.passageiros.filter((passenger) => requested.some((id) => sameId(id, passenger.id)));
+    }
+
+    const f = CONFIG.fields.passageiro;
+    const batches = [];
+    for (let index = 0; index < missing.length; index += 20) {
+      batches.push(missing.slice(index, index + 20));
+    }
+    const rows = [];
+    for (const batch of batches) {
+      const filter = batch.map((id) => `${f.id} eq ${id}`).join(" or ");
+      rows.push(...await retrieveAll(CONFIG.entities.passageiro, `?$select=${passengerSelectFields()}&$filter=${filter}`));
+    }
+    return mergePassengerRecords(rows.map(mapPassageiro));
+  }
+
+  function mergePassengerRecords(records) {
+    const merged = [];
+    records.forEach((passenger) => {
+      if (!passenger?.id) return;
+      const index = state.passageiros.findIndex((item) => sameId(item.id, passenger.id));
+      if (index >= 0) {
+        state.passageiros[index] = { ...state.passageiros[index], ...passenger };
+        merged.push(state.passageiros[index]);
+        return;
+      }
+      state.passageiros.push(passenger);
+      merged.push(passenger);
+    });
+    state.passageiros.sort((a, b) => (a.label || "").localeCompare(b.label || "", "pt-BR"));
+    return merged;
+  }
+
+  function escapeODataString(value) {
+    return String(value || "").replace(/'/g, "''");
+  }
+
+  function onlyDigits(value) {
+    return String(value || "").replace(/\D/g, "");
   }
 
   function loadMockLookups() {
@@ -1423,6 +1534,7 @@
         departamento: "Operacoes"
       }
     ];
+    state.passageiros = uniquePassengersById(state.passageiros.map(normalizeMockPassengerChoices));
     state.motoristas = [
       { id: "mot-1", label: "Carlos Motorista" },
       { id: "mot-2", label: "Rafael Costa" },
@@ -1433,7 +1545,55 @@
       { id: "op-2", label: "OP-1099" },
       { id: "op-3", label: "OP-1134" }
     ];
-    passengerCatalogLoaded = true;
+  }
+
+  function normalizeMockPassengerChoices(passenger) {
+    const classificacaoMap = {
+      40: 202410000,
+      41: 202410001,
+      42: 202410002,
+      43: 202410003
+    };
+    const sexoMap = {
+      50: 202410000,
+      51: 202410001
+    };
+    const idiomaMap = {
+      60: 202410000,
+      61: 202410001,
+      62: 202410002
+    };
+    const cargoMap = {
+      70: 202410000,
+      71: 202410003,
+      72: 202410005,
+      73: 202410006,
+      74: 202410004
+    };
+    const tipoVeiculoMap = {
+      SEDAN: 202410000,
+      SUV: 202410001,
+      VAN: 202410003
+    };
+    return {
+      ...passenger,
+      status: 202410001,
+      classificacao: classificacaoMap[passenger.classificacao] ?? passenger.classificacao,
+      sexo: sexoMap[passenger.sexo] ?? passenger.sexo,
+      idioma: idiomaMap[passenger.idioma] ?? passenger.idioma,
+      cargo: cargoMap[passenger.cargo] ?? passenger.cargo,
+      tipoVeiculo: tipoVeiculoMap[String(passenger.tipoVeiculo || "").toUpperCase()] ?? passenger.tipoVeiculo
+    };
+  }
+
+  function uniquePassengersById(rows) {
+    const seen = new Set();
+    return rows.filter((passenger) => {
+      const id = cleanGuid(passenger?.id).toLowerCase();
+      if (!id || seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
   }
 
   function getMockDb() {
@@ -1632,6 +1792,10 @@
       CONFIG.entities.servicoPassageiro,
       `?$select=${CONFIG.fields.servicoPassageiro.id},${CONFIG.fields.servicoPassageiro.ordem},${CONFIG.fields.servicoPassageiro.endereco},_cr40f_bancodedados_value&$filter=_cr40f_geral_value eq ${state.recordId}&$orderby=${CONFIG.fields.servicoPassageiro.ordem} asc`
     );
+    await ensurePassengersByIds([
+      state.record._cr40f_solicitante_value,
+      ...state.relacoes.map((rel) => rel._cr40f_bancodedados_value)
+    ]);
 
     const hasCustom = !!state.record[f.enderecoPersonalizado];
     const hasRelations = state.relacoes.length > 0;
@@ -1726,7 +1890,6 @@
     renderLookupSelect(el.cliente, state.clientes);
     renderLookupSelect(el.bdCliente, state.clientes);
     renderLookupSelect(el.solicitante, state.passageiros);
-    renderLookupSelect(el.bdExistingPassenger, state.passageiros);
     renderLookupSelect(el.motorista, state.motoristas);
     renderLookupSelect(el.op, state.ordensPagamento);
     renderChoiceSelect(el.bdStatus, state.options.bdStatus);
@@ -1735,14 +1898,10 @@
     renderChoiceSelect(el.bdIdioma, state.options.bdIdioma);
     renderChoiceSelect(el.bdCargo, state.options.bdCargo);
     renderChoiceSelect(el.bdTipoVeiculo, state.options.bdTipoVeiculo);
-    renderPassengerDirectory();
     hydrateForm();
     renderScheduleDrafts();
     renderPassengers();
     renderTabBadges();
-    renderRiskPanel();
-    renderSaveLog();
-    renderDraftStatus();
   }
 
   function renderStatusFaturamento() {
@@ -1814,69 +1973,6 @@
     return getPassengerEditFields().find((field) => field.key === fieldKey) || null;
   }
 
-  function renderPassengerDirectory() {
-    if (!el.bdPassengerDirectory) return;
-    const query = normalize(el.bdPassengerSearch?.value || "");
-    const rows = state.passageiros
-      .filter((passenger) => {
-        if (!query) return true;
-        const haystack = normalize([
-          passenger.label,
-          passenger.telefone,
-          passenger.email,
-          passenger.clienteLabel,
-          passenger.cr,
-          passenger.departamento
-        ].filter(Boolean).join(" "));
-        return haystack.includes(query);
-      })
-      .slice()
-      .sort((a, b) => (a.label || "").localeCompare(b.label || "", "pt-BR"));
-
-    el.bdPassengerDirectory.innerHTML = "";
-    if (!rows.length) {
-      const empty = document.createElement("p");
-      empty.className = "passenger-directory-empty";
-      empty.textContent = state.passageiros.length ? "Nenhum passageiro encontrado." : "Nenhum passageiro carregado.";
-      el.bdPassengerDirectory.appendChild(empty);
-      return;
-    }
-
-    rows.forEach((passenger) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "passenger-directory-item";
-      button.dataset.passengerId = passenger.id;
-      button.setAttribute("role", "option");
-
-      const name = document.createElement("strong");
-      name.textContent = passenger.label || "Passageiro sem nome";
-
-      const meta = document.createElement("span");
-      meta.textContent = [
-        passenger.telefone,
-        passenger.email,
-        passenger.clienteLabel
-      ].filter(Boolean).join(" | ") || "Sem contato cadastrado";
-
-      const extra = document.createElement("small");
-      extra.textContent = [
-        optionLabel("bdStatus", passenger.status),
-        optionLabel("bdClassificacao", passenger.classificacao),
-        passenger.cr ? `CR ${passenger.cr}` : ""
-      ].filter(Boolean).join(" | ") || "Sem classificação";
-
-      button.append(name, meta, extra);
-      el.bdPassengerDirectory.appendChild(button);
-    });
-  }
-
-  function handlePassengerDirectoryAction(event) {
-    const item = event.target.closest("[data-passenger-id]");
-    if (!item || !el.bdPassengerDirectory.contains(item)) return;
-    openPassengerEdit(item.dataset.passengerId);
-  }
-
   function openPassengerEdit(passengerOrId) {
     const passenger = typeof passengerOrId === "object"
       ? passengerOrId
@@ -1896,7 +1992,6 @@
     }
     activePassengerEditId = passengerId;
     passengerEditEnabled = false;
-    setSelectValue(el.bdExistingPassenger, passengerId);
     renderPassengerEditHeader(passenger);
     renderPassengerEditFields(passenger);
     setPassengerEditMode(false);
@@ -2169,9 +2264,6 @@
     const currentSolicitante = el.solicitante.value;
     renderLookupSelect(el.solicitante, state.passageiros);
     setSelectValue(el.solicitante, currentSolicitante);
-    renderLookupSelect(el.bdExistingPassenger, state.passageiros);
-    setSelectValue(el.bdExistingPassenger, passengerId);
-    renderPassengerDirectory();
     renderPassengers();
     renderRiskPanel();
     markDraftDirty();
@@ -2921,7 +3013,6 @@
     const target = event.target;
     if (target?.classList?.contains("custom-select-search")) return;
     if (target === el.passengerPickerSearch) return;
-    if (target === el.bdPassengerSearch) return;
     if (target?.closest?.("#passengerEditOverlay")) return;
 
     clearFieldValidation(target);
@@ -2932,22 +3023,6 @@
   }
 
   function renderRiskPanel() {
-    if (!el.riskList) return;
-    const risks = collectOperationalRisks();
-    el.riskList.innerHTML = "";
-
-    if (!risks.length) {
-      const item = document.createElement("li");
-      item.textContent = "Sem risco operacional crítico detectado.";
-      el.riskList.appendChild(item);
-      return;
-    }
-
-    risks.forEach((risk) => {
-      const item = document.createElement("li");
-      item.textContent = risk;
-      el.riskList.appendChild(item);
-    });
   }
 
   function collectOperationalRisks(context = buildSaveContext()) {
@@ -2966,39 +3041,18 @@
     if (state.enderecoPersonalizadoAtivo && !el.enderecoPersonalizado.value.trim() && !isTroca) risks.push("Endereço único ativo, mas vazio.");
     if (!state.enderecoPersonalizadoAtivo && context.colOrdemPassageiros.some((item) => !item.enderecoSaidaBD) && !isTroca) risks.push("Há passageiro sem endereço de saída.");
     if (el.agendarRetorno.checked && !context.dataHoraRetorno) risks.push("Retorno ativo sem data/hora completa.");
+    if (el.agendarRetorno.checked && context.dataHoraRetorno && context.dataHoraPrincipal && context.dataHoraRetorno < context.dataHoraPrincipal) risks.push("Data de retorno anterior à saída.");
     if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) risks.push("Serviço frequente ativo sem período completo.");
     if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) risks.push("Período frequente com data final anterior à inicial.");
+    if (el.repetirServico.checked) {
+      const frequentPeriodError = validateFrequentServicePeriod();
+      if (frequentPeriodError) risks.push(frequentPeriodError);
+    }
 
     return risks;
   }
 
   function renderSaveLog() {
-    if (!el.saveLogList) return;
-    el.saveLogList.innerHTML = "";
-
-    if (!state.saveLog.length) {
-      const item = document.createElement("li");
-      item.textContent = "Nenhum salvamento executado nesta sessão.";
-      el.saveLogList.appendChild(item);
-      return;
-    }
-
-    state.saveLog.forEach((entry) => {
-      const item = document.createElement("li");
-      item.className = `save-log-entry ${entry.type || "info"}`;
-
-      const title = document.createElement("strong");
-      title.textContent = entry.title || "Evento";
-
-      const detail = document.createElement("span");
-      detail.textContent = entry.detail || "";
-
-      const time = document.createElement("small");
-      time.textContent = entry.at ? formatTime(entry.at) : "";
-
-      item.append(title, detail, time);
-      el.saveLogList.appendChild(item);
-    });
   }
 
   function clearSaveLog() {
@@ -3149,7 +3203,7 @@
     };
   }
 
-  function restoreDraftSnapshot() {
+  async function restoreDraftSnapshot() {
     const snapshot = readDraftSnapshot();
     if (!snapshot) {
       renderDraftStatus();
@@ -3162,6 +3216,7 @@
 
     state.draftRestoring = true;
     try {
+      await ensurePassengersByIds((snapshot.selectedPassengers || []).map((item) => item.guid));
       const fields = snapshot.fields || {};
       setSelectValue(el.statusOperacao, fields.statusOperacao || "");
       setSelectValue(el.statusFaturamento, fields.statusFaturamento || "");
@@ -3255,22 +3310,6 @@
   }
 
   function renderDraftStatus(forcedText = "") {
-    if (!el.draftStatus) return;
-    if (forcedText) {
-      el.draftStatus.textContent = forcedText;
-      return;
-    }
-
-    const snapshot = readDraftSnapshot();
-    const updatedAt = state.lastDraftSavedAt || snapshot?.updatedAt || "";
-    if (!updatedAt) {
-      el.draftStatus.textContent = "Sem rascunho salvo.";
-      if (el.clearDraftButton) el.clearDraftButton.disabled = true;
-      return;
-    }
-
-    el.draftStatus.textContent = `Rascunho salvo as ${formatTime(updatedAt)}.`;
-    if (el.clearDraftButton) el.clearDraftButton.disabled = false;
   }
 
   function readDraftSnapshot() {
@@ -3444,13 +3483,17 @@
   }
 
   function getAvailablePassengers() {
+    return getAvailablePassengersFrom(state.passageiros);
+  }
+
+  function getAvailablePassengersFrom(rows) {
     const usedIds = new Set(
       state.selectedPassengers
         .map((item) => cleanGuid(item.guid || ""))
         .filter(Boolean)
         .map((id) => id.toLowerCase())
     );
-    return state.passageiros
+    return (rows || [])
       .filter((pax) => !usedIds.has(cleanGuid(pax.id).toLowerCase()))
       .slice()
       .sort((a, b) => {
@@ -3465,25 +3508,8 @@
     const normalizedOrder = Number(targetOrder);
     passengerPickerTargetOrder = Number.isFinite(normalizedOrder) && normalizedOrder > 0 ? normalizedOrder : null;
     if (!el.passengerPickerOverlay || !el.passengerPickerSearch || !el.passengerPickerResults) return;
-    if (!state.passageiros.length) {
-      try {
-        await ensurePassengerCatalogLoaded();
-      } catch (error) {
-        console.warn("Falha ao recarregar passageiros", error);
-        toast("Não foi possível carregar passageiros agora. Tente novamente.", "error", 2500);
-        return;
-      }
-    }
-    const candidates = getAvailablePassengers();
-    if (!candidates.length) {
-      passengerPickerTargetOrder = null;
-      const label = state.passageiros.length
-        ? "Sem passageiros disponíveis para adicionar (todos já estão vinculados)."
-        : "Nenhum passageiro encontrado no cadastro.";
-      toast(label, "error");
-      return;
-    }
-    renderPassengerPickerResults();
+    el.passengerPickerSearch.value = "";
+    renderPassengerPickerHint("Digite pelo menos 2 caracteres para pesquisar no Banco de Dados.");
     el.passengerPickerOverlay.hidden = false;
     requestAnimationFrame(() => {
       if (el.passengerPickerSearch) el.passengerPickerSearch.focus();
@@ -3501,30 +3527,35 @@
     }
   }
 
-  function renderPassengerPickerResults() {
+  function schedulePassengerPickerSearch() {
+    if (passengerPickerSearchTimer) window.clearTimeout(passengerPickerSearchTimer);
+    passengerPickerSearchTimer = window.setTimeout(() => {
+      passengerPickerSearchTimer = null;
+      renderPassengerPickerResults();
+    }, 250);
+  }
+
+  async function renderPassengerPickerResults() {
     if (!el.passengerPickerSearch || !el.passengerPickerResults) return;
-    const query = el.passengerPickerSearch.value.trim().toLowerCase();
-    const base = getAvailablePassengers();
-    const list = query
-      ? base.filter((pax) => {
-        const haystack = [
-          pax.label,
-          pax.telefone,
-          pax.email,
-          pax.clienteLabel
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase();
-        return haystack.includes(query);
-      })
-      : base;
+    const query = el.passengerPickerSearch.value.trim();
+    if (normalize(query).length < MIN_PASSENGER_SEARCH_LENGTH) {
+      renderPassengerPickerHint("Digite pelo menos 2 caracteres para pesquisar no Banco de Dados.");
+      return;
+    }
+    const searchSeq = ++passengerPickerSearchSeq;
+    renderPassengerPickerHint("Pesquisando passageiros...");
+    let list = [];
+    try {
+      list = getAvailablePassengersFrom(await searchPassengersServer(query, 30));
+    } catch (error) {
+      console.error(error);
+      renderPassengerPickerHint("Falha ao pesquisar passageiros. Tente novamente.");
+      return;
+    }
+    if (searchSeq !== passengerPickerSearchSeq) return;
     el.passengerPickerResults.innerHTML = "";
     if (!list.length) {
-      const empty = document.createElement("p");
-      empty.className = "passenger-picker-empty";
-      empty.textContent = base.length ? "Nenhum passageiro encontrado." : "Sem passageiros disponíveis.";
-      el.passengerPickerResults.appendChild(empty);
+      renderPassengerPickerHint("Nenhum passageiro encontrado.");
       return;
     }
     list.forEach((pax) => {
@@ -3559,6 +3590,15 @@
       first.classList.add("is-active");
       first.setAttribute("aria-selected", "true");
     }
+  }
+
+  function renderPassengerPickerHint(message) {
+    if (!el.passengerPickerResults) return;
+    el.passengerPickerResults.innerHTML = "";
+    const empty = document.createElement("p");
+    empty.className = "passenger-picker-empty";
+    empty.textContent = message;
+    el.passengerPickerResults.appendChild(empty);
   }
 
   function handlePassengerPickerAction(event) {
@@ -3655,6 +3695,9 @@
     }
     touchPassengerSelectionRecency(selected.id);
     applyPassengerDefaults(true);
+    const currentSolicitante = el.solicitante.value;
+    renderLookupSelect(el.solicitante, state.passageiros);
+    setSelectValue(el.solicitante, currentSolicitante || selected.id);
     closePassengerPicker();
     renderPassengers();
     renderRiskPanel();
@@ -3666,11 +3709,6 @@
     const hasUnfilledPassenger = state.selectedPassengers.some((item) => !item.passageiro || !item.guid);
     if (hasUnfilledPassenger) {
       toast("Preencha o passageiro pendente antes de adicionar outro.", "error");
-      return;
-    }
-    const hasCandidates = getAvailablePassengers().length > 0;
-    if (!hasCandidates) {
-      toast("Sem passageiros disponíveis para adicionar.", "error");
       return;
     }
     openPassengerPicker();
@@ -3797,11 +3835,14 @@
       return;
     }
 
-    const exists = state.passageiros.some((item) => item.label.trim().toLowerCase() === el.bdNome.value.trim().toLowerCase());
-    if (exists) {
-      revealInvalidField(el.bdNome, "Passageiro ja cadastrado.", { tab: "bd" });
-      toast(`Já existe um passageiro com o nome ${el.bdNome.value.trim()}!`, "error");
-      return;
+    const duplicateCandidates = await findPassengerDuplicateCandidates(readPassengerCreateCandidate());
+    if (duplicateCandidates.length) {
+      const decision = await openPassengerMatchReview(duplicateCandidates);
+      if (decision.action === "cancel") return;
+      if (decision.action === "use") {
+        useExistingPassengerFromMatch(decision.passenger);
+        return;
+      }
     }
 
     setLoading(true);
@@ -3840,8 +3881,6 @@
       state.passageiros.sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
       clearPassengerCreateForm();
       renderLookupSelect(el.solicitante, state.passageiros);
-      renderLookupSelect(el.bdExistingPassenger, state.passageiros);
-      renderPassengerDirectory();
       renderPassengers();
       renderRiskPanel();
       markDraftDirty();
@@ -3868,7 +3907,7 @@
     ].forEach((input) => {
       setFieldValue(input, "");
     });
-    [el.bdStatus, el.bdClassificacao, el.bdCliente, el.bdSexo, el.bdIdioma, el.bdCargo, el.bdTipoVeiculo, el.bdExistingPassenger].forEach((select) => {
+    [el.bdStatus, el.bdClassificacao, el.bdCliente, el.bdSexo, el.bdIdioma, el.bdCargo, el.bdTipoVeiculo].forEach((select) => {
       setSelectValue(select, "");
     });
     clearValidationStates();
@@ -3894,97 +3933,238 @@
     };
   }
 
-  function passengerPayloadFromForm(includeCadastro) {
-    const payload = {
-      [CONFIG.fields.passageiro.nome]: el.bdNome.value.trim(),
-      [CONFIG.fields.passageiro.telefone]: el.bdTelefone.value.trim(),
-      [CONFIG.fields.passageiro.enderecoSaida]: el.bdEndereco.value.trim(),
-      [CONFIG.fields.passageiro.preferencias]: el.bdPreferencias.value.trim(),
-      [CONFIG.fields.passageiro.email]: el.bdEmail.value.trim(),
-      [CONFIG.fields.passageiro.cr]: el.bdCr.value.trim(),
-      [CONFIG.fields.passageiro.departamento]: el.bdDepartamento.value.trim()
+  function readPassengerCreateCandidate() {
+    return {
+      ...passengerFormState(),
+      clienteLabel: state.clientes.find((item) => sameId(item.id, el.bdCliente.value))?.label || ""
     };
-    if (includeCadastro) payload[CONFIG.fields.passageiro.cadastro] = new Date().toISOString().slice(0, 10);
-    setChoice(payload, CONFIG.fields.passageiro.status, el.bdStatus.value);
-    setChoice(payload, CONFIG.fields.passageiro.cargo, el.bdCargo.value);
-    setChoice(payload, CONFIG.fields.passageiro.sexo, el.bdSexo.value);
-    setChoice(payload, CONFIG.fields.passageiro.idioma, el.bdIdioma.value);
-    setChoice(payload, CONFIG.fields.passageiro.classificacao, el.bdClassificacao.value);
-    setChoice(payload, CONFIG.fields.passageiro.tipoVeiculo, el.bdTipoVeiculo.value);
-    if (el.bdNascimento.value) payload[CONFIG.fields.passageiro.nascimento] = el.bdNascimento.value;
-    bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, el.bdCliente.value);
-    return payload;
   }
 
-  function loadPassengerForEdit() {
-    const passenger = state.passageiros.find((item) => sameId(item.id, el.bdExistingPassenger.value));
-    if (!passenger) {
-      toast("Selecione um passageiro para editar.", "error");
-      return;
-    }
-    openPassengerEdit(passenger.id);
-  }
-
-  async function updatePassenger() {
-    const passengerId = cleanGuid(el.bdExistingPassenger.value);
-    const index = state.passageiros.findIndex((item) => sameId(item.id, passengerId));
-    if (index < 0) {
-      toast("Selecione e carregue um passageiro existente.", "error");
-      return;
-    }
-    openPassengerEdit(passengerId);
-    toast("Edição agora salva automaticamente por campo.", "warning", 3500);
-    return;
-    const required = [
-      [el.bdStatus.value, "'Status' é obrigatório."],
-      [el.bdNome.value.trim(), "'Nome do Passageiro' é obrigatório."],
-      [el.bdCliente.value, "'Cliente' é obrigatório."],
-      [el.bdIdioma.value, "'Idioma' é obrigatório."],
-      [el.bdClassificacao.value, "'Classificação' é obrigatório."]
-    ];
-    const missing = required.find(([value]) => !value);
-    if (missing) {
-      toast(missing[1], "error");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const payload = passengerPayloadFromForm(false);
-      if (state.xrm && !state.mockMode) {
-        await state.xrm.WebApi.updateRecord(CONFIG.entities.passageiro, passengerId, payload);
+  async function findPassengerDuplicateCandidates(candidate) {
+    const terms = passengerDuplicateSearchTerms(candidate);
+    const rows = [];
+    for (const term of terms) {
+      try {
+        rows.push(...await searchPassengersServer(term, 20));
+      } catch (error) {
+        console.warn("Falha ao verificar duplicidade de passageiro", error);
       }
-      const updatedPassenger = {
-        ...state.passageiros[index],
-        ...passengerFormState(),
-        id: passengerId
-      };
-      state.passageiros[index] = updatedPassenger;
-      state.passageiros.sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
-      state.selectedPassengers = state.selectedPassengers.map((item) => (
-        sameId(item.guid, passengerId)
-          ? {
-              ...item,
-              passageiro: updatedPassenger,
-              telefone: updatedPassenger.telefone,
-              enderecoEditado: getDraftAddress(item.ordem) || updatedPassenger.endereco || ""
-            }
-          : item
-      ));
-      renderLookupSelect(el.solicitante, state.passageiros);
-      renderLookupSelect(el.bdExistingPassenger, state.passageiros);
-      setSelectValue(el.bdExistingPassenger, passengerId);
-      renderPassengers();
-      renderRiskPanel();
-      markDraftDirty();
-      toast(`Cadastro atualizado: ${updatedPassenger.label}`, "success");
-    } catch (error) {
-      console.error(error);
-      toast(`Falha ao atualizar passageiro. ${error.message || ""}`, "error", 9000);
-    } finally {
-      setLoading(false);
-      renderRiskPanel();
     }
+
+    state.passageiros.forEach((passenger) => rows.push(passenger));
+    const uniqueRows = [];
+    const seen = new Set();
+    rows.forEach((passenger) => {
+      const id = cleanGuid(passenger?.id).toLowerCase();
+      if (!id || seen.has(id)) return;
+      seen.add(id);
+      uniqueRows.push(passenger);
+    });
+
+    return uniqueRows
+      .map((passenger) => scorePassengerCandidate(candidate, passenger))
+      .filter(Boolean)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+  }
+
+  function passengerDuplicateSearchTerms(candidate) {
+    const terms = [];
+    const email = String(candidate.email || "").trim();
+    const phone = onlyDigits(candidate.telefone);
+    const cr = String(candidate.cr || "").trim();
+    const name = normalizeName(candidate.label);
+
+    if (email) terms.push(email);
+    if (phone.length >= 4) terms.push(phone.slice(-4));
+    if (cr) terms.push(cr);
+    if (name) {
+      terms.push(candidate.label);
+      const tokens = name.split(" ").filter((token) => token.length >= 3);
+      if (tokens[0]) terms.push(tokens[0]);
+      if (tokens.length > 1) terms.push(tokens[tokens.length - 1]);
+    }
+
+    return Array.from(new Set(
+      terms
+        .map((term) => String(term || "").trim())
+        .filter((term) => normalize(term).length >= MIN_PASSENGER_SEARCH_LENGTH)
+    )).slice(0, 5);
+  }
+
+  function scorePassengerCandidate(candidate, passenger) {
+    const reasons = [];
+    let score = 0;
+    const candidatePhone = onlyDigits(candidate.telefone);
+    const passengerPhone = onlyDigits(passenger.telefone);
+    const candidateEmail = normalize(candidate.email);
+    const passengerEmail = normalize(passenger.email);
+    const sameClient = candidate.clienteId && passenger.clienteId && sameId(candidate.clienteId, passenger.clienteId);
+
+    if (candidatePhone && passengerPhone && phoneNumbersMatch(candidatePhone, passengerPhone)) {
+      score += sameClient ? 70 : 55;
+      reasons.push("Telefone igual");
+    }
+    if (candidateEmail && passengerEmail && candidateEmail === passengerEmail) {
+      score += sameClient ? 70 : 55;
+      reasons.push("Email igual");
+    }
+
+    const similarity = nameSimilarity(candidate.label, passenger.label);
+    if (similarity >= 0.84) {
+      score += similarity >= 0.98 ? 45 : 30;
+      reasons.push("Nome muito parecido");
+    }
+    if (sameClient) {
+      score += 15;
+      reasons.push("Mesmo cliente");
+    }
+    if (candidate.cr && passenger.cr && normalize(candidate.cr) === normalize(passenger.cr)) {
+      score += 20;
+      reasons.push("CR igual");
+    }
+    if (candidate.departamento && passenger.departamento && normalize(candidate.departamento) === normalize(passenger.departamento)) {
+      score += 10;
+      reasons.push("Mesmo departamento");
+    }
+
+    const strongContactMatch = reasons.includes("Telefone igual") || reasons.includes("Email igual");
+    if (!strongContactMatch && score < 45) return null;
+    return {
+      passenger,
+      score,
+      reasons: Array.from(new Set(reasons))
+    };
+  }
+
+  function phoneNumbersMatch(left, right) {
+    if (left === right) return true;
+    const leftComparable = left.length >= 8 ? left.slice(-8) : left;
+    const rightComparable = right.length >= 8 ? right.slice(-8) : right;
+    return leftComparable.length >= 8 && leftComparable === rightComparable;
+  }
+
+  function nameSimilarity(left, right) {
+    const a = normalizeName(left);
+    const b = normalizeName(right);
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    const editScore = 1 - (levenshteinDistance(a, b) / Math.max(a.length, b.length));
+    const aTokens = new Set(a.split(" ").filter(Boolean));
+    const bTokens = new Set(b.split(" ").filter(Boolean));
+    const overlap = [...aTokens].filter((token) => bTokens.has(token)).length;
+    const tokenScore = overlap / Math.max(aTokens.size, bTokens.size, 1);
+    return Math.max(editScore, tokenScore);
+  }
+
+  function normalizeName(value) {
+    return normalize(value)
+      .replace(/[^a-z0-9 ]/g, " ")
+      .replace(/\b(sr|sra|dr|dra|mr|mrs|ms)\b/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function levenshteinDistance(left, right) {
+    const previous = Array.from({ length: right.length + 1 }, (_, index) => index);
+    for (let i = 1; i <= left.length; i += 1) {
+      let last = i - 1;
+      previous[0] = i;
+      for (let j = 1; j <= right.length; j += 1) {
+        const current = previous[j];
+        previous[j] = left[i - 1] === right[j - 1]
+          ? last
+          : Math.min(previous[j - 1], previous[j], last) + 1;
+        last = current;
+      }
+    }
+    return previous[right.length];
+  }
+
+  function openPassengerMatchReview(candidates) {
+    if (!candidates.length || !el.passengerMatchOverlay || !el.passengerMatchList) {
+      return Promise.resolve({ action: "continue" });
+    }
+    if (passengerMatchResolve) {
+      passengerMatchResolve({ action: "cancel" });
+      passengerMatchResolve = null;
+    }
+    passengerMatchCandidates = candidates;
+    renderPassengerMatchList(candidates);
+    el.passengerMatchOverlay.hidden = false;
+    return new Promise((resolve) => {
+      passengerMatchResolve = resolve;
+    });
+  }
+
+  function renderPassengerMatchList(candidates) {
+    el.passengerMatchList.innerHTML = "";
+    const questionSearchKey = "Certeza que este nao e o passageiro desejado?";
+    const question = "Certeza que este não é o passageiro desejado?";
+    candidates.forEach((candidate) => {
+      const passenger = candidate.passenger;
+      const item = document.createElement("article");
+      item.className = "passenger-match-item";
+      item.dataset.questionKey = questionSearchKey;
+
+      const title = document.createElement("strong");
+      title.textContent = passenger.label || "Passageiro sem nome";
+
+      const questionLine = document.createElement("span");
+      questionLine.className = "passenger-match-question";
+      questionLine.textContent = question;
+
+      const meta = document.createElement("small");
+      meta.textContent = [
+        passenger.clienteLabel,
+        passenger.telefone,
+        passenger.email,
+        passenger.cr ? `CR ${passenger.cr}` : ""
+      ].filter(Boolean).join(" | ") || "Sem contato cadastrado";
+
+      const reasons = document.createElement("div");
+      reasons.className = "passenger-match-reasons";
+      candidate.reasons.forEach((reason) => {
+        const badge = document.createElement("span");
+        badge.textContent = reason;
+        reasons.appendChild(badge);
+      });
+
+      const useButton = document.createElement("button");
+      useButton.type = "button";
+      useButton.className = "secondary-action";
+      useButton.dataset.passengerMatchAction = "use";
+      useButton.dataset.passengerId = passenger.id;
+      useButton.textContent = "Usar este passageiro";
+
+      item.append(title, questionLine, meta, reasons, useButton);
+      el.passengerMatchList.appendChild(item);
+    });
+  }
+
+  function handlePassengerMatchAction(event) {
+    const button = event.target.closest("[data-passenger-match-action]");
+    if (!button || !el.passengerMatchList?.contains(button)) return;
+    if (button.dataset.passengerMatchAction !== "use") return;
+    const passenger = passengerMatchCandidates.find((candidate) => sameId(candidate.passenger.id, button.dataset.passengerId))?.passenger;
+    resolvePassengerMatchReview({ action: "use", passenger });
+  }
+
+  function resolvePassengerMatchReview(result) {
+    if (el.passengerMatchOverlay) el.passengerMatchOverlay.hidden = true;
+    const resolve = passengerMatchResolve;
+    passengerMatchResolve = null;
+    if (resolve) resolve(result || { action: "cancel" });
+  }
+
+  function useExistingPassengerFromMatch(passenger) {
+    if (!passenger?.id) return;
+    mergePassengerRecords([passenger]);
+    renderLookupSelect(el.solicitante, state.passageiros);
+    if (!el.solicitante.value) setSelectValue(el.solicitante, passenger.id);
+    addPassengerFromId(passenger.id);
+    clearPassengerCreateForm();
+    setTab("details");
   }
 
   async function saveForm() {
@@ -4139,12 +4319,36 @@
     if (el.agendarRetorno.checked && !el.retornoData.value) return "'Data de retorno' é obrigatória.";
     if (el.agendarRetorno.checked && !el.retornoEndereco.value.trim()) return "'Endereço de Saída - Retorno' é obrigatório.";
     if (el.agendarRetorno.checked && !el.retornoDestino.value.trim()) return "'Destino - Retorno' é obrigatório.";
+    if (el.agendarRetorno.checked && context.dataHoraRetorno && context.dataHoraPrincipal && context.dataHoraRetorno < context.dataHoraPrincipal) return "Data de retorno nao pode ser anterior a saida.";
     if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) return "'Data de início e fim - Serviços Frequentes' são obrigatórios.";
     if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) return "'Data final' não pode ser anterior à data inicial.";
+    const frequentPeriodError = validateFrequentServicePeriod();
+    if (frequentPeriodError) return frequentPeriodError;
     if (el.repetirServico.checked && !el.frequenteTipo.value) return "'Tipo de Serviço Frequente' é obrigatório.";
     if (state.isNew && el.repetirServico.checked && el.agendarRetorno.checked) return "Não é possível usar 'Serviços Frequentes' e 'Agendar Retorno' ao mesmo tempo. Escolha apenas um.";
     if (hasDuplicatePassengers()) return "Erro: passageiro duplicado na lista. Remova as duplicatas.";
     return "";
+  }
+
+  function validateFrequentServicePeriod() {
+    if (!el.repetirServico.checked || !el.frequenteInicio.value || !el.frequenteFim.value) return "";
+    const days = dateRangeDays(el.frequenteInicio.value, el.frequenteFim.value);
+    if (days > MAX_FREQUENT_SERVICE_DAYS) {
+      return `Periodo frequente muito grande. Limite: ${MAX_FREQUENT_SERVICE_DAYS} dias.`;
+    }
+    const dates = generateFrequentDates(el.frequenteInicio.value, el.frequenteFim.value, el.contabilizarFds.checked);
+    const multiplier = el.frequenteTipo.value === "Ida e retorno" ? 2 : 1;
+    if (dates.length * multiplier > MAX_FREQUENT_SERVICE_RECORDS) {
+      return `Periodo frequente muito grande. Limite: ${MAX_FREQUENT_SERVICE_RECORDS} servicos.`;
+    }
+    return "";
+  }
+
+  function dateRangeDays(startValue, endValue) {
+    const start = new Date(`${startValue}T00:00:00`);
+    const end = new Date(`${endValue}T00:00:00`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+    return Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
   }
 
   function buildReservaPayload(context, kind, dataHora, scheduleOverride = null) {
@@ -4187,6 +4391,10 @@
   }
 
   async function createFrequentServices(context) {
+    const frequentPeriodError = validateFrequentServicePeriod();
+    if (frequentPeriodError) {
+      throw new Error(frequentPeriodError);
+    }
     if (new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) {
       throw new Error("Data final não pode ser anterior a data inicial para serviços frequentes.");
     }
@@ -4333,7 +4541,6 @@
     hydrateForm();
     renderScheduleDrafts();
     renderPassengers();
-    renderPassengerDirectory();
     renderRiskPanel();
     renderTabBadges();
     setTab("details");

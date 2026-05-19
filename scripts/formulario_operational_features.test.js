@@ -10,39 +10,43 @@ function includes(source, value, label = value) {
   assert.ok(source.includes(value), `Esperado: ${label}`);
 }
 
+function excludes(source, value, label = value) {
+  assert.ok(!source.includes(value), `Nao esperado: ${label}`);
+}
+
 [
-  "reviewOverlay",
-  "reviewSummaryList",
-  "reviewRiskList",
-  "confirmSaveButton",
-  "cancelReviewButton",
-  "riskPanel",
   "riskList",
   "saveLogList",
   "draftStatus",
-  "clearDraftButton",
-  "bdExistingPassenger",
-  "loadPassengerForEdit",
-  "updatePassenger"
-].forEach((id) => includes(html, `id="${id}"`, `elemento #${id}`));
+  "confirmSaveButton",
+  "bdExistingPassenger"
+].forEach((id) => {
+  excludes(app, `$("` + id + `")`, `binding fantasma #${id}`);
+});
 
-[
-  "function openReviewBeforeSave",
-  "function performSave",
-  "function buildReviewItems",
-  "function renderRiskPanel",
-  "function renderSaveLog",
-  "function addSaveLog",
-  "function persistDraftSnapshot",
-  "function restoreDraftSnapshot",
-  "function clearDraftSnapshot",
-  "async function updatePassenger",
-  "function loadPassengerForEdit"
-].forEach((signature) => includes(app, signature, signature));
+includes(app, "{ value: 202410005, label: \"Pendente\" }", "fallback real de Status de Faturamento");
+includes(app, "{ value: 202410000, label: \"Cartao de credito\" }", "fallback real de Forma de Pagamento");
+includes(app, "{ value: 202410000, label: \"Guarulhos\" }", "fallback real de Tipo do Servico");
+includes(app, "{ value: 202410000, label: \"Basico\" }", "fallback real de Tipo do Veiculo");
+excludes(app, "{ value: 1, label: \"Aeroporto ida e volta\" }", "fallback antigo inventado");
+excludes(app, "{ value: 30, label: \"Ativo\" }", "fallback antigo inventado para status passageiro");
 
-includes(app, "DRAFT_STORE_KEY", "chave de rascunho local");
-includes(app, "state.pendingSaveContext", "contexto de salvamento pendente");
-includes(app, "passengerPayloadFromForm(false, true)", "edicao limpa campos opcionais no Dataverse");
-includes(app, "payload[CONFIG.fields.passageiro.nascimento] = null", "edicao limpa nascimento vazio");
+includes(app, "const MIN_PASSENGER_SEARCH_LENGTH", "limite minimo para busca server-side");
+includes(app, "async function searchPassengersServer", "busca server-side de passageiros");
+includes(app, "async function ensurePassengersByIds", "carga pontual por ids de passageiros");
+excludes(app, "retrieveAll(CONFIG.entities.passageiro, [", "carga inicial de 5000 passageiros");
+
+includes(html, "id=\"passengerMatchOverlay\"", "overlay de possivel duplicidade de passageiro");
+includes(app, "function findPassengerDuplicateCandidates", "validacao multipla de duplicidade");
+includes(app, "function scorePassengerCandidate", "pontuacao de candidato duplicado");
+includes(app, "Certeza que este nao e o passageiro desejado?", "pergunta de confirmacao de duplicidade");
+includes(app, "Telefone igual", "validacao por telefone");
+includes(app, "Email igual", "validacao por email");
+includes(app, "Nome muito parecido", "validacao por nome parecido");
+includes(app, "Mesmo cliente", "validacao por cliente");
+
+includes(app, "MAX_FREQUENT_SERVICE_DAYS", "limite para periodo recorrente");
+includes(app, "Data de retorno nao pode ser anterior a saida", "validacao retorno antes da saida");
+includes(app, "Periodo frequente muito grande", "validacao de recorrencia grande demais");
 
 console.log("formulario_operational_features: ok");

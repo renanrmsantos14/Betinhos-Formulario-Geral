@@ -129,6 +129,17 @@ O novo formulario sera publicado como web resource e usado dentro de um Model-dr
 - Conferência operacional e agendamentos adicionais foram removidos da interface e do fluxo de criação.
 - Rascunho local automático e edição direta de passageiro existente seguem na aba Banco de Dados.
 
+## Novidades (2026-05-19)
+
+- IDs fantasma removidos do contrato JS: `riskList`, `saveLogList`, `draftStatus`, `confirmSaveButton` e `bdExistingPassenger`.
+- `Choices` de fallback em `app.js` foram alinhados ao metadata real auditado; valores mock inventados foram removidos.
+- Dados mock de passageiro tambem sao normalizados para os mesmos valores de Choice usados no Dataverse.
+- Dados mock de passageiro sao deduplicados por ID antes de renderizar selects e buscas locais.
+- Passageiros nao sao mais carregados em lote de 5000 no inicio. A busca agora e sob demanda via Dataverse, com carga pontual por IDs em edicao/rascunho.
+- Cadastro de passageiro novo agora executa conferencia de duplicidade por telefone, email, nome parecido, cliente, CR e departamento.
+- Quando houver candidato provavel, a tela mostra o registro encontrado e pergunta: "Certeza que este nao e o passageiro desejado?".
+- Validacoes adicionadas: retorno antes da saida bloqueia salvamento; periodo recorrente acima do limite bloqueia geracao.
+
 ## Telas / abas replicadas
 
 - `Detalhes`: dados principais do servico.
