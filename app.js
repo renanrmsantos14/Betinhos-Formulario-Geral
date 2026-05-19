@@ -162,9 +162,7 @@
         { value: 202410002, label: "Pix" }
       ],
       bdStatus: [
-        { value: 202410000, label: "Pre-reserva" },
-        { value: 202410004, label: "Solicitado" },
-        { value: 202410001, label: "Confirmado" }
+        { value: 202410001, label: "Ativo" }
       ],
       bdClassificacao: [
         { value: 202410000, label: "Passageiro Frequente" },
@@ -259,6 +257,7 @@
     destino: $("destino"),
     bdStatus: $("bdStatus"),
     bdNome: $("bdNome"),
+    bdTelefonePais: $("bdTelefonePais"),
     bdTelefone: $("bdTelefone"),
     bdEndereco: $("bdEndereco"),
     bdEmail: $("bdEmail"),
@@ -279,6 +278,7 @@
     passengerEditToggle: $("passengerEditToggle"),
     passengerEditClose: $("passengerEditClose"),
     passengerMatchOverlay: $("passengerMatchOverlay"),
+    passengerMatchSummary: $("passengerMatchSummary"),
     passengerMatchList: $("passengerMatchList"),
     passengerMatchCancel: $("passengerMatchCancel"),
     passengerMatchContinue: $("passengerMatchContinue"),
@@ -361,12 +361,6 @@
   let passengerMatchCandidates = [];
 
   state.mockMode = QUERY_MOCK_MODE || state.xrm === null;
-
-  init().catch((error) => {
-    console.error(error);
-    setLoading(false);
-    toast(error.message || "Falha ao iniciar formulário.", "error", 9000);
-  });
 
   async function init() {
     state.isNew = !state.recordId;
@@ -519,7 +513,10 @@
         resolvePassengerMatchReview({ action: "cancel" });
       }
     });
-    el.passengerMatchList?.addEventListener("click", handlePassengerMatchAction);
+    el.passengerMatchOverlay?.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || el.passengerMatchOverlay.hidden) return;
+      resolvePassengerMatchReview({ action: "cancel" });
+    });
     el.passengerEditFields?.addEventListener("input", handlePassengerEditInput);
     el.passengerEditFields?.addEventListener("change", handlePassengerEditInput);
     const markPassengerEditEmptySignals = () => requestAnimationFrame(applyPassengerEditEmptySignals);
@@ -587,23 +584,121 @@
     window?.addEventListener("resize", repositionOpenCustomSelectPanels);
     window?.addEventListener("resize", repositionPassengerPreview);
     window?.addEventListener("resize", syncPassengerNameColumnWidth);
+    bindInputFormatters();
     const appRoot = $("app");
     appRoot?.addEventListener("input", handleOperationalInput);
     appRoot?.addEventListener("change", handleOperationalInput);
   }
 
+  function bindInputFormatters() {
+    initializePhoneCountrySelect();
+    bindPhoneInput(el.bdTelefone);
+    bindFormattedInput(el.bdEmail, normalizeEmail);
+    bindFormattedInput(el.bdCr, normalizeCodeValue);
+    bindFormattedInput(el.cr, normalizeCodeValue);
+    bindCurrencyInput(el.cotacao);
+    document.querySelectorAll("input[id*='cpf' i], input[name*='cpf' i]").forEach((input) => {
+      bindFormattedInput(input, formatCpf);
+      input.addEventListener("blur", () => {
+        if (input.value.trim() && !isValidCpf(input.value)) {
+          revealInvalidField(input, "CPF invalido.");
+        } else {
+          clearFieldValidation(input);
+        }
+      });
+    });
+    el.bdEmail?.addEventListener("blur", () => validateEmailControl(el.bdEmail, { tab: "bd" }));
+  }
+
+  function initializePhoneCountrySelect() {
+    if (!el.bdTelefonePais || el.bdTelefonePais.dataset.phoneCountriesReady === "1") return;
+    el.bdTelefonePais.dataset.phoneCountriesReady = "1";
+    el.bdTelefonePais.innerHTML = "";
+    PHONE_COUNTRY_OPTIONS.forEach((country) => {
+      const option = document.createElement("option");
+      option.value = country.code;
+      option.dataset.iso = country.iso;
+      option.dataset.flag = country.flag || countryFlagFromIso(country.iso);
+      option.dataset.flagImage = country.flagImage || "";
+      option.dataset.name = country.name;
+      option.dataset.search = `${country.name} ${country.iso} +${country.code}`;
+      option.textContent = `${option.dataset.flag} ${country.name} +${country.code}`;
+      option.title = country.name;
+      el.bdTelefonePais.appendChild(option);
+    });
+    el.bdTelefonePais.value = "55";
+    if (el.bdTelefone) el.bdTelefone.placeholder = "+55 11 99999-9999";
+    el.bdTelefonePais.addEventListener("change", () => {
+      applyPhoneCountrySelection(el.bdTelefone, selectedPhoneCountryCode());
+      refreshCustomSelect(el.bdTelefonePais);
+    });
+  }
+
+  function bindPhoneInput(input) {
+    if (!input || input.dataset.phoneReady === "1") return;
+    input.dataset.phoneReady = "1";
+    input.addEventListener("input", () => {
+      const previousCountryCode = selectedPhoneCountryCode();
+      const parsed = parsePhoneNumberForInput(input.value, previousCountryCode, {
+        manualCountry: input.dataset.phoneCountryManual === "1"
+      });
+      const next = parsed.formatted;
+      if (input.value !== next) input.value = next;
+      if (parsed.countryCode && parsed.countryCode !== previousCountryCode) {
+        delete input.dataset.phoneCountryManual;
+      }
+      syncPhoneCountryFromParsed(parsed, { refreshDisplay: true });
+      updatePhoneCountryHint(input, parsed);
+    });
+    input.addEventListener("blur", () => {
+      const parsed = parsePhoneNumberForInput(input.value, selectedPhoneCountryCode(), {
+        manualCountry: input.dataset.phoneCountryManual === "1"
+      });
+      input.value = parsed.formatted;
+      validatePhoneControl(input);
+    });
+  }
+
+  function bindFormattedInput(input, formatter) {
+    if (!input || input.dataset.formatterReady === "1") return;
+    input.dataset.formatterReady = "1";
+    input.addEventListener("input", () => {
+      const next = formatter(input.value);
+      if (input.value !== next) input.value = next;
+    });
+    input.addEventListener("blur", () => {
+      const next = formatter(input.value);
+      if (input.value !== next) input.value = next;
+    });
+  }
+
+  function bindCurrencyInput(input) {
+    if (!input || input.dataset.currencyReady === "1") return;
+    input.dataset.currencyReady = "1";
+    input.addEventListener("input", () => {
+      const next = sanitizeCurrencyInput(input.value);
+      if (input.value !== next) input.value = next;
+    });
+    input.addEventListener("blur", () => {
+      input.value = formatCurrencyDisplayValue(input.value);
+    });
+  }
+
   function initializeCustomSelects() {
     document.querySelectorAll("select").forEach((select) => {
-      if (select.hidden) return;
+      if (select.hidden || select.dataset.nativeSelect === "true") return;
       ensureCustomSelect(select);
       refreshCustomSelect(select);
     });
   }
 
   function ensureCustomSelect(select) {
-    if (!select || select.tagName !== "SELECT" || select.hidden || select.dataset.customSelectReady === "1") return;
+    if (!select || select.tagName !== "SELECT" || select.hidden || select.dataset.nativeSelect === "true" || select.dataset.customSelectReady === "1") return;
     const wrapper = document.createElement("div");
     wrapper.className = "custom-select";
+    if (select.dataset.selectVariant) {
+      wrapper.classList.add(`custom-select--${select.dataset.selectVariant}`);
+    }
 
     const trigger = document.createElement("button");
     trigger.type = "button";
@@ -612,6 +707,9 @@
 
     const triggerText = document.createElement("span");
     triggerText.className = "custom-select-value";
+    if (select.dataset.selectVariant === "phone-country") {
+      triggerText.classList.add("custom-select-value--phone-country");
+    }
 
     const triggerCaret = document.createElement("span");
     triggerCaret.className = "custom-select-caret";
@@ -619,6 +717,9 @@
 
     const panel = document.createElement("div");
     panel.className = "custom-select-panel";
+    if (select.dataset.selectVariant) {
+      panel.classList.add(`custom-select-panel--${select.dataset.selectVariant}`);
+    }
     if (select.closest(".status-select")) {
       panel.classList.add("is-status");
     }
@@ -629,7 +730,7 @@
     const searchInput = document.createElement("input");
     searchInput.type = "text";
     searchInput.className = "custom-select-search";
-    searchInput.placeholder = "Pesquisar";
+    searchInput.placeholder = select.dataset.selectVariant === "phone-country" ? "Buscar país" : "Pesquisar";
     searchInput.autocomplete = "off";
     searchInput.spellcheck = false;
     searchInput.setAttribute("aria-label", "Pesquisar opção");
@@ -725,7 +826,12 @@
       || options.find((option) => option.selected)
       || options[0];
 
-    triggerText.textContent = selectedOption ? selectedOption.textContent.trim() || "Selecione" : "Selecione";
+    setCustomSelectTriggerDisplay(triggerText, selectedOption, nativeSelect);
+    if (nativeSelect.dataset.selectVariant === "phone-country" && selectedOption) {
+      trigger.title = `${selectedOption.dataset.name || selectedOption.textContent} +${selectedOption.value}`;
+    } else {
+      trigger.removeAttribute("title");
+    }
     triggerText.classList.toggle("is-placeholder", !selectedOption || selectedOption.value === "");
     trigger.disabled = nativeSelect.disabled;
     renderCustomSelectOptions(select, state.searchInput?.value || "");
@@ -766,15 +872,18 @@
     panel.classList.remove("is-empty");
     options.forEach((option) => {
       const optionText = option.textContent;
-      const normalizedOptionText = normalize(optionText);
+      const normalizedOptionText = normalize(`${optionText} ${option.dataset.search || ""}`);
       if (query && !normalizedOptionText.includes(query)) return;
 
       const button = document.createElement("button");
       button.type = "button";
       button.role = "option";
       button.className = "custom-select-option";
+      if (nativeSelect.dataset.selectVariant) {
+        button.classList.add(`custom-select-option--${nativeSelect.dataset.selectVariant}`);
+      }
       button.dataset.value = option.value || "";
-      button.textContent = optionText;
+      renderCustomSelectOptionContent(button, option);
       if (String(option.value) === normalizedSelectedValue) {
         button.classList.add("is-active");
         button.setAttribute("aria-selected", "true");
@@ -792,7 +901,7 @@
         const eventInput = new Event("input", { bubbles: true });
         nativeSelect.dispatchEvent(eventInput);
         closeCustomSelect(nativeSelect);
-        triggerText.textContent = optionText.trim() || "Selecione";
+        setCustomSelectTriggerDisplay(triggerText, option, nativeSelect);
       });
 
       optionsContainer.appendChild(button);
@@ -836,7 +945,8 @@
   function updateCustomSelectPanelPosition(state) {
     if (!state || !state.wrapper.classList.contains("is-open")) return;
     const rect = state.trigger.getBoundingClientRect();
-    const width = Math.max(140, Math.ceil(rect.width || state.trigger.offsetWidth || 120));
+    const minWidth = state.select?.dataset?.selectVariant === "phone-country" ? 280 : 140;
+    const width = Math.max(minWidth, Math.ceil(rect.width || state.trigger.offsetWidth || 120));
     const maxHeight = Math.min(260, Math.max(120, Math.floor(window.innerHeight * 0.42)));
     const spaceBelow = window.innerHeight - rect.bottom - 8;
     const spaceAbove = rect.top - 8;
@@ -1107,6 +1217,559 @@
 
   function onlyDigits(value) {
     return String(value || "").replace(/\D/g, "");
+  }
+
+  function getCustomSelectDisplayText(option, select = null) {
+    if (!option) return "";
+    if (option.dataset?.flag && option.dataset?.name) {
+      if (select?.dataset?.selectVariant === "phone-country") {
+        return `${option.dataset.flag} +${option.value}`;
+      }
+      return `${option.dataset.flag} ${option.dataset.name} +${option.value}`;
+    }
+    return option.textContent.trim();
+  }
+
+  function renderCustomSelectOptionContent(button, option) {
+    if (option.dataset?.flag && option.dataset?.name) {
+      const main = document.createElement("span");
+      main.className = "custom-select-option-main";
+      const flag = createCountryFlagNode(option);
+      const name = document.createElement("span");
+      name.className = "custom-select-option-name";
+      name.textContent = option.dataset.name;
+      const code = document.createElement("span");
+      code.className = "custom-select-option-code";
+      code.textContent = `+${option.value}`;
+      main.append(flag, name);
+      button.append(main, code);
+      const check = document.createElement("span");
+      check.className = "custom-select-option-check";
+      check.setAttribute("aria-hidden", "true");
+      check.textContent = "✓";
+      button.append(check);
+      return;
+    }
+    button.textContent = option.textContent;
+  }
+
+  function setCustomSelectTriggerDisplay(triggerText, option, select) {
+    triggerText.innerHTML = "";
+    if (!option) {
+      triggerText.textContent = "Selecione";
+      return;
+    }
+    if (select?.dataset?.selectVariant === "phone-country") {
+      const flagNode = createCountryFlagNode(option);
+      const code = document.createElement("span");
+      code.className = "custom-select-option-code custom-select-option-code--phone-country";
+      code.textContent = `+${option.value}`;
+      triggerText.append(flagNode, code);
+      return;
+    }
+    triggerText.textContent = getCustomSelectDisplayText(option, select) || "Selecione";
+  }
+
+  function createCountryFlagNode(option = null) {
+    const flag = option?.dataset?.flag || "";
+    if (!option?.dataset?.flagImage) {
+      const fallback = document.createElement("span");
+      fallback.className = "custom-select-option-flag custom-select-option-flag--emoji";
+      fallback.textContent = flag || "";
+      return fallback;
+    }
+
+    const wrapper = document.createElement("span");
+    wrapper.className = "custom-select-option-flag";
+    const img = document.createElement("img");
+    img.className = "country-flag-image";
+    img.src = option.dataset.flagImage;
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.referrerPolicy = "no-referrer";
+    img.alt = "";
+    img.onerror = () => {
+      wrapper.className = "custom-select-option-flag custom-select-option-flag--emoji";
+      wrapper.textContent = flag || "";
+      wrapper.querySelector("img")?.remove();
+    };
+    wrapper.appendChild(img);
+    return wrapper;
+  }
+
+  function normalizeEmail(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+
+  function normalizeCodeValue(value) {
+    return String(value || "").trimStart().replace(/\s+/g, " ").toUpperCase();
+  }
+
+  function countryFlagFromIso(isoValue) {
+    return String(isoValue || "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((iso) => iso
+        .trim()
+        .toUpperCase()
+        .slice(0, 2)
+        .replace(/[A-Z]/g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0))))
+      .join(" ");
+  }
+
+  function countryFlagImageFromIso(isoValue) {
+    const iso = String(isoValue || "").trim().split(/\s+/)[0] || "";
+    if (!iso) return "";
+    return `https://flagcdn.com/24x18/${iso.toLowerCase()}.png`;
+  }
+
+  const PHONE_COUNTRY_OPTIONS = [
+    { iso: "BR", code: "55", name: "Brasil" },
+    { iso: "US CA", code: "1", name: "EUA / Canadá" },
+    { iso: "PT", code: "351", name: "Portugal" },
+    { iso: "AR", code: "54", name: "Argentina" },
+    { iso: "CL", code: "56", name: "Chile" },
+    { iso: "CO", code: "57", name: "Colômbia" },
+    { iso: "MX", code: "52", name: "México" },
+    { iso: "GB", code: "44", name: "Reino Unido" },
+    { iso: "ES", code: "34", name: "Espanha" },
+    { iso: "FR", code: "33", name: "França" },
+    { iso: "IT", code: "39", name: "Itália" },
+    { iso: "DE", code: "49", name: "Alemanha" },
+    { iso: "JP", code: "81", name: "Japão" },
+    { iso: "CN", code: "86", name: "China" },
+    { iso: "IN", code: "91", name: "Índia" },
+    { iso: "AE", code: "971", name: "Emirados Árabes" },
+    { iso: "ZA", code: "27", name: "África do Sul" },
+    { iso: "AL", code: "355", name: "Albânia" },
+    { iso: "SA", code: "966", name: "Arábia Saudita" },
+    { iso: "DZ", code: "213", name: "Argélia" },
+    { iso: "AU", code: "61", name: "Austrália" },
+    { iso: "AT", code: "43", name: "Áustria" },
+    { iso: "BH", code: "973", name: "Bahrein" },
+    { iso: "BE", code: "32", name: "Bélgica" },
+    { iso: "BO", code: "591", name: "Bolívia" },
+    { iso: "BG", code: "359", name: "Bulgária" },
+    { iso: "QA", code: "974", name: "Catar" },
+    { iso: "SG", code: "65", name: "Singapura" },
+    { iso: "KR", code: "82", name: "Coreia do Sul" },
+    { iso: "CR", code: "506", name: "Costa Rica" },
+    { iso: "CU", code: "53", name: "Cuba" },
+    { iso: "DK", code: "45", name: "Dinamarca" },
+    { iso: "EC", code: "593", name: "Equador" },
+    { iso: "EG", code: "20", name: "Egito" },
+    { iso: "SV", code: "503", name: "El Salvador" },
+    { iso: "SK", code: "421", name: "Eslováquia" },
+    { iso: "SI", code: "386", name: "Eslovênia" },
+    { iso: "FI", code: "358", name: "Finlândia" },
+    { iso: "GR", code: "30", name: "Grécia" },
+    { iso: "GT", code: "502", name: "Guatemala" },
+    { iso: "NL", code: "31", name: "Países Baixos" },
+    { iso: "HN", code: "504", name: "Honduras" },
+    { iso: "HK", code: "852", name: "Hong Kong" },
+    { iso: "HU", code: "36", name: "Hungria" },
+    { iso: "ID", code: "62", name: "Indonésia" },
+    { iso: "IE", code: "353", name: "Irlanda" },
+    { iso: "IL", code: "972", name: "Israel" },
+    { iso: "LU", code: "352", name: "Luxemburgo" },
+    { iso: "MA", code: "212", name: "Marrocos" },
+    { iso: "NO", code: "47", name: "Noruega" },
+    { iso: "NZ", code: "64", name: "Nova Zelândia" },
+    { iso: "PA", code: "507", name: "Panamá" },
+    { iso: "PY", code: "595", name: "Paraguai" },
+    { iso: "PE", code: "51", name: "Peru" },
+    { iso: "PL", code: "48", name: "Polônia" },
+    { iso: "CZ", code: "420", name: "República Tcheca" },
+    { iso: "RO", code: "40", name: "Romênia" },
+    { iso: "RU KZ", code: "7", name: "Rússia / Cazaquistão" },
+    { iso: "SE", code: "46", name: "Suécia" },
+    { iso: "CH", code: "41", name: "Suíça" },
+    { iso: "TH", code: "66", name: "Tailândia" },
+    { iso: "TW", code: "886", name: "Taiwan" },
+    { iso: "TR", code: "90", name: "Turquia" },
+    { iso: "UA", code: "380", name: "Ucrânia" },
+    { iso: "UY", code: "598", name: "Uruguai" },
+    { iso: "VE", code: "58", name: "Venezuela" },
+    { iso: "VN", code: "84", name: "Vietnã" }
+  ].map((country) => ({
+    ...country,
+    flag: countryFlagFromIso(country.iso),
+    flagImage: countryFlagImageFromIso(country.iso)
+  }));
+
+  const PHONE_COUNTRY_CODES = Array.from(
+    new Map(PHONE_COUNTRY_OPTIONS.map((country) => [country.code, country.name])).entries()
+  ).sort((a, b) => b[0].length - a[0].length);
+  const PHONE_COUNTRY_FORMATS = {
+    1: { max: 10, min: 10, groups: [3, 3, 4], template: "us" },
+    33: { max: 9, min: 9, groups: [1, 2, 2, 2, 2] },
+    34: { max: 9, min: 9, groups: [3, 3, 3] },
+    39: { max: 10, min: 6, groups: [3, 3, 4] },
+    44: { max: 10, min: 10, groups: [4, 3, 3] },
+    49: { max: 11, min: 7, groups: [3, 4, 4] },
+    52: { max: 10, min: 10, groups: [2, 4, 4] },
+    54: { max: 10, min: 10, groups: [2, 4, 4] },
+    55: { max: 11, min: 10, template: "br" },
+    56: { max: 9, min: 9, groups: [1, 4, 4] },
+    57: { max: 10, min: 10, groups: [3, 3, 4] },
+    81: { max: 10, min: 10, groups: [2, 4, 4] },
+    86: { max: 11, min: 11, groups: [3, 4, 4] },
+    91: { max: 10, min: 10, groups: [5, 5] },
+    351: { max: 9, min: 9, groups: [3, 3, 3] },
+    971: { max: 9, min: 8, groups: [2, 3, 4] }
+  };
+
+  function formatPhoneNumber(value) {
+    const parsed = parsePhoneNumber(value);
+    return parsed.formatted;
+  }
+
+  function formatPhoneNumberForCountry(value, countryCode) {
+    const parsed = parsePhoneNumberForSelectedCountry(value, countryCode);
+    return parsed.formatted;
+  }
+
+  function parsePhoneNumber(value, preferredCountryCode = "") {
+    const original = String(value || "").trim();
+    if (!original) return emptyPhoneResult();
+
+    const normalized = original
+      .replace(/[^\d+]/g, "")
+      .replace(/(?!^)\+/g, "");
+    const hasExplicitPlus = normalized.startsWith("+");
+    let digits = onlyDigits(normalized);
+    if (!digits) return emptyPhoneResult();
+    if (!hasExplicitPlus && digits.startsWith("00") && digits.length > 4) {
+      digits = digits.slice(2);
+    }
+    digits = digits.slice(0, 15);
+
+    const selectedCountryCode = String(preferredCountryCode || "").trim();
+    const explicitInternational = hasExplicitPlus || original.startsWith("00") || (!selectedCountryCode && digits.length > 11 && !digits.startsWith("0"));
+    if (!explicitInternational && selectedCountryCode && selectedCountryCode !== "55") {
+      const selectedFormat = PHONE_COUNTRY_FORMATS[selectedCountryCode];
+      let nationalDigits = digits;
+      if (nationalDigits.startsWith(selectedCountryCode)) {
+        const withoutDuplicatedDdi = normalizeNationalForCountry(selectedCountryCode, nationalDigits.slice(selectedCountryCode.length));
+        if (isValidInternationalPhone(selectedCountryCode, withoutDuplicatedDdi) || nationalDigits.length > (selectedFormat?.max || phoneNationalMaxLength(selectedCountryCode))) {
+          nationalDigits = withoutDuplicatedDdi;
+        }
+      }
+      nationalDigits = normalizeNationalForCountry(selectedCountryCode, nationalDigits);
+      const country = getPhoneCountryByCode(selectedCountryCode);
+      const formatted = `+${selectedCountryCode}${nationalDigits ? ` ${formatInternationalNationalNumber(selectedCountryCode, nationalDigits)}` : ""}`;
+      const isValid = isValidInternationalPhone(selectedCountryCode, nationalDigits);
+      return {
+        formatted,
+        e164: isValid ? `+${selectedCountryCode}${nationalDigits}` : "",
+        digits: `${selectedCountryCode}${nationalDigits}`.slice(0, 15),
+        countryCode: selectedCountryCode,
+        countryName: country?.name || country?.[1] || "DDI selecionado",
+        national: nationalDigits,
+        isInternational: true,
+        isValid,
+        message: isValid ? "" : "Telefone deve ter entre 4 e 14 digitos depois do DDI."
+      };
+    }
+
+    if (!explicitInternational) {
+      const nationalDigits = normalizeNationalForCountry("55", digits);
+      const formatted = formatBrazilianPhone(nationalDigits);
+      const isValid = isValidBrazilianPhone(nationalDigits);
+      return {
+        formatted,
+        e164: isValid ? `+55${nationalDigits}` : "",
+        digits: nationalDigits,
+        countryCode: "55",
+        countryName: "Brasil",
+        national: nationalDigits,
+        isInternational: false,
+        isValid,
+        message: isValid ? "" : "Telefone brasileiro deve ter DDD e 10 ou 11 digitos."
+      };
+    }
+
+    const country = detectPhoneCountry(digits);
+    const countryCode = country?.code || country?.[0] || "";
+    const countryName = country?.name || country?.[1] || "DDI nao identificado";
+    const national = countryCode ? normalizeNationalForCountry(countryCode, digits.slice(countryCode.length)) : digits;
+    const fullDigits = countryCode ? `${countryCode}${national}`.slice(0, 15) : digits;
+    const formatted = countryCode
+      ? `+${countryCode}${national ? ` ${formatInternationalNationalNumber(countryCode, national)}` : ""}`
+      : `+${groupDigits(digits)}`;
+    const isValid = !!countryCode && isValidInternationalPhone(countryCode, national);
+    return {
+      formatted,
+      e164: isValid ? `+${fullDigits}` : "",
+      digits: fullDigits,
+      countryCode,
+      countryName,
+      national,
+      isInternational: true,
+      isValid,
+      message: !countryCode
+        ? "DDI nao identificado. Use formato internacional com codigo do pais."
+        : countryCode === "55" && !isValidBrazilianPhone(national)
+          ? "Telefone brasileiro deve ter DDD e 10 ou 11 digitos."
+          : "Telefone deve ter entre 8 e 15 digitos no formato internacional."
+      };
+  }
+
+  function parsePhoneNumberForInput(value, preferredCountryCode = "", options = {}) {
+    const preferred = parsePhoneNumber(value, preferredCountryCode);
+    const normalized = String(value || "").trim();
+    const digits = onlyDigits(normalized);
+    const explicitInternational = normalized.startsWith("+") || normalized.startsWith("00");
+    const plainInternational = digits.length > 11 && !digits.startsWith("0");
+    const detected = parsePhoneNumber(value, "");
+    const preferredCode = String(preferredCountryCode || "55");
+
+    if (!detected?.countryCode) return preferred;
+    if (detected.countryCode === preferredCode) return detected;
+    if (explicitInternational) return detected;
+    if (!options.manualCountry && plainInternational && detected.isValid) return detected;
+    return preferred;
+  }
+
+  function parsePhoneNumberForSelectedCountry(value, countryCode) {
+    const selectedCountryCode = String(countryCode || "55");
+    const nationalDigits = normalizeNationalForCountry(
+      selectedCountryCode,
+      phoneNationalDigitsForCountrySelection(value, selectedCountryCode)
+    );
+    return parsePhoneNumber(nationalDigits, selectedCountryCode);
+  }
+
+  function phoneStorageValue(value, preferredCountryCode = undefined) {
+    const countryCode = preferredCountryCode === undefined ? selectedPhoneCountryCode() : preferredCountryCode;
+    const parsed = parsePhoneNumberForInput(value, countryCode);
+    return parsed.isValid && parsed.e164 ? parsed.e164 : String(value || "").trim();
+  }
+
+  function phonePlaceholderForCountry(countryCode) {
+    const code = String(countryCode || "55");
+    if (code === "55") return "+55 11 99999-9999";
+    return `+${code}`;
+  }
+
+  function applyPhoneCountrySelection(input, countryCode) {
+    if (!input) return;
+    input.dataset.phoneCountryManual = "1";
+    input.placeholder = phonePlaceholderForCountry(countryCode);
+    const parsed = parsePhoneNumberForSelectedCountry(input.value, countryCode);
+    input.value = parsed.formatted;
+    updatePhoneCountryHint(input, parsed);
+    if (!parsed.digits) {
+      clearFieldValidation(input);
+      return;
+    }
+    if (parsed.isValid) {
+      clearFieldValidation(input);
+      return;
+    }
+    markFieldInvalid(input, parsed.message || "Telefone invalido.");
+  }
+
+  function resetPhoneControl() {
+    if (el.bdTelefonePais) {
+      el.bdTelefonePais.value = "55";
+      refreshCustomSelect(el.bdTelefonePais);
+    }
+    if (el.bdTelefone) {
+      el.bdTelefone.value = "";
+      el.bdTelefone.placeholder = phonePlaceholderForCountry("55");
+      delete el.bdTelefone.dataset.phoneCountry;
+      delete el.bdTelefone.dataset.phoneCountryManual;
+    }
+  }
+
+  function phoneNationalDigitsForCountrySelection(value, selectedCountryCode = "") {
+    const original = String(value || "").trim();
+    let digits = onlyDigits(original);
+    if (!digits) return "";
+    if (!original.startsWith("+") && digits.startsWith("00") && digits.length > 4) {
+      digits = digits.slice(2);
+    }
+
+    const detected = detectPhoneCountry(digits);
+    if ((original.startsWith("+") || original.startsWith("00")) && detected?.code) {
+      return digits.slice(detected.code.length);
+    }
+
+    const selectedCode = String(selectedCountryCode || "");
+    if (selectedCode && digits.startsWith(selectedCode)) {
+      const withoutSelectedCode = digits.slice(selectedCode.length);
+      if (isValidInternationalPhone(selectedCode, normalizeNationalForCountry(selectedCode, withoutSelectedCode))) {
+        return withoutSelectedCode;
+      }
+    }
+
+    if (detected?.code && detected.code !== selectedCode && digits.length > 11) {
+      return digits.slice(detected.code.length);
+    }
+
+    return digits;
+  }
+
+  function normalizeNationalForCountry(countryCode, nationalValue) {
+    const code = String(countryCode || "");
+    let national = onlyDigits(nationalValue).slice(0, phoneNationalMaxLength(code));
+    if (code === "55") {
+      if (national.length === 12 && national.startsWith("0")) return national.slice(1);
+      if ([13, 14].includes(national.length) && national.startsWith("0")) return national.slice(3);
+      return national;
+    }
+    if (code && code !== "39" && national.startsWith("0")) {
+      const withoutTrunk = national.slice(1);
+      if (isValidInternationalPhone(code, withoutTrunk)) return withoutTrunk;
+    }
+    return national;
+  }
+
+  function phoneNationalMaxLength(countryCode) {
+    return Math.max(4, 15 - String(countryCode || "").length);
+  }
+
+  function formatBrazilianPhone(digitsValue) {
+    const digits = onlyDigits(digitsValue).slice(0, phoneNationalMaxLength("55"));
+    if (digits.length <= 2) return digits;
+    const ddd = digits.slice(0, 2);
+    const number = digits.slice(2);
+    if (number.length <= 4) return `(${ddd}) ${number}`;
+    if (number.length <= 8) return `(${ddd}) ${number.slice(0, 4)}-${number.slice(4)}`;
+    const formatted = `(${ddd}) ${number.slice(0, 5)}-${number.slice(5, 9)}`;
+    const extra = number.slice(9);
+    return extra ? `${formatted} ${extra}` : formatted;
+  }
+
+  function formatInternationalNationalNumber(countryCode, nationalValue) {
+    const format = PHONE_COUNTRY_FORMATS[String(countryCode)];
+    const national = onlyDigits(nationalValue).slice(0, phoneNationalMaxLength(countryCode));
+    if (!national) return "";
+    if (format?.template === "br") return formatBrazilianPhone(national);
+    if (format?.template === "us") return formatGroupedPhone(national, format.groups, { parenthesizeFirst: national.length > 3 });
+    if (format?.groups) return formatGroupedPhone(national, format.groups);
+    return groupDigits(national);
+  }
+
+  function formatGroupedPhone(digitsValue, groups, options = {}) {
+    const digits = onlyDigits(digitsValue);
+    const parts = [];
+    let cursor = 0;
+    groups.forEach((size) => {
+      if (cursor >= digits.length) return;
+      parts.push(digits.slice(cursor, cursor + size));
+      cursor += size;
+    });
+    if (cursor < digits.length) parts.push(digits.slice(cursor));
+    if (options.parenthesizeFirst && parts[0]) {
+      if (parts.length === 1) return `(${parts[0]}`;
+      const rest = parts.slice(1).join("-");
+      return `(${parts[0]}) ${rest}`;
+    }
+    return parts.join(" ");
+  }
+
+  function groupDigits(value) {
+    const digits = onlyDigits(value);
+    if (digits.length <= 4) return digits;
+    const groups = [];
+    let remaining = digits;
+    while (remaining.length > 4) {
+      const size = remaining.length > 10 ? 3 : remaining.length > 7 ? 3 : remaining.length > 4 ? 4 : remaining.length;
+      groups.push(remaining.slice(0, size));
+      remaining = remaining.slice(size);
+    }
+    if (remaining) groups.push(remaining);
+    return groups.join(" ");
+  }
+
+  function detectPhoneCountry(digitsValue) {
+    const digits = onlyDigits(digitsValue);
+    const option = PHONE_COUNTRY_OPTIONS.find((country) => digits.startsWith(country.code));
+    if (option) return option;
+    const fallback = PHONE_COUNTRY_CODES.find(([code]) => digits.startsWith(code));
+    return fallback ? { code: fallback[0], name: fallback[1] } : null;
+  }
+
+  function getPhoneCountryByCode(code) {
+    const normalized = String(code || "");
+    const option = PHONE_COUNTRY_OPTIONS.find((country) => country.code === normalized);
+    if (option) return option;
+    const fallback = PHONE_COUNTRY_CODES.find(([countryCode]) => countryCode === normalized);
+    return fallback ? { code: fallback[0], name: fallback[1] } : null;
+  }
+
+  function selectedPhoneCountryCode() {
+    return el.bdTelefonePais?.value || "55";
+  }
+
+  function syncPhoneCountryFromParsed(parsed, { refreshDisplay = false } = {}) {
+    if (!el.bdTelefonePais || !parsed?.countryCode) return;
+    if ([...el.bdTelefonePais.options].some((option) => option.value === parsed.countryCode)) {
+      const previousCode = el.bdTelefonePais.value;
+      el.bdTelefonePais.value = parsed.countryCode;
+      if (el.bdTelefone) el.bdTelefone.placeholder = phonePlaceholderForCountry(parsed.countryCode);
+      if (refreshDisplay && previousCode !== el.bdTelefonePais.value && el.bdTelefonePais.dataset.customSelectReady === "1") {
+        refreshCustomSelect(el.bdTelefonePais);
+      }
+    }
+  }
+
+  function isValidInternationalPhone(countryCode, nationalValue) {
+    const national = onlyDigits(nationalValue);
+    if (countryCode === "55") return isValidBrazilianPhone(national);
+    const format = PHONE_COUNTRY_FORMATS[String(countryCode)];
+    if (format) {
+      return national.length >= format.min && national.length <= format.max && !/^(\d)\1+$/.test(national);
+    }
+    return national.length >= 4 && national.length <= Math.max(4, 15 - String(countryCode).length) && !/^(\d)\1+$/.test(national);
+  }
+
+  function isValidBrazilianPhone(value) {
+    const digits = onlyDigits(value);
+    if (![10, 11].includes(digits.length)) return false;
+    const ddd = Number(digits.slice(0, 2));
+    if (ddd < 11 || ddd > 99) return false;
+    const local = digits.slice(2);
+    if (/^(\d)\1+$/.test(local)) return false;
+    return true;
+  }
+
+  function emptyPhoneResult() {
+    return {
+      formatted: "",
+      e164: "",
+      digits: "",
+      countryCode: "",
+      countryName: "",
+      national: "",
+      isInternational: false,
+      isValid: true,
+      message: ""
+    };
+  }
+
+  function formatCpf(value) {
+    const digits = onlyDigits(value).slice(0, 11);
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+  }
+
+  function isValidCpf(value) {
+    const digits = onlyDigits(value);
+    if (digits.length !== 11 || /^(\d)\1{10}$/.test(digits)) return false;
+    const calculateDigit = (length) => {
+      const sum = digits
+        .slice(0, length)
+        .split("")
+        .reduce((total, digit, index) => total + Number(digit) * (length + 1 - index), 0);
+      const rest = (sum * 10) % 11;
+      return rest === 10 ? 0 : rest;
+    };
+    return calculateDigit(9) === Number(digits[9]) && calculateDigit(10) === Number(digits[10]);
   }
 
   function loadMockLookups() {
@@ -1714,7 +2377,7 @@
     return {
       id: record[f.id],
       label: record[f.nome] || record[`${clienteLookup}@OData.Community.Display.V1.FormattedValue`] || "(passageiro)",
-      telefone: record[f.telefone] || "",
+      telefone: formatPhoneNumber(record[f.telefone] || ""),
       email: record[f.email] || "",
       endereco: record[f.enderecoSaida] || "",
       preferencias: record[f.preferencias] || "",
@@ -1862,8 +2525,8 @@
 
     el.trajeto.value = r[f.trajeto] || "";
     el.destino.value = r[f.destino] || "";
-    el.cotacao.value = r[f.cotacao] ?? "";
-    el.cr.value = r[f.cr] || "";
+    el.cotacao.value = formatCurrencyDisplayValue(r[f.cotacao] ?? "");
+    el.cr.value = normalizeCodeValue(r[f.cr] || "");
     el.receber.checked = !!r[f.receber];
     state.obs.motorista = r[f.obsOperacao] || "";
     state.obs.interna = r[f.obsInterna] || "";
@@ -1892,7 +2555,6 @@
     renderLookupSelect(el.solicitante, state.passageiros);
     renderLookupSelect(el.motorista, state.motoristas);
     renderLookupSelect(el.op, state.ordensPagamento);
-    renderChoiceSelect(el.bdStatus, state.options.bdStatus);
     renderChoiceSelect(el.bdClassificacao, state.options.bdClassificacao);
     renderChoiceSelect(el.bdSexo, state.options.bdSexo);
     renderChoiceSelect(el.bdIdioma, state.options.bdIdioma);
@@ -1951,7 +2613,6 @@
   function getPassengerEditFields() {
     const f = CONFIG.fields.passageiro;
     return [
-      { key: "status", label: "Status", kind: "choice", required: true, stateKey: "status", payloadField: f.status, optionsKey: "bdStatus" },
       { key: "label", label: "Nome do passageiro", kind: "text", required: true, span: "wide", stateKey: "label", payloadField: f.nome, inputType: "text" },
       { key: "telefone", label: "Telefone", kind: "text", stateKey: "telefone", payloadField: f.telefone, inputType: "tel" },
       { key: "email", label: "Email", kind: "text", span: "wide", stateKey: "email", payloadField: f.email, inputType: "email" },
@@ -2083,13 +2744,16 @@
     } else {
       control = document.createElement("input");
       control.type = field.kind === "date" ? "date" : (field.inputType || "text");
+      if (field.inputType === "tel") control.inputMode = "tel";
+      if (field.inputType === "email") control.autocomplete = "email";
       control.readOnly = true;
     }
 
-    const value = getPassengerEditValue(passenger, field);
+    const rawValue = getPassengerEditValue(passenger, field);
+    const value = field.key === "telefone" ? formatPhoneNumber(rawValue) : rawValue;
     control.className = "passenger-edit-control";
     control.dataset.passengerEditControl = field.key;
-    control.dataset.savedValue = value;
+    control.dataset.savedValue = field.key === "telefone" ? phoneStorageValue(rawValue, "") : value;
     control.value = value;
     return control;
   }
@@ -2141,8 +2805,16 @@
     const control = event.target.closest("[data-passenger-edit-control]");
     if (!control || !el.passengerEditFields.contains(control)) return;
     if (control.disabled || control.readOnly) return;
+    formatPassengerEditControl(control.dataset.passengerEditControl, control);
     const delay = event.type === "input" && control.tagName !== "SELECT" ? 550 : 0;
     schedulePassengerEditSave(control.dataset.passengerEditControl, control, delay);
+  }
+
+  function formatPassengerEditControl(fieldKey, control) {
+    if (!control) return;
+    if (fieldKey === "telefone") control.value = formatPhoneNumber(control.value);
+    if (fieldKey === "email") control.value = normalizeEmail(control.value);
+    if (fieldKey === "cr") control.value = normalizeCodeValue(control.value);
   }
 
   function schedulePassengerEditSave(fieldKey, control, delay) {
@@ -2178,6 +2850,16 @@
       setPassengerEditStatus("Campo obrigatorio.", "error");
       return;
     }
+    if (field.key === "telefone" && value && !parsePhoneNumber(value).isValid) {
+      setPassengerFieldStatus(control, "error");
+      setPassengerEditStatus(parsePhoneNumber(value).message || "Telefone invalido.", "error");
+      return;
+    }
+    if (field.key === "email" && value && !control.checkValidity()) {
+      setPassengerFieldStatus(control, "error");
+      setPassengerEditStatus("Email invalido.", "error");
+      return;
+    }
     if (value === (control.dataset.savedValue || "")) {
       setPassengerFieldStatus(control, "");
       setPassengerEditStatus("", "");
@@ -2192,6 +2874,7 @@
 
       const updatedPassenger = applyPassengerFieldToState(cleanPassengerId, field, value);
       control.dataset.savedValue = value;
+      if (field.key === "telefone") control.value = formatPhoneNumber(value);
       setPassengerFieldStatus(control, "saved");
       setPassengerEditStatus("Atualizado.", "saved");
       if (updatedPassenger) renderPassengerEditHeader(updatedPassenger, true);
@@ -2206,7 +2889,12 @@
 
   function readPassengerEditControlValue(control, field) {
     if (!control) return "";
-    if (field.kind === "text" || field.kind === "textarea") return control.value.trim();
+    if (field.kind === "text" || field.kind === "textarea") {
+      if (field.key === "telefone") return phoneStorageValue(control.value, "");
+      if (field.key === "email") return normalizeEmail(control.value);
+      if (field.key === "cr") return normalizeCodeValue(control.value);
+      return control.value.trim();
+    }
     return control.value || "";
   }
 
@@ -2234,9 +2922,10 @@
     const index = state.passageiros.findIndex((item) => sameId(item.id, passengerId));
     if (index < 0) return null;
 
+    const stateValue = field.key === "telefone" ? formatPhoneNumber(value) : value;
     const updatedPassenger = {
       ...state.passageiros[index],
-      [field.stateKey]: value
+      [field.stateKey]: stateValue
     };
     if (field.key === "clienteId") {
       updatedPassenger.clienteLabel = state.clientes.find((item) => sameId(item.id, value))?.label || "";
@@ -3232,7 +3921,7 @@
       setSelectValue(el.motorista, fields.motorista || "");
       setFieldValue(el.trajeto, fields.trajeto);
       setFieldValue(el.receber, fields.receber);
-      setFieldValue(el.cotacao, fields.cotacao);
+      setFieldValue(el.cotacao, formatCurrencyDisplayValue(fields.cotacao));
       setSelectValue(el.op, fields.op || "");
       setSelectValue(el.formaPagamento, fields.formaPagamento || "");
       setFieldValue(el.cr, fields.cr);
@@ -3813,14 +4502,21 @@
 
   async function createPassenger() {
     clearValidationStates();
+    const parsedPhone = parsePhoneNumberForInput(el.bdTelefone.value, selectedPhoneCountryCode(), {
+      manualCountry: el.bdTelefone?.dataset.phoneCountryManual === "1"
+    });
+    el.bdTelefone.value = parsedPhone.formatted;
+    syncPhoneCountryFromParsed(parsedPhone, { refreshDisplay: true });
+    updatePhoneCountryHint(el.bdTelefone, parsedPhone);
+    el.bdEmail.value = normalizeEmail(el.bdEmail.value);
+    el.bdCr.value = normalizeCodeValue(el.bdCr.value);
     const required = [
-      [el.bdStatus.value, "'Status' é obrigatório."],
       [el.bdNome.value.trim(), "'Nome do Passageiro' é obrigatório."],
       [el.bdCliente.value, "'Cliente' é obrigatório."],
       [el.bdIdioma.value, "'Idioma' é obrigatório."],
       [el.bdClassificacao.value, "'Classificação' é obrigatório."]
     ];
-    const requiredControls = [el.bdStatus, el.bdNome, el.bdCliente, el.bdIdioma, el.bdClassificacao];
+    const requiredControls = [el.bdNome, el.bdCliente, el.bdIdioma, el.bdClassificacao];
     const missingIndex = required.findIndex(([value]) => !value);
     const missing = missingIndex >= 0 ? required[missingIndex] : null;
     if (missing) {
@@ -3829,9 +4525,13 @@
       return;
     }
 
-    if (el.bdEmail.value.trim() && !el.bdEmail.checkValidity()) {
+    if (!validatePhoneControl(el.bdTelefone, { tab: "bd" })) {
+      toast("'Telefone' inválido.", "error");
+      return;
+    }
+
+    if (!validateEmailControl(el.bdEmail, { tab: "bd" })) {
       toast("'Email' inválido.", "error");
-      revealInvalidField(el.bdEmail, "Informe um email valido.", { tab: "bd" });
       return;
     }
 
@@ -3839,17 +4539,13 @@
     if (duplicateCandidates.length) {
       const decision = await openPassengerMatchReview(duplicateCandidates);
       if (decision.action === "cancel") return;
-      if (decision.action === "use") {
-        useExistingPassengerFromMatch(decision.passenger);
-        return;
-      }
     }
 
     setLoading(true);
     try {
       const payload = {
         [CONFIG.fields.passageiro.nome]: el.bdNome.value.trim(),
-        [CONFIG.fields.passageiro.telefone]: el.bdTelefone.value.trim(),
+        [CONFIG.fields.passageiro.telefone]: phoneStorageValue(el.bdTelefone.value, selectedPhoneCountryCode()),
         [CONFIG.fields.passageiro.enderecoSaida]: el.bdEndereco.value.trim(),
         [CONFIG.fields.passageiro.preferencias]: el.bdPreferencias.value.trim(),
         [CONFIG.fields.passageiro.email]: el.bdEmail.value.trim(),
@@ -3857,7 +4553,7 @@
         [CONFIG.fields.passageiro.departamento]: el.bdDepartamento.value.trim(),
         [CONFIG.fields.passageiro.cadastro]: new Date().toISOString().slice(0, 10)
       };
-      setChoice(payload, CONFIG.fields.passageiro.status, el.bdStatus.value);
+      setChoice(payload, CONFIG.fields.passageiro.status, getActivePassengerStatusValue());
       setChoice(payload, CONFIG.fields.passageiro.cargo, el.bdCargo.value);
       setChoice(payload, CONFIG.fields.passageiro.sexo, el.bdSexo.value);
       setChoice(payload, CONFIG.fields.passageiro.idioma, el.bdIdioma.value);
@@ -3907,9 +4603,10 @@
     ].forEach((input) => {
       setFieldValue(input, "");
     });
-    [el.bdStatus, el.bdClassificacao, el.bdCliente, el.bdSexo, el.bdIdioma, el.bdCargo, el.bdTipoVeiculo].forEach((select) => {
+    [el.bdClassificacao, el.bdCliente, el.bdSexo, el.bdIdioma, el.bdCargo, el.bdTipoVeiculo].forEach((select) => {
       setSelectValue(select, "");
     });
+    resetPhoneControl();
     clearValidationStates();
   }
 
@@ -3922,7 +4619,7 @@
       preferencias: el.bdPreferencias.value.trim(),
       cr: el.bdCr.value.trim(),
       clienteId: el.bdCliente.value,
-      status: el.bdStatus.value,
+      status: getActivePassengerStatusValue(),
       classificacao: el.bdClassificacao.value,
       sexo: el.bdSexo.value,
       idioma: el.bdIdioma.value,
@@ -3931,6 +4628,12 @@
       departamento: el.bdDepartamento.value.trim(),
       tipoVeiculo: el.bdTipoVeiculo.value
     };
+  }
+
+  function getActivePassengerStatusValue() {
+    const active = (state.options.bdStatus || []).find((option) => normalize(option.label) === "ativo");
+    if (active) return active.value;
+    return FALLBACK.bdStatus[0]?.value || "";
   }
 
   function readPassengerCreateCandidate() {
@@ -3943,6 +4646,7 @@
   async function findPassengerDuplicateCandidates(candidate) {
     const terms = passengerDuplicateSearchTerms(candidate);
     const rows = [];
+    rows.push(...await searchPassengerDuplicateClientPool(candidate.clienteId));
     for (const term of terms) {
       try {
         rows.push(...await searchPassengersServer(term, 20));
@@ -3968,14 +4672,37 @@
       .slice(0, 5);
   }
 
+  async function searchPassengerDuplicateClientPool(clientId) {
+    const cleanClientId = cleanGuid(clientId);
+    if (!cleanClientId) return [];
+    if (!state.xrm || state.mockMode) {
+      return state.passageiros.filter((passenger) => sameId(passenger.clienteId, cleanClientId)).slice(0, 100);
+    }
+    if (!isGuid(cleanClientId)) return [];
+
+    try {
+      const f = CONFIG.fields.passageiro;
+      const rows = await retrieveAll(
+        CONFIG.entities.passageiro,
+        `?$select=${passengerSelectFields()}&$filter=_cr40f_cliente_value eq ${cleanClientId}&$orderby=${f.nome} asc&$top=100`
+      );
+      return rows.map(mapPassageiro);
+    } catch (error) {
+      console.warn("Falha ao buscar passageiros do mesmo cliente", error);
+      return [];
+    }
+  }
+
   function passengerDuplicateSearchTerms(candidate) {
     const terms = [];
     const email = String(candidate.email || "").trim();
     const phone = onlyDigits(candidate.telefone);
     const cr = String(candidate.cr || "").trim();
     const name = normalizeName(candidate.label);
+    const emailLocal = email.split("@")[0] || "";
 
     if (email) terms.push(email);
+    if (emailLocal.length >= 3) terms.push(emailLocal);
     if (phone.length >= 4) terms.push(phone.slice(-4));
     if (cr) terms.push(cr);
     if (name) {
@@ -4000,20 +4727,32 @@
     const candidateEmail = normalize(candidate.email);
     const passengerEmail = normalize(passenger.email);
     const sameClient = candidate.clienteId && passenger.clienteId && sameId(candidate.clienteId, passenger.clienteId);
+    const similarity = nameSimilarity(candidate.label, passenger.label);
 
     if (candidatePhone && passengerPhone && phoneNumbersMatch(candidatePhone, passengerPhone)) {
       score += sameClient ? 70 : 55;
       reasons.push("Telefone igual");
+    } else if (candidatePhone && passengerPhone && phoneNumbersNearlyMatch(candidatePhone, passengerPhone) && (sameClient || similarity >= 0.78)) {
+      score += sameClient ? 35 : 25;
+      reasons.push("Telefone parecido");
     }
     if (candidateEmail && passengerEmail && candidateEmail === passengerEmail) {
       score += sameClient ? 70 : 55;
       reasons.push("Email igual");
+    } else if (candidateEmail && passengerEmail && emailsProbablySame(candidateEmail, passengerEmail) && (sameClient || similarity >= 0.78)) {
+      score += sameClient ? 35 : 25;
+      reasons.push("Email parecido");
     }
 
-    const similarity = nameSimilarity(candidate.label, passenger.label);
-    if (similarity >= 0.84) {
-      score += similarity >= 0.98 ? 45 : 30;
+    if (similarity >= 0.92) {
+      score += 50;
+      reasons.push("Nome quase igual");
+    } else if (similarity >= 0.84) {
+      score += sameClient ? 40 : 35;
       reasons.push("Nome muito parecido");
+    } else if (similarity >= 0.74 && sameClient) {
+      score += 30;
+      reasons.push("Nome parecido no mesmo cliente");
     }
     if (sameClient) {
       score += 15;
@@ -4044,25 +4783,128 @@
     return leftComparable.length >= 8 && leftComparable === rightComparable;
   }
 
+  function phoneNumbersNearlyMatch(left, right) {
+    const leftComparable = left.length >= 8 ? left.slice(-8) : left;
+    const rightComparable = right.length >= 8 ? right.slice(-8) : right;
+    if (leftComparable.length < 8 || rightComparable.length < 8 || leftComparable.length !== rightComparable.length) return false;
+    return hammingDistance(leftComparable, rightComparable) === 1;
+  }
+
+  function emailsProbablySame(left, right) {
+    const a = splitEmail(left);
+    const b = splitEmail(right);
+    if (!a.local || !b.local || !a.domain || !b.domain) return false;
+    const sameLocal = stringSimilarity(a.local, b.local) >= 0.88;
+    const sameDomain = stringSimilarity(a.domain, b.domain) >= 0.88;
+    return sameLocal && sameDomain;
+  }
+
+  function splitEmail(value) {
+    const parts = normalize(value).split("@");
+    return {
+      local: parts[0] || "",
+      domain: parts[1] || ""
+    };
+  }
+
   function nameSimilarity(left, right) {
     const a = normalizeName(left);
     const b = normalizeName(right);
     if (!a || !b) return 0;
     if (a === b) return 1;
-    const editScore = 1 - (levenshteinDistance(a, b) / Math.max(a.length, b.length));
-    const aTokens = new Set(a.split(" ").filter(Boolean));
-    const bTokens = new Set(b.split(" ").filter(Boolean));
-    const overlap = [...aTokens].filter((token) => bTokens.has(token)).length;
-    const tokenScore = overlap / Math.max(aTokens.size, bTokens.size, 1);
-    return Math.max(editScore, tokenScore);
+    const editScore = stringSimilarity(a, b);
+    const aTokens = a.split(" ").filter(Boolean);
+    const bTokens = b.split(" ").filter(Boolean);
+    const aSet = new Set(aTokens);
+    const bSet = new Set(bTokens);
+    const overlap = [...aSet].filter((token) => bSet.has(token)).length;
+    const exactTokenScore = overlap / Math.max(aSet.size, bSet.size, 1);
+    const fuzzyTokenScore = tokenFuzzyNameScore(aTokens, bTokens);
+    return Math.max(editScore, exactTokenScore, fuzzyTokenScore);
   }
 
   function normalizeName(value) {
     return normalize(value)
       .replace(/[^a-z0-9 ]/g, " ")
       .replace(/\b(sr|sra|dr|dra|mr|mrs|ms)\b/g, " ")
+      .replace(/\b(de|da|do|das|dos|e|y|the)\b/g, " ")
       .replace(/\s+/g, " ")
       .trim();
+  }
+
+  function tokenFuzzyNameScore(leftTokens, rightTokens) {
+    if (!leftTokens.length || !rightTokens.length) return 0;
+    const usedRight = new Set();
+    let total = 0;
+    let strongMatches = 0;
+
+    leftTokens.forEach((leftToken) => {
+      let bestIndex = -1;
+      let bestScore = 0;
+      rightTokens.forEach((rightToken, index) => {
+        if (usedRight.has(index)) return;
+        const score = stringSimilarity(leftToken, rightToken);
+        if (score > bestScore) {
+          bestScore = score;
+          bestIndex = index;
+        }
+      });
+      if (bestIndex >= 0) usedRight.add(bestIndex);
+      total += bestScore;
+      if (bestScore >= 0.78) strongMatches += 1;
+    });
+
+    const size = Math.max(leftTokens.length, rightTokens.length, 1);
+    const average = total / size;
+    const coverage = strongMatches / size;
+    return (average * 0.7) + (coverage * 0.3);
+  }
+
+  function stringSimilarity(left, right) {
+    const a = String(left || "");
+    const b = String(right || "");
+    if (!a || !b) return 0;
+    if (a === b) return 1;
+    return 1 - (damerauLevenshteinDistance(a, b) / Math.max(a.length, b.length));
+  }
+
+  function hammingDistance(left, right) {
+    if (left.length !== right.length) return Infinity;
+    let distance = 0;
+    for (let index = 0; index < left.length; index += 1) {
+      if (left[index] !== right[index]) distance += 1;
+    }
+    return distance;
+  }
+
+  function damerauLevenshteinDistance(left, right) {
+    const rows = left.length + 1;
+    const cols = right.length + 1;
+    const matrix = Array.from({ length: rows }, () => Array(cols).fill(0));
+
+    for (let i = 0; i < rows; i += 1) matrix[i][0] = i;
+    for (let j = 0; j < cols; j += 1) matrix[0][j] = j;
+
+    for (let i = 1; i < rows; i += 1) {
+      for (let j = 1; j < cols; j += 1) {
+        const cost = left[i - 1] === right[j - 1] ? 0 : 1;
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j - 1] + cost
+        );
+        if (
+          i > 1 &&
+          j > 1 &&
+          left[i - 1] === right[j - 2] &&
+          left[i - 2] === right[j - 1]
+        ) {
+          matrix[i][j] = Math.min(matrix[i][j], matrix[i - 2][j - 2] + 1);
+        }
+      }
+    }
+
+    return matrix[left.length][right.length];
   }
 
   function levenshteinDistance(left, right) {
@@ -4092,6 +4934,9 @@
     passengerMatchCandidates = candidates;
     renderPassengerMatchList(candidates);
     el.passengerMatchOverlay.hidden = false;
+    requestAnimationFrame(() => {
+      el.passengerMatchOverlay.querySelector(".passenger-match-dialog")?.focus();
+    });
     return new Promise((resolve) => {
       passengerMatchResolve = resolve;
     });
@@ -4099,72 +4944,92 @@
 
   function renderPassengerMatchList(candidates) {
     el.passengerMatchList.innerHTML = "";
+    if (el.passengerMatchSummary) {
+      el.passengerMatchSummary.textContent = `${candidates.length} cadastro${candidates.length === 1 ? "" : "s"} parecido${candidates.length === 1 ? "" : "s"}.`;
+    }
     const questionSearchKey = "Certeza que este nao e o passageiro desejado?";
-    const question = "Certeza que este não é o passageiro desejado?";
-    candidates.forEach((candidate) => {
+    candidates.forEach((candidate, index) => {
       const passenger = candidate.passenger;
       const item = document.createElement("article");
       item.className = "passenger-match-item";
       item.dataset.questionKey = questionSearchKey;
+      item.style.setProperty("--match-index", index);
+
+      const main = document.createElement("div");
+      main.className = "passenger-match-main";
+      const reasonMap = getPassengerMatchReasonMap(candidate.reasons);
 
       const title = document.createElement("strong");
-      title.textContent = passenger.label || "Passageiro sem nome";
+      title.append(document.createTextNode(passenger.label || "Passageiro sem nome"));
+      if (reasonMap.has("nome")) {
+        title.classList.add("is-match");
+        const titleReason = document.createElement("span");
+        titleReason.className = "passenger-match-field-reason";
+        titleReason.textContent = reasonMap.get("nome");
+        title.appendChild(titleReason);
+      }
 
-      const questionLine = document.createElement("span");
-      questionLine.className = "passenger-match-question";
-      questionLine.textContent = question;
+      const meta = document.createElement("div");
+      meta.className = "passenger-match-meta";
+      const details = [
+        ["cliente", "Cliente", passenger.clienteLabel],
+        ["telefone", "Telefone", passenger.telefone],
+        ["email", "Email", passenger.email],
+        ["cr", "CR", passenger.cr],
+        ["departamento", "Departamento", passenger.departamento]
+      ].filter(([, , value]) => Boolean(value));
 
-      const meta = document.createElement("small");
-      meta.textContent = [
-        passenger.clienteLabel,
-        passenger.telefone,
-        passenger.email,
-        passenger.cr ? `CR ${passenger.cr}` : ""
-      ].filter(Boolean).join(" | ") || "Sem contato cadastrado";
+      if (details.length) {
+        details.forEach(([key, label, value]) => {
+          const detail = document.createElement("span");
+          detail.className = "passenger-match-detail";
+          detail.classList.toggle("is-match", reasonMap.has(key));
+          const detailLabel = document.createElement("small");
+          detailLabel.textContent = label;
+          const detailValue = document.createElement("b");
+          detailValue.textContent = value;
+          detailValue.title = value;
+          detail.append(detailLabel, detailValue);
+          if (reasonMap.has(key)) {
+            const reason = document.createElement("span");
+            reason.className = "passenger-match-field-reason";
+            reason.textContent = reasonMap.get(key);
+            detail.appendChild(reason);
+          }
+          meta.appendChild(detail);
+        });
+      } else {
+        const emptyDetail = document.createElement("span");
+        emptyDetail.className = "passenger-match-empty";
+        emptyDetail.textContent = "Sem contato cadastrado";
+        meta.appendChild(emptyDetail);
+      }
 
-      const reasons = document.createElement("div");
-      reasons.className = "passenger-match-reasons";
-      candidate.reasons.forEach((reason) => {
-        const badge = document.createElement("span");
-        badge.textContent = reason;
-        reasons.appendChild(badge);
-      });
-
-      const useButton = document.createElement("button");
-      useButton.type = "button";
-      useButton.className = "secondary-action";
-      useButton.dataset.passengerMatchAction = "use";
-      useButton.dataset.passengerId = passenger.id;
-      useButton.textContent = "Usar este passageiro";
-
-      item.append(title, questionLine, meta, reasons, useButton);
+      main.append(title, meta);
+      item.append(main);
       el.passengerMatchList.appendChild(item);
     });
   }
 
-  function handlePassengerMatchAction(event) {
-    const button = event.target.closest("[data-passenger-match-action]");
-    if (!button || !el.passengerMatchList?.contains(button)) return;
-    if (button.dataset.passengerMatchAction !== "use") return;
-    const passenger = passengerMatchCandidates.find((candidate) => sameId(candidate.passenger.id, button.dataset.passengerId))?.passenger;
-    resolvePassengerMatchReview({ action: "use", passenger });
+  function getPassengerMatchReasonMap(reasons) {
+    const fields = new Map();
+    (reasons || []).forEach((reason) => {
+      const text = normalize(reason);
+      if (text.includes("nome")) fields.set("nome", reason);
+      if (text.includes("telefone")) fields.set("telefone", reason);
+      if (text.includes("email") || text.includes("e-mail")) fields.set("email", reason);
+      if (text.includes("cliente")) fields.set("cliente", reason);
+      if (text.includes("cr")) fields.set("cr", reason);
+      if (text.includes("departamento")) fields.set("departamento", reason);
+    });
+    return fields;
   }
 
   function resolvePassengerMatchReview(result) {
-    if (el.passengerMatchOverlay) el.passengerMatchOverlay.hidden = true;
     const resolve = passengerMatchResolve;
     passengerMatchResolve = null;
     if (resolve) resolve(result || { action: "cancel" });
-  }
-
-  function useExistingPassengerFromMatch(passenger) {
-    if (!passenger?.id) return;
-    mergePassengerRecords([passenger]);
-    renderLookupSelect(el.solicitante, state.passageiros);
-    if (!el.solicitante.value) setSelectValue(el.solicitante, passenger.id);
-    addPassengerFromId(passenger.id);
-    clearPassengerCreateForm();
-    setTab("details");
+    if (el.passengerMatchOverlay) el.passengerMatchOverlay.hidden = true;
   }
 
   async function saveForm() {
@@ -4370,7 +5235,7 @@
       [f.paxView]: context.passageirosTelefones,
       [f.cotacao]: parseNumber(el.cotacao.value),
       [f.receber]: !!el.receber.checked,
-      [f.cr]: el.cr.value.trim()
+      [f.cr]: normalizeCodeValue(el.cr.value)
     };
 
     if (!isReturn && retornoPrevisto) payload[f.previsaoRetorno] = retornoPrevisto.toISOString();
@@ -4992,6 +5857,10 @@
     return cleanGuid(a).toLowerCase() === cleanGuid(b).toLowerCase();
   }
 
+  function isGuid(value) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanGuid(value));
+  }
+
   function normalize(value) {
     return String(value || "")
       .normalize("NFD")
@@ -5002,8 +5871,88 @@
 
   function parseNumber(value) {
     if (value === "" || value === null || value === undefined) return null;
-    const parsed = Number(String(value).replace(",", "."));
+    const raw = String(value)
+      .replace(/[^\d,.-]/g, "")
+      .trim();
+    const lastComma = raw.lastIndexOf(",");
+    const lastDot = raw.lastIndexOf(".");
+    const decimalSeparator = lastComma > lastDot ? "," : ".";
+    const hasDecimalSeparator = decimalSeparator === ","
+      ? lastComma >= 0
+      : lastDot >= 0 && raw.length - lastDot - 1 !== 3;
+    const cleaned = hasDecimalSeparator
+      ? raw
+        .replace(new RegExp(`\\${decimalSeparator === "," ? "." : ","}`, "g"), "")
+        .replace(decimalSeparator, ".")
+      : raw.replace(/[.,]/g, "");
+    const parsed = Number(cleaned);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  function sanitizeCurrencyInput(value) {
+    return String(value || "")
+      .replace(/[^\d,.-]/g, "")
+      .replace(/\.(?=\d{3}(?:\D|$))/g, "")
+      .replace(/(,.*),/g, "$1")
+      .replace(/(\..*)\./g, "$1");
+  }
+
+  function formatCurrencyDisplayValue(value) {
+    const parsed = parseNumber(value);
+    if (parsed === null) return "";
+    return parsed.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function validateEmailControl(input, options = {}) {
+    if (!input || !input.value.trim()) {
+      clearFieldValidation(input);
+      return true;
+    }
+    if (input.checkValidity()) {
+      clearFieldValidation(input);
+      return true;
+    }
+    revealInvalidField(input, "Informe um email valido.", options);
+    return false;
+  }
+
+  function validatePhoneControl(input, options = {}) {
+    if (!input || !input.value.trim()) {
+      clearFieldValidation(input);
+      return true;
+    }
+    const previousCountryCode = input === el.bdTelefone ? selectedPhoneCountryCode() : "";
+    const parsed = input === el.bdTelefone
+      ? parsePhoneNumberForInput(input.value, previousCountryCode, {
+        manualCountry: input.dataset.phoneCountryManual === "1"
+      })
+      : parsePhoneNumber(input.value);
+    input.value = parsed.formatted;
+    if (input === el.bdTelefone && parsed.countryCode && parsed.countryCode !== previousCountryCode) {
+      delete input.dataset.phoneCountryManual;
+    }
+    syncPhoneCountryFromParsed(parsed, { refreshDisplay: input === el.bdTelefone });
+    updatePhoneCountryHint(input, parsed);
+    if (parsed.isValid) {
+      clearFieldValidation(input);
+      return true;
+    }
+    revealInvalidField(input, parsed.message || "Telefone invalido.", options);
+    return false;
+  }
+
+  function updatePhoneCountryHint(input, parsed = null) {
+    if (!input) return;
+    const result = parsed || parsePhoneNumber(input.value, input === el.bdTelefone ? selectedPhoneCountryCode() : "");
+    if (!result.digits) {
+      delete input.dataset.phoneCountry;
+      return;
+    }
+    input.dataset.phoneCountry = result.countryName || "";
+    syncPhoneCountryFromParsed(result, { refreshDisplay: input === el.bdTelefone });
   }
 
   function toDateInput(date) {
@@ -5061,4 +6010,10 @@
     }
     window.setTimeout(() => item.remove(), timeout);
   }
+
+  init().catch((error) => {
+    console.error(error);
+    setLoading(false);
+    toast(error.message || "Falha ao iniciar formulário.", "error", 9000);
+  });
 })();

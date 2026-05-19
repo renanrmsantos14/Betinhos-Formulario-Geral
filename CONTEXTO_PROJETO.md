@@ -138,6 +138,7 @@ O novo formulario sera publicado como web resource e usado dentro de um Model-dr
 - Passageiros nao sao mais carregados em lote de 5000 no inicio. A busca agora e sob demanda via Dataverse, com carga pontual por IDs em edicao/rascunho.
 - Cadastro de passageiro novo agora executa conferencia de duplicidade por telefone, email, nome parecido, cliente, CR e departamento.
 - Quando houver candidato provavel, a tela mostra o registro encontrado e pergunta: "Certeza que este nao e o passageiro desejado?".
+- Validacao de passageiro parecido busca tambem o pool do mesmo cliente e aceita nome com transposicao, ordem diferente, particulas ignoraveis, telefone com 1 digito divergente e email quase igual quando ha contexto suficiente.
 - Validacoes adicionadas: retorno antes da saida bloqueia salvamento; periodo recorrente acima do limite bloqueia geracao.
 
 ## Telas / abas replicadas
