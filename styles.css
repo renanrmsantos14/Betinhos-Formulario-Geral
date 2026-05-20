@@ -314,6 +314,12 @@ h3 {
   box-shadow: none;
 }
 
+#saveButton {
+  min-height: 34px;
+  min-width: 168px;
+  padding: 0 9px;
+}
+
 .icon {
   min-width: 16px;
   font-size: 12px;

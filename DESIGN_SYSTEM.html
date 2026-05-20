@@ -3,316 +3,1125 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DESIGN SYSTEM — Tela Formulário Geral</title>
+    <title>Design System — Tela Formulário Geral</title>
     <link rel="stylesheet" href="styles.css">
     <style>
+      :root {
+        --ds-page-max: 1440px;
+        --ds-ink: var(--text);
+        --ds-note: var(--muted);
+      }
+
+      body {
+        min-height: 100vh;
+      }
+
       .ds-page {
-        max-width: 1200px;
+        width: min(var(--ds-page-max), 100%);
         margin: 0 auto;
-        padding: 16px;
+        padding: 12px;
         display: grid;
         gap: 12px;
       }
 
-      .ds-card {
+      .ds-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 16px;
+        align-items: end;
+        padding: 16px;
+        border: 1px solid rgb(148 163 184 / 0.3);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        box-shadow: var(--shadow-shell);
+      }
+
+      .ds-kicker {
+        margin: 0 0 5px;
+        color: #7f8ea3;
+        font-size: 10px;
+        font-weight: 760;
+        letter-spacing: 0.01em;
+      }
+
+      .ds-hero h1 {
+        margin: 0;
+        white-space: normal;
+      }
+
+      .ds-hero p {
+        max-width: 860px;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .ds-meta {
+        display: grid;
+        gap: 6px;
+        min-width: min(320px, 100%);
+      }
+
+      .ds-meta-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        background: var(--surface-soft);
+        color: var(--text-soft);
+        font-size: 12px;
+        font-weight: 760;
+      }
+
+      .ds-meta-item strong {
+        color: var(--text);
+      }
+
+      .ds-layout {
+        display: grid;
+        grid-template-columns: 248px minmax(0, 1fr);
+        gap: 12px;
+        align-items: start;
+      }
+
+      .ds-nav {
+        position: sticky;
+        top: 10px;
+        display: grid;
+        gap: 6px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: rgb(255 255 255 / 0.98);
+        box-shadow: var(--shadow-panel);
+      }
+
+      .ds-nav a {
+        min-height: 34px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 10px;
+        border-radius: var(--radius-sm);
+        color: var(--text-soft);
+        text-decoration: none;
+        font-size: 12px;
+        font-weight: 820;
+      }
+
+      .ds-nav a:hover,
+      .ds-nav a:focus-visible {
+        outline: 0;
+        color: var(--text);
+        background: var(--surface-active);
+        box-shadow: var(--shadow-focus);
+      }
+
+      .ds-main {
+        display: grid;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .ds-section {
+        display: grid;
+        gap: 12px;
+        padding: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: var(--surface);
+        box-shadow: var(--shadow-panel);
+      }
+
+      .ds-section-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .ds-section-head h2 {
+        margin: 0;
+      }
+
+      .ds-section-head p,
+      .ds-note {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .ds-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 10px;
+      }
+
+      .ds-grid-wide {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+        gap: 10px;
+      }
+
+      .ds-surface {
+        display: grid;
+        gap: 10px;
+        min-width: 0;
+        padding: 10px;
         border: 1px solid var(--line);
         border-radius: var(--radius-md);
-        background: var(--surface);
+        background: var(--surface-soft);
         box-shadow: var(--shadow-control);
-        padding: 12px;
       }
 
-      .ds-card > h1,
-      .ds-card > h2,
-      .ds-card > h3 {
-        margin-top: 0;
-      }
-
-      .ds-card > p {
-        margin: 0;
-        color: var(--muted);
+      .ds-title {
+        color: var(--text-soft);
+        font-size: 11px;
+        font-weight: 850;
+        letter-spacing: 0.045em;
+        text-transform: uppercase;
       }
 
       .ds-token-table-wrap {
-        overflow-x: auto;
-        margin-top: 8px;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: var(--surface);
       }
 
-      #tokenTable {
+      .ds-table {
         width: 100%;
         border-collapse: collapse;
         font-size: 12px;
       }
 
-      #tokenTable th,
-      #tokenTable td {
+      .ds-table th,
+      .ds-table td {
+        padding: 8px 10px;
         border-bottom: 1px solid var(--line);
         text-align: left;
-        padding: 7px 8px;
+        vertical-align: top;
       }
 
-      #tokenTable th {
+      .ds-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .ds-table th {
         color: var(--text-soft);
-        font-size: 11px;
-        text-transform: uppercase;
+        font-size: 10px;
+        font-weight: 850;
         letter-spacing: 0.05em;
-      }
-
-      .ds-grid {
-        display: grid;
-        gap: 10px;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        margin-top: 8px;
-      }
-
-      .ds-surface {
-        border-radius: var(--radius-sm);
-        border: 1px solid var(--line);
+        text-transform: uppercase;
         background: var(--surface-soft);
-        padding: 10px;
-        display: grid;
-        gap: 8px;
       }
 
-      .ds-title {
-        color: var(--muted);
+      .ds-code {
+        display: inline-flex;
+        max-width: 100%;
+        padding: 2px 6px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-xs);
+        background: #ffffff;
+        color: var(--text);
+        font-family: "Manrope", "Aptos", "Segoe UI", system-ui, sans-serif;
         font-size: 11px;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
+        font-weight: 820;
+        overflow-wrap: anywhere;
       }
 
       .ds-swatch-grid {
         display: grid;
-        gap: 8px;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 10px;
       }
 
       .ds-swatch {
+        display: grid;
+        gap: 7px;
+        padding: 9px;
         border: 1px solid var(--line);
         border-radius: var(--radius-sm);
-        padding: 8px;
-        background: #fff;
-        display: grid;
-        gap: 6px;
+        background: var(--surface);
       }
 
       .ds-color {
-        width: 100%;
-        aspect-ratio: 8 / 3;
-        border-radius: 6px;
-        border: 1px solid #d7dce8;
+        min-height: 54px;
+        border: 1px solid rgb(15 23 37 / 0.12);
+        border-radius: var(--radius-xs);
       }
 
-      .ds-code {
-        border: 1px dashed var(--line);
-        border-radius: var(--radius-sm);
-        padding: 8px;
-        background: #ffffff;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      .ds-swatch strong {
+        color: var(--text);
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .ds-swatch span {
+        color: var(--muted);
         font-size: 11px;
-        overflow: auto;
+        font-weight: 760;
       }
 
-      .section-note {
+      .ds-type-scale {
+        display: grid;
+        gap: 8px;
+      }
+
+      .ds-type-row {
+        display: grid;
+        grid-template-columns: 140px minmax(0, 1fr) 150px;
+        gap: 12px;
+        align-items: baseline;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .ds-type-row:last-child {
+        border-bottom: 0;
+      }
+
+      .ds-type-label {
+        color: var(--text-soft);
+        font-size: 11px;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .ds-type-spec {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 760;
+      }
+
+      .ds-preview-shell {
+        min-height: 460px;
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        grid-template-areas:
+          "top top"
+          "rail body";
+        gap: 8px;
+        padding: 10px;
+        border: 1px solid rgb(226 232 240 / 0.8);
+        border-radius: 22px;
+        background:
+          radial-gradient(520px 220px at 98% -20%, rgb(33 89 210 / 0.08), transparent 58%),
+          linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+      }
+
+      .ds-preview-topbar {
+        grid-area: top;
+        min-height: 46px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 6px 9px;
+        border: 1px solid rgb(148 163 184 / 0.3);
+        border-radius: var(--radius-lg);
+        background: #ffffff;
+        box-shadow: var(--shadow-shell);
+      }
+
+      .ds-preview-rail {
+        grid-area: rail;
+        display: grid;
+        align-content: start;
+        gap: 6px;
+        padding: 8px 6px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: rgb(255 255 255 / 0.98);
+        box-shadow: var(--shadow-shell);
+      }
+
+      .ds-preview-body {
+        grid-area: body;
+        min-width: 0;
+        display: grid;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        box-shadow: var(--shadow-panel);
+      }
+
+      .ds-static-tab {
+        min-height: 40px;
+        display: grid;
+        place-items: center;
+        border: 1px solid transparent;
+        border-radius: var(--radius-sm);
+        background: transparent;
+        color: var(--text-soft);
+      }
+
+      .ds-static-tab.is-active {
+        border-color: var(--line-strong);
+        background: color-mix(in srgb, var(--surface-active) 68%, #ffffff);
+        color: var(--text);
+      }
+
+      .ds-static-tab-icon {
+        width: 28px;
+        height: 28px;
+        display: grid;
+        place-items: center;
+        border-radius: var(--radius-xs);
+        background: var(--accent);
+        color: #ffffff;
+        font-weight: 850;
+      }
+
+      .ds-custom-select-demo {
+        position: relative;
+      }
+
+      .ds-custom-select-panel-demo {
+        position: relative;
+        opacity: 1;
+        transform: none;
+        visibility: visible;
+        pointer-events: auto;
+        max-height: none;
+        z-index: auto;
+      }
+
+      .ds-phone-demo .custom-select-panel {
+        position: relative;
+        opacity: 1;
+        transform: none;
+        visibility: visible;
+        pointer-events: auto;
+        max-height: none;
+        z-index: auto;
+      }
+
+      .ds-state-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .ds-toast-row {
+        display: grid;
+        gap: 8px;
+      }
+
+      .ds-toast-row .toast {
+        position: static;
+        width: 100%;
+        animation: none;
+      }
+
+      .ds-dialog-demo {
+        position: relative;
+        display: grid;
+        place-items: center;
+        min-height: 220px;
+        padding: 18px;
+        border-radius: var(--radius-md);
+        background: rgb(15 23 37 / 0.54);
+      }
+
+      .ds-dialog-demo .dialog {
+        animation: none;
+      }
+
+      .ds-passenger-preview-demo {
+        position: relative;
+        opacity: 1;
+        pointer-events: auto;
+        transform: none;
+        max-width: 100%;
+        max-height: none;
+      }
+
+      .ds-do-dont {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .ds-rule-list {
+        margin: 0;
+        padding-left: 18px;
         color: var(--text-soft);
         font-size: 12px;
+        line-height: 1.55;
       }
 
-      .compact-obs {
-        width: 100%;
+      .ds-rule-list strong {
+        color: var(--text);
+      }
+
+      @media (max-width: 980px) {
+        .ds-layout,
+        .ds-hero,
+        .ds-do-dont {
+          grid-template-columns: 1fr;
+        }
+
+        .ds-nav {
+          position: static;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        }
+
+        .ds-preview-shell {
+          grid-template-columns: 1fr;
+          grid-template-areas:
+            "top"
+            "rail"
+            "body";
+        }
+
+        .ds-preview-rail {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+
+        .ds-type-row {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .ds-page {
+          padding: 8px;
+        }
+
+        .ds-section,
+        .ds-hero {
+          padding: 12px;
+        }
+
+        .ds-grid-wide {
+          grid-template-columns: 1fr;
+        }
       }
     </style>
   </head>
 
   <body>
     <main class="ds-page">
-      <section class="ds-card">
-        <h1>DESIGN SYSTEM — Tela Formulário Geral</h1>
-        <p>Página de referência visual e contratos de componentes usados no projeto.</p>
-      </section>
-
-      <section class="ds-card">
-        <h2>Design tokens (CSS custom properties)</h2>
-        <p class="section-note">Valores atuais extraídos do <code>:root</code> de <code>styles.css</code>.</p>
-        <div class="ds-token-table-wrap">
-          <table id="tokenTable">
-            <thead>
-              <tr>
-                <th>Token</th>
-                <th>Valor</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+      <header class="ds-hero">
+        <div>
+          <p class="ds-kicker">Betinhos Executive Service</p>
+          <h1>Design System — Tela Formulário Geral</h1>
+          <p>Referência visual viva para o web resource de agendamento. Use esta página para validar tokens, componentes, estados, densidade e regras antes de criar tela nova ou alterar o formulário real.</p>
         </div>
-      </section>
-
-      <section class="ds-card">
-        <h2>Paleta principal</h2>
-        <p class="section-note">Amostra automática dos principais tokens de cor e superfície.</p>
-        <div class="ds-swatch-grid" id="dsSwatches"></div>
-      </section>
-
-      <section class="ds-card">
-        <h2>Campos padrão</h2>
-        <div class="ds-grid">
-          <div class="ds-surface">
-            <strong class="ds-title">Input</strong>
-            <label class="field">
-              <span>Nome do cliente</span>
-              <input type="text" value="João da Silva">
-            </label>
-          </div>
-          <div class="ds-surface">
-            <strong class="ds-title">Select nativo</strong>
-            <label class="field">
-              <span>Tipo do veículo</span>
-              <select>
-                <option>Executivo</option>
-                <option>Semi</option>
-                <option>van</option>
-              </select>
-            </label>
-          </div>
-          <div class="ds-surface">
-            <strong class="ds-title">Textarea</strong>
-            <label class="field">
-              <span>Observação</span>
-              <textarea rows="3" placeholder="Digite aqui..."></textarea>
-            </label>
-          </div>
-          <div class="ds-surface">
-            <strong class="ds-title">Estado inválido</strong>
-            <label class="field is-invalid">
-              <span>Campo obrigatório</span>
-              <input type="text" value="">
-              <small class="field-hint">Não pode ficar vazio.</small>
-            </label>
-          </div>
+        <div class="ds-meta" aria-label="Metadados do design system">
+          <div class="ds-meta-item"><span>Projeto</span><strong>Formulário Geral</strong></div>
+          <div class="ds-meta-item"><span>Registro</span><strong>Produto operacional</strong></div>
+          <div class="ds-meta-item"><span>Atualizado</span><strong>2026-05-20</strong></div>
         </div>
-      </section>
+      </header>
 
-      <section class="ds-card">
-        <h2>Campos de data e hora</h2>
-        <p class="section-note">Bloco compacto padrão com largura controlada.</p>
-        <div class="ds-surface">
-          <label class="field compact-time">
-            <span>Data e horário</span>
-            <div class="inline-time">
-              <input type="date" value="2026-01-01">
-              <div class="time-group">
-                <select>
-                  <option>08</option>
-                  <option>09</option>
-                  <option>10</option>
-                </select>
-                <span class="time-separator">:</span>
-                <select>
-                  <option>00</option>
-                  <option>15</option>
-                  <option>30</option>
-                </select>
+      <div class="ds-layout">
+        <nav class="ds-nav" aria-label="Sumário do design system">
+          <a href="#tokens">Tokens</a>
+          <a href="#typography">Tipografia</a>
+          <a href="#shell">Shell</a>
+          <a href="#fields">Campos</a>
+          <a href="#selects">Selects</a>
+          <a href="#actions">Ações</a>
+          <a href="#passengers">Passageiros</a>
+          <a href="#feedback">Feedback</a>
+          <a href="#rules">Regras</a>
+        </nav>
+
+        <div class="ds-main">
+          <section id="tokens" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Tokens</h2>
+                <p>Valores atuais extraídos do `:root` de `styles.css`.</p>
+              </div>
+              <span class="ds-code">fonte: styles.css</span>
+            </div>
+
+            <div class="ds-swatch-grid" id="dsSwatches"></div>
+
+            <div class="ds-token-table-wrap">
+              <table class="ds-table" id="tokenTable">
+                <thead>
+                  <tr>
+                    <th>Token</th>
+                    <th>Valor</th>
+                    <th>Função</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="typography" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Tipografia</h2>
+                <p>Manrope é a família principal. Aptos, Segoe UI e system-ui são fallback.</p>
+              </div>
+              <span class="ds-code">letter-spacing: 0</span>
+            </div>
+
+            <div class="ds-type-scale">
+              <div class="ds-type-row">
+                <span class="ds-type-label">Eyebrow</span>
+                <p class="eyebrow">Betinhos Executive Service</p>
+                <span class="ds-type-spec">10px / 700</span>
+              </div>
+              <div class="ds-type-row">
+                <span class="ds-type-label">H1</span>
+                <h1>Formulário Geral</h1>
+                <span class="ds-type-spec">16px / 760</span>
+              </div>
+              <div class="ds-type-row">
+                <span class="ds-type-label">H2</span>
+                <h2>Detalhes do serviço</h2>
+                <span class="ds-type-spec">19px / 780</span>
+              </div>
+              <div class="ds-type-row">
+                <span class="ds-type-label">H3</span>
+                <h3>Agenda, cliente e rota</h3>
+                <span class="ds-type-spec">13px / 780</span>
+              </div>
+              <div class="ds-type-row">
+                <span class="ds-type-label">Auxiliar</span>
+                <p class="ds-note">Texto curto, operacional e sem linguagem promocional.</p>
+                <span class="ds-type-spec">12px–13px</span>
               </div>
             </div>
-          </label>
-        </div>
-      </section>
+          </section>
 
-      <section class="ds-card">
-        <h2>Observação (agora no mesmo padrão dos demais campos)</h2>
-        <p class="section-note">A classe <code>.obs-field</code> não altera estilo visual do componente, mantendo o contrato de <code>.field</code>.</p>
-        <fieldset class="field span-2 compact-obs">
-          <legend>Observação operacional</legend>
-          <div class="field-hint">Use para orientar motorista, rota e detalhes do atendimento.</div>
-          <div class="segmented" role="tablist" aria-label="Tipo de observação">
-            <button type="button" class="seg is-active">Mot</button>
-            <button type="button" class="seg">Interna</button>
-            <button type="button" class="seg">Final</button>
-            <button type="button" class="seg">Pref Pax</button>
-          </div>
-          <textarea rows="3" placeholder="Ex.: cliente prefere rota direta, sem pedágio extra."></textarea>
-        </fieldset>
-      </section>
-
-      <section class="ds-card">
-        <h2>Segmented / status / switches</h2>
-        <div class="ds-grid">
-          <div class="ds-surface">
-            <strong class="ds-title">Segmented</strong>
-            <div class="segmented" role="tablist" aria-label="Preview segmented">
-              <button type="button" class="seg is-active">Hoje</button>
-              <button type="button" class="seg">Amanhã</button>
-              <button type="button" class="seg">Esta semana</button>
+          <section id="shell" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Shell Operacional</h2>
+                <p>Topbar compacta, rail lateral e conteúdo amplo. Sem hero. Sem landing page.</p>
+              </div>
+              <span class="ds-code">desktop first</span>
             </div>
-          </div>
-          <div class="ds-surface">
-            <strong class="ds-title">Toggle / Switch</strong>
-            <label class="switch">
-              <input type="checkbox" checked>
-              <span>Ativado</span>
-            </label>
-            <label class="toggle-field">
-              <input type="checkbox">
-              <span>Receber?</span>
-            </label>
-          </div>
-        </div>
-      </section>
 
-      <section class="ds-card">
-        <h2>Ações</h2>
-        <div class="ds-surface">
-          <button type="button" class="primary-action">Salvar agendamento</button>
-          <button type="button" class="secondary-action" data-variant="neutral">Salvar rascunho</button>
-          <button type="button" class="secondary-action success">Novo</button>
-          <button type="button" class="secondary-action danger">Cancelar</button>
+            <div class="ds-preview-shell">
+              <div class="ds-preview-topbar">
+                <div class="brand">
+                  <div class="brand-mark" aria-hidden="true"><span class="brand-mark-fallback">B</span></div>
+                  <div class="brand-text">
+                    <p class="eyebrow">Betinhos Executive Service</p>
+                    <h1>Formulário Geral</h1>
+                  </div>
+                </div>
+                <div class="top-actions">
+                  <label class="status-select">
+                    <span>Status</span>
+                    <span class="custom-select">
+                      <button class="custom-select-trigger" type="button"><span class="custom-select-value">Solicitado</span><span class="custom-select-caret"></span></button>
+                    </span>
+                  </label>
+                  <button class="primary-action" type="button">Agendar serviços</button>
+                </div>
+              </div>
+
+              <aside class="ds-preview-rail" aria-label="Preview de navegação">
+                <div class="ds-static-tab is-active"><span class="ds-static-tab-icon">D</span></div>
+                <div class="ds-static-tab"><span>BD</span></div>
+                <div class="ds-static-tab"><span>R</span></div>
+                <div class="ds-static-tab"><span>F</span></div>
+              </aside>
+
+              <section class="ds-preview-body">
+                <div class="section-head">
+                  <div>
+                    <h2>Detalhes</h2>
+                    <p>Organize campos críticos acima da dobra.</p>
+                  </div>
+                </div>
+                <section class="form-section">
+                  <div class="form-section-title"><h3>Agenda, cliente e rota</h3></div>
+                  <div class="form-grid">
+                    <label class="field compact-time required">
+                      <span>Saída</span>
+                      <div class="inline-time">
+                        <input type="date" value="2026-05-20">
+                        <div class="time-group">
+                          <select><option>08</option></select>
+                          <span class="time-separator">:</span>
+                          <select><option>30</option></select>
+                        </div>
+                      </div>
+                    </label>
+                    <label class="field required">
+                      <span>Cliente</span>
+                      <input value="Cliente executivo">
+                    </label>
+                    <label class="field span-2 required">
+                      <span>Trajeto</span>
+                      <input value="São Paulo / Guarulhos">
+                    </label>
+                  </div>
+                </section>
+              </section>
+            </div>
+          </section>
+
+          <section id="fields" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Campos</h2>
+                <p>`field` é a casca principal. Não crie visual isolado para campo comum.</p>
+              </div>
+              <span class="ds-code">.field</span>
+            </div>
+
+            <div class="ds-grid">
+              <div class="ds-surface">
+                <strong class="ds-title">Input</strong>
+                <label class="field">
+                  <span>Nome do passageiro</span>
+                  <input type="text" value="Renan Oliveira">
+                </label>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Textarea</strong>
+                <label class="field span-2">
+                  <span>Destino</span>
+                  <textarea rows="3">Aeroporto Internacional de Guarulhos</textarea>
+                </label>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Inválido</strong>
+                <label class="field is-invalid" data-validation-message="Informe o cliente antes de salvar.">
+                  <span>Cliente</span>
+                  <input type="text" value="">
+                </label>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Moeda</strong>
+                <label class="field currency-field">
+                  <span>Cotação</span>
+                  <input type="text" value="1.250,00">
+                </label>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Telefone</strong>
+                <label class="field">
+                  <span>Telefone</span>
+                  <div class="phone-field">
+                    <span class="custom-select custom-select--phone-country">
+                      <button class="custom-select-trigger" type="button"><span class="custom-select-value custom-select-value--phone-country">🇧🇷</span><span class="custom-select-caret"></span></button>
+                    </span>
+                    <input type="tel" value="+55 11 99999-9999">
+                  </div>
+                </label>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Observação</strong>
+                <label class="field span-2 obs-field">
+                  <span>Observação</span>
+                  <div class="segmented" role="tablist" aria-label="Tipo de observação">
+                    <button type="button" class="seg is-active">Mot</button>
+                    <button type="button" class="seg">Interna</button>
+                    <button type="button" class="seg">Final</button>
+                    <button type="button" class="seg">Pref Pax</button>
+                  </div>
+                  <textarea rows="2">Cliente prefere rota direta.</textarea>
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <section id="selects" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Selects</h2>
+                <p>Custom select é infraestrutura compartilhada. O select nativo continua sendo o contrato.</p>
+              </div>
+              <span class="ds-code">.custom-select</span>
+            </div>
+
+            <div class="ds-grid-wide">
+              <div class="ds-surface">
+                <strong class="ds-title">Trigger</strong>
+                <div class="custom-select ds-custom-select-demo">
+                  <button class="custom-select-trigger" type="button">
+                    <span class="custom-select-value">Executivo</span>
+                    <span class="custom-select-caret"></span>
+                  </button>
+                </div>
+                <div class="custom-select-panel ds-custom-select-panel-demo is-open">
+                  <input class="custom-select-search" value="" placeholder="Pesquisar">
+                  <div class="custom-select-options">
+                    <button class="custom-select-option is-active" type="button">Executivo</button>
+                    <button class="custom-select-option" type="button">Blindado</button>
+                    <button class="custom-select-option" type="button">Van</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ds-surface ds-phone-demo">
+                <strong class="ds-title">País do telefone</strong>
+                <div class="custom-select-panel custom-select-panel--phone-country is-open">
+                  <input class="custom-select-search" placeholder="Buscar país">
+                  <div class="custom-select-options">
+                    <button class="custom-select-option custom-select-option--phone-country is-active" type="button">
+                      <span class="custom-select-option-main">
+                        <span class="custom-select-option-flag custom-select-option-flag--emoji">🇧🇷</span>
+                        <span class="custom-select-option-name">Brasil</span>
+                      </span>
+                      <span class="custom-select-option-code">+55</span>
+                      <span class="custom-select-option-check">✓</span>
+                    </button>
+                    <button class="custom-select-option custom-select-option--phone-country" type="button">
+                      <span class="custom-select-option-main">
+                        <span class="custom-select-option-flag custom-select-option-flag--emoji">🇺🇸</span>
+                        <span class="custom-select-option-name">Estados Unidos</span>
+                      </span>
+                      <span class="custom-select-option-code">+1</span>
+                      <span class="custom-select-option-check">✓</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="actions" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Ações E Estados</h2>
+                <p>Ação primária é única. Secundárias não competem visualmente.</p>
+              </div>
+              <span class="ds-code">primary / secondary / icon</span>
+            </div>
+
+            <div class="ds-grid">
+              <div class="ds-surface">
+                <strong class="ds-title">Botões</strong>
+                <button type="button" class="primary-action">Agendar serviços</button>
+                <button type="button" class="secondary-action">Revisar</button>
+                <button type="button" class="secondary-action success">Adicionar</button>
+                <button type="button" class="secondary-action danger">Criar novo</button>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Segmented</strong>
+                <div class="segmented" role="tablist" aria-label="Segmented demo">
+                  <button type="button" class="seg is-active">Mot</button>
+                  <button type="button" class="seg">Interna</button>
+                  <button type="button" class="seg">Final</button>
+                  <button type="button" class="seg">Pref Pax</button>
+                </div>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Switches</strong>
+                <label class="switch">
+                  <input type="checkbox" checked>
+                  <span>Agendar retorno</span>
+                </label>
+                <label class="toggle-field">
+                  <input type="checkbox">
+                  <span>Receber?</span>
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <section id="passengers" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Passageiros</h2>
+                <p>Bloco crítico. Remoção sempre visível. Preview copiável por camada fixa.</p>
+              </div>
+              <span class="ds-code">.passenger-block</span>
+            </div>
+
+            <section class="passenger-block">
+              <div class="block-title">
+                <div>
+                  <h3>Passageiros selecionados</h3>
+                  <p>Lista operacional do serviço.</p>
+                </div>
+                <div class="passenger-toolbar">
+                  <div class="icon-actions">
+                    <button type="button" class="secondary-action passenger-toolbar-action" aria-pressed="true">Endereço único</button>
+                    <button type="button" class="secondary-action passenger-toolbar-action success">Adicionar</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="passenger-address-grid">
+                <div class="passenger-stack">
+                  <div class="passenger-rows">
+                    <article class="passenger-row">
+                      <button type="button" class="remove-row" aria-label="Remover passageiro">×</button>
+                      <div class="row-label">
+                        <span class="row-index">1</span>
+                        <span class="row-title-wrap">
+                          <button type="button" class="row-title passenger-name-button">Renan Oliveira</button>
+                        </span>
+                      </div>
+                      <label class="field address-cell">
+                        <span>Endereço de saída</span>
+                        <textarea class="passenger-address" rows="2">Av. Paulista, 1000</textarea>
+                      </label>
+                    </article>
+
+                    <article class="passenger-row is-incomplete">
+                      <button type="button" class="remove-row" aria-label="Remover passageiro">×</button>
+                      <div class="row-label">
+                        <span class="row-index">2</span>
+                        <span class="row-title-wrap">
+                          <button type="button" class="row-title passenger-name-button">Selecionar passageiro</button>
+                        </span>
+                      </div>
+                      <label class="field address-cell">
+                        <span>Endereço de saída</span>
+                        <textarea class="passenger-address" rows="2"></textarea>
+                      </label>
+                    </article>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <div class="ds-grid-wide">
+              <div class="ds-surface">
+                <strong class="ds-title">Preview copiável</strong>
+                <div class="passenger-preview-floating ds-passenger-preview-demo is-open">
+                  <div class="passenger-preview-list">
+                    <div class="passenger-preview-line"><span class="passenger-preview-key">Telefone</span><button class="passenger-preview-value" type="button">+55 11 99999-9999</button></div>
+                    <div class="passenger-preview-line"><span class="passenger-preview-key">Email</span><button class="passenger-preview-value" type="button">renan@betinhos.com.br</button></div>
+                    <div class="passenger-preview-line"><span class="passenger-preview-key">Cliente</span><span class="passenger-preview-value">Betinhos Executive Service</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Diretório / manutenção</strong>
+                <div class="passenger-directory">
+                  <button type="button" class="passenger-directory-item">
+                    <strong>Renan Oliveira</strong>
+                    <span>renan@betinhos.com.br · +55 11 99999-9999</span>
+                    <small>Cliente executivo · CR 001</small>
+                  </button>
+                  <button type="button" class="passenger-directory-item">
+                    <strong>Maria Santos</strong>
+                    <span>maria@empresa.com.br · +55 12 98888-0000</span>
+                    <small>Diretoria · CR 210</small>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="feedback" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Feedback</h2>
+                <p>Toast, overlay, modal e duplicidade. Feedback precisa ser direto e fechável.</p>
+              </div>
+              <span class="ds-code">toast / dialog / match</span>
+            </div>
+
+            <div class="ds-grid-wide">
+              <div class="ds-surface">
+                <strong class="ds-title">Toasts</strong>
+                <div class="ds-toast-row">
+                  <div class="toast"><span class="toast-message">Modo local ativo.</span><button class="toast-close" type="button">×</button></div>
+                  <div class="toast success"><span class="toast-message">Cadastro criado para Renan.</span><button class="toast-close" type="button">×</button></div>
+                  <div class="toast error"><span class="toast-message">Informe o passageiro antes de salvar.</span><button class="toast-close" type="button">×</button></div>
+                  <div class="toast warning"><span class="toast-message">Passageiro parecido encontrado.</span><button class="toast-close" type="button">×</button></div>
+                </div>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Dialog</strong>
+                <div class="ds-dialog-demo">
+                  <div class="dialog success-dialog">
+                    <h3>Serviço solicitado</h3>
+                    <p>Registro salvo com sucesso.</p>
+                    <button type="button" class="primary-action">OK</button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Duplicidade</strong>
+                <div class="dialog passenger-match-dialog">
+                  <header class="passenger-match-head">
+                    <p class="passenger-picker-eyebrow">Duplicidade</p>
+                    <h3>Passageiro encontrado</h3>
+                    <p><span>Cadastro parecido.</span></p>
+                  </header>
+                  <div class="passenger-match-list">
+                    <article class="passenger-match-item">
+                      <div class="passenger-match-main">
+                        <strong class="is-match">Renan Oliveira <em class="passenger-match-field-reason">Telefone igual</em></strong>
+                        <div class="passenger-match-meta">
+                          <div class="passenger-match-detail is-match"><small>Telefone</small><b>+55 11 99999-9999</b><em class="passenger-match-field-reason">igual</em></div>
+                          <div class="passenger-match-detail"><small>Email</small><b>renan@betinhos.com.br</b><em></em></div>
+                        </div>
+                      </div>
+                    </article>
+                  </div>
+                  <footer class="passenger-match-actions">
+                    <button class="secondary-action" type="button">Revisar</button>
+                    <button class="secondary-action danger" type="button">Criar novo</button>
+                  </footer>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="rules" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Regras De Uso</h2>
+                <p>Contrato visual e técnico para futuras alterações.</p>
+              </div>
+              <span class="ds-code">não quebrar app.js</span>
+            </div>
+
+            <div class="ds-do-dont">
+              <div class="ds-surface">
+                <strong class="ds-title">Faça</strong>
+                <ul class="ds-rule-list">
+                  <li>Use tokens existentes.</li>
+                  <li>Preserve IDs, `data-*` e handlers.</li>
+                  <li>Use `.field` para campos comuns.</li>
+                  <li>Use custom select compartilhado.</li>
+                  <li>Teste popup, overflow, z-index e mobile.</li>
+                  <li>Escreva pt-BR com acentos.</li>
+                </ul>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Não faça</strong>
+                <ul class="ds-rule-list">
+                  <li>Não crie landing page ou hero.</li>
+                  <li>Não crie card decorativo.</li>
+                  <li>Não espalhe azul sem função.</li>
+                  <li>Não troque IDs por estética.</li>
+                  <li>Não duplique dropdown custom.</li>
+                  <li>Não use fonte mono como acento visual.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
     </main>
 
     <script>
-      (function () {
+      (() => {
+        const tokenRoles = {
+          "--bg": "Fundo geral",
+          "--bg-2": "Topo do gradiente",
+          "--shell": "Camada escura e toast neutro",
+          "--shell-2": "Camada escura secundária",
+          "--surface": "Painéis e inputs",
+          "--surface-soft": "Campos e listas",
+          "--surface-muted": "Segmented, readonly e camadas",
+          "--surface-active": "Seleção suave",
+          "--text": "Texto principal",
+          "--text-soft": "Labels e metadados",
+          "--muted": "Texto auxiliar",
+          "--line": "Borda padrão",
+          "--line-strong": "Borda reforçada",
+          "--accent": "Ação e foco",
+          "--accent-strong": "Ação forte",
+          "--accent-soft": "Ação suave",
+          "--success": "Sucesso",
+          "--success-soft": "Sucesso suave",
+          "--danger": "Erro e bloqueio",
+          "--danger-soft": "Erro suave",
+          "--warning": "Atenção",
+          "--warning-soft": "Atenção suave",
+          "--radius-xs": "Raio de controle",
+          "--radius-sm": "Raio de campo",
+          "--radius-md": "Raio de seção",
+          "--radius-lg": "Raio de shell",
+          "--shadow-shell": "Elevação principal",
+          "--shadow-panel": "Elevação de painel",
+          "--shadow-control": "Elevação de controle",
+          "--shadow-focus": "Foco acessível",
+          "--ease-out": "Entrada e feedback",
+          "--ease-standard": "Movimento base",
+          "--menu-motion": "Expansão do menu",
+          "--menu-soft": "Hover do menu"
+        };
+
+        const colorTokens = [
+          "--bg",
+          "--bg-2",
+          "--shell",
+          "--shell-2",
+          "--surface",
+          "--surface-soft",
+          "--surface-muted",
+          "--surface-active",
+          "--text",
+          "--text-soft",
+          "--muted",
+          "--line",
+          "--line-strong",
+          "--accent",
+          "--accent-strong",
+          "--accent-soft",
+          "--success",
+          "--success-soft",
+          "--danger",
+          "--danger-soft",
+          "--warning",
+          "--warning-soft"
+        ];
+
         const rootStyle = getComputedStyle(document.documentElement);
-        const tokenNames = Array.from({ length: rootStyle.length }, (_, i) => rootStyle[i])
+        const tokenNames = Array.from({ length: rootStyle.length }, (_, index) => rootStyle[index])
           .filter((name) => name.startsWith("--"))
-          .sort((a, b) => a.localeCompare(b));
+          .sort((left, right) => left.localeCompare(right));
 
         const tableBody = document.querySelector("#tokenTable tbody");
-        const swatchContainer = document.getElementById("dsSwatches");
-        const swatches = ["--bg", "--bg-2", "--shell", "--shell-2", "--surface", "--surface-soft", "--surface-muted", "--surface-active", "--text", "--text-soft", "--muted", "--line", "--line-strong", "--accent", "--accent-strong", "--success", "--danger", "--warning"];
+        const swatches = document.getElementById("dsSwatches");
 
         tokenNames.forEach((name) => {
-          const tr = document.createElement("tr");
-          const tdName = document.createElement("td");
-          const tdValue = document.createElement("td");
-          tdName.textContent = name;
-          tdValue.textContent = rootStyle.getPropertyValue(name).trim() || "—";
-          tr.appendChild(tdName);
-          tr.appendChild(tdValue);
-          tableBody.appendChild(tr);
+          const value = rootStyle.getPropertyValue(name).trim();
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td><span class="ds-code">${name}</span></td>
+            <td>${value}</td>
+            <td>${tokenRoles[name] || "Token auxiliar"}</td>
+          `;
+          tableBody.appendChild(row);
         });
 
-        swatches.forEach((name) => {
+        colorTokens.forEach((name) => {
           const value = rootStyle.getPropertyValue(name).trim();
-          if (!value) {
-            return;
-          }
+          if (!value) return;
 
-          const card = document.createElement("div");
+          const card = document.createElement("article");
           card.className = "ds-swatch";
-
-          const chip = document.createElement("div");
-          chip.className = "ds-color";
-          chip.style.background = `var(${name})`;
-
-          const label = document.createElement("strong");
-          label.textContent = name;
-
-          const valueText = document.createElement("code");
-          valueText.textContent = value;
-
-          card.append(chip, label, valueText);
-          swatchContainer.appendChild(card);
+          card.innerHTML = `
+            <div class="ds-color" style="background: var(${name})"></div>
+            <strong>${name}</strong>
+            <span>${value}</span>
+            <span>${tokenRoles[name] || ""}</span>
+          `;
+          swatches.appendChild(card);
         });
       })();
     </script>
