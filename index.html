@@ -81,12 +81,12 @@
         <div class="panel-stack">
           <section class="form-section" aria-labelledby="servicoTitle">
             <div class="form-section-title">
-              <h3 id="servicoTitle">Agenda e rota</h3>
-              <p>Horário, tipo de serviço e trajeto principal.</p>
+              <h3 id="servicoTitle">Agenda, cliente e rota</h3>
+              <p>Dados principais do serviço, horários, cliente e percurso.</p>
             </div>
 
             <div class="form-grid">
-              <label class="field span-2 required">
+              <label class="field compact-time required">
                 <span>Data e horário de saída</span>
                 <div class="inline-time">
                   <input id="saidaData" type="date" required aria-required="true">
@@ -110,6 +110,16 @@
               </label>
 
               <label class="field required">
+                <span>Cliente</span>
+                <select id="cliente" required aria-required="true"></select>
+              </label>
+
+              <label class="field required">
+                <span>Solicitante</span>
+                <select id="solicitante" required aria-required="true"></select>
+              </label>
+
+              <label class="field required">
                 <span>Tipo do serviço</span>
                 <select id="tipoServico" required aria-required="true"></select>
               </label>
@@ -124,7 +134,7 @@
                 <select id="motorista"></select>
               </label>
 
-              <label class="field span-2 required">
+              <label class="field span-2 required trajeto-field">
                 <span>Trajeto</span>
                 <input id="trajeto" type="text" autocomplete="off">
               </label>
@@ -160,21 +170,11 @@
 
           <section class="form-section" aria-labelledby="pessoasTitle">
             <div class="form-section-title">
-              <h3 id="pessoasTitle">Cliente e comunicação</h3>
-              <p>Solicitante, observações e dados para operação.</p>
+              <h3 id="pessoasTitle">Observações da operação</h3>
+              <p>Observações e referências rápidas para atendimento.</p>
             </div>
 
             <div class="form-grid">
-              <label class="field required">
-                <span>Cliente</span>
-                <select id="cliente" required aria-required="true"></select>
-              </label>
-
-              <label class="field required">
-                <span>Solicitante</span>
-                <select id="solicitante" required aria-required="true"></select>
-              </label>
-
               <fieldset class="field span-2 obs-field">
                 <legend>Observação</legend>
                 <div class="segmented" role="tablist" aria-label="Tipo de observação">

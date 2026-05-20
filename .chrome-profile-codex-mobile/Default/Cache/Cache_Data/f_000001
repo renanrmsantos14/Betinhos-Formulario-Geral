@@ -1,0 +1,513 @@
+﻿<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Formulário de Agendamento</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2318244d'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle' fill='white' font-family='Arial'%3EB%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">
+          <span class="brand-mark-fallback">B</span>
+          <img id="brandLogo" class="brand-mark-image" alt="" hidden>
+        </div>
+        <div class="brand-text">
+          <p class="eyebrow">Betinhos Executive Service</p>
+          <h1>Formulário de Agendamento</h1>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <label class="status-select">
+          <span>Status</span>
+          <select id="statusOperacao"></select>
+        </label>
+        <div id="recordIdBox" class="record-id" hidden>
+          <span>ID</span>
+          <strong id="recordIdText"></strong>
+        </div>
+        <button id="saveButton" class="primary-action" type="button">
+          <span id="saveButtonText">Agendar serviços</span>
+        </button>
+      </div>
+    </header>
+
+    <nav class="tabs" aria-label="Seções do formulário">
+      <button class="tab is-active" type="button" data-tab="details" aria-current="page" aria-label="Detalhes">
+        <span class="tab-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M8 5h8M8 9h8M8 13h5M6 3h12a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path>
+          </svg>
+        </span>
+        <span class="tab-label">Detalhes</span>
+      </button>
+      <button class="tab" type="button" data-tab="bd" id="tabBd" aria-label="Cadastrar Passageiro">
+        <span class="tab-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M15 19a6 6 0 0 0-12 0M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM19 8v6M16 11h6"></path>
+          </svg>
+        </span>
+        <span class="tab-label">Cadastrar Passageiro</span>
+      </button>
+      <button class="tab" type="button" data-tab="return" id="tabReturn" aria-label="Retorno">
+        <span class="tab-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M4 12a8 8 0 1 0 3-6.24M4 4v6h6"></path>
+          </svg>
+        </span>
+        <span class="tab-label">Retorno</span>
+      </button>
+      <button class="tab" type="button" data-tab="repeat" id="tabRepeat" aria-label="Repetir">
+        <span class="tab-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3"></path>
+          </svg>
+        </span>
+        <span class="tab-label">Repetir</span>
+      </button>
+    </nav>
+
+    <main class="content">
+      <section id="tab-panel-details" class="panel is-active" data-panel="details">
+        <div class="section-head">
+          <h2>Detalhes do serviço</h2>
+          <p>Dados operacionais para criar ou editar a reserva no Dataverse.</p>
+        </div>
+
+        <div class="panel-stack">
+          <section class="form-section" aria-labelledby="servicoTitle">
+            <div class="form-section-title">
+              <h3 id="servicoTitle">Agenda, cliente e rota</h3>
+              <p>Dados principais do serviço, horários, cliente e percurso.</p>
+            </div>
+
+            <div class="form-grid">
+              <label class="field compact-time required">
+                <span>Data e horário de saída</span>
+                <div class="inline-time">
+                  <input id="saidaData" type="date" required aria-required="true">
+                  <div class="time-group">
+                    <select id="saidaHora" required aria-required="true"></select>
+                    <span class="time-separator">:</span>
+                    <select id="saidaMinuto" required aria-required="true"></select>
+                  </div>
+                </div>
+              </label>
+
+              <label class="field">
+                <span>Horário previsto de retorno</span>
+                <div class="inline-time">
+                  <div class="time-group">
+                    <select id="retPrevHora"></select>
+                    <span class="time-separator">:</span>
+                    <select id="retPrevMinuto"></select>
+                  </div>
+                </div>
+              </label>
+
+              <label class="field required">
+                <span>Cliente</span>
+                <select id="cliente" required aria-required="true"></select>
+              </label>
+
+              <label class="field required">
+                <span>Solicitante</span>
+                <select id="solicitante" required aria-required="true"></select>
+              </label>
+
+              <label class="field required">
+                <span>Tipo do serviço</span>
+                <select id="tipoServico" required aria-required="true"></select>
+              </label>
+
+              <label class="field required">
+                <span>Tipo do veículo</span>
+                <select id="tipoVeiculo" required aria-required="true"></select>
+              </label>
+
+              <label class="field">
+                <span>Motorista</span>
+                <select id="motorista"></select>
+              </label>
+
+              <label class="field span-2 required">
+                <span>Trajeto</span>
+                <input id="trajeto" type="text" autocomplete="off">
+              </label>
+            </div>
+          </section>
+
+          <section class="passenger-block" aria-labelledby="passageirosTitle">
+            <div class="block-title">
+              <div>
+                <h3 id="passageirosTitle">Passageiros selecionados</h3>
+                <p>Cadastre a ordem operacional e o passageiro na sequência de embarque.</p>
+              </div>
+              <div class="passenger-toolbar">
+                <div class="icon-actions">
+                  <button id="toggleEnderecoPersonalizado" type="button" class="secondary-action passenger-toolbar-action" title="Alternar endereço compartilhado por passageiros">Endereço único</button>
+                  <button id="addPassenger" type="button" class="secondary-action passenger-toolbar-action success" title="Adicionar passageiro">Adicionar</button>
+                </div>
+              </div>
+            </div>
+            <div class="passenger-address-grid">
+              <div class="passenger-stack">
+                <div id="passengerRows" class="passenger-rows"></div>
+                <p id="passengerEmpty" class="passenger-empty" hidden>Adicione ao menos um passageiro para seguir com o agendamento.</p>
+              </div>
+
+              <label id="customAddressWrap" class="field custom-address" hidden>
+                <span>Endereço único de saída</span>
+                <textarea id="enderecoPersonalizado" rows="5" placeholder="Informe o endereço que será aplicado a todos os passageiros selecionados."></textarea>
+                <small>Será aplicado a todos os passageiros selecionados.</small>
+              </label>
+            </div>
+          </section>
+
+          <section class="form-section" aria-labelledby="pessoasTitle">
+            <div class="form-section-title">
+              <h3 id="pessoasTitle">Observações da operação</h3>
+              <p>Observações e referências rápidas para atendimento.</p>
+            </div>
+
+            <div class="form-grid">
+              <fieldset class="field span-2 obs-field">
+                <legend>Observação</legend>
+                <div class="segmented" role="tablist" aria-label="Tipo de observação">
+                  <button type="button" class="seg is-active" data-obs="motorista">Mot</button>
+                  <button type="button" class="seg" data-obs="interna">Interna</button>
+                  <button type="button" class="seg" data-obs="final">Final</button>
+                  <button type="button" class="seg" data-obs="passageiro">Pref Pax</button>
+                </div>
+                <textarea id="observacao" rows="4"></textarea>
+              </fieldset>
+            </div>
+          </section>
+
+          <section class="form-section" aria-labelledby="financeiroTitle">
+            <div class="form-section-title">
+              <h3 id="financeiroTitle">Faturamento</h3>
+              <p>Status, pagamento e referências financeiras.</p>
+            </div>
+
+            <div class="form-grid">
+              <label class="toggle-field">
+                <input id="receber" type="checkbox">
+                <span>Receber?</span>
+              </label>
+
+              <label class="field">
+                <span>Status de faturamento</span>
+                <select id="statusFaturamento"></select>
+              </label>
+
+              <label class="field currency-field">
+                <span>Cotação</span>
+                <input id="cotacao" type="text" inputmode="decimal" autocomplete="off">
+              </label>
+
+              <label class="field" id="opWrap">
+                <span>OP</span>
+                <select id="op"></select>
+              </label>
+
+              <label class="field">
+                <span>Forma de pagamento</span>
+                <select id="formaPagamento"></select>
+              </label>
+
+              <label class="field">
+                <span>CR</span>
+                <input id="cr" type="text" autocomplete="off">
+              </label>
+            </div>
+          </section>
+        </div>
+
+        <section class="form-section compact-section" aria-labelledby="destinoTitle">
+          <div class="form-section-title">
+            <h3 id="destinoTitle">Destino e contatos</h3>
+            <p>Telefones e destino final do serviço.</p>
+          </div>
+
+          <div class="form-grid compact">
+            <label class="field span-2">
+              <span>Telefones</span>
+              <textarea id="telefonesPreview" rows="3" readonly></textarea>
+            </label>
+
+            <label class="field span-2 required">
+              <span>Destino</span>
+              <textarea id="destino" rows="3"></textarea>
+            </label>
+          </div>
+        </section>
+
+      </section>
+
+      <section id="tab-panel-bd" class="panel" data-panel="bd">
+        <div class="section-head">
+          <h2>Banco de Dados</h2>
+          <p>Cadastro e manutenção de passageiro sem sair do fluxo de agendamento.</p>
+        </div>
+
+        <section class="form-section">
+          <div class="form-section-title">
+            <h3>Novo passageiro</h3>
+            <p>Cadastro rápido no Banco de Dados.</p>
+          </div>
+          <div class="form-grid database-passenger-grid">
+            <label class="field span-2 required">
+              <span>Nome do passageiro</span>
+              <input id="bdNome" type="text" autocomplete="off" required aria-required="true">
+            </label>
+            <label class="field">
+              <span>Telefone</span>
+              <div class="phone-field">
+                <select id="bdTelefonePais" class="phone-country-select" data-select-variant="phone-country" aria-label="País do telefone"></select>
+                <input id="bdTelefone" type="tel" inputmode="tel" autocomplete="tel">
+              </div>
+            </label>
+            <label class="field span-2">
+              <span>Endereço de saída</span>
+              <input id="bdEndereco" type="text" autocomplete="off">
+            </label>
+            <label class="field span-2">
+              <span>Email</span>
+              <input id="bdEmail" type="email" autocomplete="off">
+            </label>
+            <label class="field required">
+              <span>Classificação</span>
+              <select id="bdClassificacao" required aria-required="true"></select>
+            </label>
+            <label class="field required">
+              <span>Cliente</span>
+              <select id="bdCliente" required aria-required="true"></select>
+            </label>
+            <label class="field">
+              <span>Sexo</span>
+              <select id="bdSexo"></select>
+            </label>
+            <label class="field required">
+              <span>Idioma</span>
+              <select id="bdIdioma" required aria-required="true"></select>
+            </label>
+            <label class="field">
+              <span>CR</span>
+              <input id="bdCr" type="text" autocomplete="off">
+            </label>
+            <label class="field">
+              <span>Departamento</span>
+              <input id="bdDepartamento" type="text" autocomplete="off">
+            </label>
+            <label class="field">
+              <span>Cargo</span>
+              <select id="bdCargo"></select>
+            </label>
+            <label class="field">
+              <span>Data de nascimento</span>
+              <input id="bdNascimento" type="date">
+            </label>
+            <label class="field span-2">
+              <span>Perfil do passageiro</span>
+              <input id="bdPreferencias" type="text" autocomplete="off">
+            </label>
+            <label class="field">
+              <span>Tipo de veículo</span>
+              <select id="bdTipoVeiculo"></select>
+            </label>
+          </div>
+        </section>
+
+        <div class="footer-actions">
+          <button id="createPassenger" type="button" class="primary-action">
+            <span class="icon">+</span>
+            <span>Cadastrar</span>
+          </button>
+        </div>
+      </section>
+
+      <section id="tab-panel-return" class="panel" data-panel="return">
+        <div class="section-head inline">
+          <div>
+            <h2>Agendar retorno</h2>
+            <p>Disponível apenas na criação.</p>
+          </div>
+          <label class="switch">
+            <input id="agendarRetorno" type="checkbox">
+            <span>Ativado</span>
+          </label>
+        </div>
+
+        <section class="form-section">
+          <div class="form-grid">
+            <label class="field span-2">
+              <span>Data de retorno</span>
+              <div class="inline-time">
+                <input id="retornoData" type="date">
+                <div class="time-group">
+                  <select id="retornoHora"></select>
+                  <span class="time-separator">:</span>
+                  <select id="retornoMinuto"></select>
+                </div>
+              </div>
+            </label>
+            <label class="field span-2">
+              <span>Endereço de saída</span>
+              <textarea id="retornoEndereco" rows="3"></textarea>
+            </label>
+            <label class="field span-2">
+              <span>Destino</span>
+              <textarea id="retornoDestino" rows="3"></textarea>
+            </label>
+            <fieldset class="field span-2 obs-field">
+              <legend>Observação</legend>
+              <div class="segmented" role="tablist" aria-label="Tipo de observação retorno">
+                <button type="button" class="seg is-active" data-ret-obs="motorista">Mot</button>
+                <button type="button" class="seg" data-ret-obs="interna">Interna</button>
+                <button type="button" class="seg" data-ret-obs="final">Final</button>
+                <button type="button" class="seg" data-ret-obs="passageiro">Pref Pax</button>
+              </div>
+              <textarea id="retornoObservacao" rows="4"></textarea>
+            </fieldset>
+          </div>
+        </section>
+      </section>
+
+      <section id="tab-panel-repeat" class="panel" data-panel="repeat">
+        <div class="section-head inline">
+          <div>
+            <h2>Serviços frequentes</h2>
+            <p>Disponível apenas na criação.</p>
+          </div>
+          <label class="switch">
+            <input id="repetirServico" type="checkbox">
+            <span>Ativado</span>
+          </label>
+        </div>
+
+        <section class="form-section">
+          <div class="form-grid">
+            <label class="field">
+              <span>Data de início</span>
+              <input id="frequenteInicio" type="date">
+            </label>
+            <label class="field">
+              <span>Data de fim</span>
+              <input id="frequenteFim" type="date">
+            </label>
+            <label class="field">
+              <span>Tipo</span>
+              <select id="frequenteTipo">
+                <option value=""></option>
+                <option value="Ida">Ida</option>
+                <option value="Retorno">Retorno</option>
+                <option value="Ida e retorno">Ida e retorno</option>
+              </select>
+            </label>
+            <label class="toggle-field">
+              <input id="contabilizarFds" type="checkbox" checked>
+              <span>Contabilizar Sáb e Dom?</span>
+            </label>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <aside id="toastStack" class="toast-stack" aria-live="polite"></aside>
+
+    <div id="loadingOverlay" class="overlay" hidden>
+      <div class="dialog">
+        <div class="spinner"></div>
+        <strong>Carregando...</strong>
+      </div>
+    </div>
+
+    <div id="successOverlay" class="overlay" hidden>
+      <div class="dialog success-dialog">
+        <strong>Concluído!</strong>
+        <p id="successMessage">Serviço solicitado com sucesso.</p>
+        <button id="closeSuccess" type="button" class="primary-action">OK</button>
+      </div>
+    </div>
+
+    <div id="passengerPickerOverlay" class="overlay" hidden>
+      <div class="dialog passenger-picker-dialog" role="dialog" aria-labelledby="passengerPickerTitle" aria-modal="true">
+        <header class="passenger-picker-head">
+          <div class="passenger-picker-head-text">
+            <span class="passenger-picker-eyebrow">Banco de dados</span>
+            <h3 id="passengerPickerTitle">Selecionar passageiro</h3>
+          </div>
+          <button id="passengerPickerClose" type="button" class="passenger-picker-icon-action" aria-label="Fechar seleção de passageiro">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M6.7 5.3 12 10.6l5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z"></path>
+            </svg>
+          </button>
+        </header>
+        <label class="passenger-picker-field">
+          <span class="passenger-picker-label">Busca</span>
+          <span class="passenger-picker-input-wrap">
+            <svg class="passenger-picker-search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M10.8 4a6.8 6.8 0 0 1 5.4 10.9l3.4 3.4-1.3 1.3-3.4-3.4A6.8 6.8 0 1 1 10.8 4Zm0 1.8a5 5 0 1 0 0 10 5 5 0 0 0 0-10Z"></path>
+            </svg>
+            <input id="passengerPickerSearch" type="text" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Nome, telefone ou email" />
+          </span>
+        </label>
+        <section class="passenger-picker-list" aria-label="Resultados de passageiros">
+          <div id="passengerPickerResults" class="passenger-picker-results" role="listbox" tabindex="0" aria-live="polite"></div>
+        </section>
+        <footer class="picker-actions">
+          <button id="passengerPickerCancel" type="button" class="passenger-picker-cancel">Cancelar</button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="passengerEditOverlay" class="overlay" hidden>
+      <div class="dialog passenger-edit-dialog" role="dialog" aria-labelledby="passengerEditTitle" aria-modal="true">
+        <div class="passenger-edit-head">
+          <div>
+            <p class="passenger-picker-eyebrow">Passageiro</p>
+            <h3 id="passengerEditTitle">Editar passageiro</h3>
+            <p id="passengerEditStatus" class="passenger-edit-status" aria-live="polite"></p>
+          </div>
+          <div class="passenger-edit-actions">
+            <button id="passengerEditToggle" type="button" class="icon-button passenger-edit-toggle" aria-label="Habilitar edição">
+              <svg class="passenger-edit-icon-edit" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M4 16.8V20h3.2L17.7 9.5l-3.2-3.2L4 16.8Zm12-12 3.2 3.2 1.2-1.2a1.8 1.8 0 0 0 0-2.5l-.7-.7a1.8 1.8 0 0 0-2.5 0L16 4.8Z"></path>
+              </svg>
+              <svg class="passenger-edit-icon-lock" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M7 10V7a5 5 0 0 1 10 0v3h1a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h1Zm2 0h6V7a3 3 0 0 0-6 0v3Zm3 3.4a1.7 1.7 0 0 0-.8 3.2V18h1.6v-1.4a1.7 1.7 0 0 0-.8-3.2Z"></path>
+              </svg>
+            </button>
+            <button id="passengerEditClose" type="button" class="icon-button" aria-label="Fechar edição de passageiro">×</button>
+          </div>
+        </div>
+        <div id="passengerEditFields" class="passenger-edit-fields"></div>
+      </div>
+    </div>
+
+    <div id="passengerMatchOverlay" class="overlay" hidden>
+      <div class="dialog passenger-match-dialog" role="dialog" aria-labelledby="passengerMatchTitle" aria-modal="true" tabindex="-1">
+        <header class="passenger-match-head">
+          <div>
+            <p class="passenger-picker-eyebrow">Duplicidade</p>
+            <h3 id="passengerMatchTitle">Passageiro encontrado</h3>
+            <p><span id="passengerMatchSummary">Cadastro parecido.</span></p>
+          </div>
+        </header>
+        <div id="passengerMatchList" class="passenger-match-list"></div>
+        <footer class="passenger-match-actions">
+          <button id="passengerMatchCancel" type="button" class="secondary-action">Revisar</button>
+          <button id="passengerMatchContinue" type="button" class="secondary-action danger">Criar novo</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
