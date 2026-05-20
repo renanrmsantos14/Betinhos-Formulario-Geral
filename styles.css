@@ -2,6 +2,9 @@
 
 :root {
   color-scheme: light;
+  --shell-padding-top: max(10px, var(--safe-top));
+  --topbar-height: 46px;
+  --topbar-menu-gap: 8px;
   --bg: #f3f6fb;
   --bg-2: #f9fbff;
   --shell: #0f1725;
@@ -105,7 +108,7 @@ p {
     "tabs content";
   gap: 8px;
   margin: 0;
-  padding: max(10px, var(--safe-top)) max(10px, var(--safe-right)) max(10px, var(--safe-bottom)) max(10px, var(--safe-left));
+  padding: var(--shell-padding-top) max(10px, var(--safe-right)) max(10px, var(--safe-bottom)) max(10px, var(--safe-left));
   position: relative;
 }
 
@@ -131,7 +134,7 @@ p {
 .topbar {
   grid-area: topbar;
   grid-column: 1 / -1;
-  min-height: 46px;
+  min-height: var(--topbar-height);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -144,7 +147,7 @@ p {
   box-shadow: var(--shadow-shell);
   animation: surface-in 320ms var(--ease-out) both;
   position: sticky;
-  top: 6px;
+  top: var(--shell-padding-top);
   z-index: 5;
 }
 
@@ -358,6 +361,15 @@ h3 {
     width 360ms var(--menu-motion),
     box-shadow 220ms var(--menu-soft),
     border-color 220ms var(--menu-soft);
+}
+
+.tabs {
+  position: fixed;
+  --tabs-top-offset: calc(var(--shell-padding-top) + var(--topbar-height) + var(--topbar-menu-gap));
+  top: var(--tabs-top-offset);
+  left: max(10px, var(--safe-left));
+  height: calc(100dvh - var(--tabs-top-offset) - max(10px, var(--safe-bottom)));
+  width: 58px;
 }
 
 .tabs:hover,
@@ -953,6 +965,35 @@ h3 {
 
 .status-select .custom-select-trigger {
   border: 2px solid var(--accent);
+}
+
+.status-button-select {
+  width: 100%;
+  min-height: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 800;
+  padding: 0 12px;
+  box-shadow: var(--shadow-control);
+  text-align: left;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.topbar .status-button-select:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-muted);
+}
+
+.topbar .status-button-select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
 }
 
 .field .status-select,
@@ -4279,7 +4320,6 @@ body.is-import-dragging .import-drop-overlay {
       "tabs"
       "content";
   }
-  
 
   .tabs {
     position: static;
@@ -4288,14 +4328,26 @@ body.is-import-dragging .import-drop-overlay {
     width: auto;
     max-height: none;
     display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px;
+    border-color: rgb(191 204 222 / 0.72);
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.98), rgb(245 248 253 / 0.98));
     overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: 7px;
+    scroll-snap-type: x proximity;
     scrollbar-width: thin;
+    scrollbar-color: rgb(148 163 184 / 0.55) transparent;
+    box-shadow: 0 10px 22px rgb(22 35 59 / 0.07);
   }
 
   .tabs:hover,
   .tabs:has(.tab:focus-visible) {
     width: auto;
-    box-shadow: var(--shadow-shell);
+    box-shadow: 0 12px 26px rgb(22 35 59 / 0.1);
   }
 
   .tabs::before {
@@ -4305,19 +4357,48 @@ body.is-import-dragging .import-drop-overlay {
   .tab {
     width: auto;
     flex: 0 0 auto;
-    min-width: 152px;
+    min-width: clamp(132px, 18vw, 190px);
+    min-height: 44px;
     grid-template-columns: auto minmax(0, 1fr);
     column-gap: 8px;
-    padding: 0 8px;
+    padding: 0 10px;
+    border-color: rgb(223 230 242 / 0.72);
+    background: rgb(255 255 255 / 0.72);
+    scroll-snap-align: start;
+  }
+
+  .tab-icon {
+    width: 26px;
+    height: 26px;
+    background: rgb(234 242 255 / 0.72);
+    color: #5f7699;
   }
 
   .tab-label {
     opacity: 1;
     transform: none;
+    font-size: 12px;
+    line-height: 1.15;
   }
 
   .tab:hover {
     transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgb(33 89 210 / 0.1);
+  }
+
+  .tab.is-active {
+    border-color: rgb(33 89 210 / 0.38);
+    background:
+      linear-gradient(180deg, #ffffff, var(--surface-active));
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 0.9) inset,
+      0 8px 18px rgb(33 89 210 / 0.12);
+  }
+
+  .tab.is-marked::after {
+    right: 8px;
+    width: 7px;
+    height: 7px;
   }
 
   .passenger-row {
@@ -4338,6 +4419,11 @@ body.is-import-dragging .import-drop-overlay {
   .app-shell {
     padding: max(8px, var(--safe-top)) max(8px, var(--safe-right)) max(8px, var(--safe-bottom)) max(8px, var(--safe-left));
     gap: 8px;
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "topbar"
+      "required"
+      "content";
   }
 
   .brand{
@@ -4351,7 +4437,8 @@ body.is-import-dragging .import-drop-overlay {
   .topbar {
     align-items: stretch;
     flex-direction: column;
-    padding: 10px;
+    min-height: 46px;
+    padding: 5px 6px;
   }
 
   .brand {
@@ -4373,45 +4460,220 @@ body.is-import-dragging .import-drop-overlay {
   .top-actions {
     width: 100%;
     display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    align-items: stretch;
+    grid-template-columns: minmax(0, 1fr) 42px;
+    align-items: center;
     justify-content: stretch;
-    gap: 10px;
+    gap: 6px;
   }
 
-  .status-select,
-  .record-id,
-  .primary-action {
+  .top-import-action {
+    display: none;
+  }
+
+  .status-select {
     width: 100%;
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: center;
+    gap: 0;
+    padding: 3px 6px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface-soft);
+    box-shadow: var(--shadow-control);
+  }
+
+  .topbar .status-select span {
+    display: none;
+  }
+
+  .status-button-select {
+    width: 100%;
+    min-width: 0;
+    min-height: 36px;
+    height: 36px;
+    border-radius: 10px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 800;
+    box-shadow: none;
+  }
+
+  .record-id {
+    display: none;
+  }
+
+  #saveButton {
+    width: 42px;
+    min-width: 42px;
+    min-height: 36px;
+    height: 36px;
+    line-height: 1;
+    display: inline-grid;
+    place-items: center;
+    padding: 0;
+    border-radius: 10px;
+  }
+
+  #saveButton::before {
+    content: "💾";
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  #saveButtonText {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .tabs {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
-    padding: 6px;
-    overflow: visible;
+    position: fixed;
+    left: max(8px, var(--safe-left));
+    right: max(8px, var(--safe-right));
+    bottom: max(8px, var(--safe-bottom));
+    width: auto;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    gap: 4px;
+    height: 52px;
+    min-height: 52px;
+    max-height: 52px;
+    padding: 4px;
+    border: 1px solid rgb(191 204 222 / 0.76);
+    border-radius: 15px;
+    background: rgb(251 252 254 / 0.98);
+    box-shadow: 0 8px 22px rgb(15 23 37 / 0.14);
+    scrollbar-width: none;
+    z-index: 30;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-inline: 4px;
+    scroll-snap-type: x proximity;
+  }
+
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  #tabImport {
+    display: none;
   }
 
   .tab {
-    min-width: 0;
-    width: 100%;
-    min-height: 44px;
-    padding: 0 10px;
+    min-width: 68px;
+    max-width: none;
+    width: auto;
+    min-height: 42px;
+    max-height: 42px;
+    padding: 3px 5px;
+    flex: 1 0 68px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: 24px 12px;
+    justify-items: center;
+    align-content: center;
+    row-gap: 1px;
+    white-space: normal;
+    text-align: center;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: transparent;
+    color: #607089;
+    box-shadow: none;
+    scroll-snap-align: start;
+  }
+
+  .tab:hover {
+    transform: none;
+    border-color: rgb(223 230 242 / 0.9);
+    background: #f5f7fa;
+    box-shadow: none;
+  }
+
+  .tab:active {
+    transform: scale(0.97);
+  }
+
+  .tab.is-active {
+    border-color: rgb(33 89 210 / 0.24);
+    background: #eef4ff;
+    color: #0f172a;
+    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.72);
   }
 
   .tab-label {
+    max-width: 100%;
+    display: block;
+    font-size: 0;
     white-space: normal;
-    line-height: 1.15;
-    font-size: 12px;
+    line-height: 1;
+    opacity: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transform: none;
   }
 
-  .tabs .tab:only-child {
-    grid-column: 1 / -1;
+  .tab-label::after {
+    display: block;
+    color: inherit;
+    font-size: 9.6px;
+    font-weight: 790;
+    line-height: 1;
+  }
+
+  .tab[data-tab="details"] .tab-label::after {
+    content: "Detalhes";
+  }
+
+  .tab[data-tab="bd"] .tab-label::after {
+    content: "Pax";
+  }
+
+  .tab[data-tab="return"] .tab-label::after {
+    content: "Retorno";
+  }
+
+  .tab[data-tab="repeat"] .tab-label::after {
+    content: "Repetir";
   }
 
   .tab-icon {
-    width: 25px;
+    width: 28px;
+    height: 24px;
+    justify-self: center;
+    border-radius: 8px;
+    background: transparent;
+    color: currentColor;
+    box-shadow: none;
+  }
+
+  .tab-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .tab.is-active .tab-icon {
+    color: #ffffff;
+    background: var(--accent);
+  }
+
+  .tab.is-marked::after {
+    top: 6px;
+    right: 8px;
+    width: 6px;
+    height: 6px;
+    box-shadow: 0 0 0 3px rgb(54 179 126 / 0.18);
+  }
+
+  .content {
+    padding-bottom: calc(60px + var(--safe-bottom));
   }
 
   .panel {
@@ -4817,11 +5079,33 @@ body.is-import-dragging .import-drop-overlay {
 
 @media (max-width: 420px) {
   .tabs {
-    grid-template-columns: 1fr;
+    gap: 3px;
+    height: 50px;
+    min-height: 50px;
+    max-height: 50px;
+    padding: 4px;
   }
 
   .tab {
-    min-height: 42px;
+    min-width: 64px;
+    min-height: 40px;
+    max-height: 40px;
+    padding-inline: 3px;
+  }
+
+  .tab-label::after {
+    font-size: 8.8px;
+  }
+
+  .tab-icon,
+  .tab.is-active .tab-icon {
+    width: 25px;
+    height: 22px;
+  }
+
+  .tab-icon svg {
+    width: 17px;
+    height: 17px;
   }
 
   .field.compact-time .inline-time input[type="date"],
