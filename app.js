@@ -241,6 +241,7 @@
     saidaData: $("saidaData"),
     saidaHora: $("saidaHora"),
     saidaMinuto: $("saidaMinuto"),
+    retPrevDateTime: $("retPrevDateTime"),
     retPrevHora: $("retPrevHora"),
     retPrevMinuto: $("retPrevMinuto"),
     cliente: $("cliente"),
@@ -357,7 +358,12 @@
     saveLog: [],
     draftTimer: null,
     draftRestoring: false,
-    lastDraftSavedAt: null
+    lastDraftSavedAt: null,
+    draftCommonEdited: false,
+    importDraftEditState: {
+      common: false,
+      retorno: false
+    }
   };
   const customSelectRoots = new WeakMap();
   let activeCustomSelect = null;
@@ -602,9 +608,17 @@
       renderTabBadges();
     });
     el.repetirServico?.addEventListener("change", renderTabBadges);
-    el.saidaData?.addEventListener("change", syncRepeatDefaultDates);
-    el.saidaHora?.addEventListener("change", syncReturnDefaults);
-    el.saidaMinuto?.addEventListener("change", syncReturnDefaults);
+    el.saidaData?.addEventListener("change", () => {
+      syncLegacyTimePartsFromDateTime(el.saidaData, el.saidaHora, el.saidaMinuto);
+      syncRepeatDefaultDates();
+      syncReturnDefaults();
+    });
+    el.retornoData?.addEventListener("change", () => {
+      syncLegacyTimePartsFromDateTime(el.retornoData, el.retornoHora, el.retornoMinuto);
+    });
+    el.retPrevDateTime?.addEventListener("change", () => {
+      syncLegacyTimePartsFromDateTime(el.retPrevDateTime, el.retPrevHora, el.retPrevMinuto);
+    });
     document.querySelectorAll("[data-obs]").forEach((button) => {
       button?.addEventListener("click", () => switchObs(button.dataset.obs, false));
     });
@@ -2689,7 +2703,7 @@
     const saida = r[f.dataSaida] ? new Date(r[f.dataSaida]) : null;
     const prevRet = r[f.previsaoRetorno] ? new Date(r[f.previsaoRetorno]) : null;
     setDateTimeFields(saida || new Date(), el.saidaData, el.saidaHora, el.saidaMinuto);
-    setTimeFields(prevRet, el.retPrevHora, el.retPrevMinuto, true);
+    setDateTimeFields(prevRet, el.retPrevDateTime, el.retPrevHora, el.retPrevMinuto, true);
 
     setSelectValue(el.statusOperacao, r[f.status], findOptionValue("statusOperacao", "Confirmado"));
     setSelectValue(el.statusFaturamento, r[f.statusFaturamento], findOptionValue("statusFaturamento", "Pendente"));
@@ -3225,22 +3239,18 @@
         <label class="field span-2 required">
           <span>Data e horário</span>
           <div class="inline-time">
-            <input type="date" data-schedule-field="data">
-            <div class="time-group">
-              <select data-schedule-field="hora"></select>
-              <span class="time-separator">:</span>
-              <select data-schedule-field="minuto"></select>
-            </div>
+            <input type="datetime-local" data-schedule-field="dataHora" step="300">
+            <input type="hidden" data-schedule-field="data">
+            <input type="hidden" data-schedule-field="hora">
+            <input type="hidden" data-schedule-field="minuto">
           </div>
         </label>
         <label class="field">
           <span>Hr prev retorno</span>
           <div class="inline-time">
-            <div class="time-group">
-              <select data-schedule-field="retPrevHora"></select>
-              <span class="time-separator">:</span>
-              <select data-schedule-field="retPrevMinuto"></select>
-            </div>
+            <input type="datetime-local" data-schedule-field="retPrevDateTime" step="300">
+            <input type="hidden" data-schedule-field="retPrevHora">
+            <input type="hidden" data-schedule-field="retPrevMinuto">
           </div>
         </label>
         <label class="field required">
@@ -3274,25 +3284,21 @@
 
   function hydrateScheduleDraftRow(row, item, index) {
     row.dataset.scheduleKey = item.key;
+    syncScheduleDateTimeFields(item);
     row.querySelector("[data-schedule-title]").textContent = `Agendamento ${index + 2}`;
+    setScheduleInput(row, "dataHora", item.dataHora);
     setScheduleInput(row, "data", item.data);
-    fillScheduleTimeSelect(row, "hora", true, item.hora);
-    fillScheduleTimeSelect(row, "minuto", false, item.minuto);
-    fillScheduleTimeSelect(row, "retPrevHora", true, item.retPrevHora, true);
-    fillScheduleTimeSelect(row, "retPrevMinuto", false, item.retPrevMinuto, true);
+    setScheduleInput(row, "hora", item.hora);
+    setScheduleInput(row, "minuto", item.minuto);
+    setScheduleInput(row, "retPrevDateTime", item.retPrevDateTime);
+    setScheduleInput(row, "retPrevHora", item.retPrevHora);
+    setScheduleInput(row, "retPrevMinuto", item.retPrevMinuto);
     fillScheduleOptions(row, "tipoServico", state.options.tipoServico, item.tipoServico);
     fillScheduleOptions(row, "tipoVeiculo", state.options.tipoVeiculo, item.tipoVeiculo);
     fillScheduleLookup(row, "motorista", state.motoristas, item.motorista);
     setScheduleInput(row, "trajeto", item.trajeto);
     setScheduleInput(row, "destino", item.destino);
     setScheduleInput(row, "obsMotorista", item.obsMotorista);
-  }
-
-  function fillScheduleTimeSelect(row, field, isHour, value) {
-    const base = isHour
-      ? Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"))
-      : ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
-    fillScheduleOptions(row, field, base.map((item) => ({ value: item, label: item })), value);
   }
 
   function fillScheduleOptions(row, field, options, value) {
@@ -3871,7 +3877,10 @@
   }
 
   function renderTabBadges() {
-    el.tabImport?.classList.toggle("is-marked", !!state.importReview);
+    const draftSnapshot = getActiveFormDraftSnapshot();
+    const hasCommonDraft = hasCommonDraftContent(draftSnapshot);
+    const hasReturnDraft = hasReturnDraftContent(draftSnapshot);
+    el.tabImport?.classList.toggle("is-marked", !!state.importReview || hasCommonDraft || hasReturnDraft);
     el.tabReturn.classList.toggle("is-marked", el.agendarRetorno.checked);
     el.tabRepeat.classList.toggle("is-marked", el.repetirServico.checked);
   }
@@ -3887,7 +3896,16 @@
     captureObsState();
     renderTabBadges();
     renderRiskPanel();
-    markDraftDirty();
+    const isReturnField = (
+      target === el.retornoData ||
+      target === el.retornoHora ||
+      target === el.retornoMinuto ||
+      target === el.retornoEndereco ||
+      target === el.retornoDestino ||
+      target === el.retornoObservacao ||
+      target === el.agendarRetorno
+    );
+    markDraftDirty({ touchCommon: !isReturnField });
   }
 
   function renderRiskPanel() {
@@ -3990,14 +4008,20 @@
     });
   }
 
-  function markDraftDirty() {
+  function markDraftDirty(options = {}) {
     if (state.draftRestoring) return;
+    const config = {
+      touchCommon: true,
+      ...options
+    };
+    if (config.touchCommon) state.draftCommonEdited = true;
     if (state.draftTimer) window.clearTimeout(state.draftTimer);
     renderDraftStatus("Salvando rascunho...");
     state.draftTimer = window.setTimeout(() => {
       state.draftTimer = null;
       saveDraftSnapshot();
     }, 400);
+    if (state.currentTab === "import") renderImportReview();
   }
 
   function saveDraftSnapshot() {
@@ -4015,6 +4039,7 @@
   }
 
   function createDraftSnapshot() {
+    syncAllDateTimeInputs();
     return {
       version: 1,
       recordId: state.recordId || "",
@@ -4029,6 +4054,7 @@
         saidaData: el.saidaData.value,
         saidaHora: el.saidaHora.value,
         saidaMinuto: el.saidaMinuto.value,
+        retPrevDateTime: el.retPrevDateTime?.value || "",
         retPrevHora: el.retPrevHora.value,
         retPrevMinuto: el.retPrevMinuto.value,
         cliente: el.cliente.value,
@@ -4074,10 +4100,14 @@
   async function restoreDraftSnapshot() {
     const snapshot = readDraftSnapshot();
     if (!snapshot) {
+      state.draftCommonEdited = false;
+      state.importDraftEditState = { common: false, retorno: false };
       renderDraftStatus();
       return;
     }
     if ((snapshot.recordId || "") !== (state.recordId || "")) {
+      state.draftCommonEdited = false;
+      state.importDraftEditState = { common: false, retorno: false };
       renderDraftStatus();
       return;
     }
@@ -4088,9 +4118,10 @@
       const fields = snapshot.fields || {};
       setSelectValue(el.statusOperacao, fields.statusOperacao || "");
       setSelectValue(el.statusFaturamento, fields.statusFaturamento || "");
-      setFieldValue(el.saidaData, fields.saidaData);
+      setFieldValue(el.saidaData, dateTimeLocalFromParts(fields.saidaData, fields.saidaHora, fields.saidaMinuto) || fields.saidaData);
       setSelectValue(el.saidaHora, fields.saidaHora || "");
       setSelectValue(el.saidaMinuto, fields.saidaMinuto || "");
+      setFieldValue(el.retPrevDateTime, fields.retPrevDateTime || dateTimeLocalFromParts(fields.saidaData, fields.retPrevHora, fields.retPrevMinuto));
       setSelectValue(el.retPrevHora, fields.retPrevHora || "");
       setSelectValue(el.retPrevMinuto, fields.retPrevMinuto || "");
       setSelectValue(el.cliente, fields.cliente || "");
@@ -4107,7 +4138,7 @@
       setFieldValue(el.enderecoPersonalizado, fields.enderecoPersonalizado);
       setFieldValue(el.destino, fields.destino);
       setFieldValue(el.agendarRetorno, fields.agendarRetorno);
-      setFieldValue(el.retornoData, fields.retornoData);
+      setFieldValue(el.retornoData, dateTimeLocalFromParts(fields.retornoData, fields.retornoHora, fields.retornoMinuto) || fields.retornoData);
       setSelectValue(el.retornoHora, fields.retornoHora || "");
       setSelectValue(el.retornoMinuto, fields.retornoMinuto || "");
       setFieldValue(el.retornoEndereco, fields.retornoEndereco);
@@ -4126,6 +4157,8 @@
       state.scheduleDrafts = [];
       state.enderecoRascunho = Array.isArray(snapshot.enderecoRascunho) ? snapshot.enderecoRascunho.map((item) => ({ ...item })) : [];
       state.selectedPassengers = restoreDraftPassengers(snapshot.selectedPassengers || []);
+      state.draftCommonEdited = hasCommonDraftContent(snapshot);
+      state.importDraftEditState = { common: false, retorno: false };
       hydratePassengerSelectionRecencyFromRows(state.selectedPassengers);
 
       el.observacao.value = state.obs[state.obsAtual] || fields.observacao || "";
@@ -4139,6 +4172,7 @@
       setTab(state.isNew ? (snapshot.currentTab || "details") : "details");
     } catch (error) {
       console.warn("Falha ao restaurar rascunho local", error);
+      state.draftCommonEdited = false;
       renderDraftStatus("Rascunho invalido.");
     } finally {
       state.draftRestoring = false;
@@ -4172,6 +4206,8 @@
     } catch (error) {
       console.warn("Falha ao remover rascunho local", error);
     }
+    state.draftCommonEdited = false;
+    state.importDraftEditState = { common: false, retorno: false };
     state.lastDraftSavedAt = null;
     renderDraftStatus();
     if (showToast) toast("Rascunho local removido.", "success", 2500);
@@ -4227,6 +4263,7 @@
   }
 
   function fillOptions(select, values) {
+    if (!select || !select.options) return;
     select.innerHTML = "";
     values.forEach((value) => {
       const option = document.createElement("option");
@@ -4297,9 +4334,11 @@
   function mainScheduleSnapshot() {
     return {
       key: nextScheduleDraftKey(),
-      data: el.saidaData.value,
+      dataHora: el.saidaData.value,
+      data: datePartFromInputValue(el.saidaData.value),
       hora: el.saidaHora.value,
       minuto: el.saidaMinuto.value,
+      retPrevDateTime: el.retPrevDateTime?.value || "",
       retPrevHora: el.retPrevHora.value,
       retPrevMinuto: el.retPrevMinuto.value,
       tipoServico: el.tipoServico.value,
@@ -4349,7 +4388,17 @@
     if (!row) return;
     const item = state.scheduleDrafts.find((draft) => draft.key === row.dataset.scheduleKey);
     if (!item) return;
-    item[field.dataset.scheduleField] = field.value;
+    const fieldName = field.dataset.scheduleField;
+    item[fieldName] = field.value;
+    if (fieldName === "dataHora") {
+      item.data = datePartFromInputValue(field.value);
+      item.hora = timePartFromInputValue(field.value).split(":")[0] || "";
+      item.minuto = timePartFromInputValue(field.value).split(":")[1] || "";
+    }
+    if (fieldName === "retPrevDateTime") {
+      item.retPrevHora = timePartFromInputValue(field.value).split(":")[0] || "";
+      item.retPrevMinuto = timePartFromInputValue(field.value).split(":")[1] || "";
+    }
   }
 
   function sortPassengers() {
@@ -4671,10 +4720,14 @@
   }
 
   function syncRepeatDefaultDates() {
-    if (el.saidaData.value) {
-      if (!el.frequenteInicio.value) el.frequenteInicio.value = el.saidaData.value;
-      if (!el.frequenteFim.value) el.frequenteFim.value = el.saidaData.value;
-      if (!el.retornoData.value) el.retornoData.value = el.saidaData.value;
+    const saidaDate = datePartFromInputValue(el.saidaData.value);
+    if (saidaDate) {
+      if (!el.frequenteInicio.value) el.frequenteInicio.value = saidaDate;
+      if (!el.frequenteFim.value) el.frequenteFim.value = saidaDate;
+      if (!el.retornoData.value) {
+        el.retornoData.value = el.saidaData.value;
+        syncLegacyTimePartsFromDateTime(el.retornoData, el.retornoHora, el.retornoMinuto);
+      }
     }
   }
 
@@ -5411,10 +5464,22 @@
 
   function renderImportReview() {
     const review = state.importReview;
+    const draftSnapshot = getActiveFormDraftSnapshot();
+    const importedPrograms = review?.programs || [];
+    const trechos = importedPrograms.flatMap((program) => program.trechos || []);
+    const validTrechos = trechos.filter((trecho) => importedTrechoIssues(trecho).length === 0);
+    const duplicatedTrechos = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
+    const hasImportedRows = Array.isArray(review?.rows) && review.rows.length > 0;
+    const hasImportData = importedPrograms.length > 0 && hasImportedRows;
+    const hasCommonDraft = hasCommonDraftContent(draftSnapshot);
+    const hasReturnDraft = hasReturnDraftContent(draftSnapshot);
+    const hasMixedServiceSources = hasImportData && (hasCommonDraft || hasReturnDraft);
+    const duplicateSuffix = duplicatedTrechos.length ? ` - ${formatDdMm(new Date())}` : "";
     if (!el.importReviewPrograms) return;
-    if (!review) {
+
+    if (!hasImportData && !hasCommonDraft && !hasReturnDraft) {
       if (el.importReviewEmpty) el.importReviewEmpty.hidden = false;
-      if (el.importReviewSummary) el.importReviewSummary.textContent = "Importe um XLSX para revisar os serviços nesta aba.";
+      if (el.importReviewSummary) el.importReviewSummary.textContent = "Importe um XLSX para revisar serviços importados ou preencha o formulário para ver o rascunho.";
       el.importReviewStats?.replaceChildren();
       el.importReviewIssues?.replaceChildren();
       if (el.importReviewIssues) el.importReviewIssues.hidden = true;
@@ -5423,24 +5488,380 @@
       return;
     }
     if (el.importReviewEmpty) el.importReviewEmpty.hidden = true;
-    const trechos = review.programs.flatMap((program) => program.trechos);
-    const validTrechos = trechos.filter((trecho) => importedTrechoIssues(trecho).length === 0);
     const importClient = getImportClient();
-    el.importReviewSummary.textContent = `${review.fileName} - ${review.rows.length} linha(s) - ${review.programs.length} PG(s) - ${trechos.length} trecho(s) - Cliente: ${importClient?.label || CONFIG.importDefaults.clienteLabel}.`;
-    el.importReviewStats.replaceChildren(
-      importStat("Linhas", review.rows.length),
-      importStat("PGs", review.programs.length),
-      importStat("Trechos", trechos.length),
-      importStat("Válidos", validTrechos.length)
-    );
-    renderImportGlobalIssues(trechos);
-    el.importReviewPrograms.replaceChildren();
-    review.programs.forEach((program) => {
-      el.importReviewPrograms.appendChild(buildImportProgramCard(program));
-    });
-    if (el.importSaveAll) {
-      el.importSaveAll.disabled = validTrechos.length === 0;
+    const summary = [];
+
+    if (hasImportData) {
+      summary.push(`${review.rows.length} linha(s)`);
+      summary.push(`${review.programs.length} PG(s)`);
+      summary.push(`${trechos.length} trecho(s)`);
+      summary.push(`${validTrechos.length} válido(s)`);
+      summary.push(`Cliente: ${importClient?.label || CONFIG.importDefaults.clienteLabel}`);
+      el.importReviewStats.replaceChildren(
+        importStat("Linhas", review.rows.length),
+        importStat("PGs", review.programs.length),
+        importStat("Trechos", trechos.length),
+        importStat("Válidos", validTrechos.length)
+      );
+      renderImportGlobalIssues(trechos);
+    } else {
+      el.importReviewStats?.replaceChildren();
+      el.importReviewIssues?.replaceChildren();
+      if (el.importReviewIssues) el.importReviewIssues.hidden = true;
     }
+    if (!hasImportData) {
+      summary.push("Sem XLSX carregado.");
+    } else {
+      summary.push(`Arquivo: ${review.fileName}.`);
+    }
+    if (hasCommonDraft) summary.push("Rascunho do formulário comum.");
+    if (hasReturnDraft) summary.push("Rascunho de retorno ativo.");
+    if (duplicatedTrechos.length) summary.push(`${duplicatedTrechos.length} serviços repetidos.`);
+    el.importReviewSummary.textContent = summary.join("  ");
+
+    el.importReviewPrograms.replaceChildren();
+    if (hasImportData) {
+      importedPrograms.forEach((program) => {
+        el.importReviewPrograms.appendChild(buildImportProgramCard(program));
+      });
+    }
+    let mixedBadgeRendered = false;
+    if (hasCommonDraft) {
+      const commonDraftCard = buildImportDraftCard(draftSnapshot, "Rascunho do formulário comum", duplicateSuffix, hasMixedServiceSources && !mixedBadgeRendered);
+      if (commonDraftCard) el.importReviewPrograms.appendChild(commonDraftCard);
+      if (hasMixedServiceSources) mixedBadgeRendered = true;
+    }
+    if (hasReturnDraft) {
+      const returnDraftCard = buildImportReturnDraftCard(draftSnapshot, duplicateSuffix, hasMixedServiceSources && !mixedBadgeRendered);
+      if (returnDraftCard) el.importReviewPrograms.appendChild(returnDraftCard);
+    }
+    if (duplicatedTrechos.length) {
+      const duplicatedCard = buildImportDuplicateServicesCard(duplicatedTrechos);
+      if (duplicatedCard) el.importReviewPrograms.appendChild(duplicatedCard);
+    }
+    if (el.importSaveAll) {
+      el.importSaveAll.disabled = !(hasImportData && validTrechos.length > 0);
+    }
+  }
+
+  function getActiveFormDraftSnapshot() {
+    try {
+      return createDraftSnapshot();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function hasText(value) {
+    if (typeof value === "boolean") return value;
+    if (Array.isArray(value) || typeof value === "object") return false;
+    return String(value ?? "").trim().length > 0;
+  }
+
+  function hasCommonDraftContent(snapshot) {
+    if (!snapshot) return false;
+    if (state.draftCommonEdited) return true;
+    const fields = snapshot?.fields || {};
+    const hasPassengers = (snapshot?.selectedPassengers || []).length > 0;
+    const hasAddressDraft = (snapshot?.enderecoRascunho || []).length > 0;
+    const hasLookupDraft = hasText(fields.cliente) || hasText(fields.solicitante) || hasText(fields.motorista);
+    return hasPassengers || hasAddressDraft || hasLookupDraft || hasText(fields.saidaData) || hasText(fields.saidaHora)
+      || hasText(fields.saidaMinuto) || hasText(fields.trajeto) || hasText(fields.destino) || hasText(fields.observacao)
+      || hasText(fields.tipoServico) || hasText(fields.tipoVeiculo) || hasText(fields.formaPagamento) || hasText(fields.cr) || hasText(fields.cotacao);
+  }
+
+  function hasReturnDraftContent(snapshot) {
+    const fields = snapshot?.fields || {};
+    if (fields.agendarRetorno) return true;
+    return hasText(fields.retornoData) || hasText(fields.retornoHora) || hasText(fields.retornoMinuto) || hasText(fields.retornoEndereco) || hasText(fields.retornoDestino) || hasText(fields.retornoObservacao);
+  }
+
+  function resolveLookupLabel(rows, id) {
+    if (!id) return "";
+    return rows.find((item) => sameId(item.id, id))?.label || "";
+  }
+
+  function formatDraftDateTime(date, hour, minute) {
+    const dateText = formatDateInputForDisplay(date) || "--";
+    const hh = hasText(hour) ? hour : "--";
+    const mm = hasText(minute) ? minute : "--";
+    return `${dateText} ${hh}:${mm}`.trim();
+  }
+
+  function formatDdMm(date) {
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit"
+    }).format(date);
+  }
+
+  function buildImportDraftCard(snapshot, title, duplicateSuffix = "", showMixedTypeBadge = false) {
+    return buildImportDraftFormCard(snapshot, "common", title, duplicateSuffix, showMixedTypeBadge);
+  }
+
+  function buildImportReturnDraftCard(snapshot, duplicateSuffix = "", showMixedTypeBadge = false) {
+    return buildImportDraftFormCard(snapshot, "retorno", "Rascunho do retorno", duplicateSuffix, showMixedTypeBadge);
+  }
+
+  function setImportDraftEditState(draftType, enabled) {
+    state.importDraftEditState[draftType] = !!enabled;
+  }
+
+  function isImportDraftEditable(draftType) {
+    return !!state.importDraftEditState?.[draftType];
+  }
+
+  function copySelectOptions(target, source) {
+    if (!target || !source || !source.options) return;
+    target.innerHTML = "";
+    Array.from(source.options).forEach((option) => {
+      target.append(option.cloneNode(true));
+    });
+  }
+
+  function buildDraftInput(source, type = "text", rows = 2) {
+    if (!source) return null;
+    if (source.tagName === "SELECT") {
+      const select = document.createElement("select");
+      select.className = "import-draft-control import-draft-select";
+      copySelectOptions(select, source);
+      select.value = source.value || "";
+      return select;
+    }
+    if (source.tagName === "TEXTAREA" || type === "textarea") {
+      const textarea = document.createElement("textarea");
+      textarea.className = "import-draft-control import-draft-textarea";
+      textarea.rows = rows;
+      textarea.value = source.value || "";
+      return textarea;
+    }
+    const input = document.createElement("input");
+    input.className = "import-draft-control import-draft-input";
+    input.type = type === "date" ? "date" : type === "datetime-local" ? "datetime-local" : "text";
+    if (input.type === "datetime-local") input.step = "300";
+    const sourceType = (source.type || "").toLowerCase();
+    input.inputMode = sourceType === "number" || sourceType === "decimal" ? "decimal" : "text";
+    if (sourceType === "email") input.inputMode = "email";
+    if (sourceType === "tel") input.inputMode = "tel";
+    input.value = source.value || "";
+    return input;
+  }
+
+  function bindDraftMirror(control, source, touchCommon = true) {
+    if (!control || !source) return;
+
+    const syncNow = () => {
+      if (source.tagName === "SELECT") {
+        setSelectValue(source, control.value);
+      } else if (source.type === "checkbox") {
+        source.checked = !!control.checked;
+      } else {
+        source.value = control.value;
+      }
+      if (source === el.cotacao) {
+        source.value = formatCurrencyDisplayValue(source.value);
+      }
+      markDraftDirty({ touchCommon: touchCommon });
+    };
+
+    control.addEventListener("input", () => {
+      if (source.tagName === "SELECT" || source.type === "checkbox") return;
+      if (source === el.cotacao) return;
+      if (source.type === "date") return;
+      if (source.tagName === "TEXTAREA") {
+        source.value = control.value;
+      } else {
+        source.value = control.value;
+      }
+    });
+
+    control.addEventListener("change", syncNow);
+    if (source.tagName !== "SELECT" && source.type !== "checkbox") {
+      control.addEventListener("blur", syncNow);
+    }
+  }
+
+  function buildDraftFieldRow(label, control, options = {}) {
+    if (!control) return null;
+    const row = document.createElement("label");
+    row.className = `import-draft-field ${options.wide ? "is-wide" : ""}`;
+    const span = document.createElement("span");
+    span.textContent = label;
+    row.append(span, control);
+    return row;
+  }
+
+  function buildDraftDateTimeField(label, dateSource, hourSource, minuteSource, touchCommon = true) {
+    const row = document.createElement("label");
+    row.className = "import-draft-field";
+    const span = document.createElement("span");
+    span.textContent = label;
+
+    const inline = document.createElement("div");
+    inline.className = "inline-time";
+
+    const dateInput = buildDraftInput(dateSource, "datetime-local");
+    bindDraftMirror(dateInput, dateSource, touchCommon);
+    dateInput?.addEventListener("change", () => {
+      syncLegacyTimePartsFromDateTime(dateSource, hourSource, minuteSource);
+    });
+
+    if (dateInput) inline.appendChild(dateInput);
+
+    row.append(span, inline);
+    return row;
+  }
+
+  function addDraftSummary(list, label, value) {
+    if (!hasText(value)) return;
+    const dt = document.createElement("dt");
+    const dd = document.createElement("dd");
+    dt.textContent = label;
+    dd.textContent = value;
+    list.append(dt, dd);
+  }
+
+  function buildImportDraftFormCard(snapshot, draftType, title, duplicateSuffix = "", showMixedTypeBadge = false) {
+    const fields = snapshot?.fields || {};
+    const hasPassengers = (snapshot?.selectedPassengers || []).length;
+    const isEditing = isImportDraftEditable(draftType);
+    const card = document.createElement("article");
+    card.className = "import-program import-draft-card";
+    card.dataset.draftType = draftType;
+    card.classList.toggle("is-locked", !isEditing);
+    card.classList.toggle("is-editing", isEditing);
+    const head = document.createElement("header");
+    head.className = "import-program-head";
+    const titleBox = document.createElement("div");
+    const strong = document.createElement("strong");
+    strong.textContent = `${title}${duplicateSuffix}`;
+    const meta = document.createElement("span");
+    meta.textContent = draftType === "retorno" ? "Ativado" : hasPassengers > 0 ? `${hasPassengers} passageiro(s)` : "Sem passageiros";
+    titleBox.append(strong, meta);
+    const actions = document.createElement("div");
+    actions.className = "import-draft-head-actions";
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "secondary-action small-action import-draft-toggle";
+    toggle.dataset.importDraftToggle = draftType;
+    toggle.setAttribute("aria-pressed", String(isEditing));
+    toggle.textContent = isEditing ? "Bloquear edição" : "Desbloquear edição";
+    const typeBadge = document.createElement("span");
+    typeBadge.className = "import-badge";
+    typeBadge.textContent = draftType === "retorno" ? "Retorno" : "Rascunho";
+    if (showMixedTypeBadge) {
+      const mixedBadge = document.createElement("span");
+      mixedBadge.className = "import-badge warning";
+      mixedBadge.textContent = "Próprio + Importado";
+      actions.append(toggle, mixedBadge, typeBadge);
+    } else {
+      actions.append(toggle, typeBadge);
+    }
+    head.append(titleBox, actions);
+    card.appendChild(head);
+
+    if (!isEditing) {
+      const list = document.createElement("dl");
+      list.className = "review-summary-list import-draft-summary";
+      if (draftType === "retorno") {
+        addDraftSummary(list, "Retorno", formatDraftDateTime(fields.retornoData, fields.retornoHora, fields.retornoMinuto));
+        addDraftSummary(list, "Endereço", fields.retornoEndereco);
+        addDraftSummary(list, "Destino", fields.retornoDestino);
+      } else {
+        addDraftSummary(list, "Saída", formatDraftDateTime(fields.saidaData, fields.saidaHora, fields.saidaMinuto));
+        addDraftSummary(list, "Cliente", resolveLookupLabel(state.clientes, fields.cliente));
+        addDraftSummary(list, "Solicitante", resolveLookupLabel(state.passageiros, fields.solicitante));
+        addDraftSummary(list, "Trajeto", fields.trajeto);
+        addDraftSummary(list, "Destino", fields.destino);
+      }
+      card.appendChild(list);
+      return card;
+    }
+
+    const form = document.createElement("div");
+    form.className = "import-draft-form";
+    if (draftType === "retorno") {
+      form.appendChild(buildDraftDateTimeField("Data e horário de retorno", el.retornoData, el.retornoHora, el.retornoMinuto, false));
+
+      const retornoEndereco = buildDraftInput(el.retornoEndereco, "textarea", 3);
+      bindDraftMirror(retornoEndereco, el.retornoEndereco, false);
+      const retornoDestino = buildDraftInput(el.retornoDestino, "textarea", 3);
+      bindDraftMirror(retornoDestino, el.retornoDestino, false);
+      const retornoObservacao = buildDraftInput(el.retornoObservacao, "textarea", 4);
+      bindDraftMirror(retornoObservacao, el.retornoObservacao, false);
+
+      if (retornoEndereco) form.appendChild(buildDraftFieldRow("Endereço de saída", retornoEndereco, { wide: true }));
+      if (retornoDestino) form.appendChild(buildDraftFieldRow("Destino", retornoDestino, { wide: true }));
+      if (retornoObservacao) form.appendChild(buildDraftFieldRow("Observação de retorno", retornoObservacao, { wide: true }));
+    } else {
+      form.appendChild(buildDraftDateTimeField("Data e horário de saída", el.saidaData, el.saidaHora, el.saidaMinuto, true));
+
+      const cliente = buildDraftInput(el.cliente, "select");
+      bindDraftMirror(cliente, el.cliente, true);
+      const solicitante = buildDraftInput(el.solicitante, "select");
+      bindDraftMirror(solicitante, el.solicitante, true);
+      const tipoServico = buildDraftInput(el.tipoServico, "select");
+      bindDraftMirror(tipoServico, el.tipoServico, true);
+      const tipoVeiculo = buildDraftInput(el.tipoVeiculo, "select");
+      bindDraftMirror(tipoVeiculo, el.tipoVeiculo, true);
+      const motorista = buildDraftInput(el.motorista, "select");
+      bindDraftMirror(motorista, el.motorista, true);
+      const trajeto = buildDraftInput(el.trajeto, "textarea", 2);
+      bindDraftMirror(trajeto, el.trajeto, true);
+      const destino = buildDraftInput(el.destino, "textarea", 3);
+      bindDraftMirror(destino, el.destino, true);
+      const observacao = buildDraftInput(el.observacao, "textarea", 4);
+      bindDraftMirror(observacao, el.observacao, true);
+      const formaPagamento = buildDraftInput(el.formaPagamento, "select");
+      bindDraftMirror(formaPagamento, el.formaPagamento, true);
+      const cotacao = buildDraftInput(el.cotacao, "text");
+      bindDraftMirror(cotacao, el.cotacao, true);
+      const cr = buildDraftInput(el.cr, "text");
+      bindDraftMirror(cr, el.cr, true);
+
+      if (cliente) form.appendChild(buildDraftFieldRow("Cliente", cliente));
+      if (solicitante) form.appendChild(buildDraftFieldRow("Solicitante", solicitante));
+      if (tipoServico) form.appendChild(buildDraftFieldRow("Tipo de serviço", tipoServico));
+      if (tipoVeiculo) form.appendChild(buildDraftFieldRow("Tipo de veículo", tipoVeiculo));
+      if (motorista) form.appendChild(buildDraftFieldRow("Motorista", motorista));
+      if (trajeto) form.appendChild(buildDraftFieldRow("Trajeto", trajeto, { wide: true }));
+      if (destino) form.appendChild(buildDraftFieldRow("Destino", destino, { wide: true }));
+      if (observacao) form.appendChild(buildDraftFieldRow("Observação operacional", observacao, { wide: true }));
+      if (formaPagamento) form.appendChild(buildDraftFieldRow("Forma de pagamento", formaPagamento));
+      if (cotacao) form.appendChild(buildDraftFieldRow("Cotação", cotacao));
+      if (cr) form.appendChild(buildDraftFieldRow("CR", cr));
+    }
+
+    card.appendChild(form);
+    return card;
+  }
+
+  function buildImportDuplicateServicesCard(duplicatedTrechos) {
+    const card = document.createElement("article");
+    card.className = "import-program";
+    const head = document.createElement("header");
+    head.className = "import-program-head";
+    const titleBox = document.createElement("div");
+    const strong = document.createElement("strong");
+    strong.textContent = "Serviços repetidos";
+    const meta = document.createElement("span");
+    meta.textContent = `${duplicatedTrechos.length} encontrado(s)`;
+    titleBox.append(strong, meta);
+    const badge = document.createElement("span");
+    badge.className = "import-badge danger";
+    badge.textContent = "Atenção";
+    head.append(titleBox, badge);
+    card.appendChild(head);
+
+    const list = document.createElement("div");
+    list.className = "import-review-issues";
+    duplicatedTrechos.forEach((trecho, index) => {
+      const item = document.createElement("p");
+      item.textContent = `PG ${trecho.programacao} · serviço ${index + 1} · ${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"} · ${trecho.passageiros.length} passageiro(s)`;
+      list.appendChild(item);
+    });
+    card.appendChild(list);
+    return card;
   }
 
   function importStat(label, value) {
@@ -5459,7 +5880,7 @@
     const issues = [];
     if (!getImportClient()?.id) issues.push("Cliente Embraer não encontrado. Configure CONFIG.importDefaults.clienteId ou cadastre Embraer.");
     const duplicated = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
-    if (duplicated.length) issues.push(`${duplicated.length} trecho(s) pertencem a PG já importada.`);
+    if (duplicated.length) issues.push(`${duplicated.length} serviço(s) repetido(s).`);
     const ambiguous = trechos.reduce((total, trecho) => total + trecho.passageiros.filter((pax) => pax.matchStatus === "ambiguous").length, 0);
     if (ambiguous) issues.push(`${ambiguous} passageiro(s) precisam de decisão de duplicidade.`);
     el.importReviewIssues.hidden = issues.length === 0;
@@ -5484,7 +5905,7 @@
     title.append(strong, meta);
     const status = document.createElement("span");
     status.className = program.duplicatedRecordIds?.length ? "import-badge danger" : "import-badge";
-    status.textContent = program.duplicatedRecordIds?.length ? "PG já importada" : "Novo";
+    status.textContent = program.duplicatedRecordIds?.length ? "Serviço repetido" : "Novo";
     head.append(title, status);
     card.appendChild(head);
     program.trechos.forEach((trecho, index) => card.appendChild(buildImportTrechoCard(program, trecho, index)));
@@ -5508,15 +5929,14 @@
     meta.textContent = `${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"} · ${trecho.passageiros.length} passageiro(s)`;
     title.append(strong, meta);
     const badge = document.createElement("span");
-    badge.className = issues.length ? "import-badge warning" : "import-badge success";
+    badge.className = issues.length ? "import-badge danger" : "import-badge success";
     badge.textContent = trecho.savedRecordId ? "Salvo" : (issues.length ? `${issues.length} pendência(s)` : "Pronto");
     head.append(title, badge);
 
     const grid = document.createElement("div");
     grid.className = "import-hot-grid";
     grid.append(
-      buildImportInput("Data", "dataIso", trecho.dataIso, "date"),
-      buildImportInput("Hora", "horario", trecho.horario, "time"),
+      buildImportInput("Data e hora", "dataHora", importedTrechoDateTimeLocal(trecho), "datetime-local"),
       buildImportSelect("Tipo de serviço", "tipoServicoValue", state.options.tipoServico, trecho.tipoServicoValue || findOptionValue("tipoServico", trecho.tipoServicoSugerido)),
       buildImportSelect("Tipo de veículo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido)),
       buildImportInput("Cotação", "valor", Number.isFinite(trecho.valor) ? String(trecho.valor) : "", "number"),
@@ -5559,6 +5979,7 @@
     span.textContent = label;
     const input = document.createElement("input");
     input.type = type;
+    if (type === "datetime-local") input.step = "300";
     input.value = value ?? "";
     input.dataset.importField = field;
     if (type === "number") input.step = "0.01";
@@ -5685,6 +6106,19 @@
   }
 
   function handleImportReviewAction(event) {
+    const draftToggle = event.target.closest("[data-import-draft-toggle]");
+    if (draftToggle) {
+      const draftType = draftToggle.dataset.importDraftToggle === "retorno" ? "retorno" : "common";
+      const enable = draftToggle.getAttribute("aria-pressed") !== "true";
+      setImportDraftEditState(draftType, enable);
+      renderImportReview();
+      if (enable) {
+        const field = draftToggle.closest("[data-draft-type]")?.querySelector(".import-draft-control");
+        field?.focus();
+      }
+      return;
+    }
+
     const action = event.target.closest("[data-import-action]");
     if (!action) return;
     const trechoCard = action.closest("[data-trecho-key]");
@@ -5740,6 +6174,14 @@
     const field = event.target.dataset.importField;
     if (!field) return;
     const value = event.target.value;
+    if (field === "dataHora") {
+      trecho.dataIso = datePartFromInputValue(value);
+      trecho.horario = timePartFromInputValue(value);
+      if (event.type === "change") {
+        window.setTimeout(renderImportReview, 0);
+      }
+      return;
+    }
     if (field === "valor") {
       trecho.valor = value === "" ? null : Number(value);
       return;
@@ -5760,7 +6202,7 @@
     try {
       const context = await buildImportedSaveContext(trecho);
       setSelectValue(el.cliente, context.importClient.id);
-      setFieldValue(el.saidaData, trecho.dataIso || "");
+      setFieldValue(el.saidaData, importedTrechoDateTimeLocal(trecho));
       const [hour, minute] = String(trecho.horario || "").split(":");
       setSelectValue(el.saidaHora, hour || "");
       setSelectValue(el.saidaMinuto, minute || "");
@@ -6080,7 +6522,7 @@
 
   function formatDateInputForDisplay(value) {
     if (!value) return "sem data";
-    const [year, month, day] = String(value).split("-");
+    const [year, month, day] = datePartFromInputValue(value).split("-");
     return year && month && day ? `${day}/${month}/${year}` : value;
   }
 
@@ -6176,6 +6618,7 @@
   }
 
   function buildSaveContext() {
+    syncAllDateTimeInputs();
     const dataHoraPrincipal = combineDateTime(el.saidaData.value, el.saidaHora.value, el.saidaMinuto.value);
     const retPrev = buildRetornoPrevisto(dataHoraPrincipal);
     const dataHoraRetorno = combineDateTime(el.retornoData.value, el.retornoHora.value, el.retornoMinuto.value);
@@ -6220,6 +6663,8 @@
   }
 
   function buildScheduleRetornoPrevisto(item, baseDateTime) {
+    const explicitRetorno = parseDateTimeInputValue(item?.retPrevDateTime);
+    if (explicitRetorno) return explicitRetorno;
     if (!baseDateTime || !item.retPrevHora || !item.retPrevMinuto || !item.hora || !item.minuto) return null;
     const saidaTime = timeFromParts(item.hora, item.minuto);
     const retornoTime = timeFromParts(item.retPrevHora, item.retPrevMinuto);
@@ -6434,6 +6879,7 @@
       el.retornoDestino,
       el.retornoObservacao,
       el.retornoData,
+      el.retPrevDateTime,
       el.frequenteInicio,
       el.frequenteFim,
       el.enderecoPersonalizado
@@ -6471,6 +6917,8 @@
   }
 
   function buildRetornoPrevisto(baseDateTime) {
+    const explicitRetorno = parseDateTimeInputValue(el.retPrevDateTime?.value);
+    if (explicitRetorno) return explicitRetorno;
     if (!baseDateTime || !el.retPrevHora.value || !el.retPrevMinuto.value) return null;
     const saidaTime = timeFromParts(el.saidaHora.value, el.saidaMinuto.value);
     const retornoTime = timeFromParts(el.retPrevHora.value, el.retPrevMinuto.value);
@@ -6480,14 +6928,17 @@
   }
 
   function combineDateTime(dateValue, hourValue, minuteValue) {
+    const parsed = parseDateTimeInputValue(dateValue);
+    if (parsed) return parsed;
     if (!dateValue || hourValue === "" || minuteValue === "") return null;
     const [year, month, day] = dateValue.split("-").map(Number);
     return new Date(year, month - 1, day, Number(hourValue), Number(minuteValue), 0, 0);
   }
 
-  function setDateTimeFields(date, dateInput, hourSelect, minuteSelect) {
-    dateInput.value = toDateInput(date);
-    setTimeFields(date, hourSelect, minuteSelect, false);
+  function setDateTimeFields(date, dateInput, hourSelect, minuteSelect, allowBlank = false) {
+    if (!dateInput) return;
+    dateInput.value = date && !Number.isNaN(date.getTime()) ? toDateTimeLocalInput(date) : "";
+    setTimeFields(date, hourSelect, minuteSelect, allowBlank);
   }
 
   function setTimeFields(date, hourSelect, minuteSelect, allowBlank) {
@@ -6586,6 +7037,10 @@
 
   function setSelectValue(select, value, fallback = "") {
     if (!select) return;
+    if (!select.options) {
+      select.value = value ?? fallback ?? "";
+      return;
+    }
     const stringValue = value === null || value === undefined ? "" : String(value);
     if (stringValue && [...select.options].some((option) => option.value === stringValue)) {
       select.value = stringValue;
@@ -6916,6 +7371,68 @@
     return cleanGuid(a).toLowerCase() === cleanGuid(b).toLowerCase();
   }
 
+  function syncAllDateTimeInputs() {
+    syncLegacyTimePartsFromDateTime(el.saidaData, el.saidaHora, el.saidaMinuto);
+    syncLegacyTimePartsFromDateTime(el.retornoData, el.retornoHora, el.retornoMinuto);
+    syncLegacyTimePartsFromDateTime(el.retPrevDateTime, el.retPrevHora, el.retPrevMinuto);
+  }
+
+  function syncLegacyTimePartsFromDateTime(dateTimeInput, hourInput, minuteInput) {
+    const date = parseDateTimeInputValue(dateTimeInput?.value);
+    if (!date) {
+      if (hourInput) hourInput.value = "";
+      if (minuteInput) minuteInput.value = "";
+      return;
+    }
+    if (hourInput) hourInput.value = String(date.getHours()).padStart(2, "0");
+    if (minuteInput) minuteInput.value = String(Math.min(55, Math.floor(date.getMinutes() / 5) * 5)).padStart(2, "0");
+  }
+
+  function parseDateTimeInputValue(value) {
+    const text = String(value || "").trim();
+    if (!text || !text.includes("T")) return null;
+    const [datePart, timePart = ""] = text.split("T");
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [hour = 0, minute = 0] = timePart.split(":").map(Number);
+    if (![year, month, day, hour, minute].every(Number.isFinite)) return null;
+    const date = new Date(year, month - 1, day, hour, minute, 0, 0);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function datePartFromInputValue(value) {
+    const text = String(value || "").trim();
+    return text.includes("T") ? text.slice(0, 10) : text;
+  }
+
+  function timePartFromInputValue(value) {
+    const text = String(value || "").trim();
+    if (!text.includes("T")) return text;
+    return text.slice(11, 16);
+  }
+
+  function dateTimeLocalFromParts(dateValue, hourValue, minuteValue) {
+    const datePart = datePartFromInputValue(dateValue);
+    if (!datePart || !hourValue || !minuteValue) return "";
+    return `${datePart}T${String(hourValue).padStart(2, "0")}:${String(minuteValue).padStart(2, "0")}`;
+  }
+
+  function importedTrechoDateTimeLocal(trecho) {
+    return dateTimeLocalFromParts(trecho?.dataIso, ...String(trecho?.horario || "").split(":"));
+  }
+
+  function syncScheduleDateTimeFields(item) {
+    if (!item) return;
+    item.dataHora = item.dataHora || dateTimeLocalFromParts(item.data, item.hora, item.minuto);
+    item.data = datePartFromInputValue(item.dataHora || item.data);
+    const [hour = "", minute = ""] = timePartFromInputValue(item.dataHora || "").split(":");
+    if (hour) item.hora = hour;
+    if (minute) item.minuto = minute;
+    item.retPrevDateTime = item.retPrevDateTime || dateTimeLocalFromParts(item.data || datePartFromInputValue(item.dataHora), item.retPrevHora, item.retPrevMinuto);
+    const [retHour = "", retMinute = ""] = timePartFromInputValue(item.retPrevDateTime || "").split(":");
+    if (retHour) item.retPrevHora = retHour;
+    if (retMinute) item.retPrevMinuto = retMinute;
+  }
+
   function isGuid(value) {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanGuid(value));
   }
@@ -7020,6 +7537,13 @@
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
+  }
+
+  function toDateTimeLocalInput(date) {
+    if (!date || Number.isNaN(date.getTime())) return "";
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(Math.min(55, Math.floor(date.getMinutes() / 5) * 5)).padStart(2, "0");
+    return `${toDateInput(date)}T${hours}:${minutes}`;
   }
 
   function formatDateTime(date) {

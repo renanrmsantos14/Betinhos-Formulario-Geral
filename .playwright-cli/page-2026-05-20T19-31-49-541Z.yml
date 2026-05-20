@@ -1,0 +1,225 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e6]: B
+      - generic [ref=e7]:
+        - paragraph [ref=e8]: Betinhos Executive Service
+        - heading "Formulário de Agendamento" [level=1] [ref=e9]
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]: Status
+        - generic [ref=e13]:
+          - combobox "Status Confirmado":
+            - option
+            - option "Cancelado"
+            - option "Requer Analise"
+            - option "Cancelado com Ressalvas"
+            - option "Pre-reserva"
+            - option "Solicitado"
+            - option "Confirmado" [selected]
+            - option "Programado"
+            - option "Em Execucao"
+            - option "Concluido"
+          - button "Confirmado" [ref=e14] [cursor=pointer]:
+            - generic [ref=e15]: Confirmado
+      - button "Importar arquivo XLSX" [ref=e17] [cursor=pointer]:
+        - img [ref=e19]
+        - text: Importar XLSX
+      - button "Agendar serviços" [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: Agendar serviços
+  - navigation "Seções do formulário" [ref=e23]:
+    - text: MENU
+    - button "Detalhes" [ref=e24] [cursor=pointer]:
+      - img [ref=e26]
+      - generic: Detalhes
+    - button "Cadastrar Passageiro" [ref=e28] [cursor=pointer]:
+      - img [ref=e30]
+      - generic: Cadastrar Passageiro
+    - button "Retorno" [ref=e32] [cursor=pointer]:
+      - img [ref=e34]
+      - generic: Retorno
+    - button "Repetir" [ref=e36] [cursor=pointer]:
+      - img [ref=e38]
+      - generic: Repetir
+    - button "Serviços importados" [ref=e40] [cursor=pointer]:
+      - img [ref=e42]
+      - generic: Serviços importados
+  - main [ref=e44]:
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - heading "Detalhes do serviço" [level=2] [ref=e47]
+        - paragraph [ref=e48]: Dados operacionais para criar ou editar a reserva no Dataverse.
+      - generic [ref=e49]:
+        - region "Agenda, cliente e rota" [ref=e50]:
+          - generic [ref=e51]:
+            - heading "Agenda, cliente e rota" [level=3] [ref=e52]
+            - paragraph [ref=e53]: Dados principais do serviço, horários, cliente e percurso.
+          - generic [ref=e54]:
+            - generic [ref=e55]:
+              - generic [ref=e56]: Data e horário de saída *
+              - textbox "Data e horário de saída *" [ref=e58]: 2026-05-20T16:30
+            - generic [ref=e59]:
+              - generic [ref=e60]: Horário previsto de retorno
+              - textbox "Horário previsto de retorno" [ref=e62]
+            - generic [ref=e63]:
+              - generic [ref=e64]: Cliente *
+              - generic [ref=e65]:
+                - combobox "Cliente * Selecione":
+                  - option [selected]
+                  - option "Embraer"
+                  - option "Tenaris"
+                  - option "Cliente Demo"
+                  - option "Beta Labs"
+                  - option "Holding Sul"
+                - button "Selecione" [ref=e66] [cursor=pointer]:
+                  - generic [ref=e67]: Selecione
+            - generic [ref=e69]:
+              - generic [ref=e70]: Solicitante *
+              - generic [ref=e71]:
+                - combobox "Solicitante * Selecione":
+                  - option [selected]
+                  - option "Maria Souza"
+                  - option "Carlos Mendes"
+                  - option "Juliana Lima"
+                - button "Selecione" [ref=e72] [cursor=pointer]:
+                  - generic [ref=e73]: Selecione
+            - generic [ref=e75]:
+              - generic [ref=e76]: Tipo do serviço *
+              - generic [ref=e77]:
+                - combobox "Tipo do serviço * Selecione":
+                  - option [selected]
+                  - option "Guarulhos"
+                  - option "Sao Paulo"
+                  - option "Outras Cidades"
+                  - option "Vale do Paraiba"
+                  - option "Rio de Janeiro"
+                  - option "Pindamonhangaba"
+                  - option "Sao Jose dos Campos"
+                  - option "Congonhas"
+                  - option "Campinas"
+                  - option "Dentro de Sao Paulo"
+                  - option "Litoral"
+                  - option "Regiao dos Lagos"
+                  - option "Extrema"
+                  - option "Nova Odessa"
+                  - option "Baixada Santista"
+                  - option "Minas Gerais"
+                  - option "GPX"
+                - button "Selecione" [ref=e78] [cursor=pointer]:
+                  - generic [ref=e79]: Selecione
+            - generic [ref=e81]:
+              - generic [ref=e82]: Tipo do veículo *
+              - generic [ref=e83]:
+                - combobox "Tipo do veículo * Selecione":
+                  - option [selected]
+                  - option "Basico"
+                  - option "Executivo"
+                  - option "Blindado"
+                  - option "Van"
+                  - option "Van Blindado"
+                  - option "Spin"
+                  - option "Somente Motorista"
+                - button "Selecione" [ref=e84] [cursor=pointer]:
+                  - generic [ref=e85]: Selecione
+            - generic [ref=e87]:
+              - generic [ref=e88]: Motorista
+              - generic [ref=e89]:
+                - combobox "Motorista Selecione":
+                  - option [selected]
+                  - option "Carlos Motorista"
+                  - option "Rafael Costa"
+                  - option "Patricia Lima"
+                - button "Selecione" [ref=e90] [cursor=pointer]:
+                  - generic [ref=e91]: Selecione
+            - generic [ref=e93]:
+              - generic [ref=e94]: Trajeto *
+              - textbox "Trajeto *" [ref=e95]
+            - generic [ref=e96]:
+              - generic [ref=e97]: Observação operacional
+              - tablist "Tipo de observação" [ref=e98]:
+                - tab "Mot" [selected] [ref=e99] [cursor=pointer]
+                - tab "Interna" [ref=e100] [cursor=pointer]
+                - tab "Final" [ref=e101] [cursor=pointer]
+                - tab "Pref Pax" [ref=e102] [cursor=pointer]
+              - 'textbox "Ex.: preferir veículo com água, sem paradas, rota direta." [ref=e103]'
+        - region "Passageiros selecionados" [ref=e104]:
+          - generic [ref=e105]:
+            - generic [ref=e106]:
+              - heading "Passageiros selecionados" [level=3] [ref=e107]
+              - paragraph [ref=e108]: Cadastre a ordem operacional e o passageiro na sequência de embarque.
+            - generic [ref=e110]:
+              - button "Endereço único" [ref=e111] [cursor=pointer]
+              - button "Adicionar" [disabled] [ref=e112]
+          - generic [ref=e116]:
+            - generic [ref=e117]:
+              - generic [ref=e118]: "01"
+              - button "Selecione o passageiro pelo botão Adicionar" [disabled] [ref=e120] [cursor=pointer]: Selecionar passageiro
+            - generic [ref=e121]:
+              - generic [ref=e122]: Endereço de saída
+              - textbox "Endereço de saída" [ref=e123]
+            - button "Remover passageiro" [ref=e124] [cursor=pointer]: X
+        - region "Destino" [ref=e125]:
+          - generic [ref=e126]:
+            - heading "Destino" [level=3] [ref=e127]
+            - paragraph [ref=e128]: Destino final do serviço.
+          - generic [ref=e130]:
+            - generic [ref=e131]: Destino *
+            - textbox "Destino *" [ref=e132]
+        - region "Faturamento" [ref=e133]:
+          - generic [ref=e134]:
+            - heading "Faturamento" [level=3] [ref=e135]
+            - paragraph [ref=e136]: Status, pagamento e referências financeiras.
+          - generic [ref=e137]:
+            - generic [ref=e138]:
+              - checkbox "Receber?" [ref=e139]
+              - generic [ref=e140]: Receber?
+            - generic [ref=e141]:
+              - generic [ref=e142]: Status de faturamento
+              - generic [ref=e143]:
+                - combobox "Status de faturamento Pendente Limpar seleção":
+                  - option
+                  - option "Nao Faturavel"
+                  - option "Pendente" [selected]
+                  - option "Composicao Realizada"
+                  - option "Cancelado Sem Taxa"
+                  - option "Cancelado Com Taxa"
+                  - option "Cortesia"
+                  - option "Permuta"
+                  - option "Pagante em Viagem"
+                  - option "Pagamento Pendente"
+                  - option "Pagamento Em Atraso"
+                  - option "Faturamento Mensal"
+                  - option "Pago"
+                - button "Pendente Limpar seleção" [ref=e144] [cursor=pointer]:
+                  - generic [ref=e145]: Pendente
+                  - button "Limpar seleção" [ref=e146]
+            - generic [ref=e148]:
+              - text: R$
+              - generic [ref=e149]: Cotação
+              - textbox "R$ Cotação" [ref=e150]
+            - generic [ref=e151]:
+              - generic [ref=e152]: Forma de pagamento
+              - generic [ref=e153]:
+                - combobox "Forma de pagamento Selecione":
+                  - option [selected]
+                  - option "Cartao de credito"
+                  - option "Pedido de compra"
+                  - option "Pix"
+                - button "Selecione" [ref=e154] [cursor=pointer]:
+                  - generic [ref=e155]: Selecione
+            - generic [ref=e157]:
+              - generic [ref=e158]: CR
+              - textbox "CR" [ref=e159]
+        - region "Pré-validação do save" [ref=e160]:
+          - generic [ref=e161]:
+            - heading "Pré-validação do save" [level=3] [ref=e162]
+            - paragraph [ref=e163]: Resumo operacional e alertas antes do envio.
+          - generic [ref=e164]:
+            - paragraph [ref=e166]: Resumo
+            - paragraph [ref=e168]: Riscos e atenção
+            - paragraph [ref=e170]: Log local
+    - text: "* * * *"
+  - complementary [ref=e171]:
+    - generic [ref=e172]:
+      - generic [ref=e173]: "Modo local ativo: dados mock gerados para teste completo da experiência."
+      - button "Fechar notificação" [ref=e174] [cursor=pointer]: ×

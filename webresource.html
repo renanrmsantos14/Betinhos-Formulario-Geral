@@ -345,16 +345,8 @@ h3 {
    ========================================================================== */
 
 .tabs {
-  --tab-compact-width: 58px;
-  --tab-icon-size: 22px;
-  --tab-open-width: 210px;
-  --tab-inner-rail: 44px;
   grid-area: tabs;
-  position: sticky;
-  top: 72px;
-  align-self: start;
-  width: var(--tab-compact-width);
-  height: auto;
+  width: 100%;
   max-height: calc(100dvh - 84px);
   min-height: 0;
   display: grid;
@@ -378,7 +370,7 @@ h3 {
 
 .tabs:hover,
 .tabs:has(.tab:focus-visible) {
-  width: var(--tab-open-width);
+  width: 210px;
   border-color: rgb(191 204 222 / 0.9);
   box-shadow: 0 16px 34px rgb(22 35 59 / 0.13), 0 0 0 1px rgb(33 89 210 / 0.05);
 }
@@ -403,7 +395,7 @@ h3 {
   min-height: 38px;
   width: 100%;
   display: grid;
-  grid-template-columns: var(--tab-inner-rail) minmax(0, 1fr);
+  grid-template-columns: 44px minmax(0, 1fr);
   align-items: center;
   padding: 0;
   border: 1px solid transparent;
@@ -667,6 +659,134 @@ h3 {
   align-items: stretch;
   justify-content: flex-start;
   align-content: flex-start;
+}
+
+.review-lists {
+  display: grid;
+  gap: 10px;
+}
+
+.review-block-title {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.review-summary-list,
+.review-risk-list,
+.save-log-list {
+  margin: 0;
+  min-height: 0;
+  list-style: none;
+  display: grid;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.review-summary-list {
+  grid-template-columns: 130px minmax(0, 1fr);
+  align-items: start;
+}
+
+.review-summary-list dt,
+.review-summary-list dd {
+  margin: 0;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.review-summary-list dt {
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.review-summary-list dd {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+}
+
+.review-risk-list {
+  border-left-color: var(--line-strong);
+}
+
+.review-risk-list.is-warning {
+  border-left-color: var(--warning);
+  background: var(--warning-soft);
+  border-color: color-mix(in srgb, var(--warning) 36%, var(--line));
+}
+
+.review-risk-list.is-clear {
+  border-left-color: var(--success);
+  background: var(--surface);
+}
+
+.review-risk-list li {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.review-risk-list li::before {
+  content: "•";
+  color: var(--warning);
+  font-size: 14px;
+  line-height: 1.1;
+  transform: translateY(1px);
+}
+
+.review-risk-list.is-clear li,
+.review-risk-list.is-clear li::before {
+  color: var(--success);
+}
+
+.save-log-list {
+  max-height: 190px;
+  overflow: auto;
+}
+
+.save-log-item {
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
+  background: #fff;
+  box-shadow: var(--shadow-control);
+}
+
+.save-log-header {
+  margin: 0 0 2px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.save-log-detail {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 11px;
+}
+
+.save-log-item-success {
+  border-left: 3px solid var(--success);
+}
+
+.save-log-item-info {
+  border-left: 3px solid var(--accent);
+}
+
+.save-log-item-error {
+  border-left: 3px solid var(--danger);
 }
 
 /* ==========================================================================
@@ -1511,11 +1631,12 @@ h3 {
   overflow: hidden;
 }
 
-.field.compact-time .inline-time input[type="date"] {
+.field.compact-time .inline-time input[type="date"],
+.field.compact-time .inline-time input[type="datetime-local"] {
   /* Data: 130px é o mínimo confortável para digitar/visualizar AAAA-MM-DD sem cortar. */
   width: 1px;
-  min-width: 132px;
-  max-width: 132px;
+  min-width: 210px;
+  max-width: 240px;
   min-height: var(--compact-time-control-height);
   height: var(--compact-time-control-height);
   max-height: var(--compact-time-control-height);
@@ -1635,6 +1756,11 @@ h3 {
   text-align: center;
   background-position: calc(100% - 12px) 56%;
   background-size: 7px 7px, 7px 7px, 100% 100%;
+}
+
+.inline-time input[type="datetime-local"] {
+  width: 100%;
+  min-width: 0;
 }
 
 .time-separator {
@@ -3233,7 +3359,8 @@ h3 {
   .import-program-head,
   .import-trecho-head,
   .import-trecho-actions,
-  .import-review-actions {
+  .import-review-actions,
+  .import-draft-head-actions {
     align-items: stretch;
     flex-direction: column;
   }
@@ -3257,9 +3384,30 @@ h3 {
     max-width: 100%;
   }
 
-    .passenger-match-dialog {
-      width: calc(100vw - 12px);
-      max-height: calc(100dvh - 16px);
+  .import-draft-form {
+    gap: 7px;
+  }
+
+  .import-draft-field {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    align-items: start;
+    min-height: 0;
+    padding: 8px;
+  }
+
+  .import-draft-field.is-wide {
+    grid-column: 1 / -1;
+  }
+
+  .import-draft-summary {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .passenger-match-dialog {
+    width: calc(100vw - 12px);
+    max-height: calc(100dvh - 16px);
     padding: 14px;
     overflow: auto;
   }
@@ -3411,61 +3559,163 @@ h3 {
   border-color: color-mix(in srgb, var(--warning) 34%, var(--line));
 }
 
-  .top-import-action {
-    min-height: 38px;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    border-style: dashed;
-    border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
-    box-sizing: border-box;
-    box-shadow: none;
-    transition:
-      transform 150ms var(--ease-out),
-      border-color 150ms var(--ease-out),
-      background-color 150ms var(--ease-out),
-      color 150ms var(--ease-out);
-  }
+.top-import-action {
+  min-height: 38px;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--line));
+  box-sizing: border-box;
+  box-shadow: none;
+  transition:
+    transform 150ms var(--ease-out),
+    border-color 150ms var(--ease-out),
+    background-color 150ms var(--ease-out),
+    color 150ms var(--ease-out);
+}
 
-  .import-button-with-icon {
-    position: relative;
-    overflow: hidden;
-  }
+.import-button-with-icon {
+  position: relative;
+  overflow: hidden;
+}
 
-  .import-btn-icon {
-    display: inline-grid;
-    width: 15px;
-    height: 15px;
-    color: currentColor;
-  }
+.import-btn-icon {
+  display: inline-grid;
+  width: 15px;
+  height: 15px;
+  color: currentColor;
+}
 
-  .import-btn-icon svg {
-    width: 100%;
-    height: 100%;
-    stroke-width: 2;
-    stroke: currentColor;
-    fill: none;
-  }
+.import-btn-icon svg {
+  width: 100%;
+  height: 100%;
+  stroke-width: 2;
+  stroke: currentColor;
+  fill: none;
+}
 
-  body.is-import-dragging .top-import-action {
-    border-color: var(--accent);
-    border-style: solid;
-    background: var(--accent-soft);
-    box-shadow: 0 0 0 3px rgb(33 89 210 / 0.14);
-  }
+body.is-import-dragging .top-import-action {
+  border-color: var(--accent);
+  border-style: solid;
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 3px rgb(33 89 210 / 0.14);
+}
 
-  body.is-import-drag-invalid .top-import-action {
-    border-color: var(--danger);
-    color: var(--danger);
-    background: var(--danger-soft);
-  }
+body.is-import-drag-invalid .top-import-action {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-soft);
+}
 
-  body.is-import-drag-blocked .top-import-action {
-    border-color: var(--warning);
-    color: var(--warning);
-    background: var(--warning-soft);
-  }
+body.is-import-drag-blocked .top-import-action {
+  border-color: var(--warning);
+  color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.import-drop-overlay {
+  position: fixed;
+  z-index: 58;
+  inset: 0;
+  display: none;
+  place-items: center;
+  padding: 16px;
+  background: rgb(15 23 37 / 0.44);
+  backdrop-filter: blur(2px);
+}
+
+body.is-import-dragging .import-drop-overlay {
+  display: grid;
+}
+
+.import-drop-overlay-card {
+  display: grid;
+  gap: 8px;
+  width: min(560px, 100%);
+  max-width: 90vw;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  border: 2px dashed var(--line-strong);
+  background: #ffffff;
+  color: var(--text);
+  text-align: center;
+  box-shadow: var(--shadow-shell);
+  transition: border-color 150ms var(--ease-out), transform 150ms var(--ease-out), background-color 150ms var(--ease-out);
+}
+
+.import-drop-overlay-card.is-ready {
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 62%, #ffffff);
+}
+
+.import-drop-overlay-card.is-invalid {
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--line));
+  background: color-mix(in srgb, var(--danger-soft) 62%, #ffffff);
+}
+
+.import-drop-overlay-card.is-blocked {
+  border-color: color-mix(in srgb, var(--warning) 55%, var(--line));
+  background: color-mix(in srgb, var(--warning-soft) 62%, #ffffff);
+}
+
+.import-drop-overlay-card.is-ready .import-drop-overlay-icon {
+  color: var(--accent);
+}
+
+.import-drop-overlay-card.is-invalid .import-drop-overlay-icon {
+  color: var(--danger);
+}
+
+.import-drop-overlay-card.is-blocked .import-drop-overlay-icon {
+  color: var(--warning);
+}
+
+.import-drop-overlay-title {
+  display: inline-block;
+  margin: 0;
+}
+
+.import-drop-overlay-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.import-drop-overlay-card.is-ready .import-drop-overlay-title {
+  color: var(--accent-strong);
+}
+
+.import-drop-overlay-card.is-invalid .import-drop-overlay-title {
+  color: var(--danger);
+}
+
+.import-drop-overlay-card.is-blocked .import-drop-overlay-title {
+  color: var(--warning);
+}
+
+.import-drop-overlay-card strong {
+  font-size: 16px;
+}
+
+.import-drop-overlay-icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  margin: 0 auto;
+  color: var(--accent);
+}
+
+.import-drop-overlay-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 
 .import-review-panel.is-active {
   display: grid;
@@ -3570,6 +3820,131 @@ h3 {
   border-left: 4px solid var(--accent);
   border-radius: var(--radius-md);
   background: var(--surface);
+}
+
+.import-draft-card {
+  border-left-color: var(--accent);
+  gap: 8px;
+  padding: 10px;
+}
+
+.import-draft-card.is-locked {
+  padding: 8px 10px 10px;
+  gap: 8px;
+  border-left-width: 3px;
+  background: color-mix(in srgb, var(--surface) 92%, var(--surface-soft));
+}
+
+.import-draft-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.import-draft-toggle {
+  min-height: 30px;
+}
+
+.import-draft-form {
+  display: grid;
+  gap: 8px;
+}
+
+.import-draft-form .inline-time {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.import-draft-field {
+  display: grid;
+  grid-template-columns: minmax(120px, 154px) minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.import-draft-field.is-wide {
+  grid-column: 1 / -1;
+}
+
+.import-draft-field span {
+  min-width: 0;
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1.2;
+}
+
+.import-draft-control {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: #ffffff;
+  color: var(--text);
+  padding: 7px 10px;
+  outline: 0;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+
+.import-draft-control.import-draft-select {
+  appearance: auto;
+}
+
+.import-draft-control:focus-visible {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
+}
+
+.import-draft-textarea {
+  min-height: 92px;
+  max-height: 140px;
+  resize: vertical;
+  line-height: 1.38;
+}
+
+.import-draft-summary {
+  margin: 0;
+  min-height: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+  grid-template-columns: 112px minmax(0, 1fr);
+  align-items: start;
+  padding: 6px 8px;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, var(--surface));
+  border-left-width: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+}
+
+.import-draft-summary dt,
+.import-draft-summary dd {
+  margin: 0;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.import-draft-summary dt {
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 820;
+}
+
+.import-draft-summary dd {
+  color: var(--text);
+  font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .import-program-head > div,
@@ -4139,7 +4514,8 @@ h3 {
     overflow: visible;
   }
 
-  .field.compact-time .inline-time input[type="date"] {
+  .field.compact-time .inline-time input[type="date"],
+  .field.compact-time .inline-time input[type="datetime-local"] {
     display: block;
     grid-column: 1 / -1;
     min-width: 0;
@@ -4456,7 +4832,8 @@ h3 {
     min-height: 42px;
   }
 
-  .field.compact-time .inline-time input[type="date"] {
+  .field.compact-time .inline-time input[type="date"],
+  .field.compact-time .inline-time input[type="datetime-local"] {
     min-width: 0;
   }
 
@@ -4523,7 +4900,7 @@ h3 {
         </div>
       </div>
 
-      <div class="top-actions">
+        <div class="top-actions">
         <label class="status-select">
           <span>Status</span>
           <select id="statusOperacao"></select>
@@ -4556,14 +4933,6 @@ h3 {
         </span>
         <span class="tab-label">Detalhes</span>
       </button>
-      <button class="tab" type="button" data-tab="import" id="tabImport" aria-label="Importação XLSX">
-        <span class="tab-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false">
-            <path d="M14 3v4a1 1 0 0 0 1 1h4M8 13h8M8 17h8M8 9h2M6 3h8l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path>
-          </svg>
-        </span>
-        <span class="tab-label">Importação XLSX</span>
-      </button>
       <button class="tab" type="button" data-tab="bd" id="tabBd" aria-label="Cadastrar Passageiro">
         <span class="tab-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false">
@@ -4588,6 +4957,14 @@ h3 {
         </span>
         <span class="tab-label">Repetir</span>
       </button>
+      <button class="tab" type="button" data-tab="import" id="tabImport" aria-label="Serviços importados">
+        <span class="tab-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M14 3v4a1 1 0 0 0 1 1h4M8 13h8M8 17h8M8 9h2M6 3h8l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path>
+          </svg>
+        </span>
+        <span class="tab-label">Serviços importados</span>
+      </button>
     </nav>
 
     <main class="content">
@@ -4608,23 +4985,18 @@ h3 {
               <label class="field compact-time required">
                 <span>Data e horário de saída</span>
                 <div class="inline-time">
-                  <input id="saidaData" type="date" required aria-required="true">
-                  <div class="time-group">
-                    <select id="saidaHora" required aria-required="true"></select>
-                    <span class="time-separator">:</span>
-                    <select id="saidaMinuto" required aria-required="true"></select>
-                  </div>
+                  <input id="saidaData" type="datetime-local" required aria-required="true" step="300">
+                  <input id="saidaHora" type="hidden">
+                  <input id="saidaMinuto" type="hidden">
                 </div>
               </label>
 
               <label class="field">
                 <span>Horário previsto de retorno</span>
                 <div class="inline-time">
-                  <div class="time-group time-group--return-preview">
-                    <select id="retPrevHora"></select>
-                    <span class="time-separator">:</span>
-                    <select id="retPrevMinuto"></select>
-                  </div>
+                  <input id="retPrevDateTime" type="datetime-local" step="300">
+                  <input id="retPrevHora" type="hidden">
+                  <input id="retPrevMinuto" type="hidden">
                 </div>
               </label>
 
@@ -4712,11 +5084,11 @@ h3 {
             </div>
           </section>
 
-          <section class="form-section" aria-labelledby="financeiroTitle">
-            <div class="form-section-title">
-              <h3 id="financeiroTitle">Faturamento</h3>
-              <p>Status, pagamento e referências financeiras.</p>
-            </div>
+        <section class="form-section" aria-labelledby="financeiroTitle">
+          <div class="form-section-title">
+            <h3 id="financeiroTitle">Faturamento</h3>
+            <p>Status, pagamento e referências financeiras.</p>
+          </div>
 
             <div class="form-grid">
               <label class="toggle-field">
@@ -4750,6 +5122,27 @@ h3 {
               </label>
             </div>
           </section>
+
+          <section class="form-section compact-section review-panel" aria-labelledby="reviewPanelTitle">
+            <div class="form-section-title">
+              <h3 id="reviewPanelTitle">Pré-validação do save</h3>
+              <p>Resumo operacional e alertas antes do envio.</p>
+            </div>
+            <div class="review-lists">
+              <div>
+                <p class="review-block-title">Resumo</p>
+                <dl id="reviewSummaryList" class="review-summary-list" hidden></dl>
+              </div>
+              <div>
+                <p class="review-block-title">Riscos e atenção</p>
+                <ul id="reviewRiskList" class="review-risk-list is-clear" hidden></ul>
+              </div>
+              <div>
+                <p class="review-block-title">Log local</p>
+                <ul id="saveLogList" class="save-log-list" hidden></ul>
+              </div>
+            </div>
+          </section>
         </div>
 
       </section>
@@ -4758,8 +5151,8 @@ h3 {
         <div class="section-head inline import-review-head">
           <div>
             <p class="passenger-picker-eyebrow">Importação XLSX</p>
-            <h2 id="importReviewTitle">Revisar serviços importados</h2>
-            <p id="importReviewSummary" class="import-review-summary">Importe um XLSX para revisar os serviços nesta aba.</p>
+            <h2 id="importReviewTitle">Serviços importados</h2>
+            <p id="importReviewSummary" class="import-review-summary">Importe um XLSX para revisar os serviços nesta aba ou confira o rascunho do formulário.</p>
           </div>
           <div class="import-review-actions">
             <button id="importSaveAll" type="button" class="primary-action" disabled>Salvar todos válidos</button>
@@ -4769,7 +5162,7 @@ h3 {
 
         <div id="importReviewEmpty" class="import-review-empty">
           <strong>Nenhum arquivo carregado.</strong>
-          <span>Use Importar XLSX para montar a revisão por PG e trecho.</span>
+          <span>Use Importar XLSX para montar a revisão por PG e trecho ou preencha o formulário para ver o rascunho aqui.</span>
         </div>
         <div id="importReviewStats" class="import-review-stats"></div>
         <div id="importReviewIssues" class="import-review-issues" hidden></div>
@@ -4873,14 +5266,11 @@ h3 {
         <section class="form-section">
           <div class="form-grid">
             <label class="field span-2">
-              <span>Data de retorno</span>
+              <span>Data e horário de retorno</span>
               <div class="inline-time">
-                <input id="retornoData" type="date">
-                <div class="time-group">
-                  <select id="retornoHora"></select>
-                  <span class="time-separator">:</span>
-                  <select id="retornoMinuto"></select>
-                </div>
+                <input id="retornoData" type="datetime-local" step="300">
+                <input id="retornoHora" type="hidden">
+                <input id="retornoMinuto" type="hidden">
               </div>
             </label>
             <label class="field span-2">
@@ -4951,6 +5341,18 @@ h3 {
       <div class="dialog">
         <div class="spinner"></div>
         <strong>Carregando...</strong>
+      </div>
+    </div>
+
+    <div id="importDropOverlay" class="import-drop-overlay" role="status" aria-live="polite" aria-atomic="true" hidden>
+      <div class="import-drop-overlay-card">
+        <span class="import-drop-overlay-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M12 15.5V3.5m0 12-2.6-2.6m2.6 2.6 2.6-2.6M3.5 19.8h17" />
+          </svg>
+        </span>
+        <strong class="import-drop-overlay-title">Solte o arquivo XLSX para importar</strong>
+        <p class="import-drop-overlay-hint">Arraste e solte seu arquivo .xlsx nesta tela para abrir a revisão de importação.</p>
       </div>
     </div>
 
@@ -5502,7 +5904,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   </script>
   <script>
-(() => {
+﻿(() => {
   "use strict";
 
   const CONFIG = {
@@ -5745,6 +6147,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     saidaData: $("saidaData"),
     saidaHora: $("saidaHora"),
     saidaMinuto: $("saidaMinuto"),
+    retPrevDateTime: $("retPrevDateTime"),
     retPrevHora: $("retPrevHora"),
     retPrevMinuto: $("retPrevMinuto"),
     cliente: $("cliente"),
@@ -5861,7 +6264,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     saveLog: [],
     draftTimer: null,
     draftRestoring: false,
-    lastDraftSavedAt: null
+    lastDraftSavedAt: null,
+    draftCommonEdited: false,
+    importDraftEditState: {
+      common: false,
+      retorno: false
+    }
   };
   const customSelectRoots = new WeakMap();
   let activeCustomSelect = null;
@@ -6106,9 +6514,17 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       renderTabBadges();
     });
     el.repetirServico?.addEventListener("change", renderTabBadges);
-    el.saidaData?.addEventListener("change", syncRepeatDefaultDates);
-    el.saidaHora?.addEventListener("change", syncReturnDefaults);
-    el.saidaMinuto?.addEventListener("change", syncReturnDefaults);
+    el.saidaData?.addEventListener("change", () => {
+      syncLegacyTimePartsFromDateTime(el.saidaData, el.saidaHora, el.saidaMinuto);
+      syncRepeatDefaultDates();
+      syncReturnDefaults();
+    });
+    el.retornoData?.addEventListener("change", () => {
+      syncLegacyTimePartsFromDateTime(el.retornoData, el.retornoHora, el.retornoMinuto);
+    });
+    el.retPrevDateTime?.addEventListener("change", () => {
+      syncLegacyTimePartsFromDateTime(el.retPrevDateTime, el.retPrevHora, el.retPrevMinuto);
+    });
     document.querySelectorAll("[data-obs]").forEach((button) => {
       button?.addEventListener("click", () => switchObs(button.dataset.obs, false));
     });
@@ -8193,7 +8609,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const saida = r[f.dataSaida] ? new Date(r[f.dataSaida]) : null;
     const prevRet = r[f.previsaoRetorno] ? new Date(r[f.previsaoRetorno]) : null;
     setDateTimeFields(saida || new Date(), el.saidaData, el.saidaHora, el.saidaMinuto);
-    setTimeFields(prevRet, el.retPrevHora, el.retPrevMinuto, true);
+    setDateTimeFields(prevRet, el.retPrevDateTime, el.retPrevHora, el.retPrevMinuto, true);
 
     setSelectValue(el.statusOperacao, r[f.status], findOptionValue("statusOperacao", "Confirmado"));
     setSelectValue(el.statusFaturamento, r[f.statusFaturamento], findOptionValue("statusFaturamento", "Pendente"));
@@ -8729,22 +9145,18 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         <label class="field span-2 required">
           <span>Data e horário</span>
           <div class="inline-time">
-            <input type="date" data-schedule-field="data">
-            <div class="time-group">
-              <select data-schedule-field="hora"></select>
-              <span class="time-separator">:</span>
-              <select data-schedule-field="minuto"></select>
-            </div>
+            <input type="datetime-local" data-schedule-field="dataHora" step="300">
+            <input type="hidden" data-schedule-field="data">
+            <input type="hidden" data-schedule-field="hora">
+            <input type="hidden" data-schedule-field="minuto">
           </div>
         </label>
         <label class="field">
           <span>Hr prev retorno</span>
           <div class="inline-time">
-            <div class="time-group">
-              <select data-schedule-field="retPrevHora"></select>
-              <span class="time-separator">:</span>
-              <select data-schedule-field="retPrevMinuto"></select>
-            </div>
+            <input type="datetime-local" data-schedule-field="retPrevDateTime" step="300">
+            <input type="hidden" data-schedule-field="retPrevHora">
+            <input type="hidden" data-schedule-field="retPrevMinuto">
           </div>
         </label>
         <label class="field required">
@@ -8778,25 +9190,21 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function hydrateScheduleDraftRow(row, item, index) {
     row.dataset.scheduleKey = item.key;
+    syncScheduleDateTimeFields(item);
     row.querySelector("[data-schedule-title]").textContent = `Agendamento ${index + 2}`;
+    setScheduleInput(row, "dataHora", item.dataHora);
     setScheduleInput(row, "data", item.data);
-    fillScheduleTimeSelect(row, "hora", true, item.hora);
-    fillScheduleTimeSelect(row, "minuto", false, item.minuto);
-    fillScheduleTimeSelect(row, "retPrevHora", true, item.retPrevHora, true);
-    fillScheduleTimeSelect(row, "retPrevMinuto", false, item.retPrevMinuto, true);
+    setScheduleInput(row, "hora", item.hora);
+    setScheduleInput(row, "minuto", item.minuto);
+    setScheduleInput(row, "retPrevDateTime", item.retPrevDateTime);
+    setScheduleInput(row, "retPrevHora", item.retPrevHora);
+    setScheduleInput(row, "retPrevMinuto", item.retPrevMinuto);
     fillScheduleOptions(row, "tipoServico", state.options.tipoServico, item.tipoServico);
     fillScheduleOptions(row, "tipoVeiculo", state.options.tipoVeiculo, item.tipoVeiculo);
     fillScheduleLookup(row, "motorista", state.motoristas, item.motorista);
     setScheduleInput(row, "trajeto", item.trajeto);
     setScheduleInput(row, "destino", item.destino);
     setScheduleInput(row, "obsMotorista", item.obsMotorista);
-  }
-
-  function fillScheduleTimeSelect(row, field, isHour, value) {
-    const base = isHour
-      ? Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"))
-      : ["00", "05", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55"];
-    fillScheduleOptions(row, field, base.map((item) => ({ value: item, label: item })), value);
   }
 
   function fillScheduleOptions(row, field, options, value) {
@@ -9375,7 +9783,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function renderTabBadges() {
-    el.tabImport?.classList.toggle("is-marked", !!state.importReview);
+    const draftSnapshot = getActiveFormDraftSnapshot();
+    const hasCommonDraft = hasCommonDraftContent(draftSnapshot);
+    const hasReturnDraft = hasReturnDraftContent(draftSnapshot);
+    el.tabImport?.classList.toggle("is-marked", !!state.importReview || hasCommonDraft || hasReturnDraft);
     el.tabReturn.classList.toggle("is-marked", el.agendarRetorno.checked);
     el.tabRepeat.classList.toggle("is-marked", el.repetirServico.checked);
   }
@@ -9391,7 +9802,16 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     captureObsState();
     renderTabBadges();
     renderRiskPanel();
-    markDraftDirty();
+    const isReturnField = (
+      target === el.retornoData ||
+      target === el.retornoHora ||
+      target === el.retornoMinuto ||
+      target === el.retornoEndereco ||
+      target === el.retornoDestino ||
+      target === el.retornoObservacao ||
+      target === el.agendarRetorno
+    );
+    markDraftDirty({ touchCommon: !isReturnField });
   }
 
   function renderRiskPanel() {
@@ -9494,14 +9914,20 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     });
   }
 
-  function markDraftDirty() {
+  function markDraftDirty(options = {}) {
     if (state.draftRestoring) return;
+    const config = {
+      touchCommon: true,
+      ...options
+    };
+    if (config.touchCommon) state.draftCommonEdited = true;
     if (state.draftTimer) window.clearTimeout(state.draftTimer);
     renderDraftStatus("Salvando rascunho...");
     state.draftTimer = window.setTimeout(() => {
       state.draftTimer = null;
       saveDraftSnapshot();
     }, 400);
+    if (state.currentTab === "import") renderImportReview();
   }
 
   function saveDraftSnapshot() {
@@ -9519,6 +9945,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function createDraftSnapshot() {
+    syncAllDateTimeInputs();
     return {
       version: 1,
       recordId: state.recordId || "",
@@ -9533,6 +9960,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         saidaData: el.saidaData.value,
         saidaHora: el.saidaHora.value,
         saidaMinuto: el.saidaMinuto.value,
+        retPrevDateTime: el.retPrevDateTime?.value || "",
         retPrevHora: el.retPrevHora.value,
         retPrevMinuto: el.retPrevMinuto.value,
         cliente: el.cliente.value,
@@ -9578,10 +10006,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   async function restoreDraftSnapshot() {
     const snapshot = readDraftSnapshot();
     if (!snapshot) {
+      state.draftCommonEdited = false;
+      state.importDraftEditState = { common: false, retorno: false };
       renderDraftStatus();
       return;
     }
     if ((snapshot.recordId || "") !== (state.recordId || "")) {
+      state.draftCommonEdited = false;
+      state.importDraftEditState = { common: false, retorno: false };
       renderDraftStatus();
       return;
     }
@@ -9592,9 +10024,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       const fields = snapshot.fields || {};
       setSelectValue(el.statusOperacao, fields.statusOperacao || "");
       setSelectValue(el.statusFaturamento, fields.statusFaturamento || "");
-      setFieldValue(el.saidaData, fields.saidaData);
+      setFieldValue(el.saidaData, dateTimeLocalFromParts(fields.saidaData, fields.saidaHora, fields.saidaMinuto) || fields.saidaData);
       setSelectValue(el.saidaHora, fields.saidaHora || "");
       setSelectValue(el.saidaMinuto, fields.saidaMinuto || "");
+      setFieldValue(el.retPrevDateTime, fields.retPrevDateTime || dateTimeLocalFromParts(fields.saidaData, fields.retPrevHora, fields.retPrevMinuto));
       setSelectValue(el.retPrevHora, fields.retPrevHora || "");
       setSelectValue(el.retPrevMinuto, fields.retPrevMinuto || "");
       setSelectValue(el.cliente, fields.cliente || "");
@@ -9611,7 +10044,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       setFieldValue(el.enderecoPersonalizado, fields.enderecoPersonalizado);
       setFieldValue(el.destino, fields.destino);
       setFieldValue(el.agendarRetorno, fields.agendarRetorno);
-      setFieldValue(el.retornoData, fields.retornoData);
+      setFieldValue(el.retornoData, dateTimeLocalFromParts(fields.retornoData, fields.retornoHora, fields.retornoMinuto) || fields.retornoData);
       setSelectValue(el.retornoHora, fields.retornoHora || "");
       setSelectValue(el.retornoMinuto, fields.retornoMinuto || "");
       setFieldValue(el.retornoEndereco, fields.retornoEndereco);
@@ -9630,6 +10063,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       state.scheduleDrafts = [];
       state.enderecoRascunho = Array.isArray(snapshot.enderecoRascunho) ? snapshot.enderecoRascunho.map((item) => ({ ...item })) : [];
       state.selectedPassengers = restoreDraftPassengers(snapshot.selectedPassengers || []);
+      state.draftCommonEdited = hasCommonDraftContent(snapshot);
+      state.importDraftEditState = { common: false, retorno: false };
       hydratePassengerSelectionRecencyFromRows(state.selectedPassengers);
 
       el.observacao.value = state.obs[state.obsAtual] || fields.observacao || "";
@@ -9643,6 +10078,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       setTab(state.isNew ? (snapshot.currentTab || "details") : "details");
     } catch (error) {
       console.warn("Falha ao restaurar rascunho local", error);
+      state.draftCommonEdited = false;
       renderDraftStatus("Rascunho invalido.");
     } finally {
       state.draftRestoring = false;
@@ -9676,6 +10112,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     } catch (error) {
       console.warn("Falha ao remover rascunho local", error);
     }
+    state.draftCommonEdited = false;
+    state.importDraftEditState = { common: false, retorno: false };
     state.lastDraftSavedAt = null;
     renderDraftStatus();
     if (showToast) toast("Rascunho local removido.", "success", 2500);
@@ -9731,6 +10169,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function fillOptions(select, values) {
+    if (!select || !select.options) return;
     select.innerHTML = "";
     values.forEach((value) => {
       const option = document.createElement("option");
@@ -9801,9 +10240,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function mainScheduleSnapshot() {
     return {
       key: nextScheduleDraftKey(),
-      data: el.saidaData.value,
+      dataHora: el.saidaData.value,
+      data: datePartFromInputValue(el.saidaData.value),
       hora: el.saidaHora.value,
       minuto: el.saidaMinuto.value,
+      retPrevDateTime: el.retPrevDateTime?.value || "",
       retPrevHora: el.retPrevHora.value,
       retPrevMinuto: el.retPrevMinuto.value,
       tipoServico: el.tipoServico.value,
@@ -9853,7 +10294,17 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (!row) return;
     const item = state.scheduleDrafts.find((draft) => draft.key === row.dataset.scheduleKey);
     if (!item) return;
-    item[field.dataset.scheduleField] = field.value;
+    const fieldName = field.dataset.scheduleField;
+    item[fieldName] = field.value;
+    if (fieldName === "dataHora") {
+      item.data = datePartFromInputValue(field.value);
+      item.hora = timePartFromInputValue(field.value).split(":")[0] || "";
+      item.minuto = timePartFromInputValue(field.value).split(":")[1] || "";
+    }
+    if (fieldName === "retPrevDateTime") {
+      item.retPrevHora = timePartFromInputValue(field.value).split(":")[0] || "";
+      item.retPrevMinuto = timePartFromInputValue(field.value).split(":")[1] || "";
+    }
   }
 
   function sortPassengers() {
@@ -10175,10 +10626,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function syncRepeatDefaultDates() {
-    if (el.saidaData.value) {
-      if (!el.frequenteInicio.value) el.frequenteInicio.value = el.saidaData.value;
-      if (!el.frequenteFim.value) el.frequenteFim.value = el.saidaData.value;
-      if (!el.retornoData.value) el.retornoData.value = el.saidaData.value;
+    const saidaDate = datePartFromInputValue(el.saidaData.value);
+    if (saidaDate) {
+      if (!el.frequenteInicio.value) el.frequenteInicio.value = saidaDate;
+      if (!el.frequenteFim.value) el.frequenteFim.value = saidaDate;
+      if (!el.retornoData.value) {
+        el.retornoData.value = el.saidaData.value;
+        syncLegacyTimePartsFromDateTime(el.retornoData, el.retornoHora, el.retornoMinuto);
+      }
     }
   }
 
@@ -10915,10 +11370,22 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function renderImportReview() {
     const review = state.importReview;
+    const draftSnapshot = getActiveFormDraftSnapshot();
+    const importedPrograms = review?.programs || [];
+    const trechos = importedPrograms.flatMap((program) => program.trechos || []);
+    const validTrechos = trechos.filter((trecho) => importedTrechoIssues(trecho).length === 0);
+    const duplicatedTrechos = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
+    const hasImportedRows = Array.isArray(review?.rows) && review.rows.length > 0;
+    const hasImportData = importedPrograms.length > 0 && hasImportedRows;
+    const hasCommonDraft = hasCommonDraftContent(draftSnapshot);
+    const hasReturnDraft = hasReturnDraftContent(draftSnapshot);
+    const hasMixedServiceSources = hasImportData && (hasCommonDraft || hasReturnDraft);
+    const duplicateSuffix = duplicatedTrechos.length ? ` - ${formatDdMm(new Date())}` : "";
     if (!el.importReviewPrograms) return;
-    if (!review) {
+
+    if (!hasImportData && !hasCommonDraft && !hasReturnDraft) {
       if (el.importReviewEmpty) el.importReviewEmpty.hidden = false;
-      if (el.importReviewSummary) el.importReviewSummary.textContent = "Importe um XLSX para revisar os serviços nesta aba.";
+      if (el.importReviewSummary) el.importReviewSummary.textContent = "Importe um XLSX para revisar serviços importados ou preencha o formulário para ver o rascunho.";
       el.importReviewStats?.replaceChildren();
       el.importReviewIssues?.replaceChildren();
       if (el.importReviewIssues) el.importReviewIssues.hidden = true;
@@ -10927,24 +11394,380 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       return;
     }
     if (el.importReviewEmpty) el.importReviewEmpty.hidden = true;
-    const trechos = review.programs.flatMap((program) => program.trechos);
-    const validTrechos = trechos.filter((trecho) => importedTrechoIssues(trecho).length === 0);
     const importClient = getImportClient();
-    el.importReviewSummary.textContent = `${review.fileName} - ${review.rows.length} linha(s) - ${review.programs.length} PG(s) - ${trechos.length} trecho(s) - Cliente: ${importClient?.label || CONFIG.importDefaults.clienteLabel}.`;
-    el.importReviewStats.replaceChildren(
-      importStat("Linhas", review.rows.length),
-      importStat("PGs", review.programs.length),
-      importStat("Trechos", trechos.length),
-      importStat("Válidos", validTrechos.length)
-    );
-    renderImportGlobalIssues(trechos);
-    el.importReviewPrograms.replaceChildren();
-    review.programs.forEach((program) => {
-      el.importReviewPrograms.appendChild(buildImportProgramCard(program));
-    });
-    if (el.importSaveAll) {
-      el.importSaveAll.disabled = validTrechos.length === 0;
+    const summary = [];
+
+    if (hasImportData) {
+      summary.push(`${review.rows.length} linha(s)`);
+      summary.push(`${review.programs.length} PG(s)`);
+      summary.push(`${trechos.length} trecho(s)`);
+      summary.push(`${validTrechos.length} válido(s)`);
+      summary.push(`Cliente: ${importClient?.label || CONFIG.importDefaults.clienteLabel}`);
+      el.importReviewStats.replaceChildren(
+        importStat("Linhas", review.rows.length),
+        importStat("PGs", review.programs.length),
+        importStat("Trechos", trechos.length),
+        importStat("Válidos", validTrechos.length)
+      );
+      renderImportGlobalIssues(trechos);
+    } else {
+      el.importReviewStats?.replaceChildren();
+      el.importReviewIssues?.replaceChildren();
+      if (el.importReviewIssues) el.importReviewIssues.hidden = true;
     }
+    if (!hasImportData) {
+      summary.push("Sem XLSX carregado.");
+    } else {
+      summary.push(`Arquivo: ${review.fileName}.`);
+    }
+    if (hasCommonDraft) summary.push("Rascunho do formulário comum.");
+    if (hasReturnDraft) summary.push("Rascunho de retorno ativo.");
+    if (duplicatedTrechos.length) summary.push(`${duplicatedTrechos.length} serviços repetidos.`);
+    el.importReviewSummary.textContent = summary.join("  ");
+
+    el.importReviewPrograms.replaceChildren();
+    if (hasImportData) {
+      importedPrograms.forEach((program) => {
+        el.importReviewPrograms.appendChild(buildImportProgramCard(program));
+      });
+    }
+    let mixedBadgeRendered = false;
+    if (hasCommonDraft) {
+      const commonDraftCard = buildImportDraftCard(draftSnapshot, "Rascunho do formulário comum", duplicateSuffix, hasMixedServiceSources && !mixedBadgeRendered);
+      if (commonDraftCard) el.importReviewPrograms.appendChild(commonDraftCard);
+      if (hasMixedServiceSources) mixedBadgeRendered = true;
+    }
+    if (hasReturnDraft) {
+      const returnDraftCard = buildImportReturnDraftCard(draftSnapshot, duplicateSuffix, hasMixedServiceSources && !mixedBadgeRendered);
+      if (returnDraftCard) el.importReviewPrograms.appendChild(returnDraftCard);
+    }
+    if (duplicatedTrechos.length) {
+      const duplicatedCard = buildImportDuplicateServicesCard(duplicatedTrechos);
+      if (duplicatedCard) el.importReviewPrograms.appendChild(duplicatedCard);
+    }
+    if (el.importSaveAll) {
+      el.importSaveAll.disabled = !(hasImportData && validTrechos.length > 0);
+    }
+  }
+
+  function getActiveFormDraftSnapshot() {
+    try {
+      return createDraftSnapshot();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function hasText(value) {
+    if (typeof value === "boolean") return value;
+    if (Array.isArray(value) || typeof value === "object") return false;
+    return String(value ?? "").trim().length > 0;
+  }
+
+  function hasCommonDraftContent(snapshot) {
+    if (!snapshot) return false;
+    if (state.draftCommonEdited) return true;
+    const fields = snapshot?.fields || {};
+    const hasPassengers = (snapshot?.selectedPassengers || []).length > 0;
+    const hasAddressDraft = (snapshot?.enderecoRascunho || []).length > 0;
+    const hasLookupDraft = hasText(fields.cliente) || hasText(fields.solicitante) || hasText(fields.motorista);
+    return hasPassengers || hasAddressDraft || hasLookupDraft || hasText(fields.saidaData) || hasText(fields.saidaHora)
+      || hasText(fields.saidaMinuto) || hasText(fields.trajeto) || hasText(fields.destino) || hasText(fields.observacao)
+      || hasText(fields.tipoServico) || hasText(fields.tipoVeiculo) || hasText(fields.formaPagamento) || hasText(fields.cr) || hasText(fields.cotacao);
+  }
+
+  function hasReturnDraftContent(snapshot) {
+    const fields = snapshot?.fields || {};
+    if (fields.agendarRetorno) return true;
+    return hasText(fields.retornoData) || hasText(fields.retornoHora) || hasText(fields.retornoMinuto) || hasText(fields.retornoEndereco) || hasText(fields.retornoDestino) || hasText(fields.retornoObservacao);
+  }
+
+  function resolveLookupLabel(rows, id) {
+    if (!id) return "";
+    return rows.find((item) => sameId(item.id, id))?.label || "";
+  }
+
+  function formatDraftDateTime(date, hour, minute) {
+    const dateText = formatDateInputForDisplay(date) || "--";
+    const hh = hasText(hour) ? hour : "--";
+    const mm = hasText(minute) ? minute : "--";
+    return `${dateText} ${hh}:${mm}`.trim();
+  }
+
+  function formatDdMm(date) {
+    return new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "2-digit"
+    }).format(date);
+  }
+
+  function buildImportDraftCard(snapshot, title, duplicateSuffix = "", showMixedTypeBadge = false) {
+    return buildImportDraftFormCard(snapshot, "common", title, duplicateSuffix, showMixedTypeBadge);
+  }
+
+  function buildImportReturnDraftCard(snapshot, duplicateSuffix = "", showMixedTypeBadge = false) {
+    return buildImportDraftFormCard(snapshot, "retorno", "Rascunho do retorno", duplicateSuffix, showMixedTypeBadge);
+  }
+
+  function setImportDraftEditState(draftType, enabled) {
+    state.importDraftEditState[draftType] = !!enabled;
+  }
+
+  function isImportDraftEditable(draftType) {
+    return !!state.importDraftEditState?.[draftType];
+  }
+
+  function copySelectOptions(target, source) {
+    if (!target || !source || !source.options) return;
+    target.innerHTML = "";
+    Array.from(source.options).forEach((option) => {
+      target.append(option.cloneNode(true));
+    });
+  }
+
+  function buildDraftInput(source, type = "text", rows = 2) {
+    if (!source) return null;
+    if (source.tagName === "SELECT") {
+      const select = document.createElement("select");
+      select.className = "import-draft-control import-draft-select";
+      copySelectOptions(select, source);
+      select.value = source.value || "";
+      return select;
+    }
+    if (source.tagName === "TEXTAREA" || type === "textarea") {
+      const textarea = document.createElement("textarea");
+      textarea.className = "import-draft-control import-draft-textarea";
+      textarea.rows = rows;
+      textarea.value = source.value || "";
+      return textarea;
+    }
+    const input = document.createElement("input");
+    input.className = "import-draft-control import-draft-input";
+    input.type = type === "date" ? "date" : type === "datetime-local" ? "datetime-local" : "text";
+    if (input.type === "datetime-local") input.step = "300";
+    const sourceType = (source.type || "").toLowerCase();
+    input.inputMode = sourceType === "number" || sourceType === "decimal" ? "decimal" : "text";
+    if (sourceType === "email") input.inputMode = "email";
+    if (sourceType === "tel") input.inputMode = "tel";
+    input.value = source.value || "";
+    return input;
+  }
+
+  function bindDraftMirror(control, source, touchCommon = true) {
+    if (!control || !source) return;
+
+    const syncNow = () => {
+      if (source.tagName === "SELECT") {
+        setSelectValue(source, control.value);
+      } else if (source.type === "checkbox") {
+        source.checked = !!control.checked;
+      } else {
+        source.value = control.value;
+      }
+      if (source === el.cotacao) {
+        source.value = formatCurrencyDisplayValue(source.value);
+      }
+      markDraftDirty({ touchCommon: touchCommon });
+    };
+
+    control.addEventListener("input", () => {
+      if (source.tagName === "SELECT" || source.type === "checkbox") return;
+      if (source === el.cotacao) return;
+      if (source.type === "date") return;
+      if (source.tagName === "TEXTAREA") {
+        source.value = control.value;
+      } else {
+        source.value = control.value;
+      }
+    });
+
+    control.addEventListener("change", syncNow);
+    if (source.tagName !== "SELECT" && source.type !== "checkbox") {
+      control.addEventListener("blur", syncNow);
+    }
+  }
+
+  function buildDraftFieldRow(label, control, options = {}) {
+    if (!control) return null;
+    const row = document.createElement("label");
+    row.className = `import-draft-field ${options.wide ? "is-wide" : ""}`;
+    const span = document.createElement("span");
+    span.textContent = label;
+    row.append(span, control);
+    return row;
+  }
+
+  function buildDraftDateTimeField(label, dateSource, hourSource, minuteSource, touchCommon = true) {
+    const row = document.createElement("label");
+    row.className = "import-draft-field";
+    const span = document.createElement("span");
+    span.textContent = label;
+
+    const inline = document.createElement("div");
+    inline.className = "inline-time";
+
+    const dateInput = buildDraftInput(dateSource, "datetime-local");
+    bindDraftMirror(dateInput, dateSource, touchCommon);
+    dateInput?.addEventListener("change", () => {
+      syncLegacyTimePartsFromDateTime(dateSource, hourSource, minuteSource);
+    });
+
+    if (dateInput) inline.appendChild(dateInput);
+
+    row.append(span, inline);
+    return row;
+  }
+
+  function addDraftSummary(list, label, value) {
+    if (!hasText(value)) return;
+    const dt = document.createElement("dt");
+    const dd = document.createElement("dd");
+    dt.textContent = label;
+    dd.textContent = value;
+    list.append(dt, dd);
+  }
+
+  function buildImportDraftFormCard(snapshot, draftType, title, duplicateSuffix = "", showMixedTypeBadge = false) {
+    const fields = snapshot?.fields || {};
+    const hasPassengers = (snapshot?.selectedPassengers || []).length;
+    const isEditing = isImportDraftEditable(draftType);
+    const card = document.createElement("article");
+    card.className = "import-program import-draft-card";
+    card.dataset.draftType = draftType;
+    card.classList.toggle("is-locked", !isEditing);
+    card.classList.toggle("is-editing", isEditing);
+    const head = document.createElement("header");
+    head.className = "import-program-head";
+    const titleBox = document.createElement("div");
+    const strong = document.createElement("strong");
+    strong.textContent = `${title}${duplicateSuffix}`;
+    const meta = document.createElement("span");
+    meta.textContent = draftType === "retorno" ? "Ativado" : hasPassengers > 0 ? `${hasPassengers} passageiro(s)` : "Sem passageiros";
+    titleBox.append(strong, meta);
+    const actions = document.createElement("div");
+    actions.className = "import-draft-head-actions";
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "secondary-action small-action import-draft-toggle";
+    toggle.dataset.importDraftToggle = draftType;
+    toggle.setAttribute("aria-pressed", String(isEditing));
+    toggle.textContent = isEditing ? "Bloquear edição" : "Desbloquear edição";
+    const typeBadge = document.createElement("span");
+    typeBadge.className = "import-badge";
+    typeBadge.textContent = draftType === "retorno" ? "Retorno" : "Rascunho";
+    if (showMixedTypeBadge) {
+      const mixedBadge = document.createElement("span");
+      mixedBadge.className = "import-badge warning";
+      mixedBadge.textContent = "Próprio + Importado";
+      actions.append(toggle, mixedBadge, typeBadge);
+    } else {
+      actions.append(toggle, typeBadge);
+    }
+    head.append(titleBox, actions);
+    card.appendChild(head);
+
+    if (!isEditing) {
+      const list = document.createElement("dl");
+      list.className = "review-summary-list import-draft-summary";
+      if (draftType === "retorno") {
+        addDraftSummary(list, "Retorno", formatDraftDateTime(fields.retornoData, fields.retornoHora, fields.retornoMinuto));
+        addDraftSummary(list, "Endereço", fields.retornoEndereco);
+        addDraftSummary(list, "Destino", fields.retornoDestino);
+      } else {
+        addDraftSummary(list, "Saída", formatDraftDateTime(fields.saidaData, fields.saidaHora, fields.saidaMinuto));
+        addDraftSummary(list, "Cliente", resolveLookupLabel(state.clientes, fields.cliente));
+        addDraftSummary(list, "Solicitante", resolveLookupLabel(state.passageiros, fields.solicitante));
+        addDraftSummary(list, "Trajeto", fields.trajeto);
+        addDraftSummary(list, "Destino", fields.destino);
+      }
+      card.appendChild(list);
+      return card;
+    }
+
+    const form = document.createElement("div");
+    form.className = "import-draft-form";
+    if (draftType === "retorno") {
+      form.appendChild(buildDraftDateTimeField("Data e horário de retorno", el.retornoData, el.retornoHora, el.retornoMinuto, false));
+
+      const retornoEndereco = buildDraftInput(el.retornoEndereco, "textarea", 3);
+      bindDraftMirror(retornoEndereco, el.retornoEndereco, false);
+      const retornoDestino = buildDraftInput(el.retornoDestino, "textarea", 3);
+      bindDraftMirror(retornoDestino, el.retornoDestino, false);
+      const retornoObservacao = buildDraftInput(el.retornoObservacao, "textarea", 4);
+      bindDraftMirror(retornoObservacao, el.retornoObservacao, false);
+
+      if (retornoEndereco) form.appendChild(buildDraftFieldRow("Endereço de saída", retornoEndereco, { wide: true }));
+      if (retornoDestino) form.appendChild(buildDraftFieldRow("Destino", retornoDestino, { wide: true }));
+      if (retornoObservacao) form.appendChild(buildDraftFieldRow("Observação de retorno", retornoObservacao, { wide: true }));
+    } else {
+      form.appendChild(buildDraftDateTimeField("Data e horário de saída", el.saidaData, el.saidaHora, el.saidaMinuto, true));
+
+      const cliente = buildDraftInput(el.cliente, "select");
+      bindDraftMirror(cliente, el.cliente, true);
+      const solicitante = buildDraftInput(el.solicitante, "select");
+      bindDraftMirror(solicitante, el.solicitante, true);
+      const tipoServico = buildDraftInput(el.tipoServico, "select");
+      bindDraftMirror(tipoServico, el.tipoServico, true);
+      const tipoVeiculo = buildDraftInput(el.tipoVeiculo, "select");
+      bindDraftMirror(tipoVeiculo, el.tipoVeiculo, true);
+      const motorista = buildDraftInput(el.motorista, "select");
+      bindDraftMirror(motorista, el.motorista, true);
+      const trajeto = buildDraftInput(el.trajeto, "textarea", 2);
+      bindDraftMirror(trajeto, el.trajeto, true);
+      const destino = buildDraftInput(el.destino, "textarea", 3);
+      bindDraftMirror(destino, el.destino, true);
+      const observacao = buildDraftInput(el.observacao, "textarea", 4);
+      bindDraftMirror(observacao, el.observacao, true);
+      const formaPagamento = buildDraftInput(el.formaPagamento, "select");
+      bindDraftMirror(formaPagamento, el.formaPagamento, true);
+      const cotacao = buildDraftInput(el.cotacao, "text");
+      bindDraftMirror(cotacao, el.cotacao, true);
+      const cr = buildDraftInput(el.cr, "text");
+      bindDraftMirror(cr, el.cr, true);
+
+      if (cliente) form.appendChild(buildDraftFieldRow("Cliente", cliente));
+      if (solicitante) form.appendChild(buildDraftFieldRow("Solicitante", solicitante));
+      if (tipoServico) form.appendChild(buildDraftFieldRow("Tipo de serviço", tipoServico));
+      if (tipoVeiculo) form.appendChild(buildDraftFieldRow("Tipo de veículo", tipoVeiculo));
+      if (motorista) form.appendChild(buildDraftFieldRow("Motorista", motorista));
+      if (trajeto) form.appendChild(buildDraftFieldRow("Trajeto", trajeto, { wide: true }));
+      if (destino) form.appendChild(buildDraftFieldRow("Destino", destino, { wide: true }));
+      if (observacao) form.appendChild(buildDraftFieldRow("Observação operacional", observacao, { wide: true }));
+      if (formaPagamento) form.appendChild(buildDraftFieldRow("Forma de pagamento", formaPagamento));
+      if (cotacao) form.appendChild(buildDraftFieldRow("Cotação", cotacao));
+      if (cr) form.appendChild(buildDraftFieldRow("CR", cr));
+    }
+
+    card.appendChild(form);
+    return card;
+  }
+
+  function buildImportDuplicateServicesCard(duplicatedTrechos) {
+    const card = document.createElement("article");
+    card.className = "import-program";
+    const head = document.createElement("header");
+    head.className = "import-program-head";
+    const titleBox = document.createElement("div");
+    const strong = document.createElement("strong");
+    strong.textContent = "Serviços repetidos";
+    const meta = document.createElement("span");
+    meta.textContent = `${duplicatedTrechos.length} encontrado(s)`;
+    titleBox.append(strong, meta);
+    const badge = document.createElement("span");
+    badge.className = "import-badge danger";
+    badge.textContent = "Atenção";
+    head.append(titleBox, badge);
+    card.appendChild(head);
+
+    const list = document.createElement("div");
+    list.className = "import-review-issues";
+    duplicatedTrechos.forEach((trecho, index) => {
+      const item = document.createElement("p");
+      item.textContent = `PG ${trecho.programacao} · serviço ${index + 1} · ${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"} · ${trecho.passageiros.length} passageiro(s)`;
+      list.appendChild(item);
+    });
+    card.appendChild(list);
+    return card;
   }
 
   function importStat(label, value) {
@@ -10963,7 +11786,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const issues = [];
     if (!getImportClient()?.id) issues.push("Cliente Embraer não encontrado. Configure CONFIG.importDefaults.clienteId ou cadastre Embraer.");
     const duplicated = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
-    if (duplicated.length) issues.push(`${duplicated.length} trecho(s) pertencem a PG já importada.`);
+    if (duplicated.length) issues.push(`${duplicated.length} serviço(s) repetido(s).`);
     const ambiguous = trechos.reduce((total, trecho) => total + trecho.passageiros.filter((pax) => pax.matchStatus === "ambiguous").length, 0);
     if (ambiguous) issues.push(`${ambiguous} passageiro(s) precisam de decisão de duplicidade.`);
     el.importReviewIssues.hidden = issues.length === 0;
@@ -10988,7 +11811,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     title.append(strong, meta);
     const status = document.createElement("span");
     status.className = program.duplicatedRecordIds?.length ? "import-badge danger" : "import-badge";
-    status.textContent = program.duplicatedRecordIds?.length ? "PG já importada" : "Novo";
+    status.textContent = program.duplicatedRecordIds?.length ? "Serviço repetido" : "Novo";
     head.append(title, status);
     card.appendChild(head);
     program.trechos.forEach((trecho, index) => card.appendChild(buildImportTrechoCard(program, trecho, index)));
@@ -11012,15 +11835,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     meta.textContent = `${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"} · ${trecho.passageiros.length} passageiro(s)`;
     title.append(strong, meta);
     const badge = document.createElement("span");
-    badge.className = issues.length ? "import-badge warning" : "import-badge success";
+    badge.className = issues.length ? "import-badge danger" : "import-badge success";
     badge.textContent = trecho.savedRecordId ? "Salvo" : (issues.length ? `${issues.length} pendência(s)` : "Pronto");
     head.append(title, badge);
 
     const grid = document.createElement("div");
     grid.className = "import-hot-grid";
     grid.append(
-      buildImportInput("Data", "dataIso", trecho.dataIso, "date"),
-      buildImportInput("Hora", "horario", trecho.horario, "time"),
+      buildImportInput("Data e hora", "dataHora", importedTrechoDateTimeLocal(trecho), "datetime-local"),
       buildImportSelect("Tipo de serviço", "tipoServicoValue", state.options.tipoServico, trecho.tipoServicoValue || findOptionValue("tipoServico", trecho.tipoServicoSugerido)),
       buildImportSelect("Tipo de veículo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido)),
       buildImportInput("Cotação", "valor", Number.isFinite(trecho.valor) ? String(trecho.valor) : "", "number"),
@@ -11063,6 +11885,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     span.textContent = label;
     const input = document.createElement("input");
     input.type = type;
+    if (type === "datetime-local") input.step = "300";
     input.value = value ?? "";
     input.dataset.importField = field;
     if (type === "number") input.step = "0.01";
@@ -11189,6 +12012,19 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function handleImportReviewAction(event) {
+    const draftToggle = event.target.closest("[data-import-draft-toggle]");
+    if (draftToggle) {
+      const draftType = draftToggle.dataset.importDraftToggle === "retorno" ? "retorno" : "common";
+      const enable = draftToggle.getAttribute("aria-pressed") !== "true";
+      setImportDraftEditState(draftType, enable);
+      renderImportReview();
+      if (enable) {
+        const field = draftToggle.closest("[data-draft-type]")?.querySelector(".import-draft-control");
+        field?.focus();
+      }
+      return;
+    }
+
     const action = event.target.closest("[data-import-action]");
     if (!action) return;
     const trechoCard = action.closest("[data-trecho-key]");
@@ -11244,6 +12080,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const field = event.target.dataset.importField;
     if (!field) return;
     const value = event.target.value;
+    if (field === "dataHora") {
+      trecho.dataIso = datePartFromInputValue(value);
+      trecho.horario = timePartFromInputValue(value);
+      if (event.type === "change") {
+        window.setTimeout(renderImportReview, 0);
+      }
+      return;
+    }
     if (field === "valor") {
       trecho.valor = value === "" ? null : Number(value);
       return;
@@ -11264,7 +12108,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     try {
       const context = await buildImportedSaveContext(trecho);
       setSelectValue(el.cliente, context.importClient.id);
-      setFieldValue(el.saidaData, trecho.dataIso || "");
+      setFieldValue(el.saidaData, importedTrechoDateTimeLocal(trecho));
       const [hour, minute] = String(trecho.horario || "").split(":");
       setSelectValue(el.saidaHora, hour || "");
       setSelectValue(el.saidaMinuto, minute || "");
@@ -11584,7 +12428,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function formatDateInputForDisplay(value) {
     if (!value) return "sem data";
-    const [year, month, day] = String(value).split("-");
+    const [year, month, day] = datePartFromInputValue(value).split("-");
     return year && month && day ? `${day}/${month}/${year}` : value;
   }
 
@@ -11680,6 +12524,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function buildSaveContext() {
+    syncAllDateTimeInputs();
     const dataHoraPrincipal = combineDateTime(el.saidaData.value, el.saidaHora.value, el.saidaMinuto.value);
     const retPrev = buildRetornoPrevisto(dataHoraPrincipal);
     const dataHoraRetorno = combineDateTime(el.retornoData.value, el.retornoHora.value, el.retornoMinuto.value);
@@ -11724,6 +12569,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function buildScheduleRetornoPrevisto(item, baseDateTime) {
+    const explicitRetorno = parseDateTimeInputValue(item?.retPrevDateTime);
+    if (explicitRetorno) return explicitRetorno;
     if (!baseDateTime || !item.retPrevHora || !item.retPrevMinuto || !item.hora || !item.minuto) return null;
     const saidaTime = timeFromParts(item.hora, item.minuto);
     const retornoTime = timeFromParts(item.retPrevHora, item.retPrevMinuto);
@@ -11938,6 +12785,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       el.retornoDestino,
       el.retornoObservacao,
       el.retornoData,
+      el.retPrevDateTime,
       el.frequenteInicio,
       el.frequenteFim,
       el.enderecoPersonalizado
@@ -11975,6 +12823,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function buildRetornoPrevisto(baseDateTime) {
+    const explicitRetorno = parseDateTimeInputValue(el.retPrevDateTime?.value);
+    if (explicitRetorno) return explicitRetorno;
     if (!baseDateTime || !el.retPrevHora.value || !el.retPrevMinuto.value) return null;
     const saidaTime = timeFromParts(el.saidaHora.value, el.saidaMinuto.value);
     const retornoTime = timeFromParts(el.retPrevHora.value, el.retPrevMinuto.value);
@@ -11984,14 +12834,17 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function combineDateTime(dateValue, hourValue, minuteValue) {
+    const parsed = parseDateTimeInputValue(dateValue);
+    if (parsed) return parsed;
     if (!dateValue || hourValue === "" || minuteValue === "") return null;
     const [year, month, day] = dateValue.split("-").map(Number);
     return new Date(year, month - 1, day, Number(hourValue), Number(minuteValue), 0, 0);
   }
 
-  function setDateTimeFields(date, dateInput, hourSelect, minuteSelect) {
-    dateInput.value = toDateInput(date);
-    setTimeFields(date, hourSelect, minuteSelect, false);
+  function setDateTimeFields(date, dateInput, hourSelect, minuteSelect, allowBlank = false) {
+    if (!dateInput) return;
+    dateInput.value = date && !Number.isNaN(date.getTime()) ? toDateTimeLocalInput(date) : "";
+    setTimeFields(date, hourSelect, minuteSelect, allowBlank);
   }
 
   function setTimeFields(date, hourSelect, minuteSelect, allowBlank) {
@@ -12090,6 +12943,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function setSelectValue(select, value, fallback = "") {
     if (!select) return;
+    if (!select.options) {
+      select.value = value ?? fallback ?? "";
+      return;
+    }
     const stringValue = value === null || value === undefined ? "" : String(value);
     if (stringValue && [...select.options].some((option) => option.value === stringValue)) {
       select.value = stringValue;
@@ -12420,6 +13277,68 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return cleanGuid(a).toLowerCase() === cleanGuid(b).toLowerCase();
   }
 
+  function syncAllDateTimeInputs() {
+    syncLegacyTimePartsFromDateTime(el.saidaData, el.saidaHora, el.saidaMinuto);
+    syncLegacyTimePartsFromDateTime(el.retornoData, el.retornoHora, el.retornoMinuto);
+    syncLegacyTimePartsFromDateTime(el.retPrevDateTime, el.retPrevHora, el.retPrevMinuto);
+  }
+
+  function syncLegacyTimePartsFromDateTime(dateTimeInput, hourInput, minuteInput) {
+    const date = parseDateTimeInputValue(dateTimeInput?.value);
+    if (!date) {
+      if (hourInput) hourInput.value = "";
+      if (minuteInput) minuteInput.value = "";
+      return;
+    }
+    if (hourInput) hourInput.value = String(date.getHours()).padStart(2, "0");
+    if (minuteInput) minuteInput.value = String(Math.min(55, Math.floor(date.getMinutes() / 5) * 5)).padStart(2, "0");
+  }
+
+  function parseDateTimeInputValue(value) {
+    const text = String(value || "").trim();
+    if (!text || !text.includes("T")) return null;
+    const [datePart, timePart = ""] = text.split("T");
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [hour = 0, minute = 0] = timePart.split(":").map(Number);
+    if (![year, month, day, hour, minute].every(Number.isFinite)) return null;
+    const date = new Date(year, month - 1, day, hour, minute, 0, 0);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function datePartFromInputValue(value) {
+    const text = String(value || "").trim();
+    return text.includes("T") ? text.slice(0, 10) : text;
+  }
+
+  function timePartFromInputValue(value) {
+    const text = String(value || "").trim();
+    if (!text.includes("T")) return text;
+    return text.slice(11, 16);
+  }
+
+  function dateTimeLocalFromParts(dateValue, hourValue, minuteValue) {
+    const datePart = datePartFromInputValue(dateValue);
+    if (!datePart || !hourValue || !minuteValue) return "";
+    return `${datePart}T${String(hourValue).padStart(2, "0")}:${String(minuteValue).padStart(2, "0")}`;
+  }
+
+  function importedTrechoDateTimeLocal(trecho) {
+    return dateTimeLocalFromParts(trecho?.dataIso, ...String(trecho?.horario || "").split(":"));
+  }
+
+  function syncScheduleDateTimeFields(item) {
+    if (!item) return;
+    item.dataHora = item.dataHora || dateTimeLocalFromParts(item.data, item.hora, item.minuto);
+    item.data = datePartFromInputValue(item.dataHora || item.data);
+    const [hour = "", minute = ""] = timePartFromInputValue(item.dataHora || "").split(":");
+    if (hour) item.hora = hour;
+    if (minute) item.minuto = minute;
+    item.retPrevDateTime = item.retPrevDateTime || dateTimeLocalFromParts(item.data || datePartFromInputValue(item.dataHora), item.retPrevHora, item.retPrevMinuto);
+    const [retHour = "", retMinute = ""] = timePartFromInputValue(item.retPrevDateTime || "").split(":");
+    if (retHour) item.retPrevHora = retHour;
+    if (retMinute) item.retPrevMinuto = retMinute;
+  }
+
   function isGuid(value) {
     return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanGuid(value));
   }
@@ -12524,6 +13443,13 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
+  }
+
+  function toDateTimeLocalInput(date) {
+    if (!date || Number.isNaN(date.getTime())) return "";
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(Math.min(55, Math.floor(date.getMinutes() / 5) * 5)).padStart(2, "0");
+    return `${toDateInput(date)}T${hours}:${minutes}`;
   }
 
   function formatDateTime(date) {

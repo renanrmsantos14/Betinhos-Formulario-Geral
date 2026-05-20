@@ -30,7 +30,6 @@
           <span>ID</span>
           <strong id="recordIdText"></strong>
         </div>
-        <p id="draftStatusText" class="draft-status" role="status" aria-live="polite"></p>
         <button id="importXlsxButton" class="secondary-action top-import-action import-button-with-icon" type="button" title="Arraste ou clique para importar um arquivo XLSX" aria-label="Importar arquivo XLSX">
           <span class="import-btn-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" focusable="false">
@@ -79,13 +78,13 @@
         </span>
         <span class="tab-label">Repetir</span>
       </button>
-      <button class="tab" type="button" data-tab="import" id="tabImport" aria-label="Importação Embraer">
+      <button class="tab" type="button" data-tab="import" id="tabImport" aria-label="Serviços importados">
         <span class="tab-icon" aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false">
             <path d="M14 3v4a1 1 0 0 0 1 1h4M8 13h8M8 17h8M8 9h2M6 3h8l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path>
           </svg>
         </span>
-        <span class="tab-label">Importação Embraer</span>
+        <span class="tab-label">Serviços importados</span>
       </button>
     </nav>
 
@@ -107,23 +106,18 @@
               <label class="field compact-time required">
                 <span>Data e horário de saída</span>
                 <div class="inline-time">
-                  <input id="saidaData" type="date" required aria-required="true">
-                  <div class="time-group">
-                    <select id="saidaHora" required aria-required="true"></select>
-                    <span class="time-separator">:</span>
-                    <select id="saidaMinuto" required aria-required="true"></select>
-                  </div>
+                  <input id="saidaData" type="datetime-local" required aria-required="true" step="300">
+                  <input id="saidaHora" type="hidden">
+                  <input id="saidaMinuto" type="hidden">
                 </div>
               </label>
 
               <label class="field">
                 <span>Horário previsto de retorno</span>
                 <div class="inline-time">
-                  <div class="time-group time-group--return-preview">
-                    <select id="retPrevHora"></select>
-                    <span class="time-separator">:</span>
-                    <select id="retPrevMinuto"></select>
-                  </div>
+                  <input id="retPrevDateTime" type="datetime-local" step="300">
+                  <input id="retPrevHora" type="hidden">
+                  <input id="retPrevMinuto" type="hidden">
                 </div>
               </label>
 
@@ -278,8 +272,8 @@
         <div class="section-head inline import-review-head">
           <div>
             <p class="passenger-picker-eyebrow">Importação XLSX</p>
-            <h2 id="importReviewTitle">Revisar serviços importados</h2>
-            <p id="importReviewSummary" class="import-review-summary">Importe um XLSX para revisar os serviços nesta aba.</p>
+            <h2 id="importReviewTitle">Serviços importados</h2>
+            <p id="importReviewSummary" class="import-review-summary">Importe um XLSX para revisar os serviços nesta aba ou confira o rascunho do formulário.</p>
           </div>
           <div class="import-review-actions">
             <button id="importSaveAll" type="button" class="primary-action" disabled>Salvar todos válidos</button>
@@ -289,7 +283,7 @@
 
         <div id="importReviewEmpty" class="import-review-empty">
           <strong>Nenhum arquivo carregado.</strong>
-          <span>Use Importar XLSX para montar a revisão por PG e trecho.</span>
+          <span>Use Importar XLSX para montar a revisão por PG e trecho ou preencha o formulário para ver o rascunho aqui.</span>
         </div>
         <div id="importReviewStats" class="import-review-stats"></div>
         <div id="importReviewIssues" class="import-review-issues" hidden></div>
@@ -393,14 +387,11 @@
         <section class="form-section">
           <div class="form-grid">
             <label class="field span-2">
-              <span>Data de retorno</span>
+              <span>Data e horário de retorno</span>
               <div class="inline-time">
-                <input id="retornoData" type="date">
-                <div class="time-group">
-                  <select id="retornoHora"></select>
-                  <span class="time-separator">:</span>
-                  <select id="retornoMinuto"></select>
-                </div>
+                <input id="retornoData" type="datetime-local" step="300">
+                <input id="retornoHora" type="hidden">
+                <input id="retornoMinuto" type="hidden">
               </div>
             </label>
             <label class="field span-2">
