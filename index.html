@@ -21,7 +21,7 @@
         </div>
       </div>
 
-      <div class="top-actions">
+        <div class="top-actions">
         <label class="status-select">
           <span>Status</span>
           <select id="statusOperacao"></select>
@@ -30,6 +30,16 @@
           <span>ID</span>
           <strong id="recordIdText"></strong>
         </div>
+        <p id="draftStatusText" class="draft-status" role="status" aria-live="polite"></p>
+        <button id="importXlsxButton" class="secondary-action top-import-action import-button-with-icon" type="button" title="Arraste ou clique para importar um arquivo XLSX" aria-label="Importar arquivo XLSX">
+          <span class="import-btn-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M12 3.5v11M9 7.8 12 3.5 15 7.8M5 15.5h14M21 16.2v4.4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-4.4"></path>
+            </svg>
+          </span>
+          Importar XLSX
+        </button>
+        <input id="xlsxImportInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
         <button id="saveButton" class="primary-action" type="button">
           <span id="saveButtonText">Agendar serviços</span>
         </button>
@@ -68,6 +78,14 @@
           </svg>
         </span>
         <span class="tab-label">Repetir</span>
+      </button>
+      <button class="tab" type="button" data-tab="import" id="tabImport" aria-label="Importação Embraer">
+        <span class="tab-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M14 3v4a1 1 0 0 0 1 1h4M8 13h8M8 17h8M8 9h2M6 3h8l5 5v12a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path>
+          </svg>
+        </span>
+        <span class="tab-label">Importação Embraer</span>
       </button>
     </nav>
 
@@ -193,11 +211,11 @@
             </div>
           </section>
 
-          <section class="form-section" aria-labelledby="financeiroTitle">
-            <div class="form-section-title">
-              <h3 id="financeiroTitle">Faturamento</h3>
-              <p>Status, pagamento e referências financeiras.</p>
-            </div>
+        <section class="form-section" aria-labelledby="financeiroTitle">
+          <div class="form-section-title">
+            <h3 id="financeiroTitle">Faturamento</h3>
+            <p>Status, pagamento e referências financeiras.</p>
+          </div>
 
             <div class="form-grid">
               <label class="toggle-field">
@@ -231,8 +249,51 @@
               </label>
             </div>
           </section>
+
+          <section class="form-section compact-section review-panel" aria-labelledby="reviewPanelTitle">
+            <div class="form-section-title">
+              <h3 id="reviewPanelTitle">Pré-validação do save</h3>
+              <p>Resumo operacional e alertas antes do envio.</p>
+            </div>
+            <div class="review-lists">
+              <div>
+                <p class="review-block-title">Resumo</p>
+                <dl id="reviewSummaryList" class="review-summary-list" hidden></dl>
+              </div>
+              <div>
+                <p class="review-block-title">Riscos e atenção</p>
+                <ul id="reviewRiskList" class="review-risk-list is-clear" hidden></ul>
+              </div>
+              <div>
+                <p class="review-block-title">Log local</p>
+                <ul id="saveLogList" class="save-log-list" hidden></ul>
+              </div>
+            </div>
+          </section>
         </div>
 
+      </section>
+
+      <section id="tab-panel-import" class="panel import-review-panel" data-panel="import" aria-labelledby="importReviewTitle">
+        <div class="section-head inline import-review-head">
+          <div>
+            <p class="passenger-picker-eyebrow">Importação XLSX</p>
+            <h2 id="importReviewTitle">Revisar serviços importados</h2>
+            <p id="importReviewSummary" class="import-review-summary">Importe um XLSX para revisar os serviços nesta aba.</p>
+          </div>
+          <div class="import-review-actions">
+            <button id="importSaveAll" type="button" class="primary-action" disabled>Salvar todos válidos</button>
+            <button id="importReviewCancel" type="button" class="secondary-action">Voltar aos detalhes</button>
+          </div>
+        </div>
+
+        <div id="importReviewEmpty" class="import-review-empty">
+          <strong>Nenhum arquivo carregado.</strong>
+          <span>Use Importar XLSX para montar a revisão por PG e trecho.</span>
+        </div>
+        <div id="importReviewStats" class="import-review-stats"></div>
+        <div id="importReviewIssues" class="import-review-issues" hidden></div>
+        <div id="importReviewPrograms" class="import-review-programs"></div>
       </section>
 
       <section id="tab-panel-bd" class="panel" data-panel="bd">
@@ -413,6 +474,18 @@
       </div>
     </div>
 
+    <div id="importDropOverlay" class="import-drop-overlay" role="status" aria-live="polite" aria-atomic="true" hidden>
+      <div class="import-drop-overlay-card">
+        <span class="import-drop-overlay-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <path d="M12 15.5V3.5m0 12-2.6-2.6m2.6 2.6 2.6-2.6M3.5 19.8h17" />
+          </svg>
+        </span>
+        <strong class="import-drop-overlay-title">Solte o arquivo XLSX para importar</strong>
+        <p class="import-drop-overlay-hint">Arraste e solte seu arquivo .xlsx nesta tela para abrir a revisão de importação.</p>
+      </div>
+    </div>
+
     <div id="successOverlay" class="overlay" hidden>
       <div class="dialog success-dialog">
         <strong>Concluído!</strong>
@@ -492,8 +565,11 @@
         </footer>
       </div>
     </div>
+
   </div>
 
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script src="scripts/xlsx_import_core.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

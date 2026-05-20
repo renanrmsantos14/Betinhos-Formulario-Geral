@@ -64,6 +64,25 @@ return { parsePhoneNumber, parsePhoneNumberForInput, parsePhoneNumberForSelected
   return Function(body)();
 }
 
+function buildMockDbHarness() {
+  const body = `
+const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
+const state = { xrm: null, mockMode: true };
+const storage = new Map();
+const localStorage = {
+  getItem(key) { return storage.has(key) ? storage.get(key) : null; },
+  setItem(key, value) { storage.set(key, String(value)); }
+};
+${extractFunction(app, "cleanGuid")}
+${extractFunction(app, "sameId")}
+${extractFunction(app, "uniquePassengersById")}
+${extractFunction(app, "getMockDb")}
+${extractFunction(app, "setMockDb")}
+${extractFunction(app, "persistMockPassengerRecord")}
+return { getMockDb, setMockDb, persistMockPassengerRecord };`;
+  return Function(body)();
+}
+
 [
   "riskList",
   "saveLogList",
@@ -160,8 +179,48 @@ assert.equal(
   "valor salvo deve sair canonico em E.164"
 );
 
+const mockDb = buildMockDbHarness();
+mockDb.setMockDb({ reservas: [{ id: "res-1" }], relacoes: [{ reservaId: "res-1" }] });
+assert.deepEqual(mockDb.getMockDb().passageiros, [], "mock antigo sem passageiros deve continuar valido");
+mockDb.persistMockPassengerRecord({ id: "local-pax-1", label: "Pessoa Local", clienteId: "cliente-embraer" });
+assert.equal(mockDb.getMockDb().passageiros.length, 1, "mock deve persistir passageiro local");
+mockDb.persistMockPassengerRecord({ id: "local-pax-1", label: "Pessoa Editada", clienteId: "cliente-embraer" });
+assert.equal(mockDb.getMockDb().passageiros.length, 1, "mock deve atualizar passageiro local sem duplicar");
+assert.equal(mockDb.getMockDb().passageiros[0].label, "Pessoa Editada", "mock deve manter hot edit local");
+
 includes(app, "MAX_FREQUENT_SERVICE_DAYS", "limite para periodo recorrente");
 includes(app, "Data de retorno nao pode ser anterior a saida", "validacao retorno antes da saida");
 includes(app, "Periodo frequente muito grande", "validacao de recorrencia grande demais");
+
+includes(html, "id=\"importXlsxButton\"", "botao de upload XLSX");
+includes(html, "id=\"xlsxImportInput\"", "input de arquivo XLSX");
+includes(html, "data-tab=\"import\"", "aba de revisao do import XLSX");
+includes(html, "id=\"tab-panel-import\"", "painel de revisao do import XLSX");
+excludes(html, "id=\"importReviewOverlay\"", "overlay antigo de revisao do import XLSX");
+excludes(html, "import-review-dialog\" role=\"dialog\"", "importacao nao deve abrir como dialog modal");
+includes(html, "scripts/xlsx_import_core.js", "core de import XLSX carregado antes do app");
+includes(html, "vendor/xlsx.full.min.js", "SheetJS local carregado antes do app");
+includes(app, "idExterno: \"cr40f_idexterno\"", "campo externo PG no payload da reserva");
+includes(app, "importDefaults:", "configuracao padrao de importacao");
+includes(app, "clienteLabel: \"Embraer\"", "cliente padrao Embraer para importacao");
+includes(app, "function getImportClient", "resolucao do cliente padrao Embraer");
+includes(app, "function ensureImportedSolicitanteRecord", "criacao/resolucao automatica do solicitante importado");
+includes(app, "function selectImportedExistingMatch", "match automatico seguro de cadastro existente");
+includes(app, "function createImportedPersonRecord", "criacao automatica de solicitante/passageiro importado");
+includes(app, "function openXlsxImportPicker", "abertura do seletor XLSX");
+includes(app, "async function handleXlsxImportFile", "leitura do XLSX");
+includes(app, "function renderImportReview", "render do resumo de importacao");
+includes(app, "async function saveImportedTrecho", "salvamento de trecho importado");
+includes(app, "async function applyImportedTrechoToForm", "abrir formulario preenchido pelo trecho");
+includes(app, "async function checkImportedProgramDuplicates", "checagem de duplicidade por cr40f_idexterno");
+includes(app, "bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, context.importClient.id)", "reserva importada vinculada ao cliente Embraer");
+includes(app, "bindLookup(payload, CONFIG.nav.solicitante, CONFIG.entitySets.passageiro, context.solicitanteRecord?.id", "reserva importada vinculada ao solicitante automatico");
+excludes(app, "importReviewOverlay: $(\"importReviewOverlay\")", "binding antigo do overlay de importacao");
+includes(app, "passageiros: Array.isArray(parsed?.passageiros)", "mock db local deve persistir passageiros");
+includes(app, "function persistMockPassengerRecord", "helper de persistencia local de passageiro");
+includes(app, "const storedPassengers = getMockDb().passageiros", "mock deve recarregar passageiros salvos localmente");
+includes(app, "persistMockPassengerRecord(newPassenger)", "cadastro manual deve salvar passageiro no banco local");
+includes(app, "persistMockPassengerRecord(updatedPassenger)", "hot edit local deve salvar alteracoes do passageiro");
+includes(app, "persistMockPassengerRecord(record)", "importacao deve salvar solicitante/passageiro no banco local");
 
 console.log("formulario_operational_features: ok");

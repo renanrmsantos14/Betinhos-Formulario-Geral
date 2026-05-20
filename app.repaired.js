@@ -1,4 +1,4 @@
-﻿(() => {
+(() => {
   "use strict";
 
   const CONFIG = {
@@ -225,6 +225,9 @@
     recordIdBox: $("recordIdBox"),
     recordIdText: $("recordIdText"),
     importXlsxButton: $("importXlsxButton"),
+    importDropOverlay: $("importDropOverlay"),
+    importDropOverlayTitle: $("importDropOverlay")?.querySelector(".import-drop-overlay-title"),
+    importDropOverlayHint: $("importDropOverlay")?.querySelector(".import-drop-overlay-hint"),
     xlsxImportInput: $("xlsxImportInput"),
     importReviewTitle: $("importReviewTitle"),
     importReviewSummary: $("importReviewSummary"),
@@ -234,6 +237,10 @@
     importReviewPrograms: $("importReviewPrograms"),
     importReviewCancel: $("importReviewCancel"),
     importSaveAll: $("importSaveAll"),
+    reviewSummaryList: $("reviewSummaryList"),
+    reviewRiskList: $("reviewRiskList"),
+    saveLogList: $("saveLogList"),
+    draftStatusText: $("draftStatusText"),
     tabs: [...document.querySelectorAll(".tab")],
     panels: [...document.querySelectorAll(".panel")],
     statusOperacao: $("statusOperacao"),
@@ -376,6 +383,11 @@
   let passengerMatchResolve = null;
   let passengerMatchCandidates = [];
   const importPassengerCreateLocks = new Map();
+  let importDropDepth = 0;
+  let importDropActive = false;
+  let importDropMode = null;
+  let importDropHintMode = null;
+  let importDropCanImport = null;
 
   state.mockMode = QUERY_MOCK_MODE || state.xrm === null;
 
@@ -394,7 +406,7 @@
     initializeCustomSelects();
     setLoading(false);
     if (state.mockMode) {
-      toast("Modo local ativo: dados mock gerados para teste completo da experiência.", "warning", 7000);
+      toast("Modo local ativo: dados mock gerados para teste completo da experi�fªncia.", "warning", 7000);
       return;
     }
   }
@@ -561,6 +573,10 @@
         setTimeout(markPassengerEditEmptySignals, 0);
       }
     });
+    document.addEventListener("dragenter", handleXlsxImportDragEnter);
+    document.addEventListener("dragover", handleXlsxImportDragOver);
+    document.addEventListener("dragleave", handleXlsxImportDragLeave);
+    document.addEventListener("drop", handleXlsxImportDrop);
     const passengerEditObserver = new MutationObserver(() => {
       if (!el.passengerEditOverlay.hidden) markPassengerEditEmptySignals();
     });
@@ -749,7 +765,7 @@
     clearButton.role = "button";
     clearButton.tabIndex = 0;
     clearButton.className = "custom-select-clear";
-    clearButton.setAttribute("aria-label", "Limpar seleção");
+    clearButton.setAttribute("aria-label", "Limpar sele�f§�f£o");
     clearButton.hidden = true;
 
     const triggerCaret = document.createElement("span");
@@ -771,17 +787,17 @@
     const searchInput = document.createElement("input");
     searchInput.type = "text";
     searchInput.className = "custom-select-search";
-    searchInput.placeholder = select.dataset.selectVariant === "phone-country" ? "Buscar país" : "Pesquisar";
+    searchInput.placeholder = select.dataset.selectVariant === "phone-country" ? "Buscar pa�f­s" : "Pesquisar";
     searchInput.autocomplete = "off";
     searchInput.spellcheck = false;
-    searchInput.setAttribute("aria-label", "Pesquisar opção");
+    searchInput.setAttribute("aria-label", "Pesquisar op�f§�f£o");
 
     const optionsContainer = document.createElement("div");
     optionsContainer.className = "custom-select-options";
 
     const noResults = document.createElement("div");
     noResults.className = "custom-select-no-results";
-    noResults.textContent = "Nenhuma opção encontrada";
+    noResults.textContent = "Nenhuma op�f§�f£o encontrada";
     noResults.hidden = true;
     noResults.setAttribute("aria-live", "polite");
 
@@ -1391,7 +1407,7 @@
       const check = document.createElement("span");
       check.className = "custom-select-option-check";
       check.setAttribute("aria-hidden", "true");
-      check.textContent = "✓";
+      check.textContent = "�o"";
       button.append(check);
       return;
     }
@@ -1467,31 +1483,31 @@
 
   const PHONE_COUNTRY_OPTIONS = [
     { iso: "BR", code: "55", name: "Brasil" },
-    { iso: "US CA", code: "1", name: "EUA / Canadá" },
+    { iso: "US CA", code: "1", name: "EUA / Canad�f¡" },
     { iso: "PT", code: "351", name: "Portugal" },
     { iso: "AR", code: "54", name: "Argentina" },
     { iso: "CL", code: "56", name: "Chile" },
-    { iso: "CO", code: "57", name: "Colômbia" },
-    { iso: "MX", code: "52", name: "México" },
+    { iso: "CO", code: "57", name: "Col�f´mbia" },
+    { iso: "MX", code: "52", name: "M�f©xico" },
     { iso: "GB", code: "44", name: "Reino Unido" },
     { iso: "ES", code: "34", name: "Espanha" },
-    { iso: "FR", code: "33", name: "França" },
-    { iso: "IT", code: "39", name: "Itália" },
+    { iso: "FR", code: "33", name: "Fran�f§a" },
+    { iso: "IT", code: "39", name: "It�f¡lia" },
     { iso: "DE", code: "49", name: "Alemanha" },
-    { iso: "JP", code: "81", name: "Japão" },
+    { iso: "JP", code: "81", name: "Jap�f£o" },
     { iso: "CN", code: "86", name: "China" },
-    { iso: "IN", code: "91", name: "Índia" },
-    { iso: "AE", code: "971", name: "Emirados Árabes" },
-    { iso: "ZA", code: "27", name: "África do Sul" },
-    { iso: "AL", code: "355", name: "Albânia" },
-    { iso: "SA", code: "966", name: "Arábia Saudita" },
-    { iso: "DZ", code: "213", name: "Argélia" },
-    { iso: "AU", code: "61", name: "Austrália" },
-    { iso: "AT", code: "43", name: "Áustria" },
+    { iso: "IN", code: "91", name: "�fndia" },
+    { iso: "AE", code: "971", name: "Emirados �frabes" },
+    { iso: "ZA", code: "27", name: "�ffrica do Sul" },
+    { iso: "AL", code: "355", name: "Alb�f¢nia" },
+    { iso: "SA", code: "966", name: "Ar�f¡bia Saudita" },
+    { iso: "DZ", code: "213", name: "Arg�f©lia" },
+    { iso: "AU", code: "61", name: "Austr�f¡lia" },
+    { iso: "AT", code: "43", name: "�fustria" },
     { iso: "BH", code: "973", name: "Bahrein" },
-    { iso: "BE", code: "32", name: "Bélgica" },
-    { iso: "BO", code: "591", name: "Bolívia" },
-    { iso: "BG", code: "359", name: "Bulgária" },
+    { iso: "BE", code: "32", name: "B�f©lgica" },
+    { iso: "BO", code: "591", name: "Bol�f­via" },
+    { iso: "BG", code: "359", name: "Bulg�f¡ria" },
     { iso: "QA", code: "974", name: "Catar" },
     { iso: "SG", code: "65", name: "Singapura" },
     { iso: "KR", code: "82", name: "Coreia do Sul" },
@@ -1501,38 +1517,38 @@
     { iso: "EC", code: "593", name: "Equador" },
     { iso: "EG", code: "20", name: "Egito" },
     { iso: "SV", code: "503", name: "El Salvador" },
-    { iso: "SK", code: "421", name: "Eslováquia" },
-    { iso: "SI", code: "386", name: "Eslovênia" },
-    { iso: "FI", code: "358", name: "Finlândia" },
-    { iso: "GR", code: "30", name: "Grécia" },
+    { iso: "SK", code: "421", name: "Eslov�f¡quia" },
+    { iso: "SI", code: "386", name: "Eslov�fªnia" },
+    { iso: "FI", code: "358", name: "Finl�f¢ndia" },
+    { iso: "GR", code: "30", name: "Gr�f©cia" },
     { iso: "GT", code: "502", name: "Guatemala" },
-    { iso: "NL", code: "31", name: "Países Baixos" },
+    { iso: "NL", code: "31", name: "Pa�f­ses Baixos" },
     { iso: "HN", code: "504", name: "Honduras" },
     { iso: "HK", code: "852", name: "Hong Kong" },
     { iso: "HU", code: "36", name: "Hungria" },
-    { iso: "ID", code: "62", name: "Indonésia" },
+    { iso: "ID", code: "62", name: "Indon�f©sia" },
     { iso: "IE", code: "353", name: "Irlanda" },
     { iso: "IL", code: "972", name: "Israel" },
     { iso: "LU", code: "352", name: "Luxemburgo" },
     { iso: "MA", code: "212", name: "Marrocos" },
     { iso: "NO", code: "47", name: "Noruega" },
-    { iso: "NZ", code: "64", name: "Nova Zelândia" },
-    { iso: "PA", code: "507", name: "Panamá" },
+    { iso: "NZ", code: "64", name: "Nova Zel�f¢ndia" },
+    { iso: "PA", code: "507", name: "Panam�f¡" },
     { iso: "PY", code: "595", name: "Paraguai" },
     { iso: "PE", code: "51", name: "Peru" },
-    { iso: "PL", code: "48", name: "Polônia" },
-    { iso: "CZ", code: "420", name: "República Tcheca" },
-    { iso: "RO", code: "40", name: "Romênia" },
-    { iso: "RU KZ", code: "7", name: "Rússia / Cazaquistão" },
-    { iso: "SE", code: "46", name: "Suécia" },
-    { iso: "CH", code: "41", name: "Suíça" },
-    { iso: "TH", code: "66", name: "Tailândia" },
+    { iso: "PL", code: "48", name: "Pol�f´nia" },
+    { iso: "CZ", code: "420", name: "Rep�fºblica Tcheca" },
+    { iso: "RO", code: "40", name: "Rom�fªnia" },
+    { iso: "RU KZ", code: "7", name: "R�fºssia / Cazaquist�f£o" },
+    { iso: "SE", code: "46", name: "Su�f©cia" },
+    { iso: "CH", code: "41", name: "Su�f­�f§a" },
+    { iso: "TH", code: "66", name: "Tail�f¢ndia" },
     { iso: "TW", code: "886", name: "Taiwan" },
     { iso: "TR", code: "90", name: "Turquia" },
-    { iso: "UA", code: "380", name: "Ucrânia" },
+    { iso: "UA", code: "380", name: "Ucr�f¢nia" },
     { iso: "UY", code: "598", name: "Uruguai" },
     { iso: "VE", code: "58", name: "Venezuela" },
-    { iso: "VN", code: "84", name: "Vietnã" }
+    { iso: "VN", code: "84", name: "Vietn�f£" }
   ].map((country) => ({
     ...country,
     flag: countryFlagFromIso(country.iso),
@@ -1928,7 +1944,7 @@
         label: "Maria Souza",
         telefone: "(11) 99999-0000",
         email: "maria@example.com",
-        endereco: "Av. Paulista, 1000 - São Paulo/SP",
+        endereco: "Av. Paulista, 1000 - S�f£o Paulo/SP",
         preferencias: "Sem janela na volta",
         cr: "CR001",
         clienteId: "cliente-demo",
@@ -1946,8 +1962,8 @@
         label: "Carlos Mendes",
         telefone: "(11) 98888-2222",
         email: "carlos.mendes@example.com",
-        endereco: "Rua Oscar Freire, 250 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Rua Oscar Freire, 250 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         cr: "CR002",
         clienteId: "cliente-betalabs",
         tipoVeiculo: "SUV",
@@ -1964,8 +1980,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -1983,8 +1999,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2002,8 +2018,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2021,8 +2037,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2040,8 +2056,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2059,8 +2075,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2078,8 +2094,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2097,8 +2113,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2116,8 +2132,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2135,8 +2151,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2154,8 +2170,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2173,8 +2189,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2192,8 +2208,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2211,8 +2227,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2230,8 +2246,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2249,8 +2265,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2268,8 +2284,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2287,8 +2303,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2306,8 +2322,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2325,8 +2341,8 @@
         label: "Juliana Lima",
         telefone: "(11) 97777-3333",
         email: "juliana.lima@example.com",
-        endereco: "Alameda Santos, 700 - São Paulo/SP",
-        preferencias: "Silêncio no trajeto",
+        endereco: "Alameda Santos, 700 - S�f£o Paulo/SP",
+        preferencias: "Sil�fªncio no trajeto",
         preferencias: "Ar ligado leve",
         cr: "CR003",
         clienteId: "cliente-holding",
@@ -2506,7 +2522,7 @@
   function hydrateMockCurrentRecord(recordId) {
     const record = getMockRecordById(recordId);
     if (!record) {
-      toast(`Registro ${recordId} não encontrado no mock db. Abrindo como novo`, "warning", 5000);
+      toast(`Registro ${recordId} n�f£o encontrado no mock db. Abrindo como novo`, "warning", 5000);
       state.isNew = true;
       state.recordId = "";
       state.selectedPassengers = [];
@@ -2677,7 +2693,7 @@
   function hydrateForm() {
     const r = state.record || {};
     const f = CONFIG.fields.reserva;
-    el.saveButtonText.textContent = state.isNew ? "Agendar serviços" : "Salvar edições";
+    el.saveButtonText.textContent = state.isNew ? "Agendar servi�f§os" : "Salvar edi�f§�fµes";
     el.tabImport.hidden = !state.isNew;
     el.tabBd.hidden = !state.isNew;
     el.tabReturn.hidden = !state.isNew;
@@ -2743,6 +2759,9 @@
     renderPassengers();
     renderTabBadges();
     renderImportReview();
+    renderRiskPanel();
+    renderDraftStatus();
+    renderSaveLog();
   }
 
   function renderStatusFaturamento() {
@@ -2795,9 +2814,9 @@
       { key: "label", label: "Nome do passageiro", kind: "text", required: true, span: "wide", stateKey: "label", payloadField: f.nome, inputType: "text" },
       { key: "telefone", label: "Telefone", kind: "text", stateKey: "telefone", payloadField: f.telefone, inputType: "tel" },
       { key: "email", label: "Email", kind: "text", span: "wide", stateKey: "email", payloadField: f.email, inputType: "email" },
-      { key: "endereco", label: "Endereço de saída", kind: "textarea", span: "wide", stateKey: "endereco", payloadField: f.enderecoSaida },
+      { key: "endereco", label: "Endere�f§o de sa�f­da", kind: "textarea", span: "wide", stateKey: "endereco", payloadField: f.enderecoSaida },
       { key: "clienteId", label: "Cliente", kind: "lookup", required: true, stateKey: "clienteId", navName: CONFIG.nav.cliente, entitySet: CONFIG.entitySets.cliente, rowsKey: "clientes" },
-      { key: "classificacao", label: "Classificação", kind: "choice", required: true, stateKey: "classificacao", payloadField: f.classificacao, optionsKey: "bdClassificacao" },
+      { key: "classificacao", label: "Classifica�f§�f£o", kind: "choice", required: true, stateKey: "classificacao", payloadField: f.classificacao, optionsKey: "bdClassificacao" },
       { key: "idioma", label: "Idioma", kind: "choice", required: true, stateKey: "idioma", payloadField: f.idioma, optionsKey: "bdIdioma" },
       { key: "sexo", label: "Sexo", kind: "choice", stateKey: "sexo", payloadField: f.sexo, optionsKey: "bdSexo" },
       { key: "cargo", label: "Cargo", kind: "choice", stateKey: "cargo", payloadField: f.cargo, optionsKey: "bdCargo" },
@@ -2805,7 +2824,7 @@
       { key: "cr", label: "CR", kind: "text", stateKey: "cr", payloadField: f.cr, inputType: "text" },
       { key: "nascimento", label: "Data de nascimento", kind: "date", stateKey: "nascimento", payloadField: f.nascimento },
       { key: "preferencias", label: "Perfil do passageiro", kind: "textarea", span: "wide", stateKey: "preferencias", payloadField: f.preferencias },
-      { key: "tipoVeiculo", label: "Tipo de veículo", kind: "choice", stateKey: "tipoVeiculo", payloadField: f.tipoVeiculo, optionsKey: "bdTipoVeiculo" }
+      { key: "tipoVeiculo", label: "Tipo de ve�f­culo", kind: "choice", stateKey: "tipoVeiculo", payloadField: f.tipoVeiculo, optionsKey: "bdTipoVeiculo" }
     ];
   }
 
@@ -2819,7 +2838,7 @@
       : getPassengerById(passengerOrId);
     const passengerId = cleanGuid(passenger?.id || passengerOrId);
     if (!passenger || !passengerId) {
-      toast("Passageiro não encontrado para edição.", "error");
+      toast("Passageiro n�f£o encontrado para edi�f§�f£o.", "error");
       return;
     }
     if (!getPassengerById(passengerId)) {
@@ -2968,7 +2987,7 @@
     if (el.passengerEditToggle) {
       el.passengerEditToggle.classList.toggle("is-active", passengerEditEnabled);
       el.passengerEditToggle.setAttribute("aria-pressed", String(passengerEditEnabled));
-      el.passengerEditToggle.setAttribute("aria-label", passengerEditEnabled ? "Bloquear edição" : "Habilitar edição");
+      el.passengerEditToggle.setAttribute("aria-label", passengerEditEnabled ? "Bloquear edi�f§�f£o" : "Habilitar edi�f§�f£o");
     }
     el.passengerEditFields?.querySelectorAll("[data-passenger-edit-control]").forEach((control) => {
       if (control.tagName === "SELECT") {
@@ -3223,7 +3242,7 @@
       </div>
       <div class="schedule-draft-grid">
         <label class="field span-2 required">
-          <span>Data e horário</span>
+          <span>Data e hor�f¡rio</span>
           <div class="inline-time">
             <input type="date" data-schedule-field="data">
             <div class="time-group">
@@ -3244,11 +3263,11 @@
           </div>
         </label>
         <label class="field required">
-          <span>Tipo serviço</span>
+          <span>Tipo servi�f§o</span>
           <select data-schedule-field="tipoServico"></select>
         </label>
         <label class="field required">
-          <span>Tipo veículo</span>
+          <span>Tipo ve�f­culo</span>
           <select data-schedule-field="tipoVeiculo"></select>
         </label>
         <label class="field">
@@ -3264,7 +3283,7 @@
           <textarea rows="3" data-schedule-field="destino"></textarea>
         </label>
         <label class="field span-2">
-          <span>Observação motorista</span>
+          <span>Observa�f§�f£o motorista</span>
           <textarea rows="3" data-schedule-field="obsMotorista"></textarea>
         </label>
       </div>
@@ -3347,8 +3366,8 @@
     }
     el.customAddressWrap.hidden = !state.enderecoPersonalizadoAtivo;
     if (el.toggleEnderecoPersonalizado) {
-      el.toggleEnderecoPersonalizado.textContent = state.enderecoPersonalizadoAtivo ? "Endereço por passageiro" : "Endereço único";
-      el.toggleEnderecoPersonalizado.title = state.enderecoPersonalizadoAtivo ? "Usar endereço por passageiro" : "Usar endereço único para todos";
+      el.toggleEnderecoPersonalizado.textContent = state.enderecoPersonalizadoAtivo ? "Endere�f§o por passageiro" : "Endere�f§o �fºnico";
+      el.toggleEnderecoPersonalizado.title = state.enderecoPersonalizadoAtivo ? "Usar endere�f§o por passageiro" : "Usar endere�f§o �fºnico para todos";
       el.toggleEnderecoPersonalizado.setAttribute("aria-pressed", String(state.enderecoPersonalizadoAtivo));
     }
     if (el.addPassenger) {
@@ -3357,7 +3376,7 @@
         ? "Conclua o passageiro pendente antes de adicionar outro."
         : (hasCandidates
           ? "Adicionar novo passageiro"
-          : "Sem passageiros disponíveis para adicionar.");
+          : "Sem passageiros dispon�f­veis para adicionar.");
     }
     sortPassengers();
 
@@ -3439,7 +3458,7 @@
     rowTitle.type = "button";
     rowTitle.className = "row-title passenger-name-button";
     rowTitle.dataset.passengerAction = "open-record";
-    rowTitle.textContent = "Passageiro sem seleção";
+    rowTitle.textContent = "Passageiro sem sele�f§�f£o";
 
     const rowPreview = document.createElement("div");
     rowPreview.className = "passenger-preview";
@@ -3452,9 +3471,9 @@
 
     const addressField = document.createElement("label");
     addressField.className = "field address-cell";
-    addressField.innerHTML = "<span>Endereço de saída</span>";
+    addressField.innerHTML = "<span>Endere�f§o de sa�f­da</span>";
     const addressInput = document.createElement("textarea");
-    addressInput.placeholder = "Endereço de saída";
+    addressInput.placeholder = "Endere�f§o de sa�f­da";
     addressInput.rows = 2;
     addressInput.wrap = "soft";
     addressInput.className = "passenger-address";
@@ -3493,24 +3512,24 @@
     if (rowTitle) {
       const visibleName = selectedName ? firstName(selectedName) : "";
       rowTitle.textContent = visibleName || selectedName || "Selecionar passageiro";
-      rowTitle.title = selectedName || (hasPassenger ? "Registro do passageiro" : "Selecione o passageiro pelo botão Adicionar");
+      rowTitle.title = selectedName || (hasPassenger ? "Registro do passageiro" : "Selecione o passageiro pelo bot�f£o Adicionar");
       rowTitle.setAttribute(
         "aria-label",
         selectedName
           ? `Abrir registro: ${selectedName}`
-          : "Selecione o passageiro pelo botão Adicionar"
+          : "Selecione o passageiro pelo bot�f£o Adicionar"
       );
       rowTitle.disabled = false;
       rowTitle.setAttribute("aria-disabled", String(!hasPassenger));
       rowTitle.dataset.passengerId = item.guid || "";
       rowTitle.title = hasPassenger
         ? "Abrir registro do passageiro"
-        : "Selecione o passageiro pelo botão Adicionar";
+        : "Selecione o passageiro pelo bot�f£o Adicionar";
     }
     renderPassengerPreview(rowPreview, item.passageiro || null);
     const addressLabelText = addressLabel.querySelector("span");
     if (addressLabelText) {
-      addressLabelText.textContent = "Endereço de saída";
+      addressLabelText.textContent = "Endere�f§o de sa�f­da";
     }
     addressInput.value = getDraftAddress(item.ordem) || item.enderecoEditado || "";
     addressInput.disabled = state.enderecoPersonalizadoAtivo;
@@ -3787,7 +3806,7 @@
     if (!passenger) {
       const empty = document.createElement("p");
       empty.className = "passenger-preview-empty";
-      empty.textContent = "Sem informações disponíveis.";
+      empty.textContent = "Sem informa�f§�fµes dispon�f­veis.";
       container.appendChild(empty);
       return;
     }
@@ -3798,20 +3817,20 @@
     };
     const rows = [
       ["Cliente", passenger.clienteLabel],
-      ["Tipo de veículo", passenger.tipoVeiculoLabel || previewValue(passenger.tipoVeiculo, "bdTipoVeiculo")],
+      ["Tipo de ve�f­culo", passenger.tipoVeiculoLabel || previewValue(passenger.tipoVeiculo, "bdTipoVeiculo")],
       ["Cargo", previewValue(passenger.cargo, "bdCargo")],
       ["Idioma", previewValue(passenger.idioma, "bdIdioma")],
       ["Sexo", previewValue(passenger.sexo, "bdSexo")],
-      ["Classificação", previewValue(passenger.classificacao, "bdClassificacao")],
-      ["Endereço", passenger.endereco],
+      ["Classifica�f§�f£o", previewValue(passenger.classificacao, "bdClassificacao")],
+      ["Endere�f§o", passenger.endereco],
       ["Telefone", passenger.telefone],
       ["Email", passenger.email],
-      ["Preferências", passenger.preferencias]
+      ["Prefer�fªncias", passenger.preferencias]
     ].filter((item) => (item[1] || "").toString().trim());
     if (!rows.length) {
       const empty = document.createElement("p");
       empty.className = "passenger-preview-empty";
-      empty.textContent = "Sem informações adicionais.";
+      empty.textContent = "Sem informa�f§�fµes adicionais.";
       container.appendChild(empty);
       return;
     }
@@ -3859,7 +3878,7 @@
         entityId: passengerId
       }).catch((error) => {
         console.error(error);
-        toast("Não foi possível abrir o registro do passageiro.", "error", 7000);
+        toast("N�f£o foi poss�f­vel abrir o registro do passageiro.", "error", 7000);
       });
       return;
     }
@@ -3867,7 +3886,7 @@
       toast(`Mock ativo: ${passageiro.label || "Passageiro"}`, "warning", 3000);
       return;
     }
-    toast("Abra este formulário dentro do Dataverse para editar o registro.", "warning", 7000);
+    toast("Abra este formul�f¡rio dentro do Dataverse para editar o registro.", "warning", 7000);
   }
 
   function renderTabBadges() {
@@ -3891,36 +3910,61 @@
   }
 
   function renderRiskPanel() {
+    const context = buildSaveContext();
+    renderReviewSummary(context);
+    renderReviewRisks(context);
   }
 
   function collectOperationalRisks(context = buildSaveContext()) {
     const risks = [];
     const statusLabel = optionLabel("statusOperacao", el.statusOperacao.value);
-    const isTroca = statusLabel === "Troca de Veículos";
+    const isTroca = statusLabel === "Troca de Ve�f­culos";
 
     if (!el.cliente.value) risks.push("Cliente vazio.");
     if (!el.solicitante.value) risks.push("Solicitante vazio.");
-    if (!el.motorista.value) risks.push("Motorista vazio. A operação precisará programar manualmente.");
-    if (!context.dataHoraPrincipal) risks.push("Data e horário de saída incompletos.");
+    if (!el.motorista.value) risks.push("Motorista vazio. A opera�f§�f£o precisar�f¡ programar manualmente.");
+    if (!context.dataHoraPrincipal) risks.push("Data e hor�f¡rio de sa�f­da incompletos.");
     if (!context.trajeto && !isTroca) risks.push("Trajeto vazio.");
     if (!el.destino.value.trim() && !isTroca) risks.push("Destino vazio.");
     if (!context.colOrdemPassageiros.length && !isTroca) risks.push("Nenhum passageiro selecionado.");
     if (hasDuplicatePassengers()) risks.push("Passageiro duplicado na lista.");
-    if (state.enderecoPersonalizadoAtivo && !el.enderecoPersonalizado.value.trim() && !isTroca) risks.push("Endereço único ativo, mas vazio.");
-    if (!state.enderecoPersonalizadoAtivo && context.colOrdemPassageiros.some((item) => !item.enderecoSaidaBD) && !isTroca) risks.push("Há passageiro sem endereço de saída.");
+    if (state.enderecoPersonalizadoAtivo && !el.enderecoPersonalizado.value.trim() && !isTroca) risks.push("Endere�f§o �fºnico ativo, mas vazio.");
+    if (!state.enderecoPersonalizadoAtivo && context.colOrdemPassageiros.some((item) => !item.enderecoSaidaBD) && !isTroca) risks.push("H�f¡ passageiro sem endere�f§o de sa�f­da.");
     if (el.agendarRetorno.checked && !context.dataHoraRetorno) risks.push("Retorno ativo sem data/hora completa.");
-    if (el.agendarRetorno.checked && context.dataHoraRetorno && context.dataHoraPrincipal && context.dataHoraRetorno < context.dataHoraPrincipal) risks.push("Data de retorno anterior à saída.");
-    if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) risks.push("Serviço frequente ativo sem período completo.");
-    if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) risks.push("Período frequente com data final anterior à inicial.");
+    if (el.agendarRetorno.checked && context.dataHoraRetorno && context.dataHoraPrincipal && context.dataHoraRetorno < context.dataHoraPrincipal) risks.push("Data de retorno anterior �f  sa�f­da.");
+    if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) risks.push("Servi�f§o frequente ativo sem per�f­odo completo.");
+    if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) risks.push("Per�f­odo frequente com data final anterior �f  inicial.");
     if (el.repetirServico.checked) {
-      const frequentPeriodError = validateFrequentServicePeriod();
-      if (frequentPeriodError) risks.push(frequentPeriodError);
+      const frequentPeriodValidation = validateFrequentServicePeriod();
+      if (!frequentPeriodValidation.ok && frequentPeriodValidation.message) risks.push(frequentPeriodValidation.message);
     }
 
     return risks;
   }
 
   function renderSaveLog() {
+    if (!el.saveLogList) return;
+    if (!state.saveLog.length) {
+      el.saveLogList.hidden = true;
+      el.saveLogList.replaceChildren();
+      return;
+    }
+    el.saveLogList.hidden = false;
+    el.saveLogList.replaceChildren();
+
+    state.saveLog.forEach((entry) => {
+      const item = document.createElement("li");
+      item.className = `save-log-item save-log-item-${entry.type}`;
+      const header = document.createElement("p");
+      header.className = "save-log-header";
+      const time = new Date(entry.at);
+      header.textContent = `${Number.isNaN(time.getTime()) ? "--:--" : time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} ${entry.title}`;
+      const detail = document.createElement("p");
+      detail.className = "save-log-detail";
+      detail.textContent = entry.detail;
+      item.append(header, detail);
+      el.saveLogList.appendChild(item);
+    });
   }
 
   function clearSaveLog() {
@@ -3939,9 +3983,25 @@
   }
 
   function openReviewBeforeSave(context) {
+    const risks = collectOperationalRisks(context);
+    if (!risks.length) {
+      performSave();
+      return;
+    }
+    setTab("details");
+    const canContinue = window.confirm(
+      `Encontramos ${risks.length} ponto(s) de aten�f§�f£o antes de salvar.\n\n` +
+      `${risks.slice(0, 3).map((risk, index) => `${index + 1}) ${risk}`).join("\n")}\n\n` +
+      "Deseja salvar mesmo assim?"
+    );
+    if (!canContinue) {
+      addSaveLog("warning", "Salvamento interrompido", "Corrija os riscos antes de continuar.");
+      closeReviewOverlay(true);
+      return;
+    }
+    addSaveLog("warning", "Salvar com atenção", `${risks.length} risco(s) confirmados e ignorados.`);
     performSave();
   }
-
   function closeReviewOverlay(clearContext) {
     if (clearContext) state.pendingSaveContext = null;
   }
@@ -3949,19 +4009,20 @@
   function renderReviewSummary(context) {
     if (!el.reviewSummaryList) return;
     const rows = [
-      ["Status", optionLabel("statusOperacao", el.statusOperacao.value) || "Não informado"],
-      ["Saída", context.dataHoraPrincipal ? formatDateTime(context.dataHoraPrincipal) : "Não informado"],
-      ["Cliente", selectedText(el.cliente) || "Não informado"],
-      ["Solicitante", selectedText(el.solicitante) || "Não informado"],
-      ["Motorista", selectedText(el.motorista) || "Não informado"],
-      ["Trajeto", context.trajeto || "Não informado"],
-      ["Destino", el.destino.value.trim() || "Não informado"],
+      ["Status", optionLabel("statusOperacao", el.statusOperacao.value) || "N�f£o informado"],
+      ["Sa�f­da", context.dataHoraPrincipal ? formatDateTime(context.dataHoraPrincipal) : "N�f£o informado"],
+      ["Cliente", selectedText(el.cliente) || "N�f£o informado"],
+      ["Solicitante", selectedText(el.solicitante) || "N�f£o informado"],
+      ["Motorista", selectedText(el.motorista) || "N�f£o informado"],
+      ["Trajeto", context.trajeto || "N�f£o informado"],
+      ["Destino", el.destino.value.trim() || "N�f£o informado"],
       ["Passageiros", String(context.colOrdemPassageiros.length)],
-      ["Retorno", el.agendarRetorno.checked ? "Sim" : "Não"],
-      ["Frequente", el.repetirServico.checked ? "Sim" : "Não"]
+      ["Retorno", el.agendarRetorno.checked ? "Sim" : "N�f£o"],
+      ["Frequente", el.repetirServico.checked ? "Sim" : "N�f£o"]
     ];
 
     el.reviewSummaryList.innerHTML = "";
+    el.reviewSummaryList.hidden = false;
     rows.forEach(([label, value]) => {
       const term = document.createElement("dt");
       term.textContent = label;
@@ -3975,10 +4036,12 @@
     if (!el.reviewRiskList) return;
     const risks = collectOperationalRisks(context);
     el.reviewRiskList.innerHTML = "";
+    el.reviewRiskList.classList.remove("is-warning", "is-clear");
 
     if (!risks.length) {
+      el.reviewRiskList.classList.add("is-clear");
       const item = document.createElement("li");
-      item.textContent = "Sem risco operacional crítico detectado.";
+      item.textContent = "Sem risco operacional cr�f­tico detectado.";
       el.reviewRiskList.appendChild(item);
       return;
     }
@@ -3988,6 +4051,7 @@
       item.textContent = risk;
       el.reviewRiskList.appendChild(item);
     });
+    el.reviewRiskList.classList.add("is-warning");
   }
 
   function markDraftDirty() {
@@ -4010,7 +4074,7 @@
       renderDraftStatus();
     } catch (error) {
       console.warn("Falha ao salvar rascunho local", error);
-    renderDraftStatus("Rascunho não salvo.");
+    renderDraftStatus("Rascunho n�f£o salvo.");
     }
   }
 
@@ -4178,6 +4242,44 @@
   }
 
   function renderDraftStatus(forcedText = "") {
+    if (!el.draftStatusText) return;
+    const classes = el.draftStatusText.classList;
+    classes.remove("is-saved", "is-dirty", "is-error");
+    if (state.draftRestoring) {
+      el.draftStatusText.textContent = "Rascunho local: restaurando...";
+      classes.add("is-dirty");
+      return;
+    }
+    if (forcedText) {
+      el.draftStatusText.textContent = forcedText;
+      if (/não salvo|erro|falha/i.test(forcedText)) {
+        classes.add("is-error");
+      } else if (/salvando/i.test(forcedText)) {
+        classes.add("is-dirty");
+      } else {
+        classes.add("is-saved");
+      }
+      return;
+    }
+    if (!state.lastDraftSavedAt) {
+      el.draftStatusText.textContent = "Rascunho local: sem versão salva.";
+      classes.add("is-dirty");
+      return;
+    }
+    const lastSavedLabel = formatDraftStatusAge(state.lastDraftSavedAt);
+    el.draftStatusText.textContent = `Rascunho local salvo ${lastSavedLabel}.`;
+    classes.add("is-saved");
+  }
+  function formatDraftStatusAge(lastSavedAt) {
+    const savedAt = lastSavedAt instanceof Date ? lastSavedAt : new Date(lastSavedAt || "");
+    if (Number.isNaN(savedAt.getTime())) return "agora";
+    const diffMinutes = Math.floor((Date.now() - savedAt.getTime()) / 60000);
+    if (diffMinutes < 1) return "agora";
+    if (diffMinutes < 60) return `h�f¡ ${diffMinutes} min`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `h�f¡ ${diffHours} h`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `h�f¡ ${diffDays} dia${diffDays > 1 ? "s" : ""}`;
   }
 
   function readDraftSnapshot() {
@@ -4238,7 +4340,7 @@
 
   function setTab(tab) {
     if ((tab === "import" || tab === "bd" || tab === "return" || tab === "repeat") && !state.isNew) {
-      toast("Agendamento de retorno e serviços frequentes só na criação.", "error");
+      toast("Agendamento de retorno e servi�f§os frequentes s�f³ na cria�f§�f£o.", "error");
       return;
     }
     state.currentTab = tab;
@@ -4450,7 +4552,7 @@
 
       const meta = document.createElement("span");
       meta.className = "passenger-picker-meta";
-      meta.textContent = [pax.telefone, pax.email].filter(Boolean).join(" • ");
+      meta.textContent = [pax.telefone, pax.email].filter(Boolean).join(" �?� ");
       if (!meta.textContent) {
         meta.textContent = "Sem contatos";
       }
@@ -4526,13 +4628,13 @@
   function addPassengerFromId(passengerId) {
     const selected = state.passageiros.find((item) => sameId(item.id, passengerId)) || null;
     if (!selected) {
-      toast("Passageiro não encontrado para seleção.", "error");
+      toast("Passageiro n�f£o encontrado para sele�f§�f£o.", "error");
       closePassengerPicker();
       return;
     }
     const alreadyAdded = state.selectedPassengers.some((item) => sameId(item.guid, selected.id));
     if (alreadyAdded) {
-      toast("Esse passageiro já está na lista.", "warning", 2500);
+      toast("Esse passageiro j�f¡ est�f¡ na lista.", "warning", 2500);
       closePassengerPicker();
       renderPassengers();
       return;
@@ -4698,10 +4800,10 @@
     el.bdEmail.value = normalizeEmail(el.bdEmail.value);
     el.bdCr.value = normalizeCodeValue(el.bdCr.value);
     const required = [
-      [el.bdNome.value.trim(), "'Nome do Passageiro' é obrigatório."],
-      [el.bdCliente.value, "'Cliente' é obrigatório."],
-      [el.bdIdioma.value, "'Idioma' é obrigatório."],
-      [el.bdClassificacao.value, "'Classificação' é obrigatório."]
+      [el.bdNome.value.trim(), "'Nome do Passageiro' �f© obrigat�f³rio."],
+      [el.bdCliente.value, "'Cliente' �f© obrigat�f³rio."],
+      [el.bdIdioma.value, "'Idioma' �f© obrigat�f³rio."],
+      [el.bdClassificacao.value, "'Classifica�f§�f£o' �f© obrigat�f³rio."]
     ];
     const requiredControls = [el.bdNome, el.bdCliente, el.bdIdioma, el.bdClassificacao];
     const missingIndex = required.findIndex(([value]) => !value);
@@ -4713,12 +4815,12 @@
     }
 
     if (!validatePhoneControl(el.bdTelefone, { tab: "bd" })) {
-      toast("'Telefone' inválido.", "error");
+      toast("'Telefone' inv�f¡lido.", "error");
       return;
     }
 
     if (!validateEmailControl(el.bdEmail, { tab: "bd" })) {
-      toast("'Email' inválido.", "error");
+      toast("'Email' inv�f¡lido.", "error");
       return;
     }
 
@@ -5213,21 +5315,36 @@
     return fields;
   }
 
-  function openXlsxImportPicker() {
+  function canImportXlsxNow() {
     if (!window.XLSX || !window.XlsxImportCore) {
-      toast("Leitor XLSX não carregado. Verifique os scripts do web resource.", "error", 8000);
-      return;
+      toast("Leitor XLSX n�f£o carregado. Verifique os scripts do web resource.", "error", 8000);
+      return false;
     }
     if (!state.isNew) {
-      toast("Importação XLSX só cria novos serviços. Abra uma tela nova para importar.", "warning", 6000);
-      return;
+      toast("Importa�f§�f£o XLSX s�f³ cria novos servi�f§os. Abra uma tela nova para importar.", "warning", 6000);
+      return false;
     }
+    return true;
+  }
+
+  function openXlsxImportPicker() {
+    if (!canImportXlsxNow()) return;
     el.xlsxImportInput?.click();
   }
 
   async function handleXlsxImportFile(event) {
     const file = event.target?.files?.[0];
     if (!file) return;
+    if (!isSupportedXlsxFile(file)) {
+      toast("Formato inv�f¡lido. Use apenas arquivo .xlsx.", "error", 8000);
+      if (event?.target) event.target.value = "";
+      return;
+    }
+    if (!canImportXlsxNow()) {
+      if (event?.target) event.target.value = "";
+      return;
+    }
+    toast(`Processando ${file.name || "arquivo XLSX"}...`, "info", 2200);
     setLoading(true);
     try {
       const rows = await readXlsxPassengersRows(file);
@@ -5237,27 +5354,184 @@
       renderTabBadges();
       setTab("import");
       requestAnimationFrame(() => document.getElementById("tab-panel-import")?.scrollIntoView({ block: "start" }));
+      toast(`${review.programs.length} programa(s) importado(s). Revise antes de salvar.`, "success", 5000);
     } catch (error) {
       console.error(error);
       toast(error.message || "Falha ao importar XLSX.", "error", 9000);
     } finally {
-      event.target.value = "";
+      if (event?.target) event.target.value = "";
       setLoading(false);
     }
   }
 
+  function handleXlsxImportDragEnter(event) {
+    const mode = resolveImportDragMode(event);
+    if (!mode) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    importDropDepth += 1;
+    setImportDropState(true, mode);
+  }
+
+  function handleXlsxImportDragOver(event) {
+    const mode = resolveImportDragMode(event);
+    if (!mode) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+    setImportDropState(true, mode);
+  }
+
+  function handleXlsxImportDragLeave(event) {
+    if (!getDataTransferFiles(event).length) return;
+    importDropDepth -= 1;
+    if (importDropDepth <= 0) setImportDropState(false);
+  }
+
+  function handleXlsxImportDrop(event) {
+    const mode = resolveImportDragMode(event);
+    if (!mode) return;
+    event.preventDefault();
+    setImportDropState(false);
+    if (mode !== "ready") {
+      if (mode === "invalid-file") {
+        toast("Formato inv�f¡lido. Use apenas arquivo .xlsx.", "error", 8000);
+      }
+      return;
+    }
+    const file = extractXlsxFileFromEvent(event);
+    if (!file || !canImportXlsxNow()) {
+      return;
+    }
+    handleXlsxImportFile({
+      target: {
+        files: [file],
+        value: ""
+      }
+    });
+  }
+
+  function setImportDropState(active, mode = "ready") {
+    importDropDepth = active ? Math.max(importDropDepth, 1) : 0;
+    if (!active) {
+      importDropActive = false;
+      importDropMode = null;
+      importDropHintMode = null;
+      if (el.importDropOverlay) {
+        el.importDropOverlay.classList.remove("is-ready", "is-invalid", "is-blocked");
+        el.importDropOverlay.hidden = true;
+      }
+      if (el.importXlsxButton) {
+        el.importXlsxButton.classList.remove("is-ready", "is-invalid", "is-blocked");
+      }
+      document.body.classList.remove(
+        "is-import-dragging",
+        "is-import-drag-ready",
+        "is-import-drag-invalid",
+        "is-import-drag-blocked"
+      );
+      importDropCanImport = null;
+      return;
+    }
+
+    if (importDropActive && importDropMode === mode) {
+      return;
+    }
+    importDropActive = true;
+    importDropMode = mode;
+
+    const isReady = mode === "ready";
+    const isInvalid = mode === "invalid-file";
+    const isBlocked = mode === "blocked";
+    const nextModeClass = isReady ? "is-ready" : isInvalid ? "is-invalid" : "is-blocked";
+
+    if (el.importDropOverlay) {
+      el.importDropOverlay.hidden = false;
+      el.importDropOverlay.classList.remove("is-ready", "is-invalid", "is-blocked");
+      el.importDropOverlay.classList.add(nextModeClass);
+    }
+    if (el.importXlsxButton) {
+      el.importXlsxButton.classList.remove("is-ready", "is-invalid", "is-blocked");
+      el.importXlsxButton.classList.add(nextModeClass);
+    }
+
+    document.body.classList.remove(
+      "is-import-drag-ready",
+      "is-import-drag-invalid",
+      "is-import-drag-blocked"
+    );
+    if (isReady) document.body.classList.add("is-import-drag-ready", "is-import-dragging");
+    if (isInvalid) document.body.classList.add("is-import-drag-invalid", "is-import-dragging");
+    if (isBlocked) document.body.classList.add("is-import-drag-blocked", "is-import-dragging");
+
+    const copyByMode = {
+      ready: "Solte o arquivo XLSX para importar",
+      blocked: "N�f£o �f© poss�f­vel importar agora",
+      "invalid-file": "Arquivo inv�f¡lido. Use .xlsx"
+    };
+    const hintByMode = {
+      ready: "Arraste e solte seu arquivo .xlsx nesta tela para abrir a revis�f£o de importa�f§�f£o.",
+      blocked: "A importa�f§�f£o est�f¡ bloqueada para este contexto. Abra uma nova tela para continuar.",
+      "invalid-file": "Arraste uma planilha .xlsx. Formatos diferentes ser�f£o rejeitados."
+    };
+    if (el.importDropOverlayTitle && el.importDropOverlayHint) {
+      el.importDropOverlayTitle.textContent = copyByMode[mode] || copyByMode.ready;
+      el.importDropOverlayHint.textContent = hintByMode[mode] || hintByMode.ready;
+    }
+
+    if (importDropHintMode !== mode) {
+      if (mode === "ready") toast("Solte o arquivo XLSX para importar.", "info", 2600);
+      if (mode === "invalid-file") toast("Formato inv�f¡lido. Use apenas arquivo .xlsx.", "warning", 3000);
+      importDropHintMode = mode;
+    }
+  }
+
+  function resolveImportDragMode(event) {
+    const files = getDataTransferFiles(event);
+    if (!files.length) return null;
+    if (!extractXlsxFileFromEvent(event)) return "invalid-file";
+    if (!canDragImportXlsxNow()) return "blocked";
+    return "ready";
+  }
+
+  function canDragImportXlsxNow() {
+    if (importDropCanImport === null) {
+      importDropCanImport = canImportXlsxNow();
+    }
+    return importDropCanImport;
+  }
+
+  function getDataTransferFiles(event) {
+    return Array.from(event?.dataTransfer?.files || []);
+  }
+
+  function extractXlsxFileFromEvent(event) {
+    const files = getDataTransferFiles(event);
+    return files.find(isSupportedXlsxFile) || null;
+  }
+
+  function isSupportedXlsxFile(file) {
+    if (!file) return false;
+    const mime = String(file.type || "").toLowerCase();
+    const name = String(file.name || "").toLowerCase();
+    return (
+      mime === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+      mime === "application/vnd.ms-excel" ||
+      name.endsWith(".xlsx")
+    );
+  }
+
   async function readXlsxPassengersRows(file) {
-    if (!window.XLSX) throw new Error("Biblioteca XLSX não carregada.");
+    if (!window.XLSX) throw new Error("Biblioteca XLSX n�f£o carregada.");
     const buffer = await file.arrayBuffer();
     const workbook = window.XLSX.read(buffer, { type: "array", cellDates: false });
     const sheetName = workbook.SheetNames.find((name) => normalize(name) === "passengers") || workbook.SheetNames[0];
-    if (!sheetName) throw new Error("A planilha não contém abas.");
+    if (!sheetName) throw new Error("A planilha n�f£o cont�f©m abas.");
     const sheet = workbook.Sheets[sheetName];
     const rows = window.XLSX.utils.sheet_to_json(sheet, { defval: "", raw: false });
     const headers = rows.length ? Object.keys(rows[0]) : [];
     const missing = window.XlsxImportCore.validateImportHeaders(headers);
     if (missing.length) {
-      throw new Error(`Planilha fora do padrão. Colunas ausentes: ${missing.join(", ")}.`);
+      throw new Error(`Planilha fora do padr�f£o. Colunas ausentes: ${missing.join(", ")}.`);
     }
     return rows;
   }
@@ -5308,7 +5582,7 @@
           passenger.matchMessage = "Cadastro parecido encontrado.";
         } else {
           passenger.matchStatus = "create-new";
-          passenger.matchMessage = "Será criado no Banco de Dados.";
+          passenger.matchMessage = "Ser�f¡ criado no Banco de Dados.";
         }
       }
     }
@@ -5345,7 +5619,7 @@
   function requireImportClient() {
     const importClient = getImportClient();
     if (!importClient?.id) {
-      throw new Error("Cliente Embraer não encontrado. Configure CONFIG.importDefaults.clienteId com o GUID real do Dataverse.");
+      throw new Error("Cliente Embraer n�f£o encontrado. Configure CONFIG.importDefaults.clienteId com o GUID real do Dataverse.");
     }
     return importClient;
   }
@@ -5390,7 +5664,7 @@
           });
         } catch (error) {
           console.warn("Falha ao validar duplicidade por cr40f_idexterno", error);
-          toast("Não consegui validar duplicidade por cr40f_idexterno. Confirme se a coluna já foi criada.", "warning", 9000);
+          toast("N�f£o consegui validar duplicidade por cr40f_idexterno. Confirme se a coluna j�f¡ foi criada.", "warning", 9000);
           break;
         }
       }
@@ -5414,7 +5688,7 @@
     if (!el.importReviewPrograms) return;
     if (!review) {
       if (el.importReviewEmpty) el.importReviewEmpty.hidden = false;
-      if (el.importReviewSummary) el.importReviewSummary.textContent = "Importe um XLSX para revisar os serviços nesta aba.";
+      if (el.importReviewSummary) el.importReviewSummary.textContent = "Importe um XLSX para revisar os servi�f§os nesta aba.";
       el.importReviewStats?.replaceChildren();
       el.importReviewIssues?.replaceChildren();
       if (el.importReviewIssues) el.importReviewIssues.hidden = true;
@@ -5431,7 +5705,7 @@
       importStat("Linhas", review.rows.length),
       importStat("PGs", review.programs.length),
       importStat("Trechos", trechos.length),
-      importStat("Válidos", validTrechos.length)
+      importStat("V�f¡lidos", validTrechos.length)
     );
     renderImportGlobalIssues(trechos);
     el.importReviewPrograms.replaceChildren();
@@ -5457,11 +5731,11 @@
   function renderImportGlobalIssues(trechos) {
     if (!el.importReviewIssues) return;
     const issues = [];
-    if (!getImportClient()?.id) issues.push("Cliente Embraer não encontrado. Configure CONFIG.importDefaults.clienteId ou cadastre Embraer.");
+    if (!getImportClient()?.id) issues.push("Cliente Embraer n�f£o encontrado. Configure CONFIG.importDefaults.clienteId ou cadastre Embraer.");
     const duplicated = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
-    if (duplicated.length) issues.push(`${duplicated.length} trecho(s) pertencem a PG já importada.`);
+    if (duplicated.length) issues.push(`${duplicated.length} trecho(s) pertencem a PG j�f¡ importada.`);
     const ambiguous = trechos.reduce((total, trecho) => total + trecho.passageiros.filter((pax) => pax.matchStatus === "ambiguous").length, 0);
-    if (ambiguous) issues.push(`${ambiguous} passageiro(s) precisam de decisão de duplicidade.`);
+    if (ambiguous) issues.push(`${ambiguous} passageiro(s) precisam de decis�f£o de duplicidade.`);
     el.importReviewIssues.hidden = issues.length === 0;
     el.importReviewIssues.replaceChildren(...issues.map((issue) => {
       const item = document.createElement("p");
@@ -5480,11 +5754,11 @@
     const strong = document.createElement("strong");
     strong.textContent = program.programacao;
     const meta = document.createElement("span");
-    meta.textContent = `${program.trechos.length} trecho(s) · ${program.solicitacoes.join(", ") || "sem ST"}`;
+    meta.textContent = `${program.trechos.length} trecho(s) �,· ${program.solicitacoes.join(", ") || "sem ST"}`;
     title.append(strong, meta);
     const status = document.createElement("span");
     status.className = program.duplicatedRecordIds?.length ? "import-badge danger" : "import-badge";
-    status.textContent = program.duplicatedRecordIds?.length ? "PG já importada" : "Novo";
+    status.textContent = program.duplicatedRecordIds?.length ? "PG j�f¡ importada" : "Novo";
     head.append(title, status);
     card.appendChild(head);
     program.trechos.forEach((trecho, index) => card.appendChild(buildImportTrechoCard(program, trecho, index)));
@@ -5503,13 +5777,13 @@
     head.className = "import-trecho-head";
     const title = document.createElement("div");
     const strong = document.createElement("strong");
-    strong.textContent = `Serviço ${index + 1}`;
+    strong.textContent = `Servi�f§o ${index + 1}`;
     const meta = document.createElement("span");
-    meta.textContent = `${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"} · ${trecho.passageiros.length} passageiro(s)`;
+    meta.textContent = `${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"} �,· ${trecho.passageiros.length} passageiro(s)`;
     title.append(strong, meta);
     const badge = document.createElement("span");
     badge.className = issues.length ? "import-badge warning" : "import-badge success";
-    badge.textContent = trecho.savedRecordId ? "Salvo" : (issues.length ? `${issues.length} pendência(s)` : "Pronto");
+    badge.textContent = trecho.savedRecordId ? "Salvo" : (issues.length ? `${issues.length} pend�fªncia(s)` : "Pronto");
     head.append(title, badge);
 
     const grid = document.createElement("div");
@@ -5517,13 +5791,13 @@
     grid.append(
       buildImportInput("Data", "dataIso", trecho.dataIso, "date"),
       buildImportInput("Hora", "horario", trecho.horario, "time"),
-      buildImportSelect("Tipo de serviço", "tipoServicoValue", state.options.tipoServico, trecho.tipoServicoValue || findOptionValue("tipoServico", trecho.tipoServicoSugerido)),
-      buildImportSelect("Tipo de veículo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido)),
-      buildImportInput("Cotação", "valor", Number.isFinite(trecho.valor) ? String(trecho.valor) : "", "number"),
+      buildImportSelect("Tipo de servi�f§o", "tipoServicoValue", state.options.tipoServico, trecho.tipoServicoValue || findOptionValue("tipoServico", trecho.tipoServicoSugerido)),
+      buildImportSelect("Tipo de ve�f­culo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido)),
+      buildImportInput("Cota�f§�f£o", "valor", Number.isFinite(trecho.valor) ? String(trecho.valor) : "", "number"),
       buildImportInput("Solicitante", "solicitanteNome", trecho.solicitanteNome, "text"),
       buildImportInput("Origem principal", "origem", trecho.origem, "text", true),
       buildImportTextarea("Destino", "destino", trecho.destino),
-      buildImportTextarea("Observação", "observacaoOperacional", trecho.observacaoOperacional)
+      buildImportTextarea("Observa�f§�f£o", "observacaoOperacional", trecho.observacaoOperacional)
     );
 
     const passengerList = document.createElement("div");
@@ -5544,7 +5818,7 @@
     const actions = document.createElement("footer");
     actions.className = "import-trecho-actions";
     actions.append(
-      buildImportAction("Abrir formulário", "open-form"),
+      buildImportAction("Abrir formul�f¡rio", "open-form"),
       buildImportAction("Salvar trecho", "save-trecho", issues.length > 0)
     );
 
@@ -5665,21 +5939,21 @@
     if (passenger.matchStatus === "use-existing") return `Usar existente: ${passenger.passageiroLabel}`;
     if (passenger.matchStatus === "create-new") return "Criar novo passageiro";
     if (passenger.matchStatus === "ambiguous") return "Escolha cadastro existente ou novo";
-    if (passenger.matchStatus === "invalid") return passenger.matchMessage || "Inválido";
+    if (passenger.matchStatus === "invalid") return passenger.matchMessage || "Inv�f¡lido";
     return passenger.matchMessage || "Pendente";
   }
 
   function importedTrechoIssues(trecho) {
     const issues = [];
     if (!getImportClient()?.id) issues.push("Cliente Embraer ausente.");
-    if (!trecho.dataIso) issues.push("Data inválida.");
-    if (!trecho.horario) issues.push("Horário vazio.");
+    if (!trecho.dataIso) issues.push("Data inv�f¡lida.");
+    if (!trecho.horario) issues.push("Hor�f¡rio vazio.");
     if (!trecho.destino) issues.push("Destino vazio.");
-    if (!resolveImportOption("tipoServico", trecho.tipoServicoValue, trecho.tipoServicoSugerido)) issues.push("Tipo de serviço sem mapeamento.");
-    if (!resolveImportOption("tipoVeiculo", trecho.tipoVeiculoValue, trecho.tipoVeiculoSugerido)) issues.push("Tipo de veículo sem mapeamento.");
+    if (!resolveImportOption("tipoServico", trecho.tipoServicoValue, trecho.tipoServicoSugerido)) issues.push("Tipo de servi�f§o sem mapeamento.");
+    if (!resolveImportOption("tipoVeiculo", trecho.tipoVeiculoValue, trecho.tipoVeiculoSugerido)) issues.push("Tipo de ve�f­culo sem mapeamento.");
     trecho.passageiros.forEach((passenger) => {
       if (passenger.matchStatus === "ambiguous") issues.push(`Decidir passageiro: ${passenger.nome}.`);
-      if (passenger.matchStatus === "invalid") issues.push(`Passageiro inválido na linha ${passenger.sourceRow}.`);
+      if (passenger.matchStatus === "invalid") issues.push(`Passageiro inv�f¡lido na linha ${passenger.sourceRow}.`);
     });
     return Array.from(new Set(issues));
   }
@@ -5799,7 +6073,7 @@
       markDraftDirty();
       renderImportReview();
       setTab("details");
-      toast(resolved.length ? "Trecho aplicado ao formulário." : "Trecho aplicado sem passageiros resolvidos.", resolved.length ? "success" : "warning", 5000);
+      toast(resolved.length ? "Trecho aplicado ao formul�f¡rio." : "Trecho aplicado sem passageiros resolvidos.", resolved.length ? "success" : "warning", 5000);
     } catch (error) {
       console.error(error);
       toast(error.message || "Falha ao aplicar trecho importado.", "error", 9000);
@@ -5831,7 +6105,7 @@
       .flatMap((program) => program.trechos)
       .filter((trecho) => importedTrechoIssues(trecho).length === 0);
     if (!valid.length) {
-      toast("Nenhum trecho válido para salvar.", "warning");
+      toast("Nenhum trecho v�f¡lido para salvar.", "warning");
       return;
     }
     for (const trecho of valid) {
@@ -5847,7 +6121,7 @@
       toast(`Resolva antes de salvar: ${issues[0]}`, "error", 8000);
       return null;
     }
-    if (trecho.duplicatedRecordIds?.length && !window.confirm(`A PG ${trecho.programacao} já existe no Dataverse. Criar novo trecho mesmo assim?`)) {
+    if (trecho.duplicatedRecordIds?.length && !window.confirm(`A PG ${trecho.programacao} j�f¡ existe no Dataverse. Criar novo trecho mesmo assim?`)) {
       return null;
     }
     setLoading(true);
@@ -6096,8 +6370,8 @@
     const context = buildSaveContext();
     clearValidationStates();
     const validation = validateContext(context);
-    if (validation) {
-      toast(validation, "error", 7000);
+    if (!validation.ok) {
+      toast(validation.message, "error", 7000);
       focusInvalidField(validation);
       return;
     }
@@ -6110,7 +6384,7 @@
     const context = state.pendingSaveContext || buildSaveContext();
     closeReviewOverlay(false);
     clearSaveLog();
-    addSaveLog("success", "Validação concluída", "Campos obrigatórios aprovados.");
+    addSaveLog("success", "Valida�f§�f£o conclu�f­da", "Campos obrigat�f³rios aprovados.");
     setLoading(true);
     try {
       const results = [];
@@ -6125,10 +6399,10 @@
         addSaveLog("success", "Passageiros vinculados", "Principal.");
 
         if (el.repetirServico.checked) {
-          addSaveLog("info", "Criando recorrência", "Gerando serviços frequentes.");
+          addSaveLog("info", "Criando recorr�fªncia", "Gerando servi�f§os frequentes.");
           const frequent = await createFrequentServices(context);
           results.push(...frequent);
-          addSaveLog("success", "Recorrência salva", `${frequent.length} serviço(s).`);
+          addSaveLog("success", "Recorr�fªncia salva", `${frequent.length} servi�f§o(s).`);
         }
 
         if (el.agendarRetorno.checked) {
@@ -6140,21 +6414,21 @@
         }
       } else {
         if (el.agendarRetorno.checked || el.repetirServico.checked) {
-      throw new Error("Agendamento de retorno e serviços frequentes só na criação.");
+      throw new Error("Agendamento de retorno e servi�f§os frequentes s�f³ na cria�f§�f£o.");
         }
         addSaveLog("info", "Atualizando reserva", state.recordId);
         const updated = await saveReserva(buildReservaPayload(context, "edicao", context.dataHoraPrincipal), state.recordId);
-        addSaveLog("info", "Recriando vínculos", `${context.colOrdemPassageiros.length} passageiro(s).`);
+        addSaveLog("info", "Recriando v�f­nculos", `${context.colOrdemPassageiros.length} passageiro(s).`);
         await replacePassengerRelations(state.recordId, context.colOrdemPassageiros, context, true, true);
-        results.push({ tipo: "Edição", data: context.dataHoraPrincipal, result: updated });
-        addSaveLog("success", "Edição salva", state.recordId);
+        results.push({ tipo: "Edi�f§�f£o", data: context.dataHoraPrincipal, result: updated });
+        addSaveLog("success", "Edi�f§�f£o salva", state.recordId);
       }
 
       const total = results.length;
       const message = state.isNew
-        ? `${total} serviço(s) solicitado(s) com sucesso!`
-        : `Serviço editado com sucesso! Data: ${formatDateTime(context.dataHoraPrincipal)}   Trajeto: ${context.trajeto}   Tipo do Veículo: ${optionLabel("tipoVeiculo", el.tipoVeiculo.value)}`;
-      addSaveLog("success", "Fluxo concluído", message);
+        ? `${total} servi�f§o(s) solicitado(s) com sucesso!`
+        : `Servi�f§o editado com sucesso! Data: ${formatDateTime(context.dataHoraPrincipal)}   Trajeto: ${context.trajeto}   Tipo do Ve�f­culo: ${optionLabel("tipoVeiculo", el.tipoVeiculo.value)}`;
+      addSaveLog("success", "Fluxo conclu�f­do", message);
       showSuccess(message);
       clearDraftSnapshot(false);
       state.pendingSaveContext = null;
@@ -6162,7 +6436,7 @@
     } catch (error) {
       console.error(error);
       addSaveLog("error", "Falha no salvamento", error.message || "Erro desconhecido.");
-      toast(error.message || "Falha ao salvar formulário.", "error", 9000);
+      toast(error.message || "Falha ao salvar formul�f¡rio.", "error", 9000);
     } finally {
       setLoading(false);
     }
@@ -6228,44 +6502,76 @@
     return withClock(base, retornoTime.hours, retornoTime.minutes);
   }
 
+  function createValidationResult(ok, message = "", fields, options = {}) {
+    const normalizedFields = Array.isArray(fields) ? fields : (fields ? [fields] : []);
+    return {
+      ok,
+      message,
+      fields: normalizedFields,
+      ...options
+    };
+  }
+
+  function normalizeValidationResult(result) {
+    if (!result) return { ok: false, message: "", fields: [] };
+    if (typeof result === "string") return result ? { ok: false, message: result, fields: [] } : { ok: true, message: "", fields: [] };
+    if (typeof result === "object" && result !== null && typeof result.ok === "boolean") {
+      return {
+        ok: result.ok,
+        message: String(result.message || ""),
+        fields: Array.isArray(result.fields) ? result.fields : result.field ? [result.field] : [],
+        ...result
+      };
+    }
+    return { ok: false, message: String(result), fields: [] };
+  }
+
   function validateContext(context) {
     const statusLabel = optionLabel("statusOperacao", el.statusOperacao.value);
-    const isTroca = statusLabel === "Troca de Veículos";
-    if (!context.dataHoraPrincipal || !el.saidaHora.value || !el.saidaMinuto.value) return "'Data e horário de saída' são obrigatórios.";
-    if (!el.tipoServico.value && !isTroca) return "'Tipo do Serviço' é obrigatório.";
-    if (!el.tipoVeiculo.value && !isTroca) return "'Tipo do Veículo' é obrigatório.";
-    if (!context.trajeto && !isTroca) return "'Trajeto' (Cidade de origem/destino) é obrigatório.";
-    if (context.colOrdemPassageiros.length === 0 && !isTroca) return "É obrigatório selecionar pelo menos um passageiro.";
-    if (!context.enderecoCompleto && !isTroca) return "'Endereço de saída' é obrigatório.";
-    if (!el.destino.value.trim() && !isTroca) return "'Destino' é obrigatório.";
-    if (!el.cliente.value) return "'Cliente' é obrigatório.";
-    if (!el.solicitante.value) return "'Solicitante' é obrigatório.";
-    if (el.agendarRetorno.checked && !el.retornoData.value) return "'Data de retorno' é obrigatória.";
-    if (el.agendarRetorno.checked && !el.retornoEndereco.value.trim()) return "'Endereço de Saída - Retorno' é obrigatório.";
-    if (el.agendarRetorno.checked && !el.retornoDestino.value.trim()) return "'Destino - Retorno' é obrigatório.";
-    if (el.agendarRetorno.checked && context.dataHoraRetorno && context.dataHoraPrincipal && context.dataHoraRetorno < context.dataHoraPrincipal) return "Data de retorno nao pode ser anterior a saida.";
-    if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) return "'Data de início e fim - Serviços Frequentes' são obrigatórios.";
-    if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) return "'Data final' não pode ser anterior à data inicial.";
+    const isTroca = statusLabel === "Troca de Ve�f­culos";
+    if (!context.dataHoraPrincipal || !el.saidaHora.value || !el.saidaMinuto.value) return createValidationResult(false, "'Data e hor�f¡rio de sa�f­da' s�f£o obrigat�f³rios.", "saidaHora");
+    if (!el.tipoServico.value && !isTroca) return createValidationResult(false, "'Tipo do Servi�f§o' �f© obrigat�f³rio.", "tipoServico");
+    if (!el.tipoVeiculo.value && !isTroca) return createValidationResult(false, "'Tipo do Ve�f­culo' �f© obrigat�f³rio.", "tipoVeiculo");
+    if (!context.trajeto && !isTroca) return createValidationResult(false, "'Trajeto' (Cidade de origem/destino) �f© obrigat�f³rio.", "trajeto");
+    if (context.colOrdemPassageiros.length === 0 && !isTroca) return createValidationResult(false, "�? obrigatório selecionar pelo menos um passageiro.", "passageiros");
+    if (!context.enderecoCompleto && !isTroca) return createValidationResult(false, "'Endere�f§o de sa�f­da' �f© obrigat�f³rio.", "enderecoPersonalizado");
+    if (!el.destino.value.trim() && !isTroca) return createValidationResult(false, "'Destino' �f© obrigat�f³rio.", "destino");
+    if (!el.cliente.value) return createValidationResult(false, "'Cliente' �f© obrigat�f³rio.", "cliente");
+    if (!el.solicitante.value) return createValidationResult(false, "'Solicitante' �f© obrigat�f³rio.", "solicitante");
+    if (el.agendarRetorno.checked && !el.retornoData.value) return createValidationResult(false, "'Data de retorno' �f© obrigat�f³ria.", "retornoData");
+    if (el.agendarRetorno.checked && !el.retornoEndereco.value.trim()) return createValidationResult(false, "'Endere�f§o de Sa�f­da - Retorno' �f© obrigat�f³rio.", "retornoEndereco");
+    if (el.agendarRetorno.checked && !el.retornoDestino.value.trim()) return createValidationResult(false, "'Destino - Retorno' �f© obrigat�f³rio.", "retornoDestino");
+    if (el.agendarRetorno.checked && context.dataHoraRetorno && context.dataHoraPrincipal && context.dataHoraRetorno < context.dataHoraPrincipal) {
+      return createValidationResult(false, "Data de retorno nao pode ser anterior a saida.", "retornoData");
+    }
+    if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) {
+      return createValidationResult(false, "'Data de in�f­cio e fim - Servi�f§os Frequentes' s�f£o obrigat�f³rios.", "frequenteInicio");
+    }
+    if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) {
+      return createValidationResult(false, "'Data final' n�f£o pode ser anterior �f  data inicial.", "frequenteFim");
+    }
     const frequentPeriodError = validateFrequentServicePeriod();
-    if (frequentPeriodError) return frequentPeriodError;
-    if (el.repetirServico.checked && !el.frequenteTipo.value) return "'Tipo de Serviço Frequente' é obrigatório.";
-    if (state.isNew && el.repetirServico.checked && el.agendarRetorno.checked) return "Não é possível usar 'Serviços Frequentes' e 'Agendar Retorno' ao mesmo tempo. Escolha apenas um.";
-    if (hasDuplicatePassengers()) return "Erro: passageiro duplicado na lista. Remova as duplicatas.";
-    return "";
+    if (!frequentPeriodError.ok) return frequentPeriodError;
+    if (el.repetirServico.checked && !el.frequenteTipo.value) return createValidationResult(false, "'Tipo de Servi�f§o Frequente' �f© obrigat�f³rio.", "frequenteTipo");
+    if (state.isNew && el.repetirServico.checked && el.agendarRetorno.checked) {
+      return createValidationResult(false, "N�f£o �f© poss�f­vel usar 'Servi�f§os Frequentes' e 'Agendar Retorno' ao mesmo tempo. Escolha apenas um.", "agendarRetorno");
+    }
+    if (hasDuplicatePassengers()) return createValidationResult(false, "Erro: passageiro duplicado na lista. Remova as duplicatas.", "passageiros");
+    return { ok: true, fields: [] };
   }
 
   function validateFrequentServicePeriod() {
-    if (!el.repetirServico.checked || !el.frequenteInicio.value || !el.frequenteFim.value) return "";
+    if (!el.repetirServico.checked || !el.frequenteInicio.value || !el.frequenteFim.value) return { ok: true, fields: ["frequenteInicio", "frequenteFim"] };
     const days = dateRangeDays(el.frequenteInicio.value, el.frequenteFim.value);
     if (days > MAX_FREQUENT_SERVICE_DAYS) {
-      return `Periodo frequente muito grande. Limite: ${MAX_FREQUENT_SERVICE_DAYS} dias.`;
+      return createValidationResult(false, `Periodo frequente muito grande. Limite: ${MAX_FREQUENT_SERVICE_DAYS} dias.`, ["frequenteInicio", "frequenteFim"]);
     }
     const dates = generateFrequentDates(el.frequenteInicio.value, el.frequenteFim.value, el.contabilizarFds.checked);
     const multiplier = el.frequenteTipo.value === "Ida e retorno" ? 2 : 1;
     if (dates.length * multiplier > MAX_FREQUENT_SERVICE_RECORDS) {
-      return `Periodo frequente muito grande. Limite: ${MAX_FREQUENT_SERVICE_RECORDS} servicos.`;
+      return createValidationResult(false, `Periodo frequente muito grande. Limite: ${MAX_FREQUENT_SERVICE_RECORDS} servicos.`, ["frequenteInicio", "frequenteFim"]);
     }
-    return "";
+    return { ok: true, fields: ["frequenteInicio", "frequenteFim"] };
   }
 
   function dateRangeDays(startValue, endValue) {
@@ -6316,11 +6622,11 @@
 
   async function createFrequentServices(context) {
     const frequentPeriodError = validateFrequentServicePeriod();
-    if (frequentPeriodError) {
-      throw new Error(frequentPeriodError);
+    if (!frequentPeriodError.ok) {
+      throw new Error(frequentPeriodError.message || "Período frequente inválido.");
     }
     if (new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) {
-      throw new Error("Data final não pode ser anterior a data inicial para serviços frequentes.");
+      throw new Error("Data final n�f£o pode ser anterior a data inicial para servi�f§os frequentes.");
     }
     const results = [];
     const dates = generateFrequentDates(el.frequenteInicio.value, el.frequenteFim.value, el.contabilizarFds.checked);
@@ -6597,18 +6903,28 @@
   }
 
   function focusInvalidField(message) {
-    const text = normalize(String(message || "")).replace(/\s+/g, " ");
-    const revealed = revealInvalidFieldByMessage(text, message);
+    const validation = normalizeValidationResult(message);
+    const normalizedMessage = validation.message || "Campo obrigat�f³rio.";
+    const text = normalize(String(normalizedMessage)).replace(/\s+/g, " ");
+
+    const fieldKey = validation.field || (Array.isArray(validation.fields) ? validation.fields[0] : "");
+    const directTarget = validationTargetElement(fieldKey);
+    if (directTarget) {
+      revealInvalidField(directTarget, normalizedMessage, validation.tab ? { tab: validation.tab } : {});
+      return;
+    }
+
+    const revealed = revealInvalidFieldByMessage(text, normalizedMessage);
     if (revealed) return;
     if (text.includes("agendamento")) {
       focusField(el.scheduleDraftRows);
       return;
     }
-    if (text.includes("horário") && text.includes("saída")) {
+    if (text.includes("hor�f¡rio") && text.includes("sa�f­da")) {
       focusField(el.saidaData);
       return;
     }
-    if (text.includes("tipo do serviço")) {
+    if (text.includes("tipo do servi�f§o")) {
       focusField(el.tipoServico);
       return;
     }
@@ -6628,7 +6944,7 @@
       }
       return;
     }
-    if (text.includes("endereço de saída")) {
+    if (text.includes("endere�f§o de sa�f­da")) {
       if (el.enderecoPersonalizadoAtivo && el.enderecoPersonalizado) {
         focusField(el.enderecoPersonalizado);
       } else if (state.selectedPassengers?.length) {
@@ -6646,42 +6962,86 @@
       focusField(el.retornoData);
       return;
     }
-    if (text.includes("data de início") || text.includes("data de fim")) {
+    if (text.includes("data de in�f­cio") || text.includes("data de fim")) {
       focusField(el.frequenteInicio);
       return;
     }
-    if (text.includes("tipo de serviço frequente") || text.includes("tipo de serviço frequente")) {
+    if (text.includes("tipo de servi�f§o frequente") || text.includes("tipo de servi�f§o frequente")) {
       focusField(el.frequenteTipo);
       return;
     }
   }
 
+  function validationTargetElement(fieldName) {
+    const key = normalize(String(fieldName || "")).replace(/[\s_-]+/g, "");
+    const fields = {
+      statusoperacao: el.statusOperacao,
+      statusfaturamento: el.statusFaturamento,
+      tiposervico: el.tipoServico,
+      tipoveiculo: el.tipoVeiculo,
+      trajeto: el.trajeto,
+      destino: el.destino,
+      motorista: el.motorista,
+      cliente: el.cliente,
+      solicitante: el.solicitante,
+      saidadata: el.saidaData,
+      saidahora: el.saidaData,
+      saidaminuto: el.saidaData,
+      retornodata: el.retornoData,
+      retornoendereco: el.retornoEndereco,
+      destinoretorno: el.retornoDestino,
+      frequenteinicio: el.frequenteInicio,
+      frequentefim: el.frequenteFim,
+      frequentetipo: el.frequenteTipo,
+      repetirsevico: el.repetirServico,
+      repetirstatus: el.repetirServico,
+      agendarretorno: el.agendarRetorno,
+      enderecopersonalizado: el.enderecoPersonalizado,
+      endereco: el.enderecoPersonalizado,
+      passageiros: el.passengerRows || el.passengerBlock || el.addPassenger,
+      passageiro: el.passengerRows || el.passengerBlock || el.addPassenger,
+      passsageiro: el.passengerRows || el.passengerBlock || el.addPassenger
+    };
+    return fields[key] || null;
+  }
+
   function revealInvalidFieldByMessage(text, message) {
-    if (text.includes("agendamento")) {
+    const validation = normalizeValidationResult(message);
+    const resolvedMessage = message || validation.message || "Campo obrigat�f³rio.";
+    const textNormalized = normalize(String(resolvedMessage)).replace(/\s+/g, " ");
+    const fieldKey = validation.field || (Array.isArray(validation.fields) ? validation.fields[0] : "");
+    const directTarget = validationTargetElement(fieldKey);
+    if (directTarget) {
+      revealInvalidField(directTarget, resolvedMessage, validation.tab ? { tab: validation.tab } : {});
+      return true;
+    }
+
+    const normalized = normalize(String(text || textNormalized)).replace(/\s+/g, " ");
+    if (normalized.includes("agendamento")) {
       revealInvalidField(el.scheduleDraftRows, message, { tab: "repeat" });
       return true;
     }
-    if (text.includes("horario") && text.includes("saida")) {
+    if (normalized.includes("horario") && normalized.includes("saida")) {
       revealInvalidField(el.saidaData, message, { related: [el.saidaHora, el.saidaMinuto] });
       return true;
     }
-    if (text.includes("tipo do servico")) {
+    if (normalized.includes("tipo do servico")) {
       revealInvalidField(el.tipoServico, message);
       return true;
     }
-    if (text.includes("tipo do veiculo")) {
+    if (normalized.includes("tipo do veiculo")) {
       revealInvalidField(el.tipoVeiculo, message);
       return true;
     }
-    if (text.includes("trajeto")) {
+    if (normalized.includes("trajeto")) {
       revealInvalidField(el.trajeto, message);
       return true;
     }
-    if (text.includes("pelo menos um passageiro")) {
+    if (normalized.includes("pelo menos um passageiro")) {
       revealInvalidField(el.passengerBlock || el.passengerRows || el.addPassenger, message);
       return true;
     }
-    if (text.includes("endereco de saida")) {
+    if (normalized.includes("endereco de saida")) {
       if (state.enderecoPersonalizadoAtivo && el.enderecoPersonalizado) {
         revealInvalidField(el.enderecoPersonalizado, message);
         return true;
@@ -6699,35 +7059,35 @@
       revealInvalidField(el.trajeto, message);
       return true;
     }
-    if (text.includes("data de retorno")) {
+    if (normalized.includes("data de retorno")) {
       revealInvalidField(el.retornoData, message, { tab: "return", related: [el.retornoHora, el.retornoMinuto] });
       return true;
     }
-    if (text.includes("destino - retorno")) {
+    if (normalized.includes("destino - retorno")) {
       revealInvalidField(el.retornoDestino, message, { tab: "return" });
       return true;
     }
-    if (text.includes("destino")) {
+    if (normalized.includes("destino")) {
       revealInvalidField(el.destino, message);
       return true;
     }
-    if (text.includes("cliente")) {
+    if (normalized.includes("cliente")) {
       revealInvalidField(el.cliente, message);
       return true;
     }
-    if (text.includes("solicitante")) {
+    if (normalized.includes("solicitante")) {
       revealInvalidField(el.solicitante, message);
       return true;
     }
-    if (text.includes("data de inicio") || text.includes("data de fim")) {
+    if (normalized.includes("data de inicio") || normalized.includes("data de fim")) {
       revealInvalidField(el.frequenteInicio, message, { tab: "repeat", related: [el.frequenteFim] });
       return true;
     }
-    if (text.includes("data final")) {
+    if (normalized.includes("data final")) {
       revealInvalidField(el.frequenteFim, message, { tab: "repeat", related: [el.frequenteInicio] });
       return true;
     }
-    if (text.includes("tipo de servico frequente")) {
+    if (normalized.includes("tipo de servico frequente")) {
       revealInvalidField(el.frequenteTipo, message, { tab: "repeat" });
       return true;
     }
@@ -7054,8 +7414,8 @@
     const close = document.createElement("button");
     close.className = "toast-close";
     close.type = "button";
-    close.setAttribute("aria-label", "Fechar notificação");
-    close.textContent = "×";
+    close.setAttribute("aria-label", "Fechar notifica�f§�f£o");
+    close.textContent = "�-";
     close?.addEventListener("click", () => item.remove());
 
     item.append(msg, close);
@@ -7073,6 +7433,6 @@
   init().catch((error) => {
     console.error(error);
     setLoading(false);
-    toast(error.message || "Falha ao iniciar formulário.", "error", 9000);
+    toast(error.message || "Falha ao iniciar formul�f¡rio.", "error", 9000);
   });
 })();
