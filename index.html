@@ -106,7 +106,7 @@
               <label class="field compact-time required">
                 <span>Data e horário de saída</span>
                 <div class="inline-time">
-                  <input id="saidaData" type="datetime-local" required aria-required="true" step="300">
+                  <input id="saidaData" type="datetime-local" required aria-required="true" step="300" max="9999-12-31T23:59">
                   <input id="saidaHora" type="hidden">
                   <input id="saidaMinuto" type="hidden">
                 </div>
@@ -115,7 +115,7 @@
               <label class="field">
                 <span>Horário previsto de retorno</span>
                 <div class="inline-time">
-                  <input id="retPrevDateTime" type="datetime-local" step="300">
+                  <input id="retPrevDateTime" type="datetime-local" step="300" max="9999-12-31T23:59">
                   <input id="retPrevHora" type="hidden">
                   <input id="retPrevMinuto" type="hidden">
                 </div>
@@ -351,7 +351,7 @@
             </label>
             <label class="field">
               <span>Data de nascimento</span>
-              <input id="bdNascimento" type="date">
+              <input id="bdNascimento" type="date" max="9999-12-31">
             </label>
             <label class="field span-2">
               <span>Perfil do passageiro</span>
@@ -389,7 +389,7 @@
             <label class="field span-2">
               <span>Data e horário de retorno</span>
               <div class="inline-time">
-                <input id="retornoData" type="datetime-local" step="300">
+                <input id="retornoData" type="datetime-local" step="300" max="9999-12-31T23:59">
                 <input id="retornoHora" type="hidden">
                 <input id="retornoMinuto" type="hidden">
               </div>
@@ -432,11 +432,11 @@
           <div class="form-grid">
             <label class="field">
               <span>Data de início</span>
-              <input id="frequenteInicio" type="date">
+              <input id="frequenteInicio" type="date" max="9999-12-31">
             </label>
             <label class="field">
               <span>Data de fim</span>
-              <input id="frequenteFim" type="date">
+              <input id="frequenteFim" type="date" max="9999-12-31">
             </label>
             <label class="field">
               <span>Tipo</span>
