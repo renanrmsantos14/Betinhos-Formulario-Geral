@@ -253,7 +253,6 @@
     passengerPickerCancel: $("passengerPickerCancel"),
     customAddressWrap: $("customAddressWrap"),
     enderecoPersonalizado: $("enderecoPersonalizado"),
-    telefonesPreview: $("telefonesPreview"),
     destino: $("destino"),
     bdStatus: $("bdStatus"),
     bdNome: $("bdNome"),
@@ -406,6 +405,16 @@
     } catch (_) {
       return "";
     }
+  }
+
+  function shouldAutofocusSearchInputs() {
+    try {
+      const coarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches;
+      const noHover = window.matchMedia?.("(hover: none)")?.matches;
+      if (coarsePointer || noHover) return false;
+    } catch (_) {
+    }
+    return true;
   }
 
   function resolveEnvironmentBaseUrl() {
@@ -934,7 +943,9 @@
     if (state.searchInput) {
       state.searchInput.value = "";
       renderCustomSelectOptions(select, "");
-      window.setTimeout(() => state.searchInput.focus(), 10);
+      if (shouldAutofocusSearchInputs()) {
+        window.setTimeout(() => state.searchInput.focus(), 10);
+      }
     }
     updateCustomSelectPanelPosition(state);
     activeCustomSelect = state.wrapper;
@@ -945,22 +956,27 @@
   function updateCustomSelectPanelPosition(state) {
     if (!state || !state.wrapper.classList.contains("is-open")) return;
     const rect = state.trigger.getBoundingClientRect();
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    const safeInset = 8;
+    const availableWidth = Math.max(120, viewportWidth - safeInset * 2);
     const minWidth = state.select?.dataset?.selectVariant === "phone-country" ? 280 : 140;
-    const width = Math.max(minWidth, Math.ceil(rect.width || state.trigger.offsetWidth || 120));
-    const maxHeight = Math.min(260, Math.max(120, Math.floor(window.innerHeight * 0.42)));
-    const spaceBelow = window.innerHeight - rect.bottom - 8;
-    const spaceAbove = rect.top - 8;
+    const desiredWidth = Math.max(minWidth, Math.ceil(rect.width || state.trigger.offsetWidth || 120));
+    const width = Math.max(120, Math.min(availableWidth, desiredWidth));
+    const maxHeight = Math.min(260, Math.max(120, Math.floor(viewportHeight * 0.42)));
+    const spaceBelow = viewportHeight - rect.bottom - safeInset;
+    const spaceAbove = rect.top - safeInset;
     const menuHeight = Math.min(maxHeight, Math.max(80, state.panel.scrollHeight || 0));
     const showAbove = spaceBelow < Math.min(maxHeight, 180) && spaceAbove > spaceBelow;
     const top = showAbove
-      ? Math.max(8, rect.top - menuHeight - 8)
-      : Math.min(window.innerHeight - menuHeight - 8, rect.bottom + 8);
+      ? Math.max(safeInset, rect.top - menuHeight - safeInset)
+      : Math.min(viewportHeight - menuHeight - safeInset, rect.bottom + safeInset);
 
-    const safeLeft = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+    const safeLeft = Math.max(safeInset, Math.min(rect.left, viewportWidth - width - safeInset));
 
     state.panel.style.left = `${safeLeft}px`;
-    state.panel.style.top = `${Math.max(8, top)}px`;
-    state.panel.style.width = `${Math.max(120, width)}px`;
+    state.panel.style.top = `${Math.max(safeInset, top)}px`;
+    state.panel.style.width = `${width}px`;
     state.panel.style.maxHeight = `${maxHeight}px`;
   }
 
@@ -1261,10 +1277,7 @@
     }
     if (select?.dataset?.selectVariant === "phone-country") {
       const flagNode = createCountryFlagNode(option);
-      const code = document.createElement("span");
-      code.className = "custom-select-option-code custom-select-option-code--phone-country";
-      code.textContent = `+${option.value}`;
-      triggerText.append(flagNode, code);
+      triggerText.append(flagNode);
       return;
     }
     triggerText.textContent = getCustomSelectDisplayText(option, select) || "Selecione";
@@ -3212,7 +3225,6 @@
     });
     animatePassengerRowReflow(previousRects, keepRows);
 
-    el.telefonesPreview.value = composePassageirosTelefones();
     if (state.enderecoPersonalizadoAtivo && !el.enderecoPersonalizado.value) {
       el.enderecoPersonalizado.value = composeEnderecoCompleto();
     }
@@ -3447,7 +3459,6 @@
     const ordem = Number(row.dataset.ordem);
     if (Number.isNaN(ordem)) return;
     setDraftAddress(ordem, input.value);
-    el.telefonesPreview.value = composePassageirosTelefones();
   }
 
   function handlePassengerPreviewEnter(event) {
@@ -4200,9 +4211,11 @@
     el.passengerPickerSearch.value = "";
     renderPassengerPickerHint("Digite pelo menos 2 caracteres para pesquisar no Banco de Dados.");
     el.passengerPickerOverlay.hidden = false;
-    requestAnimationFrame(() => {
-      if (el.passengerPickerSearch) el.passengerPickerSearch.focus();
-    });
+    if (shouldAutofocusSearchInputs()) {
+      requestAnimationFrame(() => {
+        if (el.passengerPickerSearch) el.passengerPickerSearch.focus();
+      });
+    }
   }
 
   function closePassengerPicker() {
@@ -5370,7 +5383,6 @@
       el.cotacao,
       el.cr,
       el.destino,
-      el.telefonesPreview,
       el.retornoEndereco,
       el.retornoDestino,
       el.retornoObservacao,
