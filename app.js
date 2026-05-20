@@ -720,9 +720,16 @@
       triggerText.classList.add("custom-select-value--phone-country");
     }
 
+    const clearButton = document.createElement("span");
+    clearButton.role = "button";
+    clearButton.tabIndex = 0;
+    clearButton.className = "custom-select-clear";
+    clearButton.setAttribute("aria-label", "Limpar seleção");
+    clearButton.hidden = true;
+
     const triggerCaret = document.createElement("span");
     triggerCaret.className = "custom-select-caret";
-    trigger.append(triggerText, triggerCaret);
+    trigger.append(triggerText, clearButton, triggerCaret);
 
     const panel = document.createElement("div");
     panel.className = "custom-select-panel";
@@ -770,6 +777,7 @@
       wrapper,
       trigger,
       triggerText,
+      clearButton,
       panel,
       searchInput,
       optionsContainer,
@@ -801,6 +809,20 @@
       }
     });
 
+    clearButton?.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      clearCustomSelectValue(select);
+    });
+
+    clearButton?.addEventListener("keydown", (event) => {
+      if (event.key === " " || event.key === "Enter") {
+        event.preventDefault();
+        event.stopPropagation();
+        clearCustomSelectValue(select);
+      }
+    });
+
     searchInput?.addEventListener("click", (event) => {
       event.stopPropagation();
     });
@@ -829,7 +851,7 @@
     const state = customSelectRoots.get(select);
     if (!state) return;
 
-    const { select: nativeSelect, triggerText, trigger, panel } = state;
+    const { select: nativeSelect, triggerText, trigger, clearButton, panel } = state;
     const options = Array.from(nativeSelect.options || []);
     const selectedOption = options.find((option) => option.value === nativeSelect.value)
       || options.find((option) => option.selected)
@@ -842,9 +864,13 @@
       trigger.removeAttribute("title");
     }
     triggerText.classList.toggle("is-placeholder", !selectedOption || selectedOption.value === "");
+    if (clearButton) {
+      clearButton.hidden = !isCustomSelectClearable(nativeSelect);
+    }
     trigger.disabled = nativeSelect.disabled;
     renderCustomSelectOptions(select, state.searchInput?.value || "");
     panel.classList.toggle("is-disabled", nativeSelect.disabled);
+    syncReturnPreviewTimeSelectWidths(nativeSelect);
   }
 
   function renderCustomSelectOptions(select, filterValue = "") {
@@ -859,7 +885,7 @@
       select: nativeSelect
     } = state;
 
-    const options = Array.from(nativeSelect.options || []);
+    const options = Array.from(nativeSelect.options || []).filter((option) => shouldRenderCustomSelectOption(option));
     const query = normalize(filterValue).trim();
     optionsContainer.innerHTML = "";
     noResults.hidden = true;
@@ -915,6 +941,81 @@
 
       optionsContainer.appendChild(button);
     });
+  }
+
+  function shouldRenderCustomSelectOption(option) {
+    if (!option) return false;
+    return option.value !== "";
+  }
+
+  function isCustomSelectClearable(select) {
+    if (!select || select.disabled || select.required || select.getAttribute("aria-required") === "true") return false;
+    if (select.dataset.selectVariant === "phone-country") return false;
+    if (select.closest(".status-select")) return false;
+    if (!select.value) return false;
+    return Array.from(select.options || []).some((option) => option.value === "");
+  }
+
+  function clearCustomSelectValue(select) {
+    if (!isCustomSelectClearable(select)) return;
+    select.value = "";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    select.dispatchEvent(new Event("input", { bubbles: true }));
+    refreshCustomSelect(select);
+    closeCustomSelect(select);
+  }
+
+  function syncReturnPreviewTimeSelectWidths(select) {
+    const group = select?.closest?.(".time-group--return-preview");
+    if (!group) return;
+
+    window.requestAnimationFrame(() => {
+      const states = Array.from(group.querySelectorAll("select"))
+        .map((item) => customSelectRoots.get(item))
+        .filter(Boolean);
+      if (!states.length) return;
+
+      const maxWidth = states.reduce((largest, state) => {
+        const trigger = state.trigger;
+        const triggerText = state.triggerText;
+        const clearButton = state.clearButton;
+        if (!trigger || !triggerText) return largest;
+
+        const style = window.getComputedStyle(trigger);
+        const textStyle = window.getComputedStyle(triggerText);
+        const paddingX = parseFloat(style.paddingLeft || "0") + parseFloat(style.paddingRight || "0");
+        const borderX = parseFloat(style.borderLeftWidth || "0") + parseFloat(style.borderRightWidth || "0");
+        const gap = parseFloat(style.columnGap || style.gap || "0") || 0;
+        const visibleClearWidth = clearButton && !clearButton.hidden ? clearButton.offsetWidth : 0;
+        const visibleClearGap = visibleClearWidth ? gap : 0;
+        const caretWidth = state.trigger.querySelector(".custom-select-caret")?.offsetWidth || 0;
+        const textWidth = measureTextWidth(triggerText.textContent || "", textStyle.font);
+        const needed = textWidth + paddingX + borderX + caretWidth + visibleClearWidth + gap + visibleClearGap + 6;
+        return Math.max(largest, Math.ceil(needed));
+      }, 0);
+
+      if (maxWidth > 0) {
+        group.style.setProperty("--return-preview-select-width", `${maxWidth}px`);
+        states.forEach((state) => {
+          [state.wrapper, state.trigger].forEach((element) => {
+            if (!element) return;
+            element.style.width = `${maxWidth}px`;
+            element.style.minWidth = `${maxWidth}px`;
+            element.style.maxWidth = `${maxWidth}px`;
+          });
+        });
+      }
+    });
+  }
+
+  function measureTextWidth(text, font) {
+    if (!measureTextWidth.canvas) {
+      measureTextWidth.canvas = document.createElement("canvas");
+    }
+    const context = measureTextWidth.canvas.getContext("2d");
+    if (!context) return Math.ceil(String(text || "").length * 8);
+    context.font = font || "14px sans-serif";
+    return Math.ceil(context.measureText(String(text || "")).width);
   }
 
   function toggleCustomSelect(select) {
@@ -1237,6 +1338,9 @@
 
   function getCustomSelectDisplayText(option, select = null) {
     if (!option) return "";
+    if (option.value === "" && select?.dataset?.placeholderLabel) {
+      return select.dataset.placeholderLabel;
+    }
     if (option.dataset?.flag && option.dataset?.name) {
       if (select?.dataset?.selectVariant === "phone-country") {
         return `${option.dataset.flag} +${option.value}`;
@@ -4050,6 +4154,8 @@
     const minutesRequired = minutes.slice(1);
     fillOptions(el.saidaHora, hoursRequired);
     fillOptions(el.saidaMinuto, minutesRequired);
+    el.retPrevHora.dataset.placeholderLabel = "00";
+    el.retPrevMinuto.dataset.placeholderLabel = "00";
     fillOptions(el.retPrevHora, hours);
     fillOptions(el.retPrevMinuto, minutes);
     fillOptions(el.retornoHora, hoursRequired);
@@ -4087,7 +4193,9 @@
       state.retObsAtual = next;
       el.retornoObservacao.value = state.obsRet[next] || "";
       document.querySelectorAll("[data-ret-obs]").forEach((button) => {
-        button.classList.toggle("is-active", button.dataset.retObs === next);
+        const isActive = button.dataset.retObs === next;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-selected", String(isActive));
       });
       return;
     }
@@ -4095,7 +4203,9 @@
     state.obsAtual = next;
     el.observacao.value = next === "passageiro" ? composePreferencias() : state.obs[next] || "";
     document.querySelectorAll("[data-obs]").forEach((button) => {
-      button.classList.toggle("is-active", button.dataset.obs === next);
+      const isActive = button.dataset.obs === next;
+      button.classList.toggle("is-active", isActive);
+      button.setAttribute("aria-selected", String(isActive));
     });
   }
 

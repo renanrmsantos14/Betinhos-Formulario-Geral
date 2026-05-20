@@ -101,7 +101,7 @@
               <label class="field">
                 <span>Horário previsto de retorno</span>
                 <div class="inline-time">
-                  <div class="time-group">
+                  <div class="time-group time-group--return-preview">
                     <select id="retPrevHora"></select>
                     <span class="time-separator">:</span>
                     <select id="retPrevMinuto"></select>
@@ -139,16 +139,16 @@
                 <input id="trajeto" type="text" autocomplete="off">
               </label>
 
-              <label class="field span-2 obs-field">
+              <div class="field span-2 obs-field">
                 <span>Observação operacional</span>
                 <div class="segmented" role="tablist" aria-label="Tipo de observação">
-                  <button type="button" class="seg is-active" data-obs="motorista">Mot</button>
-                  <button type="button" class="seg" data-obs="interna">Interna</button>
-                  <button type="button" class="seg" data-obs="final">Final</button>
-                  <button type="button" class="seg" data-obs="passageiro">Pref Pax</button>
+                  <button type="button" class="seg is-active" data-obs="motorista" role="tab" aria-selected="true">Mot</button>
+                  <button type="button" class="seg" data-obs="interna" role="tab" aria-selected="false">Interna</button>
+                  <button type="button" class="seg" data-obs="final" role="tab" aria-selected="false">Final</button>
+                  <button type="button" class="seg" data-obs="passageiro" role="tab" aria-selected="false">Pref Pax</button>
                 </div>
                 <textarea id="observacao" rows="2" maxlength="500" placeholder="Ex.: preferir veículo com água, sem paradas, rota direta."></textarea>
-              </label>
+              </div>
             </div>
           </section>
 
@@ -350,16 +350,16 @@
               <span>Destino</span>
               <textarea id="retornoDestino" rows="3"></textarea>
             </label>
-            <label class="field span-2 obs-field">
+            <div class="field span-2 obs-field">
               <span>Observação de retorno</span>
               <div class="segmented" role="tablist" aria-label="Tipo de observação retorno">
-                <button type="button" class="seg is-active" data-ret-obs="motorista">Mot</button>
-                <button type="button" class="seg" data-ret-obs="interna">Interna</button>
-                <button type="button" class="seg" data-ret-obs="final">Final</button>
-                <button type="button" class="seg" data-ret-obs="passageiro">Pref Pax</button>
+                <button type="button" class="seg is-active" data-ret-obs="motorista" role="tab" aria-selected="true">Mot</button>
+                <button type="button" class="seg" data-ret-obs="interna" role="tab" aria-selected="false">Interna</button>
+                <button type="button" class="seg" data-ret-obs="final" role="tab" aria-selected="false">Final</button>
+                <button type="button" class="seg" data-ret-obs="passageiro" role="tab" aria-selected="false">Pref Pax</button>
               </div>
               <textarea id="retornoObservacao" rows="2" maxlength="500" placeholder="Ex.: retorno com horário flexível, sem paradas, etc."></textarea>
-            </label>
+            </div>
           </div>
         </section>
       </section>

@@ -725,8 +725,9 @@ Edição:
 
 - `.passenger-edit-dialog`: largura `min(920px, 100%)`.
 - Altura máxima `min(88vh, 820px)`.
-- Campos em duas colunas.
-- Campo largo usa `grid-column: 1 / -1`.
+- Campos em uma coluna para cada controle ocupar 100% da largura util do popup.
+- Desktop usa linha densa com label a esquerda e controle a direita.
+- Mobile empilha label e controle, mantendo o campo em largura total.
 
 Estados:
 

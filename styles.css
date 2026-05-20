@@ -891,6 +891,8 @@ h3 {
 }
 
 .custom-select-value {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -940,6 +942,59 @@ h3 {
     inset 0 1px 0 rgb(255 255 255 / 0.92),
     0 10px 20px rgb(33 89 210 / 0.12),
     0 0 0 3px rgb(33 89 210 / 0.12);
+}
+
+.custom-select-clear {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #6f747c;
+  opacity: 0.56;
+  cursor: pointer;
+  transition:
+    opacity 140ms var(--ease-out),
+    background-color 140ms var(--ease-out),
+    color 140ms var(--ease-out);
+}
+
+.custom-select-clear::before,
+.custom-select-clear::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.custom-select-clear::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.custom-select-clear::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.custom-select-clear:hover,
+.custom-select-clear:focus-visible {
+  background: #f2f3f5;
+  color: var(--text);
+  opacity: 1;
+}
+
+.custom-select-clear:focus-visible {
+  outline: 2px solid rgb(33 89 210 / 0.22);
+  outline-offset: 1px;
+}
+
+.custom-select-clear[hidden] {
+  display: none;
 }
 
 /* .status-select .custom-select-caret {
@@ -1465,17 +1520,62 @@ h3 {
   gap: 7px;
 }
 
+.time-group--return-preview {
+  --return-preview-select-width: max-content;
+  display: inline-grid;
+  grid-template-columns: var(--return-preview-select-width) 10px var(--return-preview-select-width);
+  width: max-content;
+  min-width: max-content;
+  max-width: none;
+}
+
+.time-group--return-preview select,
+.time-group--return-preview .custom-select,
+.time-group--return-preview .custom-select-trigger {
+  width: var(--return-preview-select-width);
+  min-width: var(--return-preview-select-width);
+  max-width: var(--return-preview-select-width);
+}
+
+.time-group--return-preview .custom-select-trigger {
+  gap: 4px;
+  justify-content: flex-start;
+}
+
+.time-group--return-preview .custom-select-clear {
+  width: 14px;
+  height: 14px;
+}
+
+.time-group--return-preview .custom-select-clear::before,
+.time-group--return-preview .custom-select-clear::after {
+  width: 7px;
+  height: 1.25px;
+}
+
+.time-group--return-preview .custom-select-caret {
+  margin-left: auto;
+}
+
+.time-group--return-preview .custom-select-value {
+  flex: 0 0 auto;
+  min-width: max-content;
+  overflow: visible;
+  text-overflow: clip;
+}
+
 .field.compact-time .time-group {
   /* Grid do horário:
      hora | : | minuto, com colunas compactas para ficar em uma linha curta.
   */
-  grid-template-columns: 52px 8px 52px;
+  --saida-time-select-width: max-content;
+  grid-template-columns: var(--saida-time-select-width) 8px var(--saida-time-select-width);
   /* Não deixa o grupo de horário esticar; mantém alinhado com a data curta. */
-  width: 112px;
+  width: max-content;
   gap: 2px;
   /* Largura total exata do bloco de hora/minuto para evitar estourar o card. */
-  min-width: 112px;
-  max-width: 112px;
+  min-width: max-content;
+  max-width: none;
   height: 100%
 }
 
@@ -1483,9 +1583,9 @@ h3 {
 .field.compact-time .time-group .custom-select,
 .field.compact-time .time-group .custom-select-trigger {
   /* Mantém o elemento interno em largura natural, sem abrir espaço extra para a célula. */
-  width: 52px;
-  min-width: 52px;
-  max-width: 52px;
+  width: var(--saida-time-select-width);
+  min-width: var(--saida-time-select-width);
+  max-width: var(--saida-time-select-width);
 }
 
 .field.compact-time .time-group .time-separator {
@@ -1496,11 +1596,11 @@ h3 {
 
 .field.compact-time .time-group select {
   /* Largura explícita dos selects de hora e minuto para legibilidade sem estourar o bloco. */
-  min-width: 52px;
+  min-width: var(--saida-time-select-width);
   /* Evita que o select cresça além do necessário no grid de horário. */
-  max-width: 52px;
+  max-width: var(--saida-time-select-width);
   /* Largura final aplicada (importante para evitar jitter entre browsers). */
-  width: 52px;
+  width: var(--saida-time-select-width);
   min-height: var(--compact-time-control-height);
   height: var(--compact-time-control-height);
   max-height: var(--compact-time-control-height);
@@ -1510,9 +1610,9 @@ h3 {
 
 .field.compact-time .time-group .custom-select,
 .field.compact-time .time-group .custom-select-trigger {
-  width: 52px;
-  min-width: 52px;
-  max-width: 52px;
+  width: var(--saida-time-select-width);
+  min-width: var(--saida-time-select-width);
+  max-width: var(--saida-time-select-width);
 }
 
 .field.compact-time .time-group .custom-select-trigger {
@@ -1541,6 +1641,8 @@ h3 {
   margin: 0;
   --obs-selector-max-inline: 360px;
   align-content: start;
+  min-width: 0;
+  width: 100%;
 }
 
 .form-grid .field.obs-field,
@@ -1551,32 +1653,65 @@ h3 {
 
 .obs-field .segmented {
   width: min(100%, var(--obs-selector-max-inline));
+  min-width: 0;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 3px;
-  padding: 3px;
-  background: var(--surface);
+  gap: 4px;
+  padding: 4px;
+  border-color: var(--line-strong);
+  background: #f7f8fb;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.85);
 }
 
 .obs-field .seg {
-  min-height: 27px;
-  padding: 2px 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 31px;
+  padding: 4px 7px;
+  border-color: rgb(148 163 184 / 0.28);
+  background: #ffffff;
   font-size: 11px;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  cursor: pointer;
+  box-shadow: inset 0 -1px 0 rgb(15 23 42 / 0.04);
 }
 
 .obs-field .seg:hover {
-  background: #ffffff;
+  border-color: rgb(33 89 210 / 0.35);
+  background: #fbfdff;
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.obs-field .seg:focus-visible {
+  border-color: rgb(33 89 210 / 0.55);
+  box-shadow: 0 0 0 3px rgb(33 89 210 / 0.14);
+  outline: 0;
+}
+
+.obs-field .seg:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .obs-field .seg.is-active {
   background: var(--accent);
   color: #ffffff;
-  box-shadow: none;
+  border-color: var(--accent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.18),
+    0 1px 3px rgb(15 23 42 / 0.10);
   transform: none;
 }
 
 .obs-field textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
   min-height: 58px;
   max-height: 76px;
+  overflow: auto;
 }
 
 .segmented {
@@ -1584,8 +1719,6 @@ h3 {
   grid-template-columns: repeat(4, 1fr);
   gap: 4px;
   padding: 4px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
   background: var(--surface-muted);
 }
 
@@ -2725,22 +2858,25 @@ h3 {
 
 .passenger-edit-fields {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
   min-height: 0;
-  max-height: min(64vh, 650px);
+  max-height: min(68vh, 650px);
   overflow: auto;
   padding-right: 4px;
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
+  width: 100%;
 }
 
 .passenger-edit-field {
   display: grid;
-  gap: 7px;
+  grid-template-columns: minmax(132px, 178px) minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
   min-width: 0;
-  min-height: 84px;
-  padding: 10px;
+  min-height: 62px;
+  padding: 9px 10px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--surface-soft);
@@ -2756,7 +2892,12 @@ h3 {
 }
 
 .passenger-edit-field.is-multiline {
-  min-height: 142px;
+  align-items: start;
+  min-height: 116px;
+}
+
+.passenger-edit-field.is-multiline .passenger-edit-field-head {
+  padding-top: 9px;
 }
 
 .passenger-edit-field:focus-within {
@@ -2815,6 +2956,7 @@ h3 {
   align-items: center;
   justify-content: flex-start;
   gap: 8px;
+  min-width: 0;
 }
 
 .passenger-edit-field-head span {
@@ -2829,6 +2971,7 @@ h3 {
 .passenger-edit-field .custom-select-trigger {
   width: 100%;
   max-width: 100%;
+  min-width: 0;
   min-height: 40px;
   border: 1px solid var(--line);
   border-radius: var(--radius-xs);
@@ -3590,21 +3733,23 @@ h3 {
   }
 
   .form-grid {
-    flex-direction: column;
-    flex-wrap: nowrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
   }
 
   .form-grid .field,
   .form-grid .toggle-field,
   .form-grid .switch {
-    flex: 1 1 100%;
+    grid-column: 1 / -1;
+    flex: none;
     width: 100%;
     min-width: 0;
   }
 
   .form-grid .field.span-2 {
-    flex-basis: 100%;
+    grid-column: 1 / -1;
+    flex-basis: auto;
     width: 100%;
     min-width: 0;
     max-width: 100%;
@@ -3643,38 +3788,93 @@ h3 {
   }
 
   .field.compact-time .inline-time {
-    flex-wrap: wrap;
-    row-gap: 6px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 8px;
+    overflow: visible;
   }
 
   .field.compact-time .inline-time input[type="date"] {
-    flex: 1 1 140px;
-    min-width: 130px;
+    display: block;
+    grid-column: 1 / -1;
+    min-width: 0;
     max-width: none;
-    width: auto;
+    width: 100%;
+    font-size: 16px;
   }
 
   .field.compact-time .time-group {
-    width: auto;
-    min-width: 112px;
+    grid-template-columns: var(--saida-time-select-width) 12px var(--saida-time-select-width);
+    width: max-content;
+    min-width: max-content;
+    max-width: none;
+    gap: 8px;
+    height: auto;
+  }
+
+  .field.compact-time .time-group select,
+  .field.compact-time .time-group .custom-select,
+  .field.compact-time .time-group .custom-select-trigger {
+    width: var(--saida-time-select-width);
+    min-width: var(--saida-time-select-width);
+    max-width: var(--saida-time-select-width);
+    font-size: 16px;
+  }
+
+  .field.compact-time .time-group .time-separator {
+    width: 12px;
+    min-width: 12px;
+    max-width: 12px;
+  }
+
+  .form-grid .field.obs-field,
+  .form-grid .field.obs-field.span-2 {
+    --form-field-min: 0px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: auto;
+    gap: 7px;
+    align-content: start;
+    grid-column: 1 / -1;
+    flex: none;
+    flex-basis: auto;
+    align-self: stretch;
+    width: 100%;
+    min-width: 0;
     max-width: 100%;
+    min-height: 0;
+    margin: 0 0 4px;
+    position: relative;
+    z-index: 0;
+    overflow: visible;
   }
 
   .obs-field .segmented {
     width: 100%;
     max-width: none;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: hidden;
   }
 
   .obs-field .seg {
-    min-height: 30px;
+    width: 100%;
+    min-width: 0;
+    min-height: 34px;
     font-size: 11px;
-    padding: 3px 6px;
+    padding: 5px 6px;
+    overflow-wrap: anywhere;
   }
 
   .obs-field textarea {
-    min-height: 72px;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    min-height: 112px;
     max-height: none;
+    resize: none;
+    overflow: auto;
   }
 
   .passenger-block.is-shared-address .passenger-address-grid {
@@ -3786,8 +3986,37 @@ h3 {
   }
 
   .passenger-edit-fields {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    max-height: calc(100svh - 150px);
     padding-right: 0;
+    overscroll-behavior: contain;
+  }
+
+  .passenger-edit-field {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 7px;
+    min-height: 76px;
+    padding: 9px;
+  }
+
+  .passenger-edit-field.is-multiline {
+    min-height: 132px;
+  }
+
+  .passenger-edit-field.is-multiline .passenger-edit-field-head {
+    padding-top: 0;
+  }
+
+  .passenger-edit-control,
+  .passenger-edit-field .custom-select-trigger {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .passenger-edit-field textarea.passenger-edit-control {
+    min-height: 88px;
+    max-height: 128px;
   }
 
   .passenger-directory {
@@ -3835,26 +4064,40 @@ h3 {
 
   .field.compact-time .inline-time input[type="date"] {
     min-width: 0;
-    flex: 1 1 100%;
   }
 
   .field.compact-time .time-group {
-    grid-template-columns: 48px 6px 48px;
-    min-width: 102px;
+    grid-template-columns: var(--saida-time-select-width) 10px var(--saida-time-select-width);
+    min-width: max-content;
+    gap: 7px;
   }
 
   .field.compact-time .time-group select,
   .field.compact-time .time-group .custom-select,
   .field.compact-time .time-group .custom-select-trigger {
-    width: 48px;
-    min-width: 48px;
-    max-width: 48px;
+    width: var(--saida-time-select-width);
+    min-width: var(--saida-time-select-width);
+    max-width: var(--saida-time-select-width);
   }
 
   .field.compact-time .time-group .time-separator {
-    width: 6px;
-    min-width: 6px;
-    max-width: 6px;
+    width: 10px;
+    min-width: 10px;
+    max-width: 10px;
+  }
+
+  .time-group--return-preview {
+    grid-template-columns: var(--return-preview-select-width) 6px var(--return-preview-select-width);
+    width: max-content;
+    min-width: max-content;
+  }
+
+  .time-group--return-preview select,
+  .time-group--return-preview .custom-select,
+  .time-group--return-preview .custom-select-trigger {
+    width: var(--return-preview-select-width);
+    min-width: var(--return-preview-select-width);
+    max-width: var(--return-preview-select-width);
   }
 
   .phone-field {
