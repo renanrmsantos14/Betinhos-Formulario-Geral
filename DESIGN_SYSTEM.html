@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DESIGN SYSTEM — Tela Formulário Geral</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+      .ds-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .ds-card {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: var(--surface);
+        box-shadow: var(--shadow-control);
+        padding: 12px;
+      }
+
+      .ds-card > h1,
+      .ds-card > h2,
+      .ds-card > h3 {
+        margin-top: 0;
+      }
+
+      .ds-card > p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .ds-token-table-wrap {
+        overflow-x: auto;
+        margin-top: 8px;
+      }
+
+      #tokenTable {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+
+      #tokenTable th,
+      #tokenTable td {
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        padding: 7px 8px;
+      }
+
+      #tokenTable th {
+        color: var(--text-soft);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .ds-grid {
+        display: grid;
+        gap: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        margin-top: 8px;
+      }
+
+      .ds-surface {
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--line);
+        background: var(--surface-soft);
+        padding: 10px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .ds-title {
+        color: var(--muted);
+        font-size: 11px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+
+      .ds-swatch-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+
+      .ds-swatch {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-sm);
+        padding: 8px;
+        background: #fff;
+        display: grid;
+        gap: 6px;
+      }
+
+      .ds-color {
+        width: 100%;
+        aspect-ratio: 8 / 3;
+        border-radius: 6px;
+        border: 1px solid #d7dce8;
+      }
+
+      .ds-code {
+        border: 1px dashed var(--line);
+        border-radius: var(--radius-sm);
+        padding: 8px;
+        background: #ffffff;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        overflow: auto;
+      }
+
+      .section-note {
+        color: var(--text-soft);
+        font-size: 12px;
+      }
+
+      .compact-obs {
+        width: 100%;
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="ds-page">
+      <section class="ds-card">
+        <h1>DESIGN SYSTEM — Tela Formulário Geral</h1>
+        <p>Página de referência visual e contratos de componentes usados no projeto.</p>
+      </section>
+
+      <section class="ds-card">
+        <h2>Design tokens (CSS custom properties)</h2>
+        <p class="section-note">Valores atuais extraídos do <code>:root</code> de <code>styles.css</code>.</p>
+        <div class="ds-token-table-wrap">
+          <table id="tokenTable">
+            <thead>
+              <tr>
+                <th>Token</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="ds-card">
+        <h2>Paleta principal</h2>
+        <p class="section-note">Amostra automática dos principais tokens de cor e superfície.</p>
+        <div class="ds-swatch-grid" id="dsSwatches"></div>
+      </section>
+
+      <section class="ds-card">
+        <h2>Campos padrão</h2>
+        <div class="ds-grid">
+          <div class="ds-surface">
+            <strong class="ds-title">Input</strong>
+            <label class="field">
+              <span>Nome do cliente</span>
+              <input type="text" value="João da Silva">
+            </label>
+          </div>
+          <div class="ds-surface">
+            <strong class="ds-title">Select nativo</strong>
+            <label class="field">
+              <span>Tipo do veículo</span>
+              <select>
+                <option>Executivo</option>
+                <option>Semi</option>
+                <option>van</option>
+              </select>
+            </label>
+          </div>
+          <div class="ds-surface">
+            <strong class="ds-title">Textarea</strong>
+            <label class="field">
+              <span>Observação</span>
+              <textarea rows="3" placeholder="Digite aqui..."></textarea>
+            </label>
+          </div>
+          <div class="ds-surface">
+            <strong class="ds-title">Estado inválido</strong>
+            <label class="field is-invalid">
+              <span>Campo obrigatório</span>
+              <input type="text" value="">
+              <small class="field-hint">Não pode ficar vazio.</small>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="ds-card">
+        <h2>Campos de data e hora</h2>
+        <p class="section-note">Bloco compacto padrão com largura controlada.</p>
+        <div class="ds-surface">
+          <label class="field compact-time">
+            <span>Data e horário</span>
+            <div class="inline-time">
+              <input type="date" value="2026-01-01">
+              <div class="time-group">
+                <select>
+                  <option>08</option>
+                  <option>09</option>
+                  <option>10</option>
+                </select>
+                <span class="time-separator">:</span>
+                <select>
+                  <option>00</option>
+                  <option>15</option>
+                  <option>30</option>
+                </select>
+              </div>
+            </div>
+          </label>
+        </div>
+      </section>
+
+      <section class="ds-card">
+        <h2>Observação (agora no mesmo padrão dos demais campos)</h2>
+        <p class="section-note">A classe <code>.obs-field</code> não altera estilo visual do componente, mantendo o contrato de <code>.field</code>.</p>
+        <fieldset class="field span-2 compact-obs">
+          <legend>Observação operacional</legend>
+          <div class="field-hint">Use para orientar motorista, rota e detalhes do atendimento.</div>
+          <div class="segmented" role="tablist" aria-label="Tipo de observação">
+            <button type="button" class="seg is-active">Mot</button>
+            <button type="button" class="seg">Interna</button>
+            <button type="button" class="seg">Final</button>
+            <button type="button" class="seg">Pref Pax</button>
+          </div>
+          <textarea rows="3" placeholder="Ex.: cliente prefere rota direta, sem pedágio extra."></textarea>
+        </fieldset>
+      </section>
+
+      <section class="ds-card">
+        <h2>Segmented / status / switches</h2>
+        <div class="ds-grid">
+          <div class="ds-surface">
+            <strong class="ds-title">Segmented</strong>
+            <div class="segmented" role="tablist" aria-label="Preview segmented">
+              <button type="button" class="seg is-active">Hoje</button>
+              <button type="button" class="seg">Amanhã</button>
+              <button type="button" class="seg">Esta semana</button>
+            </div>
+          </div>
+          <div class="ds-surface">
+            <strong class="ds-title">Toggle / Switch</strong>
+            <label class="switch">
+              <input type="checkbox" checked>
+              <span>Ativado</span>
+            </label>
+            <label class="toggle-field">
+              <input type="checkbox">
+              <span>Receber?</span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="ds-card">
+        <h2>Ações</h2>
+        <div class="ds-surface">
+          <button type="button" class="primary-action">Salvar agendamento</button>
+          <button type="button" class="secondary-action" data-variant="neutral">Salvar rascunho</button>
+          <button type="button" class="secondary-action success">Novo</button>
+          <button type="button" class="secondary-action danger">Cancelar</button>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        const rootStyle = getComputedStyle(document.documentElement);
+        const tokenNames = Array.from({ length: rootStyle.length }, (_, i) => rootStyle[i])
+          .filter((name) => name.startsWith("--"))
+          .sort((a, b) => a.localeCompare(b));
+
+        const tableBody = document.querySelector("#tokenTable tbody");
+        const swatchContainer = document.getElementById("dsSwatches");
+        const swatches = ["--bg", "--bg-2", "--shell", "--shell-2", "--surface", "--surface-soft", "--surface-muted", "--surface-active", "--text", "--text-soft", "--muted", "--line", "--line-strong", "--accent", "--accent-strong", "--success", "--danger", "--warning"];
+
+        tokenNames.forEach((name) => {
+          const tr = document.createElement("tr");
+          const tdName = document.createElement("td");
+          const tdValue = document.createElement("td");
+          tdName.textContent = name;
+          tdValue.textContent = rootStyle.getPropertyValue(name).trim() || "—";
+          tr.appendChild(tdName);
+          tr.appendChild(tdValue);
+          tableBody.appendChild(tr);
+        });
+
+        swatches.forEach((name) => {
+          const value = rootStyle.getPropertyValue(name).trim();
+          if (!value) {
+            return;
+          }
+
+          const card = document.createElement("div");
+          card.className = "ds-swatch";
+
+          const chip = document.createElement("div");
+          chip.className = "ds-color";
+          chip.style.background = `var(${name})`;
+
+          const label = document.createElement("strong");
+          label.textContent = name;
+
+          const valueText = document.createElement("code");
+          valueText.textContent = value;
+
+          card.append(chip, label, valueText);
+          swatchContainer.appendChild(card);
+        });
+      })();
+    </script>
+  </body>
+</html>

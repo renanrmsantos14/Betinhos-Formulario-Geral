@@ -138,6 +138,17 @@
                 <span>Trajeto</span>
                 <input id="trajeto" type="text" autocomplete="off">
               </label>
+
+              <label class="field span-2 obs-field">
+                <span>Observação operacional</span>
+                <div class="segmented" role="tablist" aria-label="Tipo de observação">
+                  <button type="button" class="seg is-active" data-obs="motorista">Mot</button>
+                  <button type="button" class="seg" data-obs="interna">Interna</button>
+                  <button type="button" class="seg" data-obs="final">Final</button>
+                  <button type="button" class="seg" data-obs="passageiro">Pref Pax</button>
+                </div>
+                <textarea id="observacao" rows="2" maxlength="500" placeholder="Ex.: preferir veículo com água, sem paradas, rota direta."></textarea>
+              </label>
             </div>
           </section>
 
@@ -165,26 +176,6 @@
                 <textarea id="enderecoPersonalizado" rows="5" placeholder="Informe o endereço que será aplicado a todos os passageiros selecionados."></textarea>
                 <small>Será aplicado a todos os passageiros selecionados.</small>
               </label>
-            </div>
-          </section>
-
-          <section class="form-section" aria-labelledby="pessoasTitle">
-            <div class="form-section-title">
-              <h3 id="pessoasTitle">Observações da operação</h3>
-              <p>Observações e referências rápidas para atendimento.</p>
-            </div>
-
-            <div class="form-grid">
-              <fieldset class="field span-2 obs-field">
-                <legend>Observação</legend>
-                <div class="segmented" role="tablist" aria-label="Tipo de observação">
-                  <button type="button" class="seg is-active" data-obs="motorista">Mot</button>
-                  <button type="button" class="seg" data-obs="interna">Interna</button>
-                  <button type="button" class="seg" data-obs="final">Final</button>
-                  <button type="button" class="seg" data-obs="passageiro">Pref Pax</button>
-                </div>
-                <textarea id="observacao" rows="4"></textarea>
-              </fieldset>
             </div>
           </section>
 
@@ -364,16 +355,16 @@
               <span>Destino</span>
               <textarea id="retornoDestino" rows="3"></textarea>
             </label>
-            <fieldset class="field span-2 obs-field">
-              <legend>Observação</legend>
+            <label class="field span-2 obs-field">
+              <span>Observação de retorno</span>
               <div class="segmented" role="tablist" aria-label="Tipo de observação retorno">
                 <button type="button" class="seg is-active" data-ret-obs="motorista">Mot</button>
                 <button type="button" class="seg" data-ret-obs="interna">Interna</button>
                 <button type="button" class="seg" data-ret-obs="final">Final</button>
                 <button type="button" class="seg" data-ret-obs="passageiro">Pref Pax</button>
               </div>
-              <textarea id="retornoObservacao" rows="4"></textarea>
-            </fieldset>
+              <textarea id="retornoObservacao" rows="2" maxlength="500" placeholder="Ex.: retorno com horário flexível, sem paradas, etc."></textarea>
+            </label>
           </div>
         </section>
       </section>
