@@ -53,6 +53,18 @@ assert.doesNotMatch(
 );
 
 const mobileCss = extractMedia("@media (max-width: 760px)");
+const mobileDialog = extractRule(".passenger-edit-dialog", mobileCss);
+assert.match(
+  mobileDialog,
+  /grid-template-rows:\s*auto\s+minmax\(0,\s*1fr\);/,
+  "popup mobile deve reservar uma linha flexivel para os campos"
+);
+assert.match(
+  mobileDialog,
+  /overflow:\s*hidden;/,
+  "popup mobile deve conter o scroll dentro da lista de campos"
+);
+
 const mobileFields = extractRule(".passenger-edit-fields", mobileCss);
 assert.match(
   mobileFields,
@@ -61,8 +73,35 @@ assert.match(
 );
 assert.match(
   mobileFields,
-  /max-height:\s*calc\(100svh - 150px\);/,
-  "lista de campos deve rolar dentro do popup no mobile"
+  /height:\s*100%;/,
+  "lista de campos deve ocupar a linha rolavel do popup no mobile"
+);
+assert.match(
+  mobileFields,
+  /overflow-x:\s*hidden;/,
+  "lista de campos nao deve gerar quebra horizontal no mobile"
+);
+
+const mobileField = extractRule(".passenger-edit-field", mobileCss);
+assert.match(
+  mobileField,
+  /border:\s*0;/,
+  "campo mobile de editar pax nao deve criar moldura externa duplicada"
+);
+assert.match(
+  mobileField,
+  /background:\s*transparent;/,
+  "campo mobile de editar pax nao deve parecer card dentro do popup"
+);
+assert.match(
+  mobileField,
+  /box-shadow:\s*none;/,
+  "campo mobile de editar pax nao deve ter sombra de card"
+);
+assert.match(
+  mobileField,
+  /min-height:\s*auto;/,
+  "campo mobile de editar pax deve ter altura natural"
 );
 
 console.log("passenger_edit_layout: ok");

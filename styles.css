@@ -3974,20 +3974,41 @@ h3 {
   }
 
   .passenger-edit-dialog {
-    width: min(920px, calc(100vw - 16px));
-    max-height: calc(100svh - 22px);
+    width: calc(100vw - 16px);
+    max-height: calc(100svh - 16px);
+    grid-template-rows: auto minmax(0, 1fr);
+    gap: 10px;
     padding: 14px;
+    overflow: hidden;
   }
 
   .passenger-edit-head {
     align-items: start;
     justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
     width: 100%;
+  }
+
+  .passenger-edit-head > div:first-child {
+    min-width: 0;
+  }
+
+  .passenger-edit-head h3 {
+    max-width: 100%;
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
+
+  .passenger-edit-actions {
+    flex: 0 0 auto;
   }
 
   .passenger-edit-fields {
     grid-template-columns: minmax(0, 1fr);
-    max-height: calc(100svh - 150px);
+    height: 100%;
+    max-height: none;
+    overflow-x: hidden;
     padding-right: 0;
     overscroll-behavior: contain;
   }
@@ -3996,12 +4017,41 @@ h3 {
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
     gap: 7px;
-    min-height: 76px;
-    padding: 9px;
+    width: 100%;
+    max-width: 100%;
+    min-height: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .passenger-edit-field-head {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .passenger-edit-field-head span {
+    overflow-wrap: anywhere;
+  }
+
+  .passenger-edit-field.is-empty .passenger-edit-field-head span {
+    padding-right: 0;
+  }
+
+  .passenger-edit-field.is-empty .passenger-edit-field-head::after {
+    flex: 0 0 auto;
+  }
+
+  .passenger-edit-field .custom-select,
+  .passenger-edit-field .custom-select-trigger,
+  .passenger-edit-control {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .passenger-edit-field.is-multiline {
-    min-height: 132px;
+    min-height: auto;
   }
 
   .passenger-edit-field.is-multiline .passenger-edit-field-head {
