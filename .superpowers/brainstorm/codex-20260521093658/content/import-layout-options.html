@@ -1,0 +1,101 @@
+<h2>Revisão operacional de XLSX</h2>
+<p class="subtitle">Comparação de 3 modelos para importar, conferir, editar e salvar serviços em volume.</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="display:grid;gap:10px;padding:12px;background:#f3f6fb;border-radius:12px">
+        <div style="display:flex;justify-content:space-between;gap:8px">
+          <strong>Serviços importados</strong>
+          <span style="background:#e6eefb;color:#2159d2;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:800">Salvar todos</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+          <span style="background:white;border:1px solid #dfe6f2;border-radius:8px;padding:8px">131 PG</span>
+          <span style="background:white;border:1px solid #dfe6f2;border-radius:8px;padding:8px">142 serviços</span>
+          <span style="background:white;border:1px solid #dfe6f2;border-radius:8px;padding:8px">286 pax</span>
+          <span style="background:white;border:1px solid #dfe6f2;border-radius:8px;padding:8px">8 pendências</span>
+        </div>
+        <div style="display:grid;gap:8px">
+          <div style="background:white;border-left:4px solid #2159d2;border-radius:10px;padding:10px">
+            <strong>PG2026/31241</strong>
+            <p style="margin:4px 0 0;color:#64748b">Serviço 1 · Data · Pax · campos editáveis</p>
+          </div>
+          <div style="background:white;border-left:4px solid #c12f45;border-radius:10px;padding:10px">
+            <strong>PG2026/31766</strong>
+            <p style="margin:4px 0 0;color:#64748b">3 pendências · passageiro ambíguo</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. Cards atuais refinados</h3>
+      <p>Menor mudança. Funciona, mas cansa em volume e obriga scroll longo.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="display:grid;gap:10px;padding:12px;background:#f3f6fb;border-radius:12px">
+        <div style="display:grid;grid-template-columns:1.35fr .9fr;gap:10px">
+          <div style="display:grid;gap:8px">
+            <div style="display:flex;gap:6px">
+              <span style="background:#0f1725;color:white;border-radius:999px;padding:5px 8px;font-size:11px">Todos 142</span>
+              <span style="background:#fff4cf;color:#8f6317;border-radius:999px;padding:5px 8px;font-size:11px">Pendências 8</span>
+              <span style="background:#fdecee;color:#c12f45;border-radius:999px;padding:5px 8px;font-size:11px">Duplicados 3</span>
+            </div>
+            <div style="background:white;border:1px solid #dfe6f2;border-radius:10px;overflow:hidden">
+              <div style="display:grid;grid-template-columns:.7fr .8fr 1.2fr .6fr .6fr;gap:0;background:#f5f7fa;color:#64748b;font-size:10px;font-weight:900;padding:8px">
+                <span>PG</span><span>Saída</span><span>Trajeto</span><span>Pax</span><span>Estado</span>
+              </div>
+              <div style="display:grid;grid-template-columns:.7fr .8fr 1.2fr .6fr .6fr;gap:0;padding:8px;border-top:1px solid #dfe6f2">
+                <strong>31241</strong><span>15/05 06:00</span><span>GRU → Embraer</span><span>6</span><span style="color:#168f57;font-weight:800">Pronto</span>
+              </div>
+              <div style="display:grid;grid-template-columns:.7fr .8fr 1.2fr .6fr .6fr;gap:0;padding:8px;border-top:1px solid #dfe6f2;background:#fffaf0">
+                <strong>31766</strong><span>15/05 08:30</span><span>Hotel → SJK</span><span>3</span><span style="color:#b17a00;font-weight:800">Revisar</span>
+              </div>
+            </div>
+          </div>
+          <div style="background:white;border:1px solid #dfe6f2;border-radius:10px;padding:10px">
+            <strong>Inspector do serviço</strong>
+            <p style="margin:6px 0;color:#64748b">Edita data, rota, tipo, valor e passageiros sem sair da lista.</p>
+            <div style="display:grid;gap:6px">
+              <span style="background:#f5f7fa;border-radius:8px;padding:7px">Data e hora</span>
+              <span style="background:#f5f7fa;border-radius:8px;padding:7px">Passageiros + decisão</span>
+              <span style="background:#f5f7fa;border-radius:8px;padding:7px">Salvar este serviço</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. Mesa de conferência + inspector</h3>
+      <p>Melhor para operação. Lista compacta para volume e edição detalhada no painel lateral.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="display:grid;gap:10px;padding:12px;background:#f3f6fb;border-radius:12px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="background:#2159d2;color:white;border-radius:999px;padding:5px 9px">1 Upload</span>
+          <span style="background:#2159d2;color:white;border-radius:999px;padding:5px 9px">2 Conferir</span>
+          <span style="background:#e6eefb;color:#2159d2;border-radius:999px;padding:5px 9px">3 Resolver</span>
+          <span style="background:#e6eefb;color:#2159d2;border-radius:999px;padding:5px 9px">4 Salvar</span>
+        </div>
+        <div style="background:white;border:1px solid #dfe6f2;border-radius:10px;padding:18px;text-align:center">
+          <strong>Etapa atual: resolver exceções</strong>
+          <p style="color:#64748b">Mostra uma pendência por vez com ação guiada.</p>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. Wizard guiado</h3>
+      <p>Bom para usuário novo. Ruim para rotina; lento para quem importa 100+ serviços.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Minha recomendação</h3>
+  <p>Use o modelo B. A importação vira uma mesa de conferência: resumo no topo, tabela de serviços, inspector lateral, fila de pendências e salvamento controlado.</p>
+</div>

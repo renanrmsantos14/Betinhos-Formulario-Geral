@@ -24,7 +24,7 @@
         <div class="top-actions">
         <label class="status-select">
           <span>Status</span>
-          <select id="statusOperacao" class="status-button-select secondary-action" data-native-select="true" aria-label="Status da operação"></select>
+          <select id="statusOperacao" aria-label="Status da operação"></select>
         </label>
         <div id="recordIdBox" class="record-id" hidden>
           <span>ID</span>
@@ -101,7 +101,7 @@
             </div>
 
             <div class="form-grid">
-              <label class="field compact-time saida-compact-time required">
+              <label class="field compact-time saida-compact-time datetime-field required">
                 <span>Data e horário de saída</span>
                 <div class="inline-time">
                   <input id="saidaData" type="datetime-local" required aria-required="true" step="300" max="9999-12-31T23:59">
@@ -110,7 +110,7 @@
                 </div>
               </label>
 
-              <label class="field">
+              <label class="field datetime-field">
                 <span>Horário previsto de retorno</span>
                 <div class="inline-time">
                   <input id="retPrevDateTime" type="datetime-local" step="300" max="9999-12-31T23:59">
@@ -263,12 +263,12 @@
 
       </section>
 
-      <section id="tab-panel-import" class="panel import-review-panel" data-panel="import" aria-labelledby="importReviewTitle">
+      <section id="tab-panel-import" class="panel import-review-panel import-review-panel--compact" data-panel="import" aria-labelledby="importReviewTitle">
         <div class="section-head inline import-review-head">
           <div>
             <p class="passenger-picker-eyebrow">Importação XLSX</p>
             <h2 id="importReviewTitle">Serviços importados</h2>
-            <p id="importReviewSummary" class="import-review-summary">Importe um XLSX para revisar os serviços nesta aba ou confira o rascunho do formulário.</p>
+            <p id="importReviewSummary" class="import-review-summary"></p>
           </div>
           <div class="import-review-actions">
             <button id="importSaveAll" type="button" class="primary-action" disabled>Salvar todos válidos</button>
@@ -278,7 +278,7 @@
 
         <div id="importReviewEmpty" class="import-review-empty">
           <strong>Nenhum arquivo carregado.</strong>
-          <span>Use Importar XLSX para montar a revisão por PG e trecho ou preencha o formulário para ver o rascunho aqui.</span>
+          <span>Use Importar XLSX para montar a revisão por PG e trecho.</span>
         </div>
         <div id="importReviewStats" class="import-review-stats"></div>
         <div id="importReviewIssues" class="import-review-issues" hidden></div>
@@ -344,7 +344,7 @@
               <span>Cargo</span>
               <select id="bdCargo"></select>
             </label>
-            <label class="field">
+            <label class="field date-field">
               <span>Data de nascimento</span>
               <input id="bdNascimento" type="date" max="9999-12-31">
             </label>
@@ -381,7 +381,7 @@
 
         <section class="form-section">
           <div class="form-grid">
-            <label class="field span-2">
+            <label class="field span-2 datetime-field">
               <span>Data e horário de retorno</span>
               <div class="inline-time">
                 <input id="retornoData" type="datetime-local" step="300" max="9999-12-31T23:59">
@@ -425,11 +425,11 @@
 
         <section class="form-section">
           <div class="form-grid">
-            <label class="field">
+            <label class="field date-field">
               <span>Data de início</span>
               <input id="frequenteInicio" type="date" max="9999-12-31">
             </label>
-            <label class="field">
+            <label class="field date-field">
               <span>Data de fim</span>
               <input id="frequenteFim" type="date" max="9999-12-31">
             </label>

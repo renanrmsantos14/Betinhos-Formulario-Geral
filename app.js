@@ -398,6 +398,7 @@
     renderAll();
     await restoreDraftSnapshot();
     initializeCustomSelects();
+    syncDateTimeFieldRowWidths();
     setLoading(false);
     if (state.mockMode) {
       toast("Modo local ativo: dados mock gerados para teste completo da experiência.", "warning", 7000);
@@ -535,6 +536,7 @@
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
     el.importReviewCancel?.addEventListener("click", closeImportReview);
     el.importSaveAll?.addEventListener("click", saveAllValidImportedTrechos);
+    el.importReviewPrograms?.addEventListener("click", handleImportFieldCopy);
     el.importReviewPrograms?.addEventListener("click", handleImportReviewAction);
     el.importReviewPrograms?.addEventListener("input", handleImportReviewInput);
     el.importReviewPrograms?.addEventListener("change", handleImportReviewInput);
@@ -632,6 +634,7 @@
     window?.addEventListener("resize", repositionOpenCustomSelectPanels);
     window?.addEventListener("resize", repositionPassengerPreview);
     window?.addEventListener("resize", syncPassengerNameColumnWidth);
+    window?.addEventListener("resize", syncDateTimeFieldRowWidths);
     bindInputFormatters();
     const appRoot = $("app");
     appRoot?.addEventListener("input", handleOperationalInput);
@@ -732,6 +735,11 @@
     });
   }
 
+  function addClassIfPresent(node, className) {
+    const token = String(className || "").trim();
+    if (node?.classList && token) node.classList.add(token);
+  }
+
   function initializeCustomSelects() {
     document.querySelectorAll("select").forEach((select) => {
       if (select.hidden || select.dataset.nativeSelect === "true") return;
@@ -744,9 +752,7 @@
     if (!select || select.tagName !== "SELECT" || select.hidden || select.dataset.nativeSelect === "true" || select.dataset.customSelectReady === "1") return;
     const wrapper = document.createElement("div");
     wrapper.className = "custom-select";
-    if (select.dataset.selectVariant) {
-      wrapper.classList.add(`custom-select--${select.dataset.selectVariant}`);
-    }
+    addClassIfPresent(wrapper, `custom-select--${select.dataset.selectVariant || ""}`);
 
     const trigger = document.createElement("button");
     trigger.type = "button";
@@ -772,9 +778,7 @@
 
     const panel = document.createElement("div");
     panel.className = "custom-select-panel";
-    if (select.dataset.selectVariant) {
-      panel.classList.add(`custom-select-panel--${select.dataset.selectVariant}`);
-    }
+    addClassIfPresent(panel, `custom-select-panel--${select.dataset.selectVariant || ""}`);
     if (select.closest(".status-select")) {
       panel.classList.add("is-status");
     }
@@ -953,9 +957,7 @@
       button.type = "button";
       button.role = "option";
       button.className = "custom-select-option";
-      if (nativeSelect.dataset.selectVariant) {
-        button.classList.add(`custom-select-option--${nativeSelect.dataset.selectVariant}`);
-      }
+      addClassIfPresent(button, `custom-select-option--${nativeSelect.dataset.selectVariant || ""}`);
       button.dataset.value = option.value || "";
       renderCustomSelectOptionContent(button, option);
       if (String(option.value) === normalizedSelectedValue) {
@@ -3195,7 +3197,7 @@
     const row = control?.closest?.(".passenger-edit-field");
     if (!row) return;
     row.classList.remove("is-saving", "is-saved", "is-error");
-    if (status) row.classList.add(`is-${status}`);
+    addClassIfPresent(row, `is-${status || ""}`);
     if (status === "saved") {
       window.setTimeout(() => {
         if (row.isConnected) row.classList.remove("is-saved");
@@ -3242,6 +3244,7 @@
 
     keepRows.forEach((row) => el.scheduleDraftRows.appendChild(row));
     el.scheduleDraftRows.classList.toggle("is-empty", state.scheduleDrafts.length === 0);
+    syncDateTimeFieldRowWidths();
   }
 
   function buildScheduleDraftRow(item) {
@@ -3257,7 +3260,7 @@
         </div>
       </div>
       <div class="schedule-draft-grid">
-        <label class="field span-2 required">
+        <label class="field span-2 required datetime-field">
           <span>Data e horário</span>
           <div class="inline-time">
             <input type="datetime-local" data-schedule-field="dataHora" step="300">
@@ -3266,7 +3269,7 @@
             <input type="hidden" data-schedule-field="minuto">
           </div>
         </label>
-        <label class="field">
+        <label class="field datetime-field">
           <span>Hr prev retorno</span>
           <div class="inline-time">
             <input type="datetime-local" data-schedule-field="retPrevDateTime" step="300">
@@ -3898,10 +3901,7 @@
   }
 
   function renderTabBadges() {
-    const draftSnapshot = getActiveFormDraftSnapshot();
-    const hasCommonDraft = hasCommonDraftContent(draftSnapshot);
-    const hasReturnDraft = hasReturnDraftContent(draftSnapshot);
-    el.tabImport?.classList.toggle("is-marked", !!state.importReview || hasCommonDraft || hasReturnDraft);
+    el.tabImport?.classList.toggle("is-marked", !!state.importReview);
     el.tabReturn.classList.toggle("is-marked", el.agendarRetorno.checked);
     el.tabRepeat.classList.toggle("is-marked", el.repetirServico.checked);
   }
@@ -4037,7 +4037,7 @@
     };
     if (config.touchCommon) state.draftCommonEdited = true;
     if (state.draftTimer) window.clearTimeout(state.draftTimer);
-    renderDraftStatus("Salvando rascunho...");
+    renderDraftStatus("Salvando dados locais...");
     state.draftTimer = window.setTimeout(() => {
       state.draftTimer = null;
       saveDraftSnapshot();
@@ -4054,8 +4054,8 @@
       state.lastDraftSavedAt = snapshot.updatedAt;
       renderDraftStatus();
     } catch (error) {
-      console.warn("Falha ao salvar rascunho local", error);
-    renderDraftStatus("Rascunho não salvo.");
+      console.warn("Falha ao salvar dados locais", error);
+    renderDraftStatus("Dados locais não salvos.");
     }
   }
 
@@ -4192,9 +4192,9 @@
       renderDraftStatus();
       setTab(state.isNew ? (snapshot.currentTab || "details") : "details");
     } catch (error) {
-      console.warn("Falha ao restaurar rascunho local", error);
+      console.warn("Falha ao restaurar dados locais", error);
       state.draftCommonEdited = false;
-      renderDraftStatus("Rascunho invalido.");
+      renderDraftStatus("Dados locais inválidos.");
     } finally {
       state.draftRestoring = false;
     }
@@ -4225,13 +4225,13 @@
     try {
       window.localStorage.removeItem(DRAFT_STORE_KEY);
     } catch (error) {
-      console.warn("Falha ao remover rascunho local", error);
+      console.warn("Falha ao remover dados locais", error);
     }
     state.draftCommonEdited = false;
     state.importDraftEditState = { common: false, retorno: false };
     state.lastDraftSavedAt = null;
     renderDraftStatus();
-    if (showToast) toast("Rascunho local removido.", "success", 2500);
+    if (showToast) toast("Dados locais removidos.", "success", 2500);
   }
 
   function renderDraftStatus(forcedText = "") {
@@ -4328,6 +4328,10 @@
       const isActive = button.dataset.obs === next;
       button.classList.toggle("is-active", isActive);
       button.setAttribute("aria-selected", String(isActive));
+    });
+    requestAnimationFrame(() => {
+      el.observacao?.focus();
+      el.observacao?.setSelectionRange?.(el.observacao.value.length, el.observacao.value.length);
     });
   }
 
@@ -5350,6 +5354,59 @@
     };
   }
 
+  function importReviewStatuses() {
+    return window.XlsxImportCore?.IMPORT_REVIEW_STATUSES || {
+      PENDING: "pending",
+      CONFIRMED: "confirmed",
+      BLOCKED: "blocked",
+      IGNORED: "ignored",
+      SAVED: "saved"
+    };
+  }
+
+  function normalizeImportedReviewStatus(trecho) {
+    const statuses = importReviewStatuses();
+    if (trecho?.savedRecordId && trecho.reviewStatus !== statuses.IGNORED) return statuses.SAVED;
+    return Object.values(statuses).includes(trecho?.reviewStatus) ? trecho.reviewStatus : statuses.PENDING;
+  }
+
+  function markImportedReviewPending(trecho) {
+    const statuses = importReviewStatuses();
+    const status = normalizeImportedReviewStatus(trecho);
+    if (status !== statuses.CONFIRMED && status !== statuses.BLOCKED && status !== statuses.SAVED) return;
+    if (status === statuses.SAVED) trecho.savedRecordId = "";
+    window.XlsxImportCore?.markImportedTrechoPending?.(trecho);
+    if (!window.XlsxImportCore?.markImportedTrechoPending && trecho) {
+      trecho.reviewStatus = statuses.PENDING;
+      trecho.reviewBlockReason = "";
+    }
+    if (el.importSaveAll) {
+      el.importSaveAll.disabled = true;
+      el.importSaveAll.title = "Serviço editado. Confirme a revisão novamente.";
+    }
+  }
+
+  function summarizeCurrentImportTrechos(trechos) {
+    if (window.XlsxImportCore?.summarizeImportReviewTrechos) {
+      return window.XlsxImportCore.summarizeImportReviewTrechos(trechos);
+    }
+    const statuses = importReviewStatuses();
+    const counts = { pending: 0, confirmed: 0, blocked: 0, ignored: 0, saved: 0 };
+    const saveableTrechos = [];
+    (trechos || []).forEach((trecho) => {
+      const status = normalizeImportedReviewStatus(trecho);
+      counts[status] += 1;
+      if (status === statuses.CONFIRMED) saveableTrechos.push(trecho);
+    });
+    const canScheduleConfirmed = saveableTrechos.length > 0 && counts.pending === 0 && counts.blocked === 0;
+    return {
+      counts,
+      saveableTrechos,
+      canScheduleConfirmed,
+      blockedReason: canScheduleConfirmed ? "" : (counts.pending ? `${counts.pending} trecho(s) pendente(s) de revisão.` : "Nenhum trecho confirmado para agendar.")
+    };
+  }
+
   async function resolveImportedPassengerMatches(programs) {
     const cache = new Map();
     const importClient = getImportClient();
@@ -5442,14 +5499,16 @@
 
   async function checkImportedProgramDuplicates(programs) {
     const ids = Array.from(new Set((programs || []).map((program) => program.programacao).filter(Boolean)));
-    const duplicateMap = new Map();
-    if (!ids.length) return duplicateMap;
+    const candidateMap = new Map();
+    if (!ids.length) return candidateMap;
 
     if (!state.xrm || state.mockMode) {
       const db = getMockDb();
       ids.forEach((programacao) => {
-        const rows = db.reservas.filter((item) => String(item[CONFIG.fields.reserva.idExterno] || "") === programacao);
-        if (rows.length) duplicateMap.set(programacao, rows.map((item) => item[CONFIG.fields.reserva.id]));
+        const rows = db.reservas
+          .filter((item) => String(item[CONFIG.fields.reserva.idExterno] || item.programacao || "") === programacao)
+          .map(importedDuplicateCandidateFromReserva);
+        if (rows.length) candidateMap.set(programacao, rows);
       });
     } else {
       const f = CONFIG.fields.reserva;
@@ -5457,27 +5516,69 @@
         const batch = ids.slice(index, index + 15);
         const filter = batch.map((id) => `${f.idExterno} eq '${escapeODataString(id)}'`).join(" or ");
         try {
-          const rows = await retrieveAll(CONFIG.entities.reserva, `?$select=${f.id},${f.idExterno}&$filter=${filter}`);
+          const select = [f.id, f.idExterno, f.dataSaida, f.trajeto, f.enderecoView, f.destino, f.paxView].join(",");
+          const rows = await retrieveAll(CONFIG.entities.reserva, `?$select=${select}&$filter=${filter}`);
           rows.forEach((row) => {
             const key = row[f.idExterno];
-            if (!duplicateMap.has(key)) duplicateMap.set(key, []);
-            duplicateMap.get(key).push(row[f.id]);
+            if (!candidateMap.has(key)) candidateMap.set(key, []);
+            candidateMap.get(key).push(importedDuplicateCandidateFromReserva(row));
           });
         } catch (error) {
-          console.warn("Falha ao validar duplicidade por cr40f_idexterno", error);
-          toast("Não consegui validar duplicidade por cr40f_idexterno. Confirme se a coluna já foi criada.", "warning", 9000);
+          console.warn("Falha ao validar duplicidade de serviço importado", error);
+          toast("Não consegui validar duplicidade dos serviços importados. Confirme os campos da reserva no Dataverse.", "warning", 9000);
           break;
         }
       }
     }
 
     programs.forEach((program) => {
-      program.duplicatedRecordIds = duplicateMap.get(program.programacao) || [];
+      const candidates = candidateMap.get(program.programacao) || [];
+      const exactIds = [];
       program.trechos.forEach((trecho) => {
-        trecho.duplicatedRecordIds = program.duplicatedRecordIds;
+        const matches = candidates
+          .map((candidate) => scoreImportedTrechoDuplicate(trecho, candidate))
+          .filter((match) => match.level)
+          .sort((a, b) => b.score - a.score);
+        const exactMatches = matches.filter((match) => match.level === "exact");
+        const possibleMatches = matches.filter((match) => match.level === "possible");
+        trecho.duplicateMatches = exactMatches;
+        trecho.possibleDuplicateMatches = possibleMatches;
+        trecho.duplicatedRecordIds = exactMatches.map((match) => match.recordId).filter(Boolean);
+        exactIds.push(...trecho.duplicatedRecordIds);
+        if (trecho.duplicatedRecordIds.length) {
+          const statuses = importReviewStatuses();
+          const status = normalizeImportedReviewStatus(trecho);
+          if (status !== statuses.IGNORED && status !== statuses.SAVED) {
+            trecho.reviewStatus = statuses.BLOCKED;
+            trecho.reviewBlockReason = `Serviço repetido provável: ${formatImportedDuplicateMatch(exactMatches[0])}.`;
+          }
+        }
       });
+      program.duplicatedRecordIds = Array.from(new Set(exactIds));
     });
-    return duplicateMap;
+    return candidateMap;
+  }
+
+  function importedDuplicateCandidateFromReserva(row) {
+    const f = CONFIG.fields.reserva;
+    return {
+      recordId: cleanGuid(row?.[f.id] || row?.id || row?.recordId || ""),
+      programacao: row?.[f.idExterno] || row?.programacao || "",
+      dataSaida: row?.[f.dataSaida] || row?.dataSaida || "",
+      trajeto: row?.[f.trajeto] || row?.trajeto || "",
+      enderecoView: row?.[f.enderecoView] || row?.enderecoView || "",
+      destino: row?.[f.destino] || row?.destino || "",
+      paxView: row?.[f.paxView] || row?.paxView || ""
+    };
+  }
+
+  function scoreImportedTrechoDuplicate(trecho, candidate) {
+    return window.XlsxImportCore?.scoreImportedTrechoDuplicate?.(trecho, candidate) || {
+      recordId: candidate?.recordId || candidate?.id || "",
+      score: 0,
+      level: "",
+      reasons: []
+    };
   }
 
   function closeImportReview() {
@@ -5486,22 +5587,18 @@
 
   function renderImportReview() {
     const review = state.importReview;
-    const draftSnapshot = getActiveFormDraftSnapshot();
     const importedPrograms = review?.programs || [];
     const trechos = importedPrograms.flatMap((program) => program.trechos || []);
-    const validTrechos = trechos.filter((trecho) => importedTrechoIssues(trecho).length === 0);
+    const visiblePrograms = getImportProgramsForReview(importedPrograms);
+    const reviewState = summarizeCurrentImportTrechos(trechos);
     const duplicatedTrechos = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
     const hasImportedRows = Array.isArray(review?.rows) && review.rows.length > 0;
     const hasImportData = importedPrograms.length > 0 && hasImportedRows;
-    const hasCommonDraft = hasCommonDraftContent(draftSnapshot);
-    const hasReturnDraft = hasReturnDraftContent(draftSnapshot);
-    const hasMixedServiceSources = hasImportData && (hasCommonDraft || hasReturnDraft);
-    const duplicateSuffix = duplicatedTrechos.length ? ` - ${formatDdMm(new Date())}` : "";
     if (!el.importReviewPrograms) return;
 
-    if (!hasImportData && !hasCommonDraft && !hasReturnDraft) {
+    if (!hasImportData) {
       if (el.importReviewEmpty) el.importReviewEmpty.hidden = false;
-      if (el.importReviewSummary) el.importReviewSummary.textContent = "Importe um XLSX para revisar serviços importados ou preencha o formulário para ver o rascunho.";
+      if (el.importReviewSummary) el.importReviewSummary.textContent = "Importe um XLSX para revisar serviços por PG e trecho.";
       el.importReviewStats?.replaceChildren();
       el.importReviewIssues?.replaceChildren();
       if (el.importReviewIssues) el.importReviewIssues.hidden = true;
@@ -5517,13 +5614,20 @@
       summary.push(`${review.rows.length} linha(s)`);
       summary.push(`${review.programs.length} PG(s)`);
       summary.push(`${trechos.length} trecho(s)`);
-      summary.push(`${validTrechos.length} válido(s)`);
+      summary.push(`${reviewState.counts.confirmed} confirmado(s)`);
+      summary.push(`${reviewState.counts.pending} pendente(s)`);
+      summary.push(`${reviewState.counts.blocked} bloqueado(s)`);
+      summary.push(`${reviewState.counts.ignored} ignorado(s)`);
       summary.push(`Cliente: ${importClient?.label || CONFIG.importDefaults.clienteLabel}`);
       el.importReviewStats.replaceChildren(
         importStat("Linhas", review.rows.length),
         importStat("PGs", review.programs.length),
         importStat("Trechos", trechos.length),
-        importStat("Válidos", validTrechos.length)
+        importStat("Repetidos", duplicatedTrechos.length, duplicatedTrechos.length ? "danger" : ""),
+        importStat("Confirmados", reviewState.counts.confirmed),
+        importStat("Pendentes", reviewState.counts.pending),
+        importStat("Bloqueados", reviewState.counts.blocked),
+        importStat("Ignorados", reviewState.counts.ignored)
       );
       renderImportGlobalIssues(trechos);
     } else {
@@ -5531,47 +5635,33 @@
       el.importReviewIssues?.replaceChildren();
       if (el.importReviewIssues) el.importReviewIssues.hidden = true;
     }
-    if (!hasImportData) {
-      summary.push("Sem XLSX carregado.");
-    } else {
-      summary.push(`Arquivo: ${review.fileName}.`);
-    }
-    if (hasCommonDraft) summary.push("Rascunho do formulário comum.");
-    if (hasReturnDraft) summary.push("Rascunho de retorno ativo.");
+    summary.push(`Arquivo: ${review.fileName}.`);
     if (duplicatedTrechos.length) summary.push(`${duplicatedTrechos.length} serviços repetidos.`);
     el.importReviewSummary.textContent = summary.join("  ");
 
     el.importReviewPrograms.replaceChildren();
-    if (hasImportData) {
-      importedPrograms.forEach((program) => {
-        el.importReviewPrograms.appendChild(buildImportProgramCard(program));
-      });
-    }
-    let mixedBadgeRendered = false;
-    if (hasCommonDraft) {
-      const commonDraftCard = buildImportDraftCard(draftSnapshot, "Rascunho do formulário comum", duplicateSuffix, hasMixedServiceSources && !mixedBadgeRendered);
-      if (commonDraftCard) el.importReviewPrograms.appendChild(commonDraftCard);
-      if (hasMixedServiceSources) mixedBadgeRendered = true;
-    }
-    if (hasReturnDraft) {
-      const returnDraftCard = buildImportReturnDraftCard(draftSnapshot, duplicateSuffix, hasMixedServiceSources && !mixedBadgeRendered);
-      if (returnDraftCard) el.importReviewPrograms.appendChild(returnDraftCard);
-    }
-    if (duplicatedTrechos.length) {
-      const duplicatedCard = buildImportDuplicateServicesCard(duplicatedTrechos);
-      if (duplicatedCard) el.importReviewPrograms.appendChild(duplicatedCard);
+    if (hasImportData && visiblePrograms.length > 0) {
+      el.importReviewPrograms.appendChild(buildImportWorkbench(visiblePrograms));
     }
     if (el.importSaveAll) {
-      el.importSaveAll.disabled = !(hasImportData && validTrechos.length > 0);
+      el.importSaveAll.textContent = "Agendar confirmados";
+      el.importSaveAll.disabled = !(hasImportData && reviewState.canScheduleConfirmed);
+      el.importSaveAll.title = reviewState.canScheduleConfirmed ? "" : reviewState.blockedReason;
     }
+    syncDateTimeFieldRowWidths();
   }
 
-  function getActiveFormDraftSnapshot() {
-    try {
-      return createDraftSnapshot();
-    } catch (_) {
-      return null;
-    }
+  function getImportProgramsForReview(programs) {
+    const statuses = importReviewStatuses();
+    return (programs || []).map((program) => {
+      const trechos = (program.trechos || []).filter(
+        (trecho) => normalizeImportedReviewStatus(trecho) !== statuses.SAVED
+      );
+      return {
+        ...program,
+        trechos
+      };
+    }).filter((program) => program.trechos.length > 0);
   }
 
   function hasText(value) {
@@ -5592,303 +5682,10 @@
       || hasText(fields.tipoServico) || hasText(fields.tipoVeiculo) || hasText(fields.formaPagamento) || hasText(fields.cr) || hasText(fields.cotacao);
   }
 
-  function hasReturnDraftContent(snapshot) {
-    const fields = snapshot?.fields || {};
-    if (fields.agendarRetorno) return true;
-    return hasText(fields.retornoData) || hasText(fields.retornoHora) || hasText(fields.retornoMinuto) || hasText(fields.retornoEndereco) || hasText(fields.retornoDestino) || hasText(fields.retornoObservacao);
-  }
-
-  function resolveLookupLabel(rows, id) {
-    if (!id) return "";
-    return rows.find((item) => sameId(item.id, id))?.label || "";
-  }
-
-  function formatDraftDateTime(date, hour, minute) {
-    const dateText = formatDateInputForDisplay(date) || "--";
-    const hh = hasText(hour) ? hour : "--";
-    const mm = hasText(minute) ? minute : "--";
-    return `${dateText} ${hh}:${mm}`.trim();
-  }
-
-  function formatDdMm(date) {
-    return new Intl.DateTimeFormat("pt-BR", {
-      day: "2-digit",
-      month: "2-digit"
-    }).format(date);
-  }
-
-  function buildImportDraftCard(snapshot, title, duplicateSuffix = "", showMixedTypeBadge = false) {
-    return buildImportDraftFormCard(snapshot, "common", title, duplicateSuffix, showMixedTypeBadge);
-  }
-
-  function buildImportReturnDraftCard(snapshot, duplicateSuffix = "", showMixedTypeBadge = false) {
-    return buildImportDraftFormCard(snapshot, "retorno", "Rascunho do retorno", duplicateSuffix, showMixedTypeBadge);
-  }
-
-  function setImportDraftEditState(draftType, enabled) {
-    state.importDraftEditState[draftType] = !!enabled;
-  }
-
-  function isImportDraftEditable(draftType) {
-    return !!state.importDraftEditState?.[draftType];
-  }
-
-  function copySelectOptions(target, source) {
-    if (!target || !source || !source.options) return;
-    target.innerHTML = "";
-    Array.from(source.options).forEach((option) => {
-      target.append(option.cloneNode(true));
-    });
-  }
-
-  function buildDraftInput(source, type = "text", rows = 2) {
-    if (!source) return null;
-    if (source.tagName === "SELECT") {
-      const select = document.createElement("select");
-      select.className = "import-draft-control import-draft-select";
-      copySelectOptions(select, source);
-      select.value = source.value || "";
-      return select;
-    }
-    if (source.tagName === "TEXTAREA" || type === "textarea") {
-      const textarea = document.createElement("textarea");
-      textarea.className = "import-draft-control import-draft-textarea";
-      textarea.rows = rows;
-      textarea.value = source.value || "";
-      return textarea;
-    }
-    const input = document.createElement("input");
-    input.className = "import-draft-control import-draft-input";
-    input.type = type === "date" ? "date" : type === "datetime-local" ? "datetime-local" : "text";
-    if (input.type === "datetime-local") input.step = "300";
-    const sourceType = (source.type || "").toLowerCase();
-    input.inputMode = sourceType === "number" || sourceType === "decimal" ? "decimal" : "text";
-    if (sourceType === "email") input.inputMode = "email";
-    if (sourceType === "tel") input.inputMode = "tel";
-    input.value = source.value || "";
-    return input;
-  }
-
-  function bindDraftMirror(control, source, touchCommon = true) {
-    if (!control || !source) return;
-
-    const syncNow = () => {
-      if (source.tagName === "SELECT") {
-        setSelectValue(source, control.value);
-      } else if (source.type === "checkbox") {
-        source.checked = !!control.checked;
-      } else {
-        source.value = control.value;
-      }
-      if (source === el.cotacao) {
-        source.value = formatCurrencyDisplayValue(source.value);
-      }
-      markDraftDirty({ touchCommon: touchCommon });
-    };
-
-    control.addEventListener("input", () => {
-      if (source.tagName === "SELECT" || source.type === "checkbox") return;
-      if (source === el.cotacao) return;
-      if (source.type === "date") return;
-      if (source.tagName === "TEXTAREA") {
-        source.value = control.value;
-      } else {
-        source.value = control.value;
-      }
-    });
-
-    control.addEventListener("change", syncNow);
-    if (source.tagName !== "SELECT" && source.type !== "checkbox") {
-      control.addEventListener("blur", syncNow);
-    }
-  }
-
-  function buildDraftFieldRow(label, control, options = {}) {
-    if (!control) return null;
-    const row = document.createElement("label");
-    row.className = `import-draft-field ${options.wide ? "is-wide" : ""}`;
-    const span = document.createElement("span");
-    span.textContent = label;
-    row.append(span, control);
-    return row;
-  }
-
-  function buildDraftDateTimeField(label, dateSource, hourSource, minuteSource, touchCommon = true) {
-    const row = document.createElement("label");
-    row.className = "import-draft-field";
-    const span = document.createElement("span");
-    span.textContent = label;
-
-    const inline = document.createElement("div");
-    inline.className = "inline-time";
-
-    const dateInput = buildDraftInput(dateSource, "datetime-local");
-    bindDraftMirror(dateInput, dateSource, touchCommon);
-    dateInput?.addEventListener("change", () => {
-      syncLegacyTimePartsFromDateTime(dateSource, hourSource, minuteSource);
-    });
-
-    if (dateInput) inline.appendChild(dateInput);
-
-    row.append(span, inline);
-    return row;
-  }
-
-  function addDraftSummary(list, label, value) {
-    if (!hasText(value)) return;
-    const dt = document.createElement("dt");
-    const dd = document.createElement("dd");
-    dt.textContent = label;
-    dd.textContent = value;
-    list.append(dt, dd);
-  }
-
-  function buildImportDraftFormCard(snapshot, draftType, title, duplicateSuffix = "", showMixedTypeBadge = false) {
-    const fields = snapshot?.fields || {};
-    const hasPassengers = (snapshot?.selectedPassengers || []).length;
-    const isEditing = isImportDraftEditable(draftType);
-    const card = document.createElement("article");
-    card.className = "import-program import-draft-card";
-    card.dataset.draftType = draftType;
-    card.classList.toggle("is-locked", !isEditing);
-    card.classList.toggle("is-editing", isEditing);
-    const head = document.createElement("header");
-    head.className = "import-program-head";
-    const titleBox = document.createElement("div");
-    const strong = document.createElement("strong");
-    strong.textContent = `${title}${duplicateSuffix}`;
-    const meta = document.createElement("span");
-    meta.textContent = draftType === "retorno" ? "Ativado" : hasPassengers > 0 ? `${hasPassengers} passageiro(s)` : "Sem passageiros";
-    titleBox.append(strong, meta);
-    const actions = document.createElement("div");
-    actions.className = "import-draft-head-actions";
-    const toggle = document.createElement("button");
-    toggle.type = "button";
-    toggle.className = "secondary-action small-action import-draft-toggle";
-    toggle.dataset.importDraftToggle = draftType;
-    toggle.setAttribute("aria-pressed", String(isEditing));
-    toggle.textContent = isEditing ? "Bloquear edição" : "Desbloquear edição";
-    const typeBadge = document.createElement("span");
-    typeBadge.className = "import-badge";
-    typeBadge.textContent = draftType === "retorno" ? "Retorno" : "Rascunho";
-    if (showMixedTypeBadge) {
-      const mixedBadge = document.createElement("span");
-      mixedBadge.className = "import-badge warning";
-      mixedBadge.textContent = "Próprio + Importado";
-      actions.append(toggle, mixedBadge, typeBadge);
-    } else {
-      actions.append(toggle, typeBadge);
-    }
-    head.append(titleBox, actions);
-    card.appendChild(head);
-
-    if (!isEditing) {
-      const list = document.createElement("dl");
-      list.className = "review-summary-list import-draft-summary";
-      if (draftType === "retorno") {
-        addDraftSummary(list, "Retorno", formatDraftDateTime(fields.retornoData, fields.retornoHora, fields.retornoMinuto));
-        addDraftSummary(list, "Endereço", fields.retornoEndereco);
-        addDraftSummary(list, "Destino", fields.retornoDestino);
-      } else {
-        addDraftSummary(list, "Saída", formatDraftDateTime(fields.saidaData, fields.saidaHora, fields.saidaMinuto));
-        addDraftSummary(list, "Cliente", resolveLookupLabel(state.clientes, fields.cliente));
-        addDraftSummary(list, "Solicitante", resolveLookupLabel(state.passageiros, fields.solicitante));
-        addDraftSummary(list, "Trajeto", fields.trajeto);
-        addDraftSummary(list, "Destino", fields.destino);
-      }
-      card.appendChild(list);
-      return card;
-    }
-
-    const form = document.createElement("div");
-    form.className = "import-draft-form";
-    if (draftType === "retorno") {
-      form.appendChild(buildDraftDateTimeField("Data e horário de retorno", el.retornoData, el.retornoHora, el.retornoMinuto, false));
-
-      const retornoEndereco = buildDraftInput(el.retornoEndereco, "textarea", 3);
-      bindDraftMirror(retornoEndereco, el.retornoEndereco, false);
-      const retornoDestino = buildDraftInput(el.retornoDestino, "textarea", 3);
-      bindDraftMirror(retornoDestino, el.retornoDestino, false);
-      const retornoObservacao = buildDraftInput(el.retornoObservacao, "textarea", 4);
-      bindDraftMirror(retornoObservacao, el.retornoObservacao, false);
-
-      if (retornoEndereco) form.appendChild(buildDraftFieldRow("Endereço de saída", retornoEndereco, { wide: true }));
-      if (retornoDestino) form.appendChild(buildDraftFieldRow("Destino", retornoDestino, { wide: true }));
-      if (retornoObservacao) form.appendChild(buildDraftFieldRow("Observação de retorno", retornoObservacao, { wide: true }));
-    } else {
-      form.appendChild(buildDraftDateTimeField("Data e horário de saída", el.saidaData, el.saidaHora, el.saidaMinuto, true));
-
-      const cliente = buildDraftInput(el.cliente, "select");
-      bindDraftMirror(cliente, el.cliente, true);
-      const solicitante = buildDraftInput(el.solicitante, "select");
-      bindDraftMirror(solicitante, el.solicitante, true);
-      const tipoServico = buildDraftInput(el.tipoServico, "select");
-      bindDraftMirror(tipoServico, el.tipoServico, true);
-      const tipoVeiculo = buildDraftInput(el.tipoVeiculo, "select");
-      bindDraftMirror(tipoVeiculo, el.tipoVeiculo, true);
-      const motorista = buildDraftInput(el.motorista, "select");
-      bindDraftMirror(motorista, el.motorista, true);
-      const trajeto = buildDraftInput(el.trajeto, "textarea", 2);
-      bindDraftMirror(trajeto, el.trajeto, true);
-      const destino = buildDraftInput(el.destino, "textarea", 3);
-      bindDraftMirror(destino, el.destino, true);
-      const observacao = buildDraftInput(el.observacao, "textarea", 4);
-      bindDraftMirror(observacao, el.observacao, true);
-      const formaPagamento = buildDraftInput(el.formaPagamento, "select");
-      bindDraftMirror(formaPagamento, el.formaPagamento, true);
-      const cotacao = buildDraftInput(el.cotacao, "text");
-      bindDraftMirror(cotacao, el.cotacao, true);
-      const cr = buildDraftInput(el.cr, "text");
-      bindDraftMirror(cr, el.cr, true);
-
-      if (cliente) form.appendChild(buildDraftFieldRow("Cliente", cliente));
-      if (solicitante) form.appendChild(buildDraftFieldRow("Solicitante", solicitante));
-      if (tipoServico) form.appendChild(buildDraftFieldRow("Tipo de serviço", tipoServico));
-      if (tipoVeiculo) form.appendChild(buildDraftFieldRow("Tipo de veículo", tipoVeiculo));
-      if (motorista) form.appendChild(buildDraftFieldRow("Motorista", motorista));
-      if (trajeto) form.appendChild(buildDraftFieldRow("Trajeto", trajeto, { wide: true }));
-      if (destino) form.appendChild(buildDraftFieldRow("Destino", destino, { wide: true }));
-      if (observacao) form.appendChild(buildDraftFieldRow("Observação operacional", observacao, { wide: true }));
-      if (formaPagamento) form.appendChild(buildDraftFieldRow("Forma de pagamento", formaPagamento));
-      if (cotacao) form.appendChild(buildDraftFieldRow("Cotação", cotacao));
-      if (cr) form.appendChild(buildDraftFieldRow("CR", cr));
-    }
-
-    card.appendChild(form);
-    return card;
-  }
-
-  function buildImportDuplicateServicesCard(duplicatedTrechos) {
-    const card = document.createElement("article");
-    card.className = "import-program";
-    const head = document.createElement("header");
-    head.className = "import-program-head";
-    const titleBox = document.createElement("div");
-    const strong = document.createElement("strong");
-    strong.textContent = "Serviços repetidos";
-    const meta = document.createElement("span");
-    meta.textContent = `${duplicatedTrechos.length} encontrado(s)`;
-    titleBox.append(strong, meta);
-    const badge = document.createElement("span");
-    badge.className = "import-badge danger";
-    badge.textContent = "Atenção";
-    head.append(titleBox, badge);
-    card.appendChild(head);
-
-    const list = document.createElement("div");
-    list.className = "import-review-issues";
-    duplicatedTrechos.forEach((trecho, index) => {
-      const item = document.createElement("p");
-      item.textContent = `PG ${trecho.programacao} · serviço ${index + 1} · ${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"} · ${trecho.passageiros.length} passageiro(s)`;
-      list.appendChild(item);
-    });
-    card.appendChild(list);
-    return card;
-  }
-
-  function importStat(label, value) {
+  function importStat(label, value, tone = "") {
     const item = document.createElement("div");
     item.className = "import-stat";
+    if (tone) item.classList.add(tone);
     const strong = document.createElement("strong");
     strong.textContent = String(value);
     const span = document.createElement("span");
@@ -5902,7 +5699,9 @@
     const issues = [];
     if (!getImportClient()?.id) issues.push("Cliente Embraer não encontrado. Configure CONFIG.importDefaults.clienteId ou cadastre Embraer.");
     const duplicated = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
-    if (duplicated.length) issues.push(`${duplicated.length} serviço(s) repetido(s).`);
+    const possible = trechos.filter((trecho) => !trecho.duplicatedRecordIds?.length && trecho.possibleDuplicateMatches?.length);
+    if (duplicated.length) issues.push(`${duplicated.length} serviço(s) repetido(s) por horário, trajeto, endereço, destino ou passageiros. Não edite nem salve por aqui.`);
+    if (possible.length) issues.push(`${possible.length} serviço(s) parecido(s) com registros existentes. Revise antes de confirmar.`);
     const ambiguous = trechos.reduce((total, trecho) => total + trecho.passageiros.filter((pax) => pax.matchStatus === "ambiguous").length, 0);
     if (ambiguous) issues.push(`${ambiguous} passageiro(s) precisam de decisão de duplicidade.`);
     el.importReviewIssues.hidden = issues.length === 0;
@@ -5911,6 +5710,265 @@
       item.textContent = issue;
       return item;
     }));
+  }
+
+  function ensureSelectedImportedTrecho(programs) {
+    const trechos = (programs || []).flatMap((program) => (
+      (program.trechos || []).map((trecho) => ({ program, trecho }))
+    ));
+    if (!trechos.length) return null;
+    const currentProgram = state.importReview?.selectedProgramacao || "";
+    const currentKey = state.importReview?.selectedTrechoKey || "";
+    const selected = trechos.find((item) => item.program.programacao === currentProgram && item.trecho.key === currentKey)
+      || trechos.find((item) => normalizeImportedReviewStatus(item.trecho) !== importReviewStatuses().IGNORED)
+      || trechos[0];
+    state.importReview.selectedProgramacao = selected.program.programacao;
+    state.importReview.selectedTrechoKey = selected.trecho.key;
+    return selected;
+  }
+
+  function importedTrechoEditKey(programacao, trechoKey) {
+    return `${programacao || ""}||${trechoKey || ""}`;
+  }
+
+  function currentImportedTrechoEditKey() {
+    return importedTrechoEditKey(state.importReview?.selectedProgramacao, state.importReview?.selectedTrechoKey);
+  }
+
+  function isImportedTrechoEditing(programacao, trechoKey) {
+    return state.importReview?.editingTrechoKey === importedTrechoEditKey(programacao, trechoKey);
+  }
+
+  function setImportedTrechoEditMode(programacao, trechoKey, enabled) {
+    if (!state.importReview) return;
+    state.importReview.editingTrechoKey = enabled ? importedTrechoEditKey(programacao, trechoKey) : "";
+  }
+
+  function isManualImportedTrecho(trecho) {
+    return trecho?.originStatus === "Manual" || trecho?.importOrigin === "manual";
+  }
+
+  function findImportProgram(programacao) {
+    return state.importReview?.programs?.find((program) => program.programacao === programacao) || null;
+  }
+
+  function createManualImportedTrecho(program) {
+    const key = nextManualImportedTrechoKey(program);
+    if (window.XlsxImportCore?.createManualImportTrecho) {
+      return window.XlsxImportCore.createManualImportTrecho(program, { key });
+    }
+    return {
+      key,
+      programacao: program?.programacao || "",
+      solicitacoes: [],
+      sourceRows: [],
+      data: "",
+      dataIso: "",
+      horario: "",
+      origem: "",
+      destino: "",
+      destinos: [],
+      cidadeOrigem: "",
+      cidadeDestino: "",
+      solicitanteNome: "",
+      tipoServicoSugerido: "",
+      tipoVeiculoSugerido: "",
+      tipoServicoValue: "",
+      tipoVeiculoValue: "",
+      valor: null,
+      motoristaNome: "",
+      passageiros: [],
+      observacoes: [],
+      observacaoOperacional: "",
+      pendencias: [],
+      reviewStatus: importReviewStatuses().PENDING,
+      reviewBlockReason: "",
+      savedRecordId: "",
+      duplicatedRecordIds: [],
+      importOrigin: "manual",
+      originStatus: "Manual"
+    };
+  }
+
+  function nextManualImportedTrechoKey(program) {
+    const programacao = program?.programacao || "";
+    const keys = new Set((program?.trechos || []).map((trecho) => String(trecho.key || "")));
+    let sequence = 1;
+    while (keys.has(`${programacao}|manual|${sequence}`)) {
+      sequence += 1;
+    }
+    return `${programacao}|manual|${sequence}`;
+  }
+
+  function addManualImportedTrecho(programacao) {
+    const program = findImportProgram(programacao);
+    if (!program) return;
+    const trecho = createManualImportedTrecho(program);
+    program.trechos.push(trecho);
+    program.pendencias = window.XlsxImportCore?.collectProgramIssues
+      ? window.XlsxImportCore.collectProgramIssues(program.trechos)
+      : Array.from(new Set(program.trechos.flatMap((item) => item.pendencias || [])));
+    state.importReview.selectedProgramacao = program.programacao;
+    state.importReview.selectedTrechoKey = trecho.key;
+    setImportedTrechoEditMode(program.programacao, trecho.key, true);
+    return trecho;
+  }
+
+  function createImportPassengerDraft(trecho) {
+    return {
+      sourceRow: "",
+      nome: "",
+      telefone: "",
+      documento: "",
+      centroCusto: "",
+      solicitanteNome: trecho?.solicitanteNome || "",
+      origem: trecho?.origem || "",
+      destino: "",
+      horario: trecho?.horario || "",
+      passageiroId: "",
+      passageiroLabel: "",
+      matchStatus: "create-new",
+      matchCandidates: []
+    };
+  }
+
+  function renderImportReviewPreservingGallery(scrollTop = null) {
+    const list = el.importReviewPrograms?.querySelector(".import-service-list");
+    const nextScrollTop = scrollTop ?? list?.scrollTop ?? 0;
+    renderImportReview();
+    requestAnimationFrame(() => {
+      const nextList = el.importReviewPrograms?.querySelector(".import-service-list");
+      if (nextList) nextList.scrollTop = nextScrollTop;
+    });
+  }
+
+  function buildImportWorkbench(programs) {
+    const selected = ensureSelectedImportedTrecho(programs);
+    const shell = document.createElement("div");
+    shell.className = "import-workbench";
+
+    const list = document.createElement("section");
+    list.className = "import-service-list";
+    list.setAttribute("aria-label", "Serviços importados");
+    (programs || []).forEach((program) => {
+      const group = document.createElement("article");
+      group.className = "import-service-group";
+      group.dataset.programacao = program.programacao;
+      const title = document.createElement("div");
+      title.className = "import-service-group-title";
+      const titleText = document.createElement("div");
+      titleText.className = "import-service-group-title-text";
+      const strong = document.createElement("strong");
+      strong.textContent = program.programacao;
+      const meta = document.createElement("span");
+      meta.textContent = `${program.trechos.length} serviço(s) · ${program.solicitacoes.join(", ") || "sem ST"}`;
+      titleText.append(strong, meta);
+      title.append(titleText, buildImportAddServiceButton(program));
+      group.appendChild(title);
+      program.trechos.forEach((trecho, index) => {
+        const isSelected = selected?.program.programacao === program.programacao && selected?.trecho.key === trecho.key;
+        group.appendChild(buildImportServiceListItem(program, trecho, index, isSelected));
+      });
+      list.appendChild(group);
+    });
+
+    const inspector = document.createElement("aside");
+    inspector.className = "import-inspector";
+    inspector.setAttribute("aria-label", "Inspector do serviço importado");
+    if (selected) {
+      const isDuplicated = !!selected.trecho.duplicatedRecordIds?.length;
+      const isManual = isManualImportedTrecho(selected.trecho);
+      inspector.classList.toggle("is-duplicated", isDuplicated);
+      const isEditing = !isDuplicated && isImportedTrechoEditing(selected.program.programacao, selected.trecho.key);
+      const inspectorHead = document.createElement("div");
+      inspectorHead.className = "import-inspector-head";
+      const title = document.createElement("div");
+      const eyebrow = document.createElement("span");
+      eyebrow.textContent = isDuplicated ? "Serviço bloqueado" : isManual ? "Serviço manual" : isEditing ? "Edição habilitada" : "Conferência bloqueada";
+      const strong = document.createElement("strong");
+      strong.textContent = `${selected.program.programacao} · ${formatDateInputForDisplay(selected.trecho.dataIso)} ${selected.trecho.horario || "--:--"}`;
+      title.append(eyebrow, strong);
+      const actions = document.createElement("div");
+      actions.className = "import-inspector-actions";
+      if (isDuplicated) actions.classList.add("duplicado");
+      actions.appendChild(buildImportEditToggle(selected.program.programacao, selected.trecho.key, isEditing, isDuplicated));
+      inspectorHead.append(title, actions);
+      inspector.append(inspectorHead, buildImportTrechoCard(selected.program, selected.trecho, selected.program.trechos.indexOf(selected.trecho), { editable: isEditing }));
+    }
+
+    shell.append(list, inspector);
+    return shell;
+  }
+
+  function buildImportEditToggle(programacao, trechoKey, isEditing, disabled = false) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "icon-button passenger-edit-toggle import-edit-toggle";
+    button.classList.toggle("is-active", !!isEditing);
+    button.dataset.importAction = "toggle-edit";
+    button.dataset.programacao = programacao;
+    button.dataset.trechoKey = trechoKey;
+    button.setAttribute("aria-pressed", String(!!isEditing));
+    button.disabled = !!disabled;
+    button.title = disabled ? "Serviço já existe no sistema. Edite pelo sistema." : "";
+    button.setAttribute("aria-label", disabled ? "Serviço bloqueado por duplicidade" : isEditing ? "Bloquear edição do serviço" : "Habilitar edição do serviço");
+    button.innerHTML = `
+      <svg class="passenger-edit-icon-edit" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M4 16.5V20h3.5L18.06 9.44l-3.5-3.5L4 16.5Zm15.71-9.71a1 1 0 0 0 0-1.42l-1.08-1.08a1 1 0 0 0-1.42 0l-.86.86 3.5 3.5.86-.86Z"></path>
+      </svg>
+      <svg class="passenger-edit-icon-lock" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M17 9h-1V7a4 4 0 0 0-8 0v2H7a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2Zm-7-2a2 2 0 0 1 4 0v2h-4V7Zm3 8.73V17h-2v-1.27a2 2 0 1 1 2 0Z"></path>
+      </svg>
+    `;
+    return button;
+  }
+
+  function buildImportAddServiceButton(program) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "import-add-service-button";
+    button.dataset.importAction = "add-manual-trecho";
+    button.dataset.programacao = program?.programacao || "";
+    button.textContent = "+";
+    button.title = "Adicionar serviço manual nesta PG";
+    button.setAttribute("aria-label", `Adicionar serviço manual na PG ${program?.programacao || ""}`);
+    return button;
+  }
+
+  function buildImportServiceListItem(program, trecho, index, isSelected) {
+    const issues = importedTrechoIssues(trecho);
+    const status = importedTrechoReviewMeta(trecho, issues);
+    const isDuplicated = !!trecho.duplicatedRecordIds?.length;
+    const isManual = isManualImportedTrecho(trecho);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "import-service-row";
+    button.classList.toggle("is-selected", !!isSelected);
+    button.classList.toggle("is-duplicated", isDuplicated);
+    addClassIfPresent(button, `is-${normalizeImportedReviewStatus(trecho) || ""}`);
+    button.dataset.importAction = "select-trecho";
+    button.dataset.programacao = program.programacao;
+    button.dataset.trechoKey = trecho.key;
+    button.setAttribute("aria-current", isSelected ? "true" : "false");
+
+    const main = document.createElement("span");
+    main.className = "import-service-main";
+    const title = document.createElement("strong");
+    title.textContent = `Serviço ${index + 1}`;
+    const meta = document.createElement("span");
+    meta.textContent = `${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"} · ${trecho.destino || "sem destino"}`;
+    main.append(title, meta);
+
+    const side = document.createElement("span");
+    side.className = "import-service-side";
+    const pax = document.createElement("span");
+    pax.textContent = `${trecho.passageiros.length} pax`;
+    const badge = document.createElement("span");
+    badge.className = `import-badge ${isDuplicated ? "danger" : trecho.possibleDuplicateMatches?.length ? "warning" : isManual ? "manual" : status.tone}`;
+    badge.textContent = isDuplicated ? "Não editar" : trecho.possibleDuplicateMatches?.length ? "Parecido" : isManual ? "Manual" : isSelected ? "Em revisão" : status.label;
+    side.append(pax, badge);
+    button.append(main, side);
+    return button;
   }
 
   function buildImportProgramCard(program) {
@@ -5934,13 +5992,21 @@
     return card;
   }
 
-  function buildImportTrechoCard(program, trecho, index) {
+  function buildImportTrechoCard(program, trecho, index, options = {}) {
     const card = document.createElement("section");
     card.className = "import-trecho";
     card.classList.toggle("is-saved", !!trecho.savedRecordId);
+    const isDuplicated = !!trecho.duplicatedRecordIds?.length;
+    const reviewStatus = normalizeImportedReviewStatus(trecho);
+    const isEditing = !!options.editable && !isDuplicated;
+    addClassIfPresent(card, `is-${reviewStatus || ""}`);
+    card.classList.toggle("is-duplicated", isDuplicated);
+    card.classList.toggle("is-editing", isEditing);
+    card.classList.toggle("is-locked", !isEditing);
     card.dataset.programacao = program.programacao;
     card.dataset.trechoKey = trecho.key;
     const issues = importedTrechoIssues(trecho);
+    const displayIssues = importedTrechoDisplayIssues(trecho, issues);
 
     const head = document.createElement("header");
     head.className = "import-trecho-head";
@@ -5951,9 +6017,12 @@
     meta.textContent = `${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"} · ${trecho.passageiros.length} passageiro(s)`;
     title.append(strong, meta);
     const badge = document.createElement("span");
-    badge.className = issues.length ? "import-badge danger" : "import-badge success";
-    badge.textContent = trecho.savedRecordId ? "Salvo" : (issues.length ? `${issues.length} pendência(s)` : "Pronto");
+    const reviewMeta = importedTrechoReviewMeta(trecho, issues);
+    badge.className = `import-badge ${reviewMeta.tone}`;
+    badge.textContent = reviewMeta.label;
     head.append(title, badge);
+
+    const duplicateLock = buildImportDuplicateLockNotice(trecho);
 
     const grid = document.createElement("div");
     grid.className = "import-hot-grid";
@@ -5970,14 +6039,30 @@
 
     const passengerList = document.createElement("div");
     passengerList.className = "import-passengers";
+    const passengerHead = document.createElement("div");
+    passengerHead.className = "import-passengers-head";
+    const passengerTitle = document.createElement("strong");
+    passengerTitle.textContent = "Passageiros";
+    const addPassengerButton = buildImportAction("+", "add-import-passenger", !isEditing);
+    addPassengerButton.className = "import-add-service-button import-add-passenger-button";
+    addPassengerButton.title = isEditing ? "Adicionar passageiro ao serviço" : "Habilite edição para adicionar passageiro.";
+    addPassengerButton.setAttribute("aria-label", "Adicionar passageiro ao serviço");
+    passengerHead.append(passengerTitle, addPassengerButton);
+    passengerList.appendChild(passengerHead);
+    if (!trecho.passageiros.length) {
+      const emptyPassenger = document.createElement("p");
+      emptyPassenger.className = "import-passenger-empty";
+      emptyPassenger.textContent = "Nenhum passageiro.";
+      passengerList.appendChild(emptyPassenger);
+    }
     trecho.passageiros.forEach((passenger, passengerIndex) => {
-      passengerList.appendChild(buildImportPassengerRow(passenger, passengerIndex));
+      passengerList.appendChild(buildImportPassengerRow(passenger, passengerIndex, { editable: isEditing }));
     });
 
     const issueList = document.createElement("div");
     issueList.className = "import-trecho-issues";
-    issueList.hidden = issues.length === 0;
-    issueList.replaceChildren(...issues.map((issue) => {
+    issueList.hidden = displayIssues.length === 0;
+    issueList.replaceChildren(...displayIssues.map((issue) => {
       const item = document.createElement("span");
       item.textContent = issue;
       return item;
@@ -5985,18 +6070,99 @@
 
     const actions = document.createElement("footer");
     actions.className = "import-trecho-actions";
-    actions.append(
-      buildImportAction("Abrir formulário", "open-form"),
-      buildImportAction("Salvar trecho", "save-trecho", issues.length > 0)
-    );
+    if (!isDuplicated) {
+      actions.append(buildImportAction("Abrir formulário", "open-form", reviewStatus === importReviewStatuses().IGNORED));
+    }
+    if (reviewStatus === importReviewStatuses().SAVED) {
+      actions.append(buildImportAction("Salvo", "noop", true));
+    } else if (isDuplicated) {
+      actions.append(
+        buildImportAction("Bloqueado", "noop", true),
+        buildImportAction("Ignorar", "ignore-trecho")
+      );
+    } else if (reviewStatus === importReviewStatuses().IGNORED) {
+      actions.append(buildImportAction("Revisar novamente", "review-pending"));
+    } else {
+      actions.append(
+        buildImportAction("Confirmar revisão", "confirm-review"),
+        buildImportAction("Ignorar", "ignore-trecho")
+      );
+    }
 
-    card.append(head, grid, passengerList, issueList, actions);
+    if (duplicateLock) {
+      card.append(head, duplicateLock, grid, passengerList, issueList, actions);
+    } else {
+      card.append(head, grid, passengerList, issueList, actions);
+    }
+    setImportedTrechoControlsMode(card, isEditing);
     return card;
+  }
+
+  function buildImportDuplicateLockNotice(trecho) {
+    if (!trecho.duplicatedRecordIds?.length) return null;
+    const notice = document.createElement("div");
+    notice.className = "import-duplicate-lock";
+    notice.setAttribute("role", "alert");
+    const strong = document.createElement("strong");
+    strong.textContent = "Não edite este serviço";
+    const span = document.createElement("span");
+    span.textContent = `${formatImportedDuplicateMatch(trecho.duplicateMatches?.[0])}. Clique em qualquer campo para copiar a informação. Edite somente o registro original.`;
+    notice.append(strong, span);
+    return notice;
+  }
+
+  function setImportedTrechoControlsMode(card, isEditing) {
+    card.querySelectorAll("[data-import-field], [data-import-passenger-field]").forEach((control) => {
+      if (control.tagName === "SELECT") {
+        control.disabled = !isEditing;
+      } else {
+        control.readOnly = !isEditing;
+      }
+    });
+  }
+
+  function importedTrechoReviewMeta(trecho, issues = []) {
+    const statuses = importReviewStatuses();
+    const status = normalizeImportedReviewStatus(trecho);
+    if (trecho.duplicatedRecordIds?.length) return { label: "Não editável", tone: "danger" };
+    if (status === statuses.SAVED) return { label: "Salvo", tone: "success" };
+    if (status === statuses.IGNORED) return { label: "Ignorado", tone: "warning" };
+    if (status === statuses.CONFIRMED) return { label: "Confirmado", tone: "success" };
+    if (status === statuses.BLOCKED) return { label: "Bloqueado", tone: "danger" };
+    if (isManualImportedTrecho(trecho)) return { label: "Manual", tone: "manual" };
+    if (issues.length) return { label: "Pendente", tone: "warning" };
+    return { label: "Pendente", tone: "warning" };
+  }
+
+  function importedTrechoDisplayIssues(trecho, issues = []) {
+    const statuses = importReviewStatuses();
+    const status = normalizeImportedReviewStatus(trecho);
+    const output = [...issues];
+    if (trecho.duplicatedRecordIds?.length) {
+      output.unshift(`Serviço repetido provável: ${formatImportedDuplicateMatch(trecho.duplicateMatches?.[0])}. Sem edição e sem salvamento pela importação.`);
+    } else if (trecho.possibleDuplicateMatches?.length) {
+      output.unshift(`Possível duplicidade: ${formatImportedDuplicateMatch(trecho.possibleDuplicateMatches[0])}. Revise antes de confirmar.`);
+    }
+    if (status === statuses.BLOCKED && trecho.reviewBlockReason) {
+      output.unshift(`Bloqueado: ${trecho.reviewBlockReason}`);
+    }
+    if (status === statuses.IGNORED) {
+      output.unshift("Ignorado: este trecho não será salvo.");
+    }
+    return Array.from(new Set(output));
+  }
+
+  function formatImportedDuplicateMatch(match) {
+    if (!match) return "Serviço repetido provável";
+    const reasons = (match.reasons || []).filter(Boolean).slice(0, 4).join(", ");
+    return reasons ? `Serviço repetido provável por ${reasons}` : "Serviço repetido provável";
   }
 
   function buildImportInput(label, field, value, type = "text", wide = false) {
     const wrap = document.createElement("label");
     wrap.className = wide ? "field import-field span-2" : "field import-field";
+    wrap.dataset.importCopy = "1";
+    wrap.dataset.copyLabel = label;
     const span = document.createElement("span");
     span.textContent = label;
     const input = document.createElement("input");
@@ -6012,6 +6178,8 @@
   function buildImportTextarea(label, field, value) {
     const wrap = document.createElement("label");
     wrap.className = "field import-field span-2";
+    wrap.dataset.importCopy = "1";
+    wrap.dataset.copyLabel = label;
     const span = document.createElement("span");
     span.textContent = label;
     const textarea = document.createElement("textarea");
@@ -6025,6 +6193,8 @@
   function buildImportSelect(label, field, options, value) {
     const wrap = document.createElement("label");
     wrap.className = "field import-field";
+    wrap.dataset.importCopy = "1";
+    wrap.dataset.copyLabel = label;
     const span = document.createElement("span");
     span.textContent = label;
     const select = document.createElement("select");
@@ -6041,9 +6211,11 @@
     return wrap;
   }
 
-  function buildImportPassengerRow(passenger, index) {
+  function buildImportPassengerRow(passenger, index, options = {}) {
+    const isEditable = !!options.editable;
     const row = document.createElement("div");
     row.className = `import-passenger is-${passenger.matchStatus || "pending"}`;
+    row.classList.toggle("is-locked", !isEditable);
     row.dataset.passengerIndex = String(index);
     const fields = document.createElement("div");
     fields.className = "import-passenger-fields";
@@ -6051,7 +6223,8 @@
       buildPassengerImportInput("Passageiro", "nome", passenger.nome),
       buildPassengerImportInput("Telefone", "telefone", passenger.telefone),
       buildPassengerImportInput("CR", "centroCusto", passenger.centroCusto),
-      buildPassengerImportInput("Origem", "origem", passenger.origem)
+      buildPassengerImportInput("Origem", "origem", passenger.origem),
+      buildPassengerImportInput("Destino", "destino", passenger.destino)
     );
 
     const decision = document.createElement("div");
@@ -6059,6 +6232,14 @@
     const status = document.createElement("strong");
     status.textContent = importedPassengerStatusLabel(passenger);
     decision.appendChild(status);
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "text-action danger import-passenger-remove";
+    removeButton.dataset.importAction = "remove-import-passenger";
+    removeButton.textContent = "Remover";
+    removeButton.disabled = !isEditable;
+    removeButton.title = isEditable ? "" : "Habilite edição para remover passageiro.";
+    decision.appendChild(removeButton);
 
     if (passenger.matchCandidates?.length) {
       passenger.matchCandidates.slice(0, 3).forEach((candidate) => {
@@ -6068,6 +6249,8 @@
         button.dataset.importAction = "use-existing-passenger";
         button.dataset.passengerId = candidate.passenger.id;
         button.textContent = `Usar ${candidate.passenger.label}`;
+        button.disabled = !isEditable;
+        button.title = isEditable ? "" : "Habilite edição para alterar passageiro.";
         decision.appendChild(button);
       });
       const createButton = document.createElement("button");
@@ -6075,6 +6258,8 @@
       createButton.className = "text-action danger";
       createButton.dataset.importAction = "create-new-passenger";
       createButton.textContent = "Criar novo";
+      createButton.disabled = !isEditable;
+      createButton.title = isEditable ? "" : "Habilite edição para alterar passageiro.";
       decision.appendChild(createButton);
     }
 
@@ -6084,6 +6269,8 @@
 
   function buildPassengerImportInput(label, field, value) {
     const wrap = document.createElement("label");
+    wrap.dataset.importCopy = "1";
+    wrap.dataset.copyLabel = label;
     const span = document.createElement("span");
     span.textContent = label;
     const input = document.createElement("input");
@@ -6097,7 +6284,7 @@
   function buildImportAction(label, action, disabled = false) {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = action === "save-trecho" ? "primary-action" : "secondary-action";
+    button.className = action === "save-trecho" || action === "confirm-review" ? "primary-action" : "secondary-action";
     button.dataset.importAction = action;
     button.textContent = label;
     button.disabled = !!disabled;
@@ -6120,35 +6307,138 @@
     if (!trecho.destino) issues.push("Destino vazio.");
     if (!resolveImportOption("tipoServico", trecho.tipoServicoValue, trecho.tipoServicoSugerido)) issues.push("Tipo de serviço sem mapeamento.");
     if (!resolveImportOption("tipoVeiculo", trecho.tipoVeiculoValue, trecho.tipoVeiculoSugerido)) issues.push("Tipo de veículo sem mapeamento.");
+    if (!trecho.passageiros.length) issues.push("Nenhum passageiro informado.");
     trecho.passageiros.forEach((passenger) => {
+      if (!String(passenger.nome || "").trim()) issues.push("Passageiro sem nome.");
       if (passenger.matchStatus === "ambiguous") issues.push(`Decidir passageiro: ${passenger.nome}.`);
       if (passenger.matchStatus === "invalid") issues.push(`Passageiro inválido na linha ${passenger.sourceRow}.`);
     });
     return Array.from(new Set(issues));
   }
 
-  function handleImportReviewAction(event) {
-    const draftToggle = event.target.closest("[data-import-draft-toggle]");
-    if (draftToggle) {
-      const draftType = draftToggle.dataset.importDraftToggle === "retorno" ? "retorno" : "common";
-      const enable = draftToggle.getAttribute("aria-pressed") !== "true";
-      setImportDraftEditState(draftType, enable);
-      renderImportReview();
-      if (enable) {
-        const field = draftToggle.closest("[data-draft-type]")?.querySelector(".import-draft-control");
-        field?.focus();
-      }
-      return;
+  async function handleImportFieldCopy(event) {
+    const copyTarget = event.target.closest("[data-import-copy]");
+    if (!copyTarget || event.target.closest("[data-import-action]")) return;
+    const trechoCard = copyTarget.closest(".import-trecho");
+    if (!trechoCard || (!trechoCard.classList.contains("is-locked") && !trechoCard.classList.contains("is-duplicated"))) return;
+    const control = copyTarget.querySelector("[data-import-field], [data-import-passenger-field]");
+    const value = importCopyControlValue(control);
+    if (!value) return;
+    try {
+      await copyTextToClipboard(value);
+      showImportFieldCopyFeedback(copyTarget);
+    } catch (error) {
+      console.warn("Falha ao copiar campo importado", error);
+      showImportFieldCopyFeedback(copyTarget, "Não copiou");
     }
+  }
 
+  function importCopyControlValue(control) {
+    if (!control) return "";
+    if (control.tagName === "SELECT") {
+      return control.selectedOptions?.[0]?.textContent?.trim() || control.value || "";
+    }
+    return String(control.value || "").trim();
+  }
+
+  function showImportFieldCopyFeedback(target, message = "Copiado") {
+    target.dataset.copyFeedback = message;
+    target.classList.add("is-copied");
+    window.clearTimeout(target._importCopyTimer);
+    target._importCopyTimer = window.setTimeout(() => {
+      target.classList.remove("is-copied");
+      delete target.dataset.copyFeedback;
+    }, 1100);
+  }
+
+  function handleImportReviewAction(event) {
     const action = event.target.closest("[data-import-action]");
     if (!action) return;
+    if (action.dataset.importAction === "add-manual-trecho") {
+      const listScrollTop = action.closest(".import-service-list")?.scrollTop ?? 0;
+      addManualImportedTrecho(action.dataset.programacao || action.closest("[data-programacao]")?.dataset.programacao || "");
+      renderImportReviewPreservingGallery(listScrollTop);
+      requestAnimationFrame(() => {
+        el.importReviewPrograms?.querySelector(".import-inspector [data-import-field]")?.focus();
+      });
+      return;
+    }
     const trechoCard = action.closest("[data-trecho-key]");
     const passengerRow = action.closest("[data-passenger-index]");
     const trecho = trechoCard ? findImportedTrecho(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey) : null;
     if (!trecho) return;
 
+    if (action.dataset.importAction === "noop") {
+      return;
+    }
+    if (action.dataset.importAction === "select-trecho") {
+      const listScrollTop = action.closest(".import-service-list")?.scrollTop ?? 0;
+      state.importReview.selectedProgramacao = trechoCard.dataset.programacao;
+      state.importReview.selectedTrechoKey = trechoCard.dataset.trechoKey;
+      setImportedTrechoEditMode(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey, isManualImportedTrecho(trecho));
+      renderImportReviewPreservingGallery(listScrollTop);
+      return;
+    }
+    if (action.dataset.importAction === "toggle-edit") {
+      if (trecho.duplicatedRecordIds?.length) {
+        toast("Serviço já existe no sistema. Edite pelo sistema.", "warning", 6000);
+        return;
+      }
+      const programacao = trechoCard.dataset.programacao;
+      const trechoKey = trechoCard.dataset.trechoKey;
+      const enable = !isImportedTrechoEditing(programacao, trechoKey);
+      setImportedTrechoEditMode(programacao, trechoKey, enable);
+      renderImportReviewPreservingGallery();
+      if (enable) {
+        requestAnimationFrame(() => {
+          el.importReviewPrograms?.querySelector(".import-inspector [data-import-field], .import-inspector [data-import-passenger-field]")?.focus();
+        });
+      }
+      return;
+    }
+    if (action.dataset.importAction === "confirm-review") {
+      if (trecho.duplicatedRecordIds?.length) {
+        toast("Serviço já existe no sistema. Para editar, acesse o serviço no sistema.", "warning", 7000);
+        return;
+      }
+      const issues = importedTrechoIssues(trecho);
+      window.XlsxImportCore?.confirmImportedTrechoReview?.(trecho, issues);
+      if (!window.XlsxImportCore?.confirmImportedTrechoReview) {
+        const statuses = importReviewStatuses();
+        trecho.reviewStatus = issues.length ? statuses.BLOCKED : statuses.CONFIRMED;
+        trecho.reviewBlockReason = issues[0] || "";
+      }
+      if (issues.length) {
+        toast(`Bloqueado: ${issues[0]}`, "error", 8000);
+      } else {
+        toast("Trecho confirmado para agendamento.", "success", 4000);
+      }
+      renderImportReviewPreservingGallery();
+      return;
+    }
+    if (action.dataset.importAction === "ignore-trecho") {
+      window.XlsxImportCore?.ignoreImportedTrechoReview?.(trecho);
+      if (!window.XlsxImportCore?.ignoreImportedTrechoReview) {
+        trecho.reviewStatus = importReviewStatuses().IGNORED;
+        trecho.reviewBlockReason = "";
+      }
+      renderImportReviewPreservingGallery();
+      return;
+    }
+    if (action.dataset.importAction === "review-pending") {
+      window.XlsxImportCore?.markImportedTrechoPending?.(trecho);
+      if (!window.XlsxImportCore?.markImportedTrechoPending) {
+        trecho.reviewStatus = importReviewStatuses().PENDING;
+        trecho.reviewBlockReason = "";
+      }
+      renderImportReviewPreservingGallery();
+      return;
+    }
     if (action.dataset.importAction === "open-form") {
+      if (trecho.duplicatedRecordIds?.length) {
+        toast("Serviço repetido não abre no formulário. Edite o registro original no Dataverse.", "warning", 7000);
+        return;
+      }
       applyImportedTrechoToForm(trecho);
       return;
     }
@@ -6156,23 +6446,48 @@
       saveImportedTrecho(trecho);
       return;
     }
+    if (action.dataset.importAction === "add-import-passenger") {
+      if (!isImportedTrechoEditing(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey)) {
+        toast("Habilite a edição pelo ícone de lápis antes de alterar o serviço.", "warning", 5000);
+        return;
+      }
+      markImportedReviewPending(trecho);
+      trecho.passageiros.push(createImportPassengerDraft(trecho));
+      renderImportReviewPreservingGallery();
+      requestAnimationFrame(() => {
+        const rows = el.importReviewPrograms?.querySelectorAll(".import-inspector [data-passenger-index]");
+        rows?.[rows.length - 1]?.querySelector('[data-import-passenger-field="nome"]')?.focus();
+      });
+      return;
+    }
     if (passengerRow) {
       const passenger = trecho.passageiros[Number(passengerRow.dataset.passengerIndex)];
       if (!passenger) return;
+      if (!isImportedTrechoEditing(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey)) {
+        toast("Habilite a edição pelo ícone de lápis antes de alterar o serviço.", "warning", 5000);
+        return;
+      }
       if (action.dataset.importAction === "use-existing-passenger") {
         const candidate = passenger.matchCandidates.find((item) => sameId(item.passenger.id, action.dataset.passengerId));
         if (!candidate) return;
+        markImportedReviewPending(trecho);
         mergePassengerRecords([candidate.passenger]);
         passenger.matchStatus = "use-existing";
         passenger.passageiroId = candidate.passenger.id;
         passenger.passageiroLabel = candidate.passenger.label;
       }
       if (action.dataset.importAction === "create-new-passenger") {
+        markImportedReviewPending(trecho);
         passenger.matchStatus = "create-new";
         passenger.passageiroId = "";
         passenger.passageiroLabel = "";
       }
-      renderImportReview();
+      if (action.dataset.importAction === "remove-import-passenger") {
+        markImportedReviewPending(trecho);
+        trecho.passageiros.splice(Number(passengerRow.dataset.passengerIndex), 1);
+        trecho.destino = composeImportPassengerDestinations(trecho);
+      }
+      renderImportReviewPreservingGallery();
     }
   }
 
@@ -6181,20 +6496,36 @@
     if (!trechoCard) return;
     const trecho = findImportedTrecho(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey);
     if (!trecho) return;
+    if (trecho.duplicatedRecordIds?.length) {
+      event.preventDefault();
+      toast("Serviço repetido não permite edição nesta tela.", "warning", 6000);
+      return;
+    }
+    if (!isImportedTrechoEditing(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey)) {
+      event.preventDefault();
+      return;
+    }
 
     const passengerRow = event.target.closest("[data-passenger-index]");
     if (passengerRow && event.target.dataset.importPassengerField) {
       const passenger = trecho.passageiros[Number(passengerRow.dataset.passengerIndex)];
       if (!passenger) return;
+      markImportedReviewPending(trecho);
       passenger[event.target.dataset.importPassengerField] = event.target.value;
       if (event.target.dataset.importPassengerField === "nome" || event.target.dataset.importPassengerField === "telefone") {
         passenger.matchStatus = passenger.matchCandidates?.length ? "ambiguous" : "create-new";
+      }
+      if (event.target.dataset.importPassengerField === "destino") {
+        trecho.destino = composeImportPassengerDestinations(trecho);
+        const destinoField = trechoCard.querySelector('[data-import-field="destino"]');
+        if (destinoField) destinoField.value = trecho.destino;
       }
       return;
     }
 
     const field = event.target.dataset.importField;
     if (!field) return;
+    markImportedReviewPending(trecho);
     const value = event.target.value;
     if (field === "dataHora") {
       trecho.dataIso = datePartFromInputValue(value);
@@ -6220,6 +6551,10 @@
   }
 
   async function applyImportedTrechoToForm(trecho) {
+    if (trecho.duplicatedRecordIds?.length) {
+      toast("Serviço repetido não abre no formulário. Edite o registro original no Dataverse.", "warning", 7000);
+      return;
+    }
     setLoading(true);
     try {
       const context = await buildImportedSaveContext(trecho);
@@ -6279,7 +6614,7 @@
       id: passenger.passageiroId,
       label: passenger.passageiroLabel || passenger.nome,
       telefone: passenger.telefone || "",
-      endereco: passenger.origem || "",
+      endereco: "",
       preferencias: "",
       email: "",
       cr: passenger.centroCusto || "",
@@ -6291,27 +6626,30 @@
   async function saveAllValidImportedTrechos() {
     const review = state.importReview;
     if (!review) return;
-    const valid = review.programs
-      .flatMap((program) => program.trechos)
-      .filter((trecho) => importedTrechoIssues(trecho).length === 0);
-    if (!valid.length) {
-      toast("Nenhum trecho válido para salvar.", "warning");
+    const reviewState = summarizeCurrentImportTrechos(review.programs.flatMap((program) => program.trechos));
+    if (!reviewState.canScheduleConfirmed) {
+      toast(reviewState.blockedReason || "Revise os trechos antes de agendar.", "warning", 7000);
       return;
     }
-    for (const trecho of valid) {
+    for (const trecho of reviewState.saveableTrechos) {
       await saveImportedTrecho(trecho, { silentSuccess: true });
     }
     renderImportReview();
-    toast(`${valid.length} trecho(s) importado(s).`, "success", 6000);
+    toast(`${reviewState.saveableTrechos.length} trecho(s) importado(s).`, "success", 6000);
   }
 
   async function saveImportedTrecho(trecho, options = {}) {
+    if (normalizeImportedReviewStatus(trecho) !== importReviewStatuses().CONFIRMED) {
+      toast("Confirme a revisão individual antes de salvar este trecho.", "warning", 7000);
+      return null;
+    }
     const issues = importedTrechoIssues(trecho);
     if (issues.length) {
       toast(`Resolva antes de salvar: ${issues[0]}`, "error", 8000);
       return null;
     }
-    if (trecho.duplicatedRecordIds?.length && !window.confirm(`A PG ${trecho.programacao} já existe no Dataverse. Criar novo trecho mesmo assim?`)) {
+    if (trecho.duplicatedRecordIds?.length) {
+      toast("Serviço repetido provável. A importação não cria outro registro com horário, trajeto, endereço, destino e passageiros parecidos.", "error", 9000);
       return null;
     }
     setLoading(true);
@@ -6320,7 +6658,12 @@
       const payload = buildImportedReservaPayload(trecho, context);
       const saved = await saveReserva(payload);
       await replacePassengerRelations(saved.id, context.colOrdemPassageiros, context, true);
-      trecho.savedRecordId = saved.id;
+      window.XlsxImportCore?.markImportedTrechoSaved?.(trecho, saved.id);
+      if (!window.XlsxImportCore?.markImportedTrechoSaved) {
+        trecho.savedRecordId = saved.id;
+        trecho.reviewStatus = importReviewStatuses().SAVED;
+        trecho.reviewBlockReason = "";
+      }
       trecho.duplicatedRecordIds = Array.from(new Set([...(trecho.duplicatedRecordIds || []), saved.id]));
       if (!options.silentSuccess) {
         toast(`Trecho ${trecho.programacao} salvo.`, "success", 5000);
@@ -6413,7 +6756,7 @@
     const person = {
       nome,
       telefone: "",
-      origem: trecho.origem || "",
+      origem: "",
       centroCusto: firstImportedCr(trecho),
       matchStatus: "create-new",
       passageiroId: "",
@@ -6448,7 +6791,6 @@
       const payload = {
         [CONFIG.fields.passageiro.nome]: person.nome,
         [CONFIG.fields.passageiro.telefone]: phoneStorageValue(person.telefone || "", "55"),
-        [CONFIG.fields.passageiro.enderecoSaida]: person.origem || "",
         [CONFIG.fields.passageiro.cr]: person.centroCusto || "",
         [CONFIG.fields.passageiro.cadastro]: new Date().toISOString().slice(0, 10)
       };
@@ -6469,7 +6811,7 @@
         label: person.nome,
         telefone: formatPhoneNumber(person.telefone || ""),
         email: "",
-        endereco: person.origem || "",
+        endereco: "",
         preferencias: "",
         cr: person.centroCusto || "",
         clienteId: importClient.id,
@@ -6498,7 +6840,9 @@
       [f.destino]: trecho.destino || "",
       [f.dataSaida]: context.dataHoraPrincipal.toISOString(),
       [f.obsOperacao]: trecho.observacaoOperacional || "",
-      [f.obsInterna]: `Importado via XLSX. PG: ${trecho.programacao}. ST: ${(trecho.solicitacoes || []).join(", ") || "-"}.`,
+      [f.obsInterna]: isManualImportedTrecho(trecho)
+        ? `Serviço manual criado na PG: ${trecho.programacao}.`
+        : `Importado via XLSX. PG: ${trecho.programacao}. ST: ${(trecho.solicitacoes || []).join(", ") || "-"}.`,
       [f.obsFinal]: "",
       [f.perfilPassageiro]: "",
       [f.email]: "",
@@ -6534,6 +6878,24 @@
 
   function firstImportedCr(trecho) {
     return (trecho.passageiros || []).find((passenger) => passenger.centroCusto)?.centroCusto || "";
+  }
+
+  function composeImportPassengerDestinations(trecho) {
+    const passageiros = trecho?.passageiros || [];
+    const uniqueDestinos = [];
+    passageiros.forEach((passenger) => {
+      const destino = String(passenger.destino || "").trim();
+      const key = normalize(destino);
+      if (key && !uniqueDestinos.some((item) => normalize(item) === key)) {
+        uniqueDestinos.push(destino);
+      }
+    });
+    if (uniqueDestinos.length <= 1) return uniqueDestinos[0] || "";
+    return passageiros.map((passenger, index) => {
+      const destino = String(passenger.destino || "").trim();
+      const nome = firstName(passenger.nome) || `Passageiro ${index + 1}`;
+      return `${index + 1}. ${nome} - ${destino || "destino não informado"}`;
+    }).join(";\n");
   }
 
   function findMotoristaByName(name) {
@@ -7334,8 +7696,12 @@
     const text = String(value || "").trim();
     if (!text) return;
     if (navigator.clipboard?.writeText && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-      return;
+      try {
+        await navigator.clipboard.writeText(text);
+        return;
+      } catch (error) {
+        console.warn("Clipboard API indisponível, usando fallback", error);
+      }
     }
     const input = document.createElement("textarea");
     input.value = text;
@@ -7345,8 +7711,9 @@
     input.style.pointerEvents = "none";
     document.body.appendChild(input);
     input.select();
-    document.execCommand("copy");
+    const copied = document.execCommand("copy");
     input.remove();
+    if (!copied) throw new Error("Fallback de cópia recusado pelo navegador.");
   }
 
   function clearCopyNotice() {
@@ -7397,6 +7764,36 @@
     syncLegacyTimePartsFromDateTime(el.saidaData, el.saidaHora, el.saidaMinuto);
     syncLegacyTimePartsFromDateTime(el.retornoData, el.retornoHora, el.retornoMinuto);
     syncLegacyTimePartsFromDateTime(el.retPrevDateTime, el.retPrevHora, el.retPrevMinuto);
+  }
+
+  function syncDateTimeFieldRowWidths() {
+    const containers = [...document.querySelectorAll(".form-grid")];
+    containers.forEach((container) => {
+      const items = [...container.children]
+        .filter((node) => node instanceof HTMLElement)
+        .filter((node) => !node.hidden && node.offsetParent !== null);
+
+      items.forEach((node) => node.classList.remove("is-row-alone"));
+      if (!items.length) return;
+
+      const rows = [];
+      items.forEach((node) => {
+        const top = node.offsetTop;
+        const row = rows.find((entry) => Math.abs(entry.top - top) <= 2);
+        if (row) {
+          row.items.push(node);
+          return;
+        }
+        rows.push({ top, items: [node] });
+      });
+
+      rows.forEach((row) => {
+        if (row.items.length !== 1) return;
+        const [onlyItem] = row.items;
+        if (!onlyItem.classList.contains("datetime-field")) return;
+        onlyItem.classList.add("is-row-alone");
+      });
+    });
   }
 
   function syncLegacyTimePartsFromDateTime(dateTimeInput, hourInput, minuteInput) {

@@ -6,7 +6,15 @@ const zlib = require("node:zlib");
 const {
   REQUIRED_XLSX_HEADERS,
   normalizeImportedRows,
-  buildImportPrograms
+  buildImportPrograms,
+  IMPORT_REVIEW_STATUSES,
+  createManualImportTrecho,
+  confirmImportedTrechoReview,
+  ignoreImportedTrechoReview,
+  markImportedTrechoPending,
+  markImportedTrechoSaved,
+  scoreImportedTrechoDuplicate,
+  summarizeImportReviewTrechos
 } = require("./xlsx_import_core");
 
 const root = path.resolve(__dirname, "..");
@@ -127,11 +135,156 @@ assert.equal(
   "PG2026/31241 deve preservar todos os passageiros das linhas originais"
 );
 
-const staggeredProgram = programs.find((program) => program.programacao === "PG2026/31766");
-assert.ok(staggeredProgram, "PG2026/31766 deve existir no resumo");
+const sharedPickupPrograms = buildImportPrograms([
+  {
+    sourceRow: 2,
+    programacao: "PGTEST/1",
+    solicitacao: "ST1",
+    data: "20/05/2026",
+    dataIso: "2026-05-20",
+    horario: "08:00",
+    origem: "Av. Brigadeiro Faria Lima, 1000",
+    origemKey: "av brigadeiro faria lima 1000",
+    destino: "Hotel A",
+    destinoKey: "hotel a",
+    cidadeOrigem: "Sao Paulo",
+    cidadeDestino: "Sao Paulo",
+    nomePassageiro: "ANA TESTE",
+    telefone: "11999990000",
+    centroCusto: "CR1",
+    motoristaNome: "Carlos",
+    prefixoMotorista: "CAR-01",
+    tipoTransporteExterno: "Carro executivo",
+    tipoServicoSugerido: "Dentro de Sao Paulo",
+    tipoVeiculoSugerido: "Executivo",
+    valor: 100
+  },
+  {
+    sourceRow: 3,
+    programacao: "PGTEST/1",
+    solicitacao: "ST2",
+    data: "20/05/2026",
+    dataIso: "2026-05-20",
+    horario: "08:00",
+    origem: "Av. Brigadeiro Faria Lima, 1000",
+    origemKey: "av brigadeiro faria lima 1000",
+    destino: "Hotel B",
+    destinoKey: "hotel b",
+    cidadeOrigem: "Sao Paulo",
+    cidadeDestino: "Sao Paulo",
+    nomePassageiro: "BRUNO TESTE",
+    telefone: "11988880000",
+    centroCusto: "CR2",
+    motoristaNome: "Carlos",
+    prefixoMotorista: "CAR-01",
+    tipoTransporteExterno: "Carro executivo",
+    tipoServicoSugerido: "Dentro de Sao Paulo",
+    tipoVeiculoSugerido: "Executivo",
+    valor: 120
+  }
+]);
+const sharedPickupTrecho = sharedPickupPrograms[0].trechos[0];
+assert.equal(sharedPickupPrograms[0].trechos.length, 1, "mesma PG, origem, horario e carro deve virar um unico servico");
+assert.deepEqual(sharedPickupTrecho.passageiros.map((passenger) => passenger.nome), ["ANA TESTE", "BRUNO TESTE"], "ordem dos passageiros deve seguir a ordem da planilha");
+assert.deepEqual(sharedPickupTrecho.passageiros.map((passenger) => passenger.destino), ["Hotel A", "Hotel B"], "destino individual deve ficar editavel por passageiro");
+assert.equal(sharedPickupTrecho.destino, "1. ANA - Hotel A;\n2. BRUNO - Hotel B", "destinos diferentes devem ser consolidados no destino do servico");
+
+const manualTrecho = createManualImportTrecho(sharedPickupPrograms[0], { key: "PGTEST/1|manual|1" });
+assert.equal(manualTrecho.key, "PGTEST/1|manual|1", "servico manual deve receber chave estavel dentro da PG");
+assert.equal(manualTrecho.programacao, "PGTEST/1", "servico manual deve nascer dentro da mesma PG");
+assert.equal(manualTrecho.originStatus, "Manual", "servico adicionado pelo usuario deve exibir status Manual");
+assert.equal(manualTrecho.importOrigin, "manual", "servico manual deve manter origem tecnica manual");
+assert.equal(manualTrecho.reviewStatus, IMPORT_REVIEW_STATUSES.PENDING, "servico manual deve iniciar como rascunho pendente");
+assert.deepEqual(manualTrecho.passageiros, [], "servico manual deve nascer sem passageiros preenchidos");
+assert.equal(manualTrecho.destino, "", "servico manual deve permitir preenchimento total pelo inspector");
+
+const exactDuplicateScore = scoreImportedTrechoDuplicate(sharedPickupTrecho, {
+  recordId: "reserva-exata",
+  programacao: "PGTEST/1",
+  dataSaida: "2026-05-20T08:00:00",
+  trajeto: "Sao Paulo > Sao Paulo",
+  enderecoView: "Av. Brigadeiro Faria Lima, 1000",
+  destino: "1. ANA - Hotel A;\n2. BRUNO - Hotel B",
+  paxView: "ANA TESTE - 11999990000; BRUNO TESTE - 11988880000"
+});
+assert.equal(exactDuplicateScore.level, "exact", "mesma PG so bloqueia quando o servico tambem bate por horario/trajeto/endereco/pax");
+assert.ok(exactDuplicateScore.reasons.includes("mesmo horario"), "duplicidade deve explicar horario");
+assert.ok(exactDuplicateScore.reasons.includes("mesmos passageiros"), "duplicidade deve explicar passageiros");
+
+const samePgDifferentServiceScore = scoreImportedTrechoDuplicate(sharedPickupTrecho, {
+  recordId: "reserva-outra",
+  programacao: "PGTEST/1",
+  dataSaida: "2026-05-20T15:30:00",
+  trajeto: "Sao Paulo > Campinas",
+  enderecoView: "Rua Oscar Freire, 200",
+  destino: "Aeroporto de Viracopos",
+  paxView: "CARLA TESTE - 11977770000"
+});
+assert.notEqual(samePgDifferentServiceScore.level, "exact", "mesma PG com outro servico nao pode bloquear");
+
+const possibleDuplicateScore = scoreImportedTrechoDuplicate(sharedPickupTrecho, {
+  recordId: "reserva-parecida",
+  programacao: "PGTEST/1",
+  dataSaida: "2026-05-20T08:10:00",
+  trajeto: "Sao Paulo > Sao Paulo",
+  enderecoView: "Av Brigadeiro Faria Lima 1000",
+  destino: "Hotel A / Hotel B",
+  paxView: "ANA TESTE"
+});
+assert.equal(possibleDuplicateScore.level, "possible", "servico muito parecido deve avisar sem bloquear automaticamente");
+
+const allTrechos = programs.flatMap((program) => program.trechos);
+assert.ok(allTrechos.length > 0, "fixture deve gerar trechos importados");
+assert.ok(IMPORT_REVIEW_STATUSES, "core deve exportar estados de revisão de importados");
 assert.ok(
-  staggeredProgram.trechos.some((trecho) => trecho.passageiros.length === 3 && trecho.horario === "06:00"),
-  "PG2026/31766 deve consolidar pickups escalonados pelo destino do trecho"
+  allTrechos.every((trecho) => trecho.reviewStatus === IMPORT_REVIEW_STATUSES.PENDING),
+  "todo trecho importado deve iniciar como Pendente para revisão humana"
 );
+
+const reviewTrechos = [
+  {
+    key: "ok",
+    reviewStatus: IMPORT_REVIEW_STATUSES.PENDING,
+    passageiros: []
+  },
+  {
+    key: "bad",
+    reviewStatus: IMPORT_REVIEW_STATUSES.PENDING,
+    passageiros: []
+  },
+  {
+    key: "ignored",
+    reviewStatus: IMPORT_REVIEW_STATUSES.PENDING,
+    passageiros: []
+  },
+  {
+    key: "saved",
+    reviewStatus: IMPORT_REVIEW_STATUSES.PENDING,
+    passageiros: []
+  }
+];
+
+confirmImportedTrechoReview(reviewTrechos[0], []);
+assert.equal(reviewTrechos[0].reviewStatus, IMPORT_REVIEW_STATUSES.CONFIRMED, "confirmar sem pendencia deve marcar Confirmado");
+
+confirmImportedTrechoReview(reviewTrechos[1], ["Destino vazio."]);
+assert.equal(reviewTrechos[1].reviewStatus, IMPORT_REVIEW_STATUSES.BLOCKED, "confirmar com pendencia deve marcar Bloqueado");
+assert.equal(reviewTrechos[1].reviewBlockReason, "Destino vazio.", "Bloqueado deve guardar o motivo exato");
+
+ignoreImportedTrechoReview(reviewTrechos[2]);
+assert.equal(reviewTrechos[2].reviewStatus, IMPORT_REVIEW_STATUSES.IGNORED, "ignorar deve marcar Ignorado");
+
+markImportedTrechoSaved(reviewTrechos[3], "reserva-1");
+assert.equal(reviewTrechos[3].reviewStatus, IMPORT_REVIEW_STATUSES.SAVED, "salvar deve marcar Salvo");
+assert.equal(reviewTrechos[3].savedRecordId, "reserva-1", "Salvo deve manter o id criado");
+
+let summary = summarizeImportReviewTrechos(reviewTrechos);
+assert.equal(summary.canScheduleConfirmed, false, "Agendar confirmados deve bloquear enquanto houver Bloqueado");
+assert.deepEqual(summary.saveableTrechos.map((trecho) => trecho.key), ["ok"], "Ignorado nao entra nos trechos para salvar");
+assert.equal(summary.counts.ignored, 1, "Ignorado deve aparecer no resumo");
+assert.equal(summary.counts.saved, 1, "Salvo deve aparecer no resumo");
+
+markImportedTrechoPending(reviewTrechos[0]);
+assert.equal(reviewTrechos[0].reviewStatus, IMPORT_REVIEW_STATUSES.PENDING, "editar trecho confirmado deve voltar para Pendente");
 
 console.log("xlsx_import_parser: ok");
