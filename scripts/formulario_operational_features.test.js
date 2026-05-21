@@ -224,6 +224,12 @@ includes(app, "function createManualImportedTrecho", "criacao de servico manual 
 includes(app, "add-manual-trecho", "acao de adicionar servico manual por PG");
 includes(app, "import-add-service-button", "botao sutil de adicionar servico por PG");
 includes(app, "originStatus: \"Manual\"", "servico manual deve carregar status visual Manual");
+includes(app, "function buildImportDecisionPanel", "revisao importada deve expor decisao operacional da PG");
+includes(app, "import-decision-panel", "revisao importada deve destacar manter espera ou separar busca");
+includes(app, "Separar busca", "Split deve aparecer com linguagem operacional");
+includes(app, "function buildImportTimeline", "revisao importada deve mostrar timeline de saida e retorno");
+includes(app, "Janela da PG", "timeline deve explicar a janela operacional da PG");
+includes(app, "trajetoCidades", "revisao importada deve permitir revisar trajeto por cidades");
 includes(app, "function createImportPassengerDraft", "rascunho de passageiro para servico manual");
 includes(app, "add-import-passenger", "inspector lateral deve permitir adicionar passageiro ao servico manual");
 excludes(app, "button.disabled = isDuplicated", "PG duplicada nao pode bloquear o botao de adicionar servico manual");
