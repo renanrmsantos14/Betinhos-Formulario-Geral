@@ -1461,6 +1461,26 @@
     return String(value || "").trimStart().replace(/\s+/g, " ").toUpperCase();
   }
 
+  function normalizePassengerDisplayName(value) {
+    const text = String(value || "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (!text) return "";
+    const smallWords = new Set(["da", "de", "do", "das", "dos", "e"]);
+    const romanNumerals = /^(i|ii|iii|iv|v|vi|vii|viii|ix|x)$/i;
+
+    return text
+      .split(" ")
+      .filter(Boolean)
+      .map((part, index) => {
+        const lowerPart = part.toLowerCase();
+        if (index > 0 && smallWords.has(lowerPart)) return lowerPart;
+        if (romanNumerals.test(lowerPart)) return lowerPart.toUpperCase();
+        return lowerPart.replace(/(^|[-'])\p{L}/gu, (chunk) => chunk.toUpperCase());
+      })
+      .join(" ");
+  }
+
   function countryFlagFromIso(isoValue) {
     return String(isoValue || "")
       .split(/\s+/)
@@ -3087,6 +3107,7 @@
       if (field.key === "telefone") return phoneStorageValue(control.value, "");
       if (field.key === "email") return normalizeEmail(control.value);
       if (field.key === "cr") return normalizeCodeValue(control.value);
+      if (field.key === "label") return normalizePassengerDisplayName(control.value);
       return control.value.trim();
     }
     return control.value || "";
@@ -4742,6 +4763,7 @@
 
   async function createPassenger() {
     clearValidationStates();
+    el.bdNome.value = normalizePassengerDisplayName(el.bdNome.value);
     const parsedPhone = parsePhoneNumberForInput(el.bdTelefone.value, selectedPhoneCountryCode(), {
       manualCountry: el.bdTelefone?.dataset.phoneCountryManual === "1"
     });

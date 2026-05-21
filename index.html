@@ -92,18 +92,16 @@
       <section id="tab-panel-details" class="panel is-active" data-panel="details">
         <div class="section-head">
           <h2>Detalhes do serviço</h2>
-          <p>Dados operacionais para criar ou editar a reserva no Dataverse.</p>
         </div>
 
         <div class="panel-stack">
           <section class="form-section" aria-labelledby="servicoTitle">
             <div class="form-section-title">
               <h3 id="servicoTitle">Agenda, cliente e rota</h3>
-              <p>Dados principais do serviço, horários, cliente e percurso.</p>
             </div>
 
             <div class="form-grid">
-              <label class="field compact-time required">
+              <label class="field compact-time saida-compact-time required">
                 <span>Data e horário de saída</span>
                 <div class="inline-time">
                   <input id="saidaData" type="datetime-local" required aria-required="true" step="300" max="9999-12-31T23:59">
@@ -168,7 +166,6 @@
             <div class="block-title">
               <div>
                 <h3 id="passageirosTitle">Passageiros selecionados</h3>
-                <p>Cadastre a ordem operacional e o passageiro na sequência de embarque.</p>
               </div>
               <div class="passenger-toolbar">
                 <div class="icon-actions">
@@ -194,7 +191,6 @@
           <section class="form-section compact-section" aria-labelledby="destinoTitle">
             <div class="form-section-title">
               <h3 id="destinoTitle">Destino</h3>
-              <p>Destino final do serviço.</p>
             </div>
 
             <div class="form-grid compact">
@@ -208,7 +204,6 @@
         <section class="form-section" aria-labelledby="financeiroTitle">
           <div class="form-section-title">
             <h3 id="financeiroTitle">Faturamento</h3>
-            <p>Status, pagamento e referências financeiras.</p>
           </div>
 
             <div class="form-grid">
@@ -564,3 +559,4 @@
   <script src="app.js"></script>
 </body>
 </html>
+
