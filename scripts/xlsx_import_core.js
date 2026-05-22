@@ -48,6 +48,25 @@
     SAVED: "saved"
   });
 
+  const IMPORT_OPERATIONAL_MODES = Object.freeze({
+    SINGLE: "single",
+    WAITING: "waiting",
+    SEPARABLE: "separable",
+    MANUAL_REVIEW: "manual-review",
+    MANUAL: "manual",
+    SPLIT_RETURN: "split-return"
+  });
+
+  const IMPORT_OPERATIONAL_DECISIONS = Object.freeze({
+    PENDING: "pending",
+    KEEP_WAITING: "keep-waiting",
+    SPLIT: "split",
+    SPLIT_DRAFT: "split-draft",
+    MANUAL_REVIEW: "manual-review"
+  });
+
+  const OPERATIONAL_DECISION_ISSUE = "Decidir se motorista fica a disposicao ou separar ida/busca.";
+
   function normalizeImportedRows(rows) {
     return (rows || [])
       .map((row, index) => normalizeImportedRow(row, index + 2))
@@ -172,7 +191,12 @@
       observacoes: [],
       pendencias: [],
       reviewStatus: IMPORT_REVIEW_STATUSES.PENDING,
-      reviewBlockReason: ""
+      reviewBlockReason: "",
+      operationalMode: "",
+      operationalDecision: "",
+      operationalSuggestion: "",
+      operationalConfidence: "",
+      operationalReason: ""
     };
   }
 
@@ -227,6 +251,11 @@
     const horario = firstLine?.horario || trecho.horario;
     const uniqueDates = new Set(linhasImportadas.map((line) => line.dataIso).filter(Boolean));
     const pendencias = [...trecho.pendencias];
+    const operational = classifyImportOperationalInterpretation(linhasImportadas, {
+      retornoLine,
+      uniqueDates
+    });
+    if (operational.requiresDecision) pendencias.push(OPERATIONAL_DECISION_ISSUE);
     if (uniqueDates.size > 1) pendencias.push("PG com datas diferentes.");
     if (!trecho.dataIso) pendencias.push("Data inválida.");
     if (!trecho.horario) pendencias.push("Horário vazio.");
@@ -265,8 +294,74 @@
       observacaoOperacional: trecho.observacoes.join("\n"),
       pendencias: Array.from(new Set(pendencias)),
       reviewStatus: normalizeImportReviewStatus(trecho.reviewStatus),
-      reviewBlockReason: trecho.reviewBlockReason || ""
+      reviewBlockReason: trecho.reviewBlockReason || "",
+      operationalMode: operational.mode,
+      operationalDecision: operational.decision,
+      operationalSuggestion: operational.suggestion,
+      operationalConfidence: operational.confidence,
+      operationalReason: operational.reason
     };
+  }
+
+  function classifyImportOperationalInterpretation(lines, options = {}) {
+    const sorted = sortImportedLines(lines);
+    const distinctTimes = new Set(sorted.map((line) => importedLineDateTimeKey(line)).filter(Boolean));
+    if (options.uniqueDates?.size > 1) {
+      return {
+        mode: IMPORT_OPERATIONAL_MODES.MANUAL_REVIEW,
+        decision: IMPORT_OPERATIONAL_DECISIONS.MANUAL_REVIEW,
+        suggestion: "Revisar manual",
+        confidence: "alta",
+        reason: "A PG tem datas diferentes. Nao e seguro inferir espera ou ida/busca.",
+        requiresDecision: false
+      };
+    }
+    if (!options.retornoLine || distinctTimes.size <= 1) {
+      return {
+        mode: IMPORT_OPERATIONAL_MODES.SINGLE,
+        decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING,
+        suggestion: "OS unica",
+        confidence: "media",
+        reason: "A PG tem apenas um horario operacional util.",
+        requiresDecision: false
+      };
+    }
+    if (importedLinesContainWaitingSignal(sorted)) {
+      return {
+        mode: IMPORT_OPERATIONAL_MODES.WAITING,
+        decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING,
+        suggestion: "Manter espera",
+        confidence: "alta",
+        reason: "O texto importado indica espera ou motorista a disposicao.",
+        requiresDecision: false
+      };
+    }
+    return {
+      mode: IMPORT_OPERATIONAL_MODES.SEPARABLE,
+      decision: IMPORT_OPERATIONAL_DECISIONS.PENDING,
+      suggestion: "Ida + busca separaveis",
+      confidence: distinctTimes.size === 2 ? "media" : "baixa",
+      reason: "A PG tem mais de um horario no mesmo dia e nao informa espera. Confirme se o motorista fica a disposicao.",
+      requiresDecision: true
+    };
+  }
+
+  function importedLinesContainWaitingSignal(lines) {
+    const text = normalizeText((lines || []).map((line) => [
+      line.tipoServicoExterno,
+      line.tipoTransporteExterno,
+      line.observacao,
+      line.observacaoFaturamento
+    ].filter(Boolean).join(" ")).join(" "));
+    return [
+      "espera",
+      "disposicao",
+      "a disposicao",
+      "diaria",
+      "periodo integral",
+      "carro a disposicao",
+      "motorista a disposicao"
+    ].some((needle) => text.includes(needle));
   }
 
   function normalizeImportReviewStatus(status) {
@@ -348,7 +443,12 @@
       savedRecordId: "",
       duplicatedRecordIds: [],
       importOrigin: "manual",
-      originStatus: "Manual"
+      originStatus: "Manual",
+      operationalMode: IMPORT_OPERATIONAL_MODES.MANUAL,
+      operationalDecision: IMPORT_OPERATIONAL_DECISIONS.MANUAL_REVIEW,
+      operationalSuggestion: "Servico manual",
+      operationalConfidence: "manual",
+      operationalReason: "Servico criado manualmente dentro da PG."
     };
   }
 
@@ -356,6 +456,7 @@
     if (!program || !trecho) return null;
     trecho.retornoPrevistoDataIso = "";
     trecho.retornoPrevistoHorario = "";
+    applyImportOperationalDecision(trecho, IMPORT_OPERATIONAL_DECISIONS.SPLIT);
     markImportedTrechoPending(trecho);
     const clone = createSplitImportTrecho(program, trecho, options);
     program.trechos = Array.isArray(program.trechos) ? program.trechos : [];
@@ -367,19 +468,21 @@
   function createSplitImportTrecho(program, source, options = {}) {
     const programacao = String(options.programacao || program?.programacao || source?.programacao || "").trim();
     const key = options.key || `${programacao}|split|${nextSplitImportSequence(program)}`;
+    const returnLines = latestImportedLineGroup(source?.linhasImportadas || []);
+    const returnLine = returnLines[0] || null;
     return {
       key,
       programacao,
       solicitacoes: Array.from(new Set(source?.solicitacoes || [])),
-      sourceRows: [],
-      data: "",
-      dataIso: "",
-      horario: "",
-      origem: "",
-      destino: "",
-      destinos: [],
-      cidadeOrigem: "",
-      cidadeDestino: "",
+      sourceRows: returnLines.map((line) => line.sourceRow).filter(Boolean),
+      data: returnLine?.data || "",
+      dataIso: returnLine?.dataIso || "",
+      horario: returnLine?.horario || "",
+      origem: composeGroupedLineSummary(returnLines, "origem"),
+      destino: composeGroupedLineSummary(returnLines, "destino"),
+      destinos: Array.from(new Set(returnLines.map((line) => line.destino).filter(Boolean))),
+      cidadeOrigem: returnLine?.cidadeOrigem || "",
+      cidadeDestino: returnLine?.cidadeDestino || "",
       solicitanteNome: source?.solicitanteNome || "",
       tipoServicoSugerido: source?.tipoServicoSugerido || "",
       tipoVeiculoSugerido: source?.tipoVeiculoSugerido || "",
@@ -389,10 +492,10 @@
       motoristaNome: "",
       retornoPrevistoDataIso: "",
       retornoPrevistoHorario: "",
-      trajetoCidades: "",
-      origemPrincipal: "",
-      destinoPrincipal: "",
-      linhasImportadas: [],
+      trajetoCidades: composeCityRoute(returnLines),
+      origemPrincipal: returnLine?.origem || "",
+      destinoPrincipal: returnLine?.destino || "",
+      linhasImportadas: returnLines,
       passageiros: (source?.passageiros || []).map(clonePassengerForSplit),
       observacoes: Array.from(new Set(source?.observacoes || [])),
       observacaoOperacional: source?.observacaoOperacional || "",
@@ -402,7 +505,14 @@
       savedRecordId: "",
       duplicatedRecordIds: [],
       importOrigin: "split",
-      originStatus: "Split"
+      originStatus: "Split",
+      operationalMode: IMPORT_OPERATIONAL_MODES.SPLIT_RETURN,
+      operationalDecision: IMPORT_OPERATIONAL_DECISIONS.SPLIT_DRAFT,
+      operationalSuggestion: "Busca separada",
+      operationalConfidence: returnLines.length ? "media" : "baixa",
+      operationalReason: returnLines.length
+        ? "Rascunho criado com os dados provaveis da linha de retorno."
+        : "Rascunho criado sem linha de retorno clara. Complete manualmente."
     };
   }
 
@@ -803,6 +913,37 @@
     sequence.push(value);
   }
 
+  function latestImportedLineGroup(lines) {
+    const sorted = sortImportedLines(lines);
+    const last = sorted[sorted.length - 1];
+    const lastKey = importedLineDateTimeKey(last);
+    if (!lastKey) return [];
+    return sorted.filter((line) => importedLineDateTimeKey(line) === lastKey);
+  }
+
+  function applyImportOperationalDecision(trecho, decision) {
+    if (!trecho) return null;
+    const normalized = Object.values(IMPORT_OPERATIONAL_DECISIONS).includes(decision)
+      ? decision
+      : IMPORT_OPERATIONAL_DECISIONS.PENDING;
+    trecho.operationalDecision = normalized;
+    trecho.pendencias = Array.from(new Set((trecho.pendencias || []).filter((issue) => issue !== OPERATIONAL_DECISION_ISSUE)));
+    if (normalized === IMPORT_OPERATIONAL_DECISIONS.MANUAL_REVIEW) {
+      trecho.pendencias.push(OPERATIONAL_DECISION_ISSUE);
+      trecho.operationalMode = IMPORT_OPERATIONAL_MODES.MANUAL_REVIEW;
+      trecho.operationalSuggestion = "Revisar manual";
+      trecho.operationalReason = "Usuario marcou a PG para decisao manual antes do agendamento.";
+    } else if (normalized === IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING) {
+      trecho.operationalSuggestion = "Manter espera";
+      trecho.operationalReason = "Usuario confirmou uma OS com motorista a disposicao ate o retorno previsto.";
+    } else if (normalized === IMPORT_OPERATIONAL_DECISIONS.SPLIT) {
+      trecho.operationalSuggestion = "Ida/busca separadas";
+      trecho.operationalReason = "Usuario separou a PG em OS de ida e OS de busca.";
+    }
+    markImportedTrechoPending(trecho);
+    return trecho;
+  }
+
   function clonePassengerForSplit(passenger) {
     return {
       sourceRow: "",
@@ -989,6 +1130,10 @@
   return {
     REQUIRED_XLSX_HEADERS,
     IMPORT_REVIEW_STATUSES,
+    IMPORT_OPERATIONAL_DECISIONS,
+    IMPORT_OPERATIONAL_MODES,
+    OPERATIONAL_DECISION_ISSUE,
+    applyImportOperationalDecision,
     buildImportPrograms,
     collectProgramIssues,
     createManualImportTrecho,

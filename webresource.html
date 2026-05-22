@@ -4394,7 +4394,7 @@ body.is-import-dragging .import-drop-overlay {
 
 .import-decision-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(260px, 1fr) minmax(260px, auto);
   gap: 12px;
   align-items: center;
   min-width: 0;
@@ -4404,6 +4404,11 @@ body.is-import-dragging .import-drop-overlay {
   border-radius: var(--radius-sm);
   background: #ffffff;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.86);
+}
+
+.import-decision-panel.is-decision-pending {
+  border-left-color: var(--warning);
+  background: color-mix(in srgb, var(--warning-soft) 20%, #ffffff);
 }
 
 .import-decision-copy {
@@ -4440,6 +4445,8 @@ body.is-import-dragging .import-drop-overlay {
 .import-decision-options {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
 }
@@ -4459,13 +4466,15 @@ body.is-import-dragging .import-drop-overlay {
   background: color-mix(in srgb, var(--accent-soft) 64%, #ffffff);
 }
 
-.import-decision-button.is-current:not(.is-waiting) {
-  color: var(--text-soft);
-  border-color: var(--line);
-  background: var(--surface-soft);
+.import-decision-button.is-manual-action.is-current {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 28%, var(--line));
+  background: var(--warning-soft);
 }
 
-.import-decision-button.is-split-action {
+.import-decision-button.is-split-action,
+.import-decision-button.is-manual-action,
+.import-decision-button.is-keep-action {
   padding-inline: 12px;
 }
 
@@ -6682,6 +6691,25 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     SAVED: "saved"
   });
 
+  const IMPORT_OPERATIONAL_MODES = Object.freeze({
+    SINGLE: "single",
+    WAITING: "waiting",
+    SEPARABLE: "separable",
+    MANUAL_REVIEW: "manual-review",
+    MANUAL: "manual",
+    SPLIT_RETURN: "split-return"
+  });
+
+  const IMPORT_OPERATIONAL_DECISIONS = Object.freeze({
+    PENDING: "pending",
+    KEEP_WAITING: "keep-waiting",
+    SPLIT: "split",
+    SPLIT_DRAFT: "split-draft",
+    MANUAL_REVIEW: "manual-review"
+  });
+
+  const OPERATIONAL_DECISION_ISSUE = "Decidir se motorista fica a disposicao ou separar ida/busca.";
+
   function normalizeImportedRows(rows) {
     return (rows || [])
       .map((row, index) => normalizeImportedRow(row, index + 2))
@@ -6806,7 +6834,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       observacoes: [],
       pendencias: [],
       reviewStatus: IMPORT_REVIEW_STATUSES.PENDING,
-      reviewBlockReason: ""
+      reviewBlockReason: "",
+      operationalMode: "",
+      operationalDecision: "",
+      operationalSuggestion: "",
+      operationalConfidence: "",
+      operationalReason: ""
     };
   }
 
@@ -6861,6 +6894,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const horario = firstLine?.horario || trecho.horario;
     const uniqueDates = new Set(linhasImportadas.map((line) => line.dataIso).filter(Boolean));
     const pendencias = [...trecho.pendencias];
+    const operational = classifyImportOperationalInterpretation(linhasImportadas, {
+      retornoLine,
+      uniqueDates
+    });
+    if (operational.requiresDecision) pendencias.push(OPERATIONAL_DECISION_ISSUE);
     if (uniqueDates.size > 1) pendencias.push("PG com datas diferentes.");
     if (!trecho.dataIso) pendencias.push("Data inválida.");
     if (!trecho.horario) pendencias.push("Horário vazio.");
@@ -6899,8 +6937,74 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       observacaoOperacional: trecho.observacoes.join("\n"),
       pendencias: Array.from(new Set(pendencias)),
       reviewStatus: normalizeImportReviewStatus(trecho.reviewStatus),
-      reviewBlockReason: trecho.reviewBlockReason || ""
+      reviewBlockReason: trecho.reviewBlockReason || "",
+      operationalMode: operational.mode,
+      operationalDecision: operational.decision,
+      operationalSuggestion: operational.suggestion,
+      operationalConfidence: operational.confidence,
+      operationalReason: operational.reason
     };
+  }
+
+  function classifyImportOperationalInterpretation(lines, options = {}) {
+    const sorted = sortImportedLines(lines);
+    const distinctTimes = new Set(sorted.map((line) => importedLineDateTimeKey(line)).filter(Boolean));
+    if (options.uniqueDates?.size > 1) {
+      return {
+        mode: IMPORT_OPERATIONAL_MODES.MANUAL_REVIEW,
+        decision: IMPORT_OPERATIONAL_DECISIONS.MANUAL_REVIEW,
+        suggestion: "Revisar manual",
+        confidence: "alta",
+        reason: "A PG tem datas diferentes. Nao e seguro inferir espera ou ida/busca.",
+        requiresDecision: false
+      };
+    }
+    if (!options.retornoLine || distinctTimes.size <= 1) {
+      return {
+        mode: IMPORT_OPERATIONAL_MODES.SINGLE,
+        decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING,
+        suggestion: "OS unica",
+        confidence: "media",
+        reason: "A PG tem apenas um horario operacional util.",
+        requiresDecision: false
+      };
+    }
+    if (importedLinesContainWaitingSignal(sorted)) {
+      return {
+        mode: IMPORT_OPERATIONAL_MODES.WAITING,
+        decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING,
+        suggestion: "Manter espera",
+        confidence: "alta",
+        reason: "O texto importado indica espera ou motorista a disposicao.",
+        requiresDecision: false
+      };
+    }
+    return {
+      mode: IMPORT_OPERATIONAL_MODES.SEPARABLE,
+      decision: IMPORT_OPERATIONAL_DECISIONS.PENDING,
+      suggestion: "Ida + busca separaveis",
+      confidence: distinctTimes.size === 2 ? "media" : "baixa",
+      reason: "A PG tem mais de um horario no mesmo dia e nao informa espera. Confirme se o motorista fica a disposicao.",
+      requiresDecision: true
+    };
+  }
+
+  function importedLinesContainWaitingSignal(lines) {
+    const text = normalizeText((lines || []).map((line) => [
+      line.tipoServicoExterno,
+      line.tipoTransporteExterno,
+      line.observacao,
+      line.observacaoFaturamento
+    ].filter(Boolean).join(" ")).join(" "));
+    return [
+      "espera",
+      "disposicao",
+      "a disposicao",
+      "diaria",
+      "periodo integral",
+      "carro a disposicao",
+      "motorista a disposicao"
+    ].some((needle) => text.includes(needle));
   }
 
   function normalizeImportReviewStatus(status) {
@@ -6982,7 +7086,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       savedRecordId: "",
       duplicatedRecordIds: [],
       importOrigin: "manual",
-      originStatus: "Manual"
+      originStatus: "Manual",
+      operationalMode: IMPORT_OPERATIONAL_MODES.MANUAL,
+      operationalDecision: IMPORT_OPERATIONAL_DECISIONS.MANUAL_REVIEW,
+      operationalSuggestion: "Servico manual",
+      operationalConfidence: "manual",
+      operationalReason: "Servico criado manualmente dentro da PG."
     };
   }
 
@@ -6990,6 +7099,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (!program || !trecho) return null;
     trecho.retornoPrevistoDataIso = "";
     trecho.retornoPrevistoHorario = "";
+    applyImportOperationalDecision(trecho, IMPORT_OPERATIONAL_DECISIONS.SPLIT);
     markImportedTrechoPending(trecho);
     const clone = createSplitImportTrecho(program, trecho, options);
     program.trechos = Array.isArray(program.trechos) ? program.trechos : [];
@@ -7001,19 +7111,21 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function createSplitImportTrecho(program, source, options = {}) {
     const programacao = String(options.programacao || program?.programacao || source?.programacao || "").trim();
     const key = options.key || `${programacao}|split|${nextSplitImportSequence(program)}`;
+    const returnLines = latestImportedLineGroup(source?.linhasImportadas || []);
+    const returnLine = returnLines[0] || null;
     return {
       key,
       programacao,
       solicitacoes: Array.from(new Set(source?.solicitacoes || [])),
-      sourceRows: [],
-      data: "",
-      dataIso: "",
-      horario: "",
-      origem: "",
-      destino: "",
-      destinos: [],
-      cidadeOrigem: "",
-      cidadeDestino: "",
+      sourceRows: returnLines.map((line) => line.sourceRow).filter(Boolean),
+      data: returnLine?.data || "",
+      dataIso: returnLine?.dataIso || "",
+      horario: returnLine?.horario || "",
+      origem: composeGroupedLineSummary(returnLines, "origem"),
+      destino: composeGroupedLineSummary(returnLines, "destino"),
+      destinos: Array.from(new Set(returnLines.map((line) => line.destino).filter(Boolean))),
+      cidadeOrigem: returnLine?.cidadeOrigem || "",
+      cidadeDestino: returnLine?.cidadeDestino || "",
       solicitanteNome: source?.solicitanteNome || "",
       tipoServicoSugerido: source?.tipoServicoSugerido || "",
       tipoVeiculoSugerido: source?.tipoVeiculoSugerido || "",
@@ -7023,10 +7135,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       motoristaNome: "",
       retornoPrevistoDataIso: "",
       retornoPrevistoHorario: "",
-      trajetoCidades: "",
-      origemPrincipal: "",
-      destinoPrincipal: "",
-      linhasImportadas: [],
+      trajetoCidades: composeCityRoute(returnLines),
+      origemPrincipal: returnLine?.origem || "",
+      destinoPrincipal: returnLine?.destino || "",
+      linhasImportadas: returnLines,
       passageiros: (source?.passageiros || []).map(clonePassengerForSplit),
       observacoes: Array.from(new Set(source?.observacoes || [])),
       observacaoOperacional: source?.observacaoOperacional || "",
@@ -7036,7 +7148,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       savedRecordId: "",
       duplicatedRecordIds: [],
       importOrigin: "split",
-      originStatus: "Split"
+      originStatus: "Split",
+      operationalMode: IMPORT_OPERATIONAL_MODES.SPLIT_RETURN,
+      operationalDecision: IMPORT_OPERATIONAL_DECISIONS.SPLIT_DRAFT,
+      operationalSuggestion: "Busca separada",
+      operationalConfidence: returnLines.length ? "media" : "baixa",
+      operationalReason: returnLines.length
+        ? "Rascunho criado com os dados provaveis da linha de retorno."
+        : "Rascunho criado sem linha de retorno clara. Complete manualmente."
     };
   }
 
@@ -7437,6 +7556,37 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     sequence.push(value);
   }
 
+  function latestImportedLineGroup(lines) {
+    const sorted = sortImportedLines(lines);
+    const last = sorted[sorted.length - 1];
+    const lastKey = importedLineDateTimeKey(last);
+    if (!lastKey) return [];
+    return sorted.filter((line) => importedLineDateTimeKey(line) === lastKey);
+  }
+
+  function applyImportOperationalDecision(trecho, decision) {
+    if (!trecho) return null;
+    const normalized = Object.values(IMPORT_OPERATIONAL_DECISIONS).includes(decision)
+      ? decision
+      : IMPORT_OPERATIONAL_DECISIONS.PENDING;
+    trecho.operationalDecision = normalized;
+    trecho.pendencias = Array.from(new Set((trecho.pendencias || []).filter((issue) => issue !== OPERATIONAL_DECISION_ISSUE)));
+    if (normalized === IMPORT_OPERATIONAL_DECISIONS.MANUAL_REVIEW) {
+      trecho.pendencias.push(OPERATIONAL_DECISION_ISSUE);
+      trecho.operationalMode = IMPORT_OPERATIONAL_MODES.MANUAL_REVIEW;
+      trecho.operationalSuggestion = "Revisar manual";
+      trecho.operationalReason = "Usuario marcou a PG para decisao manual antes do agendamento.";
+    } else if (normalized === IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING) {
+      trecho.operationalSuggestion = "Manter espera";
+      trecho.operationalReason = "Usuario confirmou uma OS com motorista a disposicao ate o retorno previsto.";
+    } else if (normalized === IMPORT_OPERATIONAL_DECISIONS.SPLIT) {
+      trecho.operationalSuggestion = "Ida/busca separadas";
+      trecho.operationalReason = "Usuario separou a PG em OS de ida e OS de busca.";
+    }
+    markImportedTrechoPending(trecho);
+    return trecho;
+  }
+
   function clonePassengerForSplit(passenger) {
     return {
       sourceRow: "",
@@ -7623,6 +7773,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   return {
     REQUIRED_XLSX_HEADERS,
     IMPORT_REVIEW_STATUSES,
+    IMPORT_OPERATIONAL_DECISIONS,
+    IMPORT_OPERATIONAL_MODES,
+    OPERATIONAL_DECISION_ISSUE,
+    applyImportOperationalDecision,
     buildImportPrograms,
     collectProgramIssues,
     createManualImportTrecho,
@@ -13403,6 +13557,29 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return isManualImportedTrecho(trecho) || isSplitImportedTrecho(trecho);
   }
 
+  function importOperationalDecisions() {
+    return window.XlsxImportCore?.IMPORT_OPERATIONAL_DECISIONS || {
+      PENDING: "pending",
+      KEEP_WAITING: "keep-waiting",
+      SPLIT: "split",
+      SPLIT_DRAFT: "split-draft",
+      MANUAL_REVIEW: "manual-review"
+    };
+  }
+
+  function applyImportedOperationalDecision(trecho, decision) {
+    if (window.XlsxImportCore?.applyImportOperationalDecision) {
+      return window.XlsxImportCore.applyImportOperationalDecision(trecho, decision);
+    }
+    const decisions = importOperationalDecisions();
+    trecho.operationalDecision = decision;
+    const decisionIssue = window.XlsxImportCore?.OPERATIONAL_DECISION_ISSUE || "Decidir se motorista fica a disposicao ou separar ida/busca.";
+    trecho.pendencias = (trecho.pendencias || []).filter((issue) => issue !== decisionIssue);
+    if (decision === decisions.MANUAL_REVIEW) trecho.pendencias.push(decisionIssue);
+    markImportedReviewPending(trecho);
+    return trecho;
+  }
+
   function findImportProgram(programacao) {
     return state.importReview?.programs?.find((program) => program.programacao === programacao) || null;
   }
@@ -13447,7 +13624,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       savedRecordId: "",
       duplicatedRecordIds: [],
       importOrigin: "manual",
-      originStatus: "Manual"
+      originStatus: "Manual",
+      operationalMode: "manual",
+      operationalDecision: importOperationalDecisions().MANUAL_REVIEW,
+      operationalSuggestion: "Serviço manual",
+      operationalConfidence: "manual",
+      operationalReason: "Serviço criado manualmente dentro da PG."
     };
   }
 
@@ -13491,6 +13673,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function createLocalSplitImportedTrecho(program, source) {
     source.retornoPrevistoDataIso = "";
     source.retornoPrevistoHorario = "";
+    applyImportedOperationalDecision(source, importOperationalDecisions().SPLIT);
     markImportedReviewPending(source);
     const key = nextSplitImportedTrechoKey(program);
     const clone = {
@@ -13534,7 +13717,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       savedRecordId: "",
       duplicatedRecordIds: [],
       importOrigin: "split",
-      originStatus: "Split"
+      originStatus: "Split",
+      operationalMode: "split-return",
+      operationalDecision: importOperationalDecisions().SPLIT_DRAFT,
+      operationalSuggestion: "Busca separada",
+      operationalConfidence: "baixa",
+      operationalReason: "Rascunho criado para completar a busca separada."
     };
     program.trechos.push(clone);
     program.pendencias = Array.from(new Set(program.trechos.flatMap((item) => item.pendencias || [])));
@@ -13865,18 +14053,23 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const isSplit = isSplitImportedTrecho(trecho);
     const isManual = isManualImportedTrecho(trecho);
     const isLocked = !!options.isDuplicated || options.reviewStatus === statuses.SAVED || options.reviewStatus === statuses.IGNORED;
+    const decisions = importOperationalDecisions();
+    const currentDecision = trecho.operationalDecision || "";
     const splitDisabled = isLocked || isDraft;
     const panel = document.createElement("section");
     panel.className = "import-decision-panel";
+    panel.classList.toggle("is-decision-pending", currentDecision === decisions.PENDING);
 
     const copy = document.createElement("div");
     copy.className = "import-decision-copy";
     const label = document.createElement("span");
-    label.textContent = "Modo da PG";
+    label.textContent = "Motorista fica à disposição?";
     const strong = document.createElement("strong");
     strong.textContent = importedTrechoModeLabel(trecho);
     const detail = document.createElement("p");
-    if (isSplit) {
+    if (trecho.operationalReason) {
+      detail.textContent = formatOperationalText(trecho.operationalReason);
+    } else if (isSplit) {
       detail.textContent = "Complete este rascunho como a busca separada.";
     } else if (isManual) {
       detail.textContent = "Serviço criado manualmente dentro da mesma PG.";
@@ -13889,20 +14082,24 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
     const optionsWrap = document.createElement("div");
     optionsWrap.className = "import-decision-options";
-    const keepButton = document.createElement("button");
-    keepButton.type = "button";
-    keepButton.className = `import-decision-button is-current${hasReturn && !isDraft ? " is-waiting" : ""}`;
-    keepButton.textContent = hasReturn && !isDraft ? "Manter espera" : "Sem espera";
-    keepButton.disabled = true;
-    keepButton.setAttribute("aria-pressed", "true");
-    const splitButton = buildImportAction("Separar busca", "split-trecho", splitDisabled);
+    const keepButton = buildImportAction("Manter espera", "keep-waiting", isLocked || isDraft || !hasReturn);
+    keepButton.classList.add("import-decision-button", "is-keep-action");
+    keepButton.classList.toggle("is-current", currentDecision === decisions.KEEP_WAITING);
+    keepButton.setAttribute("aria-pressed", String(currentDecision === decisions.KEEP_WAITING));
+    const splitButton = buildImportAction("Separar ida/busca", "split-trecho", splitDisabled);
     splitButton.classList.add("import-decision-button", "is-split-action");
+    splitButton.classList.toggle("is-current", currentDecision === decisions.SPLIT || currentDecision === decisions.SPLIT_DRAFT);
+    splitButton.setAttribute("aria-pressed", String(currentDecision === decisions.SPLIT || currentDecision === decisions.SPLIT_DRAFT));
     splitButton.title = splitDisabled
       ? isDraft
         ? "Split disponível apenas no serviço importado original."
         : "Este serviço não pode ser separado neste estado."
       : "Criar segunda OS rascunho na mesma PG.";
-    optionsWrap.append(keepButton, splitButton);
+    const manualButton = buildImportAction("Revisar manual", "manual-operational-review", isLocked);
+    manualButton.classList.add("import-decision-button", "is-manual-action");
+    manualButton.classList.toggle("is-current", currentDecision === decisions.MANUAL_REVIEW);
+    manualButton.setAttribute("aria-pressed", String(currentDecision === decisions.MANUAL_REVIEW));
+    optionsWrap.append(keepButton, splitButton, manualButton);
 
     panel.append(copy, optionsWrap);
     return panel;
@@ -13958,9 +14155,26 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function importedTrechoModeLabel(trecho) {
+    if (trecho?.operationalSuggestion) return formatOperationalText(trecho.operationalSuggestion);
     if (isSplitImportedTrecho(trecho)) return "Separar busca";
     if (isManualImportedTrecho(trecho)) return "Serviço manual";
     return importedTrechoHasReturn(trecho) ? "Manter espera" : "Sem espera";
+  }
+
+  function formatOperationalText(value) {
+    return String(value || "")
+      .replace(/Ida \+ busca separaveis/g, "Ida + busca separáveis")
+      .replace(/Ida\/busca separadas/g, "Ida/busca separadas")
+      .replace(/OS unica/g, "OS única")
+      .replace(/Servico/g, "Serviço")
+      .replace(/servico/g, "serviço")
+      .replace(/disposicao/g, "disposição")
+      .replace(/Nao/g, "Não")
+      .replace(/nao/g, "não")
+      .replace(/e seguro/g, "é seguro")
+      .replace(/provaveis/g, "prováveis")
+      .replace(/Usuario/g, "Usuário")
+      .replace(/decisao/g, "decisão");
   }
 
   function importedTrechoWindowLabel(trecho) {
@@ -14283,6 +14497,20 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       }
       return;
     }
+    if (action.dataset.importAction === "keep-waiting") {
+      if (trecho.duplicatedRecordIds?.length || isDraftImportedTrecho(trecho)) return;
+      applyImportedOperationalDecision(trecho, importOperationalDecisions().KEEP_WAITING);
+      renderImportReviewPreservingGallery();
+      toast("Decisão registrada: manter uma OS com espera.", "success", 4000);
+      return;
+    }
+    if (action.dataset.importAction === "manual-operational-review") {
+      if (trecho.duplicatedRecordIds?.length) return;
+      applyImportedOperationalDecision(trecho, importOperationalDecisions().MANUAL_REVIEW);
+      renderImportReviewPreservingGallery();
+      toast("PG mantida pendente para revisão manual.", "warning", 5000);
+      return;
+    }
     if (action.dataset.importAction === "split-trecho") {
       if (trecho.duplicatedRecordIds?.length) {
         toast("Serviço já existe no sistema. Edite pelo sistema.", "warning", 6000);
@@ -14298,7 +14526,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       requestAnimationFrame(() => {
         el.importReviewPrograms?.querySelector(".import-inspector [data-import-field]")?.focus();
       });
-      toast(clone ? "Split criado. Complete data, endereço, trajeto e destino." : "Não consegui criar Split.", clone ? "success" : "error", 6000);
+      toast(clone ? "Busca separada criada. Revise os dados pré-preenchidos." : "Não consegui criar Split.", clone ? "success" : "error", 6000);
       return;
     }
     if (action.dataset.importAction === "confirm-review") {

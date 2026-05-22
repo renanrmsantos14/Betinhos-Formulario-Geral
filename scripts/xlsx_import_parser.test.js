@@ -8,6 +8,9 @@ const {
   normalizeImportedRows,
   buildImportPrograms,
   IMPORT_REVIEW_STATUSES,
+  IMPORT_OPERATIONAL_DECISIONS,
+  IMPORT_OPERATIONAL_MODES,
+  applyImportOperationalDecision,
   createManualImportTrecho,
   confirmImportedTrechoReview,
   ignoreImportedTrechoReview,
@@ -263,6 +266,14 @@ assert.deepEqual(waitTrecho.passageiros.map((passenger) => passenger.nome), ["AN
 assert.equal(waitTrecho.origem, "08:00 - ANA, BRUNO - Hotel A\n17:00 - ANA - Escritorio A", "endereco de saida deve listar todas as linhas agrupando endereco igual");
 assert.equal(waitTrecho.destino, "08:00 - ANA - Escritorio A\n08:00 - BRUNO - Escritorio B\n17:00 - ANA - Hotel A", "destino deve listar todas as linhas por horario e destino");
 assert.equal(waitTrecho.trajetoCidades, "Sao Paulo / Campinas / Sao Paulo", "trajeto deve usar sequencia unica de cidades");
+assert.equal(waitTrecho.operationalMode, IMPORT_OPERATIONAL_MODES.SEPARABLE, "PG com dois horarios sem indicacao de espera deve sugerir ida/busca separaveis");
+assert.equal(waitTrecho.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.PENDING, "PG separavel deve exigir decisao operacional antes de confirmar");
+assert.equal(waitTrecho.operationalSuggestion, "Ida + busca separaveis", "sugestao deve falar a linguagem operacional");
+assert.ok(waitTrecho.pendencias.includes("Decidir se motorista fica a disposicao ou separar ida/busca."), "PG separavel deve ficar pendente ate decisao humana");
+
+applyImportOperationalDecision(waitTrecho, IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING);
+assert.equal(waitTrecho.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING, "decisao de manter espera deve ficar registrada");
+assert.ok(!waitTrecho.pendencias.includes("Decidir se motorista fica a disposicao ou separar ida/busca."), "manter espera deve liberar a pendencia operacional");
 
 const multiDatePrograms = buildImportPrograms([
   { ...waitPrograms[0].trechos[0].linhasImportadas[0], sourceRow: 20, programacao: "PGDATE/1", data: "20/05/2026", dataIso: "2026-05-20" },
@@ -272,15 +283,17 @@ assert.ok(multiDatePrograms[0].trechos[0].pendencias.includes("PG com datas dife
 
 const splitClone = splitImportedTrecho(waitPrograms[0], waitTrecho, { key: "PGWAIT/1|split|1" });
 assert.equal(waitTrecho.retornoPrevistoHorario, "", "Split deve limpar retorno previsto da OS original");
+assert.equal(waitTrecho.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.SPLIT, "Split deve registrar decisao operacional na OS original");
 assert.equal(splitClone.key, "PGWAIT/1|split|1", "Split deve criar chave estavel na PG");
 assert.equal(splitClone.importOrigin, "split", "Split deve marcar origem tecnica");
 assert.equal(splitClone.reviewStatus, IMPORT_REVIEW_STATUSES.PENDING, "Split deve nascer pendente");
 assert.deepEqual(splitClone.passageiros.map((passenger) => passenger.nome), ["ANA TESTE", "BRUNO TESTE"], "Split deve copiar pax unicos");
-assert.equal(splitClone.dataIso, "", "Split deve nascer sem data");
-assert.equal(splitClone.horario, "", "Split deve nascer sem horario");
-assert.equal(splitClone.origem, "", "Split deve nascer sem endereco");
-assert.equal(splitClone.destino, "", "Split deve nascer sem destino");
-assert.equal(splitClone.trajetoCidades, "", "Split deve nascer sem trajeto");
+assert.equal(splitClone.dataIso, "2026-05-20", "Split deve pre-preencher data da busca quando houver linha de retorno clara");
+assert.equal(splitClone.horario, "17:00", "Split deve pre-preencher horario da busca quando houver linha de retorno clara");
+assert.equal(splitClone.origem, "17:00 - ANA - Escritorio A", "Split deve pre-preencher endereco de saida da busca");
+assert.equal(splitClone.destino, "17:00 - ANA - Hotel A", "Split deve pre-preencher destino da busca");
+assert.equal(splitClone.trajetoCidades, "Campinas / Sao Paulo", "Split deve pre-preencher trajeto da busca");
+assert.equal(splitClone.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.SPLIT_DRAFT, "clone deve nascer como rascunho de busca separada");
 
 const manualTrecho = createManualImportTrecho(sharedPickupPrograms[0], { key: "PGTEST/1|manual|1" });
 assert.equal(manualTrecho.key, "PGTEST/1|manual|1", "servico manual deve receber chave estavel dentro da PG");

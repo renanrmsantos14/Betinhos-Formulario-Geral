@@ -5756,6 +5756,29 @@
     return isManualImportedTrecho(trecho) || isSplitImportedTrecho(trecho);
   }
 
+  function importOperationalDecisions() {
+    return window.XlsxImportCore?.IMPORT_OPERATIONAL_DECISIONS || {
+      PENDING: "pending",
+      KEEP_WAITING: "keep-waiting",
+      SPLIT: "split",
+      SPLIT_DRAFT: "split-draft",
+      MANUAL_REVIEW: "manual-review"
+    };
+  }
+
+  function applyImportedOperationalDecision(trecho, decision) {
+    if (window.XlsxImportCore?.applyImportOperationalDecision) {
+      return window.XlsxImportCore.applyImportOperationalDecision(trecho, decision);
+    }
+    const decisions = importOperationalDecisions();
+    trecho.operationalDecision = decision;
+    const decisionIssue = window.XlsxImportCore?.OPERATIONAL_DECISION_ISSUE || "Decidir se motorista fica a disposicao ou separar ida/busca.";
+    trecho.pendencias = (trecho.pendencias || []).filter((issue) => issue !== decisionIssue);
+    if (decision === decisions.MANUAL_REVIEW) trecho.pendencias.push(decisionIssue);
+    markImportedReviewPending(trecho);
+    return trecho;
+  }
+
   function findImportProgram(programacao) {
     return state.importReview?.programs?.find((program) => program.programacao === programacao) || null;
   }
@@ -5800,7 +5823,12 @@
       savedRecordId: "",
       duplicatedRecordIds: [],
       importOrigin: "manual",
-      originStatus: "Manual"
+      originStatus: "Manual",
+      operationalMode: "manual",
+      operationalDecision: importOperationalDecisions().MANUAL_REVIEW,
+      operationalSuggestion: "Serviço manual",
+      operationalConfidence: "manual",
+      operationalReason: "Serviço criado manualmente dentro da PG."
     };
   }
 
@@ -5844,6 +5872,7 @@
   function createLocalSplitImportedTrecho(program, source) {
     source.retornoPrevistoDataIso = "";
     source.retornoPrevistoHorario = "";
+    applyImportedOperationalDecision(source, importOperationalDecisions().SPLIT);
     markImportedReviewPending(source);
     const key = nextSplitImportedTrechoKey(program);
     const clone = {
@@ -5887,7 +5916,12 @@
       savedRecordId: "",
       duplicatedRecordIds: [],
       importOrigin: "split",
-      originStatus: "Split"
+      originStatus: "Split",
+      operationalMode: "split-return",
+      operationalDecision: importOperationalDecisions().SPLIT_DRAFT,
+      operationalSuggestion: "Busca separada",
+      operationalConfidence: "baixa",
+      operationalReason: "Rascunho criado para completar a busca separada."
     };
     program.trechos.push(clone);
     program.pendencias = Array.from(new Set(program.trechos.flatMap((item) => item.pendencias || [])));
@@ -6218,18 +6252,23 @@
     const isSplit = isSplitImportedTrecho(trecho);
     const isManual = isManualImportedTrecho(trecho);
     const isLocked = !!options.isDuplicated || options.reviewStatus === statuses.SAVED || options.reviewStatus === statuses.IGNORED;
+    const decisions = importOperationalDecisions();
+    const currentDecision = trecho.operationalDecision || "";
     const splitDisabled = isLocked || isDraft;
     const panel = document.createElement("section");
     panel.className = "import-decision-panel";
+    panel.classList.toggle("is-decision-pending", currentDecision === decisions.PENDING);
 
     const copy = document.createElement("div");
     copy.className = "import-decision-copy";
     const label = document.createElement("span");
-    label.textContent = "Modo da PG";
+    label.textContent = "Motorista fica à disposição?";
     const strong = document.createElement("strong");
     strong.textContent = importedTrechoModeLabel(trecho);
     const detail = document.createElement("p");
-    if (isSplit) {
+    if (trecho.operationalReason) {
+      detail.textContent = formatOperationalText(trecho.operationalReason);
+    } else if (isSplit) {
       detail.textContent = "Complete este rascunho como a busca separada.";
     } else if (isManual) {
       detail.textContent = "Serviço criado manualmente dentro da mesma PG.";
@@ -6242,20 +6281,24 @@
 
     const optionsWrap = document.createElement("div");
     optionsWrap.className = "import-decision-options";
-    const keepButton = document.createElement("button");
-    keepButton.type = "button";
-    keepButton.className = `import-decision-button is-current${hasReturn && !isDraft ? " is-waiting" : ""}`;
-    keepButton.textContent = hasReturn && !isDraft ? "Manter espera" : "Sem espera";
-    keepButton.disabled = true;
-    keepButton.setAttribute("aria-pressed", "true");
-    const splitButton = buildImportAction("Separar busca", "split-trecho", splitDisabled);
+    const keepButton = buildImportAction("Manter espera", "keep-waiting", isLocked || isDraft || !hasReturn);
+    keepButton.classList.add("import-decision-button", "is-keep-action");
+    keepButton.classList.toggle("is-current", currentDecision === decisions.KEEP_WAITING);
+    keepButton.setAttribute("aria-pressed", String(currentDecision === decisions.KEEP_WAITING));
+    const splitButton = buildImportAction("Separar ida/busca", "split-trecho", splitDisabled);
     splitButton.classList.add("import-decision-button", "is-split-action");
+    splitButton.classList.toggle("is-current", currentDecision === decisions.SPLIT || currentDecision === decisions.SPLIT_DRAFT);
+    splitButton.setAttribute("aria-pressed", String(currentDecision === decisions.SPLIT || currentDecision === decisions.SPLIT_DRAFT));
     splitButton.title = splitDisabled
       ? isDraft
         ? "Split disponível apenas no serviço importado original."
         : "Este serviço não pode ser separado neste estado."
       : "Criar segunda OS rascunho na mesma PG.";
-    optionsWrap.append(keepButton, splitButton);
+    const manualButton = buildImportAction("Revisar manual", "manual-operational-review", isLocked);
+    manualButton.classList.add("import-decision-button", "is-manual-action");
+    manualButton.classList.toggle("is-current", currentDecision === decisions.MANUAL_REVIEW);
+    manualButton.setAttribute("aria-pressed", String(currentDecision === decisions.MANUAL_REVIEW));
+    optionsWrap.append(keepButton, splitButton, manualButton);
 
     panel.append(copy, optionsWrap);
     return panel;
@@ -6311,9 +6354,26 @@
   }
 
   function importedTrechoModeLabel(trecho) {
+    if (trecho?.operationalSuggestion) return formatOperationalText(trecho.operationalSuggestion);
     if (isSplitImportedTrecho(trecho)) return "Separar busca";
     if (isManualImportedTrecho(trecho)) return "Serviço manual";
     return importedTrechoHasReturn(trecho) ? "Manter espera" : "Sem espera";
+  }
+
+  function formatOperationalText(value) {
+    return String(value || "")
+      .replace(/Ida \+ busca separaveis/g, "Ida + busca separáveis")
+      .replace(/Ida\/busca separadas/g, "Ida/busca separadas")
+      .replace(/OS unica/g, "OS única")
+      .replace(/Servico/g, "Serviço")
+      .replace(/servico/g, "serviço")
+      .replace(/disposicao/g, "disposição")
+      .replace(/Nao/g, "Não")
+      .replace(/nao/g, "não")
+      .replace(/e seguro/g, "é seguro")
+      .replace(/provaveis/g, "prováveis")
+      .replace(/Usuario/g, "Usuário")
+      .replace(/decisao/g, "decisão");
   }
 
   function importedTrechoWindowLabel(trecho) {
@@ -6636,6 +6696,20 @@
       }
       return;
     }
+    if (action.dataset.importAction === "keep-waiting") {
+      if (trecho.duplicatedRecordIds?.length || isDraftImportedTrecho(trecho)) return;
+      applyImportedOperationalDecision(trecho, importOperationalDecisions().KEEP_WAITING);
+      renderImportReviewPreservingGallery();
+      toast("Decisão registrada: manter uma OS com espera.", "success", 4000);
+      return;
+    }
+    if (action.dataset.importAction === "manual-operational-review") {
+      if (trecho.duplicatedRecordIds?.length) return;
+      applyImportedOperationalDecision(trecho, importOperationalDecisions().MANUAL_REVIEW);
+      renderImportReviewPreservingGallery();
+      toast("PG mantida pendente para revisão manual.", "warning", 5000);
+      return;
+    }
     if (action.dataset.importAction === "split-trecho") {
       if (trecho.duplicatedRecordIds?.length) {
         toast("Serviço já existe no sistema. Edite pelo sistema.", "warning", 6000);
@@ -6651,7 +6725,7 @@
       requestAnimationFrame(() => {
         el.importReviewPrograms?.querySelector(".import-inspector [data-import-field]")?.focus();
       });
-      toast(clone ? "Split criado. Complete data, endereço, trajeto e destino." : "Não consegui criar Split.", clone ? "success" : "error", 6000);
+      toast(clone ? "Busca separada criada. Revise os dados pré-preenchidos." : "Não consegui criar Split.", clone ? "success" : "error", 6000);
       return;
     }
     if (action.dataset.importAction === "confirm-review") {

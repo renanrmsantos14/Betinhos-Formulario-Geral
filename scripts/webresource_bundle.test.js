@@ -19,7 +19,9 @@ assert.ok(html.includes("cr40f_idexterno"), "bundle deve conter o campo externo 
 assert.ok(html.includes("split-trecho"), "bundle deve expor acao Split na revisao de importacao");
 assert.ok(html.includes("importedTrechoReturnDateTimeLocal"), "bundle deve editar horario previsto de retorno importado");
 assert.ok(html.includes("import-decision-panel"), "bundle deve conter painel de decisao operacional da PG");
-assert.ok(html.includes("Separar busca"), "bundle deve expor Split com linguagem operacional");
+assert.ok(html.includes("Motorista fica à disposição?"), "bundle deve perguntar a decisao operacional correta");
+assert.ok(html.includes("Separar ida/busca"), "bundle deve expor Split com linguagem operacional");
+assert.ok(html.includes("keep-waiting"), "bundle deve permitir registrar manter espera");
 assert.ok(html.includes("import-timeline"), "bundle deve conter timeline de saida e retorno");
 assert.ok(html.includes("Janela da PG"), "bundle deve explicar a janela operacional da PG");
 assert.ok(!html.includes('<link rel="stylesheet" href="styles.css"'), "bundle nao deve depender de styles.css externo");

@@ -4386,7 +4386,7 @@ body.is-import-dragging .import-drop-overlay {
 
 .import-decision-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(260px, 1fr) minmax(260px, auto);
   gap: 12px;
   align-items: center;
   min-width: 0;
@@ -4396,6 +4396,11 @@ body.is-import-dragging .import-drop-overlay {
   border-radius: var(--radius-sm);
   background: #ffffff;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.86);
+}
+
+.import-decision-panel.is-decision-pending {
+  border-left-color: var(--warning);
+  background: color-mix(in srgb, var(--warning-soft) 20%, #ffffff);
 }
 
 .import-decision-copy {
@@ -4432,6 +4437,8 @@ body.is-import-dragging .import-drop-overlay {
 .import-decision-options {
   display: inline-flex;
   align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
   min-width: 0;
 }
@@ -4451,13 +4458,15 @@ body.is-import-dragging .import-drop-overlay {
   background: color-mix(in srgb, var(--accent-soft) 64%, #ffffff);
 }
 
-.import-decision-button.is-current:not(.is-waiting) {
-  color: var(--text-soft);
-  border-color: var(--line);
-  background: var(--surface-soft);
+.import-decision-button.is-manual-action.is-current {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 28%, var(--line));
+  background: var(--warning-soft);
 }
 
-.import-decision-button.is-split-action {
+.import-decision-button.is-split-action,
+.import-decision-button.is-manual-action,
+.import-decision-button.is-keep-action {
   padding-inline: 12px;
 }
 

@@ -226,7 +226,10 @@ includes(app, "import-add-service-button", "botao sutil de adicionar servico por
 includes(app, "originStatus: \"Manual\"", "servico manual deve carregar status visual Manual");
 includes(app, "function buildImportDecisionPanel", "revisao importada deve expor decisao operacional da PG");
 includes(app, "import-decision-panel", "revisao importada deve destacar manter espera ou separar busca");
-includes(app, "Separar busca", "Split deve aparecer com linguagem operacional");
+includes(app, "Motorista fica à disposição?", "revisao importada deve perguntar a decisao operacional correta");
+includes(app, "Separar ida/busca", "Split deve aparecer com linguagem operacional");
+includes(app, "keep-waiting", "usuario deve conseguir registrar manter espera");
+includes(app, "manual-operational-review", "usuario deve conseguir deixar PG para revisao manual");
 includes(app, "function buildImportTimeline", "revisao importada deve mostrar timeline de saida e retorno");
 includes(app, "Janela da PG", "timeline deve explicar a janela operacional da PG");
 includes(app, "trajetoCidades", "revisao importada deve permitir revisar trajeto por cidades");
