@@ -3930,6 +3930,55 @@ body.is-import-dragging .import-drop-overlay {
   padding: 10px;
 }
 
+.import-ignored-list {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--surface-muted) 70%, #ffffff);
+}
+
+.import-ignored-list-head,
+.import-ignored-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.import-ignored-list-head strong,
+.import-ignored-item strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.import-ignored-list-head span,
+.import-ignored-item span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.import-ignored-items {
+  display: grid;
+  gap: 6px;
+}
+
+.import-ignored-item {
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: #ffffff;
+}
+
+.import-ignored-item > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
 .import-service-group {
   display: grid;
   gap: 6px;
@@ -3975,7 +4024,7 @@ body.is-import-dragging .import-drop-overlay {
   min-width: 0;
 }
 
-.import-add-service-button {
+.import-add-inline-button {
   display: inline-grid;
   place-items: center;
   width: 26px;
@@ -3997,23 +4046,23 @@ body.is-import-dragging .import-drop-overlay {
     transform 150ms var(--ease-out);
 }
 
-.import-add-service-button:hover,
-.import-add-service-button:focus-visible {
+.import-add-inline-button:hover,
+.import-add-inline-button:focus-visible {
   border-color: color-mix(in srgb, var(--accent) 42%, var(--line));
   background: color-mix(in srgb, var(--accent-soft) 50%, #ffffff);
   color: var(--accent-strong);
 }
 
-.import-add-service-button:focus-visible {
+.import-add-inline-button:focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus);
 }
 
-.import-add-service-button:active {
+.import-add-inline-button:active {
   transform: translateY(1px);
 }
 
-.import-add-service-button:disabled {
+.import-add-inline-button:disabled {
   color: var(--muted);
   background: var(--surface-muted);
   cursor: not-allowed;
@@ -4119,8 +4168,7 @@ body.is-import-dragging .import-drop-overlay {
   background: var(--accent);
 }
 
-.import-service-row.is-split::before,
-.import-service-row.is-manual::before {
+.import-service-row.is-split::before {
   background: var(--text-soft);
 }
 
@@ -4427,7 +4475,7 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .import-badge.warning {
-  color: var(--danger);
+  color: var(--warning);
   border-color: color-mix(in srgb, var(--warning) 24%, transparent);
   background: var(--warning-soft);
 }

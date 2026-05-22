@@ -58,12 +58,12 @@
     INDEPENDENT_SERVICES: "independent-services",
     SEPARABLE: "separable",
     MANUAL_REVIEW: "manual-review",
-    MANUAL: "manual",
     SPLIT_RETURN: "split-return"
   });
 
   const IMPORT_OPERATIONAL_DECISIONS = Object.freeze({
     PENDING: "pending",
+    KEEP_ONE: "keep-one",
     KEEP_WAITING: "keep-waiting",
     SPLIT: "split",
     SPLIT_DRAFT: "split-draft",
@@ -355,7 +355,7 @@
       return {
         mode: IMPORT_OPERATIONAL_MODES.MANUAL_REVIEW,
         decision: IMPORT_OPERATIONAL_DECISIONS.MANUAL_REVIEW,
-        suggestion: "Revisar manual",
+        suggestion: "Revisao necessaria",
         confidence: "alta",
         reason: "A PG tem datas diferentes. Nao e seguro inferir espera ou ida/busca.",
         requiresDecision: false
@@ -364,7 +364,7 @@
     if (destinationKeys.size === 1 && sorted.length > 1 && windowMinutes <= 90 && passengerKeys.size > 1) {
       return {
         mode: IMPORT_OPERATIONAL_MODES.MULTI_PICKUP,
-        decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING,
+        decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_ONE,
         suggestion: "Multi-coleta",
         confidence: "alta",
         reason: "Mesmo destino dentro de 1h30. Trate como uma OS com coletas em sequencia.",
@@ -384,7 +384,7 @@
     if (!options.retornoLine || distinctTimes.size <= 1) {
       return {
         mode: IMPORT_OPERATIONAL_MODES.SINGLE,
-        decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING,
+        decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_ONE,
         suggestion: "OS unica",
         confidence: "media",
         reason: "A PG tem apenas um horario operacional util.",
@@ -476,53 +476,6 @@
     trecho.reviewBlockReason = "";
     if (recordId) trecho.savedRecordId = recordId;
     return trecho;
-  }
-
-  function createManualImportTrecho(program, options = {}) {
-    const programacao = String(options.programacao || program?.programacao || "").trim();
-    const key = options.key || `${programacao}|manual|${nextManualImportSequence(program)}`;
-    return {
-      key,
-      programacao,
-      solicitacoes: [],
-      sourceRows: [],
-      data: "",
-      dataIso: "",
-      horario: "",
-      origem: "",
-      destino: "",
-      destinos: [],
-      cidadeOrigem: "",
-      cidadeDestino: "",
-      solicitanteNome: "",
-      tipoServicoSugerido: "",
-      tipoVeiculoSugerido: "",
-      tipoServicoValue: "",
-      tipoVeiculoValue: "",
-      valor: null,
-      motoristaNome: "",
-      retornoPrevistoDataIso: "",
-      retornoPrevistoHorario: "",
-      trajetoCidades: "",
-      origemPrincipal: "",
-      destinoPrincipal: "",
-      linhasImportadas: [],
-      passageiros: [],
-      observacoes: [],
-      observacaoOperacional: "",
-      pendencias: [],
-      reviewStatus: IMPORT_REVIEW_STATUSES.PENDING,
-      reviewBlockReason: "",
-      savedRecordId: "",
-      duplicatedRecordIds: [],
-      importOrigin: "manual",
-      originStatus: "Manual",
-      operationalMode: IMPORT_OPERATIONAL_MODES.MANUAL,
-      operationalDecision: IMPORT_OPERATIONAL_DECISIONS.MANUAL_REVIEW,
-      operationalSuggestion: "Servico manual",
-      operationalConfidence: "manual",
-      operationalReason: "Servico criado manualmente dentro da PG."
-    };
   }
 
   function splitImportedTrecho(program, trecho, options = {}) {
@@ -624,7 +577,7 @@
     merged.importOrigin = "same-car";
     merged.originStatus = "Mesmo carro";
     merged.operationalMode = IMPORT_OPERATIONAL_MODES.MULTI_PICKUP;
-    merged.operationalDecision = IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING;
+    merged.operationalDecision = IMPORT_OPERATIONAL_DECISIONS.KEEP_ONE;
     merged.operationalSuggestion = "Mesmo carro";
     merged.operationalConfidence = "manual";
     merged.operationalReason = "Usuario confirmou que os trechos separados usam o mesmo carro.";
@@ -825,15 +778,6 @@
       if (nameMatches || phoneMatches) matched += 1;
     });
     return matched / normalizedPassengers.length;
-  }
-
-  function nextManualImportSequence(program) {
-    const keys = new Set((program?.trechos || []).map((trecho) => String(trecho?.key || "")));
-    let sequence = 1;
-    while (keys.has(`${program?.programacao || ""}|manual|${sequence}`)) {
-      sequence += 1;
-    }
-    return sequence;
   }
 
   function nextSplitImportSequence(program) {
@@ -1204,8 +1148,11 @@
     if (normalized === IMPORT_OPERATIONAL_DECISIONS.MANUAL_REVIEW) {
       trecho.pendencias.push(OPERATIONAL_DECISION_ISSUE);
       trecho.operationalMode = IMPORT_OPERATIONAL_MODES.MANUAL_REVIEW;
-      trecho.operationalSuggestion = "Revisar manual";
+      trecho.operationalSuggestion = "Revisao necessaria";
       trecho.operationalReason = "Usuario marcou a PG para decisao manual antes do agendamento.";
+    } else if (normalized === IMPORT_OPERATIONAL_DECISIONS.KEEP_ONE) {
+      trecho.operationalSuggestion = "OS unica";
+      trecho.operationalReason = "Usuario confirmou uma OS unica sem espera operacional.";
     } else if (normalized === IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING) {
       trecho.operationalSuggestion = "Manter espera";
       trecho.operationalReason = "Usuario confirmou uma OS com motorista a disposicao ate o retorno previsto.";
@@ -1431,7 +1378,6 @@
     applyImportOperationalDecision,
     buildImportPrograms,
     collectProgramIssues,
-    createManualImportTrecho,
     confirmImportedTrechoReview,
     ignoreImportedTrechoReview,
     inferServiceType,

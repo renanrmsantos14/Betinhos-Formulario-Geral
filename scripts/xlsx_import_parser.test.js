@@ -3,6 +3,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 const zlib = require("node:zlib");
 
+const importCore = require("./xlsx_import_core");
+
 const {
   REQUIRED_XLSX_HEADERS,
   normalizeImportedRows,
@@ -11,7 +13,6 @@ const {
   IMPORT_OPERATIONAL_DECISIONS,
   IMPORT_OPERATIONAL_MODES,
   applyImportOperationalDecision,
-  createManualImportTrecho,
   confirmImportedTrechoReview,
   ignoreImportedTrechoReview,
   markImportedTrechoPending,
@@ -21,7 +22,7 @@ const {
   splitImportedTrecho,
   summarizeImportReviewTrechos,
   validateImportHeaders
-} = require("./xlsx_import_core");
+} = importCore;
 
 const root = path.resolve(__dirname, "..");
 const workbookPath = path.join(root, "Relatorio - 2026-05-15T144227.698.xlsx");
@@ -115,6 +116,7 @@ function readPassengersSheet(filePath) {
 }
 
 assert.ok(fs.existsSync(workbookPath), "Arquivo XLSX real precisa estar na pasta do projeto");
+assert.equal(importCore.createManualImportTrecho, undefined, "core nao deve expor criacao de servico manual na PG");
 
 const rawRows = readPassengersSheet(workbookPath);
 const normalized = normalizeImportedRows(rawRows);
@@ -409,6 +411,34 @@ applyImportOperationalDecision(waitTrecho, IMPORT_OPERATIONAL_DECISIONS.KEEP_WAI
 assert.equal(waitTrecho.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING, "decisao de manter espera deve ficar registrada");
 assert.ok(!waitTrecho.pendencias.includes("Decidir se motorista fica a disposicao ou separar ida/busca."), "manter espera deve liberar a pendencia operacional");
 
+const keepOnePrograms = buildImportPrograms([
+  {
+    sourceRow: 25,
+    programacao: "PGONE/1",
+    solicitacao: "ST25",
+    data: "20/05/2026",
+    dataIso: "2026-05-20",
+    horario: "09:30",
+    origem: "Hotel A",
+    origemKey: "hotel a",
+    destino: "Escritorio A",
+    destinoKey: "escritorio a",
+    cidadeOrigem: "Sao Paulo",
+    cidadeDestino: "Sao Paulo",
+    nomePassageiro: "CARLA TESTE",
+    telefone: "11955550000",
+    centroCusto: "CR1",
+    tipoServicoSugerido: "Dentro de Sao Paulo",
+    tipoVeiculoSugerido: "Executivo",
+    valor: 100,
+    solicitanteNome: "SOLICITANTE TESTE"
+  }
+]);
+const keepOneTrecho = keepOnePrograms[0].trechos[0];
+applyImportOperationalDecision(keepOneTrecho, IMPORT_OPERATIONAL_DECISIONS.KEEP_ONE);
+assert.equal(keepOneTrecho.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.KEEP_ONE, "decisao de manter 1 OS deve ficar registrada sem virar espera");
+assert.equal(keepOneTrecho.operationalSuggestion, "OS unica", "manter 1 OS deve ficar como decisao interna sem botao visual");
+
 const multiPickupPrograms = buildImportPrograms([
   {
     sourceRow: 30,
@@ -508,15 +538,6 @@ assert.equal(splitClone.origem, "17:00 - ANA - Escritorio A", "Split deve pre-pr
 assert.equal(splitClone.destino, "ANA - Hotel A", "Split deve pre-preencher destino da busca sem horario");
 assert.equal(splitClone.trajetoCidades, "Campinas / Sao Paulo", "Split deve pre-preencher trajeto da busca");
 assert.equal(splitClone.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.SPLIT_DRAFT, "clone deve nascer como rascunho de busca separada");
-
-const manualTrecho = createManualImportTrecho(sharedPickupPrograms[0], { key: "PGTEST/1|manual|1" });
-assert.equal(manualTrecho.key, "PGTEST/1|manual|1", "servico manual deve receber chave estavel dentro da PG");
-assert.equal(manualTrecho.programacao, "PGTEST/1", "servico manual deve nascer dentro da mesma PG");
-assert.equal(manualTrecho.originStatus, "Manual", "servico adicionado pelo usuario deve exibir status Manual");
-assert.equal(manualTrecho.importOrigin, "manual", "servico manual deve manter origem tecnica manual");
-assert.equal(manualTrecho.reviewStatus, IMPORT_REVIEW_STATUSES.PENDING, "servico manual deve iniciar como rascunho pendente");
-assert.deepEqual(manualTrecho.passageiros, [], "servico manual deve nascer sem passageiros preenchidos");
-assert.equal(manualTrecho.destino, "", "servico manual deve permitir preenchimento total pelo inspector");
 
 const exactDuplicateScore = scoreImportedTrechoDuplicate(sharedPickupTrecho, {
   recordId: "reserva-exata",

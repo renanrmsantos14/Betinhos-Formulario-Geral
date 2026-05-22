@@ -100,7 +100,7 @@
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
   const PASSENGER_RECENCY_KEY = "formulario_geral_passenger_recency_v1";
   const BRAND_LOGO_WEBRESOURCE = "cr40f_LogoBetinhosB";
-  const MIN_PASSENGER_SEARCH_LENGTH = 2;
+  const MIN_PASSENGER_SEARCH_LENGTH = 1;
   const MAX_FREQUENT_SERVICE_DAYS = 90;
   const MAX_FREQUENT_SERVICE_RECORDS = 120;
 
@@ -232,8 +232,6 @@
     importReviewStats: $("importReviewStats"),
     importReviewIssues: $("importReviewIssues"),
     importReviewPrograms: $("importReviewPrograms"),
-    importReviewCancel: $("importReviewCancel"),
-    importSaveAll: $("importSaveAll"),
     tabs: [...document.querySelectorAll(".tab")],
     panels: [...document.querySelectorAll(".panel")],
     statusOperacao: $("statusOperacao"),
@@ -534,8 +532,6 @@
     el.saveButton?.addEventListener("click", saveForm);
     el.importXlsxButton?.addEventListener("click", openXlsxImportPicker);
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
-    el.importReviewCancel?.addEventListener("click", closeImportReview);
-    el.importSaveAll?.addEventListener("click", saveAllValidImportedTrechos);
     el.importReviewPrograms?.addEventListener("click", handleImportFieldCopy);
     el.importReviewPrograms?.addEventListener("click", handleImportReviewAction);
     el.importReviewPrograms?.addEventListener("input", handleImportReviewInput);
@@ -4457,7 +4453,7 @@
     passengerPickerTargetOrder = Number.isFinite(normalizedOrder) && normalizedOrder > 0 ? normalizedOrder : null;
     if (!el.passengerPickerOverlay || !el.passengerPickerSearch || !el.passengerPickerResults) return;
     el.passengerPickerSearch.value = "";
-    renderPassengerPickerHint("Digite pelo menos 2 caracteres para pesquisar no Banco de Dados.");
+    renderPassengerPickerHint("Digite pelo menos 1 caractere para pesquisar no Banco de Dados.");
     el.passengerPickerOverlay.hidden = false;
     if (shouldAutofocusSearchInputs()) {
       requestAnimationFrame(() => {
@@ -4489,7 +4485,7 @@
     if (!el.passengerPickerSearch || !el.passengerPickerResults) return;
     const query = el.passengerPickerSearch.value.trim();
     if (normalize(query).length < MIN_PASSENGER_SEARCH_LENGTH) {
-      renderPassengerPickerHint("Digite pelo menos 2 caracteres para pesquisar no Banco de Dados.");
+      renderPassengerPickerHint("Digite pelo menos 1 caractere para pesquisar no Banco de Dados.");
       return;
     }
     const searchSeq = ++passengerPickerSearchSeq;
@@ -5381,10 +5377,6 @@
       trecho.reviewStatus = statuses.PENDING;
       trecho.reviewBlockReason = "";
     }
-    if (el.importSaveAll) {
-      el.importSaveAll.disabled = true;
-      el.importSaveAll.title = "Serviço editado. Confirme a revisão novamente.";
-    }
   }
 
   function summarizeCurrentImportTrechos(trechos) {
@@ -5582,10 +5574,6 @@
     };
   }
 
-  function closeImportReview() {
-    setTab("details");
-  }
-
   function renderImportReview() {
     const review = state.importReview;
     const importedPrograms = review?.programs || [];
@@ -5604,7 +5592,6 @@
       el.importReviewIssues?.replaceChildren();
       if (el.importReviewIssues) el.importReviewIssues.hidden = true;
       el.importReviewPrograms.replaceChildren();
-      if (el.importSaveAll) el.importSaveAll.disabled = true;
       return;
     }
     if (el.importReviewEmpty) el.importReviewEmpty.hidden = true;
@@ -5644,10 +5631,9 @@
     if (hasImportData && visiblePrograms.length > 0) {
       el.importReviewPrograms.appendChild(buildImportWorkbench(visiblePrograms));
     }
-    if (el.importSaveAll) {
-      el.importSaveAll.textContent = "Agendar confirmados";
-      el.importSaveAll.disabled = !(hasImportData && reviewState.canScheduleConfirmed);
-      el.importSaveAll.title = reviewState.canScheduleConfirmed ? "" : reviewState.blockedReason;
+    const ignoredTrechos = getIgnoredImportTrechos(importedPrograms);
+    if (hasImportData && ignoredTrechos.length) {
+      el.importReviewPrograms.appendChild(buildImportIgnoredList(ignoredTrechos));
     }
     syncDateTimeFieldRowWidths();
   }
@@ -5656,13 +5642,25 @@
     const statuses = importReviewStatuses();
     return (programs || []).map((program) => {
       const trechos = (program.trechos || []).filter(
-        (trecho) => normalizeImportedReviewStatus(trecho) !== statuses.SAVED
+        (trecho) => {
+          const status = normalizeImportedReviewStatus(trecho);
+          return status !== statuses.SAVED && status !== statuses.IGNORED;
+        }
       );
       return {
         ...program,
         trechos
       };
     }).filter((program) => program.trechos.length > 0);
+  }
+
+  function getIgnoredImportTrechos(programs) {
+    const statuses = importReviewStatuses();
+    return (programs || []).flatMap((program) => (
+      (program.trechos || [])
+        .filter((trecho) => normalizeImportedReviewStatus(trecho) === statuses.IGNORED)
+        .map((trecho) => ({ program, trecho }))
+    ));
   }
 
   function hasText(value) {
@@ -5745,16 +5743,12 @@
     state.importReview.editingTrechoKey = enabled ? importedTrechoEditKey(programacao, trechoKey) : "";
   }
 
-  function isManualImportedTrecho(trecho) {
-    return trecho?.originStatus === "Manual" || trecho?.importOrigin === "manual";
-  }
-
   function isSplitImportedTrecho(trecho) {
     return trecho?.originStatus === "Split" || trecho?.importOrigin === "split";
   }
 
   function isDraftImportedTrecho(trecho) {
-    return isManualImportedTrecho(trecho) || isSplitImportedTrecho(trecho);
+    return isSplitImportedTrecho(trecho);
   }
 
   function importOperationalDecisions() {
@@ -5775,7 +5769,6 @@
       INDEPENDENT_SERVICES: "independent-services",
       SEPARABLE: "separable",
       MANUAL_REVIEW: "manual-review",
-      MANUAL: "manual",
       SPLIT_RETURN: "split-return"
     };
   }
@@ -5795,79 +5788,6 @@
 
   function findImportProgram(programacao) {
     return state.importReview?.programs?.find((program) => program.programacao === programacao) || null;
-  }
-
-  function createManualImportedTrecho(program) {
-    const key = nextManualImportedTrechoKey(program);
-    if (window.XlsxImportCore?.createManualImportTrecho) {
-      return window.XlsxImportCore.createManualImportTrecho(program, { key });
-    }
-    return {
-      key,
-      programacao: program?.programacao || "",
-      solicitacoes: [],
-      sourceRows: [],
-      data: "",
-      dataIso: "",
-      horario: "",
-      origem: "",
-      destino: "",
-      destinos: [],
-      cidadeOrigem: "",
-      cidadeDestino: "",
-      solicitanteNome: "",
-      tipoServicoSugerido: "",
-      tipoVeiculoSugerido: "",
-      tipoServicoValue: "",
-      tipoVeiculoValue: "",
-      valor: null,
-      motoristaNome: "",
-      retornoPrevistoDataIso: "",
-      retornoPrevistoHorario: "",
-      trajetoCidades: "",
-      origemPrincipal: "",
-      destinoPrincipal: "",
-      linhasImportadas: [],
-      passageiros: [],
-      observacoes: [],
-      observacaoOperacional: "",
-      pendencias: [],
-      reviewStatus: importReviewStatuses().PENDING,
-      reviewBlockReason: "",
-      savedRecordId: "",
-      duplicatedRecordIds: [],
-      importOrigin: "manual",
-      originStatus: "Manual",
-      operationalMode: "manual",
-      operationalDecision: importOperationalDecisions().MANUAL_REVIEW,
-      operationalSuggestion: "Serviço manual",
-      operationalConfidence: "manual",
-      operationalReason: "Serviço criado manualmente dentro da PG."
-    };
-  }
-
-  function nextManualImportedTrechoKey(program) {
-    const programacao = program?.programacao || "";
-    const keys = new Set((program?.trechos || []).map((trecho) => String(trecho.key || "")));
-    let sequence = 1;
-    while (keys.has(`${programacao}|manual|${sequence}`)) {
-      sequence += 1;
-    }
-    return `${programacao}|manual|${sequence}`;
-  }
-
-  function addManualImportedTrecho(programacao) {
-    const program = findImportProgram(programacao);
-    if (!program) return;
-    const trecho = createManualImportedTrecho(program);
-    program.trechos.push(trecho);
-    program.pendencias = window.XlsxImportCore?.collectProgramIssues
-      ? window.XlsxImportCore.collectProgramIssues(program.trechos)
-      : Array.from(new Set(program.trechos.flatMap((item) => item.pendencias || [])));
-    state.importReview.selectedProgramacao = program.programacao;
-    state.importReview.selectedTrechoKey = trecho.key;
-    setImportedTrechoEditMode(program.programacao, trecho.key, true);
-    return trecho;
   }
 
   function splitImportedTrechoForReview(programacao, trecho) {
@@ -6114,7 +6034,6 @@
       groupActions.className = "import-service-group-actions";
       const sameCarButton = buildImportSameCarButton(program);
       if (sameCarButton) groupActions.appendChild(sameCarButton);
-      groupActions.appendChild(buildImportAddServiceButton(program));
       title.append(titleText, groupActions);
       group.appendChild(title);
       program.trechos.forEach((trecho, index) => {
@@ -6130,7 +6049,6 @@
     inspector.setAttribute("aria-label", "Inspector do serviço importado");
     if (selected) {
       const isDuplicated = !!selected.trecho.duplicatedRecordIds?.length;
-      const isManual = isManualImportedTrecho(selected.trecho);
       const isSplit = isSplitImportedTrecho(selected.trecho);
       inspector.classList.toggle("is-duplicated", isDuplicated);
       const isEditing = !isDuplicated && isImportedTrechoEditing(selected.program.programacao, selected.trecho.key);
@@ -6138,7 +6056,7 @@
       inspectorHead.className = "import-inspector-head";
       const title = document.createElement("div");
       const eyebrow = document.createElement("span");
-      eyebrow.textContent = isDuplicated ? "Serviço bloqueado" : isManual ? "Serviço manual" : isSplit ? "Serviço Split" : isEditing ? "Edição habilitada" : "Conferência bloqueada";
+      eyebrow.textContent = isDuplicated ? "Serviço bloqueado" : isSplit ? "Serviço Split" : isEditing ? "Edição habilitada" : "Conferência bloqueada";
       const strong = document.createElement("strong");
       strong.textContent = `${selected.program.programacao} · ${formatDateInputForDisplay(selected.trecho.dataIso)} ${selected.trecho.horario || "--:--"}`;
       title.append(eyebrow, strong);
@@ -6152,6 +6070,41 @@
 
     shell.append(list, inspector);
     return shell;
+  }
+
+  function buildImportIgnoredList(items) {
+    const section = document.createElement("section");
+    section.className = "import-ignored-list";
+    const head = document.createElement("div");
+    head.className = "import-ignored-list-head";
+    const title = document.createElement("strong");
+    title.textContent = "Ignorados";
+    const count = document.createElement("span");
+    count.textContent = `${items.length} serviço(s)`;
+    head.append(title, count);
+
+    const list = document.createElement("div");
+    list.className = "import-ignored-items";
+    items.forEach(({ program, trecho }) => {
+      const row = document.createElement("div");
+      row.className = "import-ignored-item";
+      const main = document.createElement("div");
+      const name = document.createElement("strong");
+      name.textContent = `${program.programacao} · ${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"}`;
+      const meta = document.createElement("span");
+      meta.textContent = [importPassengerCountLabel(trecho.passageiros?.length || 0), importedTrechoModeLabel(trecho)].filter(Boolean).join(" · ");
+      main.append(name, meta);
+      const action = buildImportAction("Revisar novamente", "review-pending");
+      action.dataset.programacao = program.programacao;
+      action.dataset.trechoKey = trecho.key;
+      row.dataset.programacao = program.programacao;
+      row.dataset.trechoKey = trecho.key;
+      row.append(main, action);
+      list.appendChild(row);
+    });
+
+    section.append(head, list);
+    return section;
   }
 
   function buildImportEditToggle(programacao, trechoKey, isEditing, disabled = false) {
@@ -6177,18 +6130,6 @@
     return button;
   }
 
-  function buildImportAddServiceButton(program) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "import-add-service-button";
-    button.dataset.importAction = "add-manual-trecho";
-    button.dataset.programacao = program?.programacao || "";
-    button.textContent = "+";
-    button.title = "Adicionar serviço manual nesta PG";
-    button.setAttribute("aria-label", `Adicionar serviço manual na PG ${program?.programacao || ""}`);
-    return button;
-  }
-
   function buildImportSameCarButton(program) {
     const selectedTrechos = sameCarSelectedTrechos(program);
     if (!selectedTrechos.length) return null;
@@ -6210,7 +6151,6 @@
     const issues = importedTrechoIssues(trecho);
     const status = importedTrechoReviewMeta(trecho, issues);
     const isDuplicated = !!trecho.duplicatedRecordIds?.length;
-    const isManual = isManualImportedTrecho(trecho);
     const isSplit = isSplitImportedTrecho(trecho);
     const wrap = document.createElement("div");
     wrap.className = "import-service-row-wrap";
@@ -6234,7 +6174,6 @@
     button.classList.toggle("is-duplicated", isDuplicated);
     button.classList.toggle("is-waiting", importedTrechoHasReturn(trecho) && !isDraftImportedTrecho(trecho));
     button.classList.toggle("is-split", isSplit);
-    button.classList.toggle("is-manual", isManual);
     addClassIfPresent(button, `is-${normalizeImportedReviewStatus(trecho) || ""}`);
     button.dataset.importAction = "select-trecho";
     button.dataset.programacao = program.programacao;
@@ -6257,8 +6196,8 @@
     const pax = document.createElement("span");
     pax.textContent = importPassengerCountLabel(trecho.passageiros.length);
     const badge = document.createElement("span");
-    badge.className = `import-badge ${isDuplicated ? "danger" : trecho.possibleDuplicateMatches?.length ? "warning" : isManual || isSplit ? "manual" : status.tone}`;
-    badge.textContent = isDuplicated ? "Não editar" : trecho.possibleDuplicateMatches?.length ? "Parecido" : isManual ? "Manual" : isSplit ? "Busca separada" : importedTrechoModeLabel(trecho);
+    badge.className = `import-badge ${isDuplicated ? "danger" : trecho.possibleDuplicateMatches?.length ? "warning" : isSplit ? "manual" : status.tone}`;
+    badge.textContent = isDuplicated ? "Não editar" : trecho.possibleDuplicateMatches?.length ? "Parecido" : isSplit ? "Busca separada" : importedTrechoModeLabel(trecho);
     side.append(pax, badge);
     button.append(main, side);
     wrap.append(selector, button);
@@ -6354,7 +6293,7 @@
     const passengerTitle = document.createElement("strong");
     passengerTitle.textContent = "Passageiros";
     const addPassengerButton = buildImportAction("+", "add-import-passenger", !isEditing);
-    addPassengerButton.className = "import-add-service-button import-add-passenger-button";
+    addPassengerButton.className = "import-add-inline-button import-add-passenger-button";
     addPassengerButton.title = isEditing ? "Adicionar passageiro ao serviço" : "Habilite edição para adicionar passageiro.";
     addPassengerButton.setAttribute("aria-label", "Adicionar passageiro ao serviço");
     passengerHead.append(passengerTitle, addPassengerButton);
@@ -6388,14 +6327,14 @@
     } else if (isDuplicated) {
       actions.append(
         buildImportAction("Bloqueado", "noop", true),
-        buildImportAction("Ignorar", "ignore-trecho")
+        buildImportAction("IGNORAR", "ignore-trecho")
       );
     } else if (reviewStatus === importReviewStatuses().IGNORED) {
       actions.append(buildImportAction("Revisar novamente", "review-pending"));
     } else {
       actions.append(
-        buildImportAction("Confirmar revisão", "confirm-review"),
-        buildImportAction("Ignorar", "ignore-trecho")
+        buildImportAction("VALIDAR", "confirm-review"),
+        buildImportAction("IGNORAR", "ignore-trecho")
       );
     }
 
@@ -6412,7 +6351,6 @@
     const hasReturn = importedTrechoHasReturn(trecho);
     const isDraft = isDraftImportedTrecho(trecho);
     const isSplit = isSplitImportedTrecho(trecho);
-    const isManual = isManualImportedTrecho(trecho);
     const isLocked = !!options.isDuplicated || options.reviewStatus === statuses.SAVED || options.reviewStatus === statuses.IGNORED;
     const decisions = importOperationalDecisions();
     const modes = importOperationalModes();
@@ -6420,7 +6358,6 @@
     const isIndependentServices = trecho?.operationalMode === modes.INDEPENDENT_SERVICES;
     const currentDecision = trecho.operationalDecision || "";
     const splitDisabled = isLocked || isDraft || isMultiPickup || isIndependentServices || !hasReturn;
-    const keepLabel = hasReturn && !isMultiPickup ? "Manter espera" : "Manter 1 OS";
     const panel = document.createElement("section");
     panel.className = "import-decision-panel";
     panel.classList.toggle("is-decision-pending", currentDecision === decisions.PENDING);
@@ -6438,8 +6375,6 @@
       detail.textContent = formatOperationalText(trecho.operationalReason);
     } else if (isSplit) {
       detail.textContent = "Complete este rascunho como a busca separada.";
-    } else if (isManual) {
-      detail.textContent = "Serviço criado manualmente dentro da mesma PG.";
     } else if (hasReturn) {
       detail.textContent = "Uma OS cobre saída e retorno previsto. Separe se o carro não precisa ficar à disposição.";
     } else {
@@ -6449,10 +6384,13 @@
 
     const optionsWrap = document.createElement("div");
     optionsWrap.className = "import-decision-options";
-    const keepButton = buildImportAction(keepLabel, "keep-waiting", isLocked || isDraft);
-    keepButton.classList.add("import-decision-button", "is-keep-action");
-    keepButton.classList.toggle("is-current", currentDecision === decisions.KEEP_WAITING);
-    keepButton.setAttribute("aria-pressed", String(currentDecision === decisions.KEEP_WAITING));
+    const hasKeepAction = hasReturn && !isMultiPickup;
+    const keepButton = hasKeepAction ? buildImportAction("Manter espera", "keep-waiting", isLocked || isDraft) : null;
+    if (keepButton) {
+      keepButton.classList.add("import-decision-button", "is-keep-action");
+      keepButton.classList.toggle("is-current", currentDecision === decisions.KEEP_WAITING);
+      keepButton.setAttribute("aria-pressed", String(currentDecision === decisions.KEEP_WAITING));
+    }
     const splitButton = buildImportAction("Separar ida/busca", "split-trecho", splitDisabled);
     splitButton.classList.add("import-decision-button", "is-split-action");
     splitButton.classList.toggle("is-current", currentDecision === decisions.SPLIT || currentDecision === decisions.SPLIT_DRAFT);
@@ -6468,11 +6406,9 @@
               ? "Sem retorno previsto para separar ida/busca."
               : "Este serviço não pode ser separado neste estado."
       : "Criar segunda OS rascunho na mesma PG.";
-    const manualButton = buildImportAction("Revisar manual", "manual-operational-review", isLocked);
-    manualButton.classList.add("import-decision-button", "is-manual-action");
-    manualButton.classList.toggle("is-current", currentDecision === decisions.MANUAL_REVIEW);
-    manualButton.setAttribute("aria-pressed", String(currentDecision === decisions.MANUAL_REVIEW));
-    optionsWrap.append(keepButton, splitButton, manualButton);
+    const hasSplitAction = !isDraft && currentDecision !== decisions.SPLIT && currentDecision !== decisions.SPLIT_DRAFT && !isIndependentServices && hasReturn;
+    if (keepButton) optionsWrap.appendChild(keepButton);
+    if (hasSplitAction) optionsWrap.appendChild(splitButton);
 
     panel.append(copy, optionsWrap);
     return panel;
@@ -6530,7 +6466,6 @@
   function importedTrechoModeLabel(trecho) {
     if (trecho?.operationalSuggestion) return formatOperationalText(trecho.operationalSuggestion);
     if (isSplitImportedTrecho(trecho)) return "Separar busca";
-    if (isManualImportedTrecho(trecho)) return "Serviço manual";
     return importedTrechoHasReturn(trecho) ? "Manter espera" : "Sem espera";
   }
 
@@ -6606,7 +6541,6 @@
     if (status === statuses.IGNORED) return { label: "Ignorado", tone: "warning" };
     if (status === statuses.CONFIRMED) return { label: "Confirmado", tone: "success" };
     if (status === statuses.BLOCKED) return { label: "Bloqueado", tone: "danger" };
-    if (isManualImportedTrecho(trecho)) return { label: "Manual", tone: "manual" };
     if (isSplitImportedTrecho(trecho)) return { label: "Split", tone: "manual" };
     if (issues.length) return { label: "Pendente", tone: "warning" };
     return { label: "Pendente", tone: "warning" };
@@ -6832,15 +6766,6 @@
   function handleImportReviewAction(event) {
     const action = event.target.closest("[data-import-action]");
     if (!action) return;
-    if (action.dataset.importAction === "add-manual-trecho") {
-      const listScrollTop = action.closest(".import-service-list")?.scrollTop ?? 0;
-      addManualImportedTrecho(action.dataset.programacao || action.closest("[data-programacao]")?.dataset.programacao || "");
-      renderImportReviewPreservingGallery(listScrollTop);
-      requestAnimationFrame(() => {
-        el.importReviewPrograms?.querySelector(".import-inspector [data-import-field]")?.focus();
-      });
-      return;
-    }
     if (action.dataset.importAction === "merge-same-car") {
       const listScrollTop = action.closest(".import-service-list")?.scrollTop ?? 0;
       const merged = mergeSelectedImportedTrechosAsSameCar(action.dataset.programacao || "");
@@ -6891,15 +6816,7 @@
       if (trecho.duplicatedRecordIds?.length || isDraftImportedTrecho(trecho)) return;
       applyImportedOperationalDecision(trecho, importOperationalDecisions().KEEP_WAITING);
       renderImportReviewPreservingGallery();
-      const keepMessage = importedTrechoHasReturn(trecho) ? "manter uma OS com espera" : "manter 1 OS";
-      toast(`Decisão registrada: ${keepMessage}.`, "success", 4000);
-      return;
-    }
-    if (action.dataset.importAction === "manual-operational-review") {
-      if (trecho.duplicatedRecordIds?.length) return;
-      applyImportedOperationalDecision(trecho, importOperationalDecisions().MANUAL_REVIEW);
-      renderImportReviewPreservingGallery();
-      toast("PG mantida pendente para revisão manual.", "warning", 5000);
+      toast("Decisão registrada: manter uma OS com espera.", "success", 4000);
       return;
     }
     if (action.dataset.importAction === "split-trecho") {
@@ -7165,21 +7082,6 @@
     };
   }
 
-  async function saveAllValidImportedTrechos() {
-    const review = state.importReview;
-    if (!review) return;
-    const reviewState = summarizeCurrentImportTrechos(review.programs.flatMap((program) => program.trechos));
-    if (!reviewState.canScheduleConfirmed) {
-      toast(reviewState.blockedReason || "Revise os trechos antes de agendar.", "warning", 7000);
-      return;
-    }
-    for (const trecho of reviewState.saveableTrechos) {
-      await saveImportedTrecho(trecho, { silentSuccess: true });
-    }
-    renderImportReview();
-    toast(`${reviewState.saveableTrechos.length} trecho(s) importado(s).`, "success", 6000);
-  }
-
   async function saveImportedTrecho(trecho, options = {}) {
     if (normalizeImportedReviewStatus(trecho) !== importReviewStatuses().CONFIRMED) {
       toast("Confirme a revisão individual antes de salvar este trecho.", "warning", 7000);
@@ -7386,10 +7288,8 @@
       [f.destino]: trecho.destino || "",
       [f.dataSaida]: context.dataHoraPrincipal.toISOString(),
       [f.obsOperacao]: trecho.observacaoOperacional || "",
-      [f.obsInterna]: isManualImportedTrecho(trecho)
-        ? `Serviço manual criado na PG: ${trecho.programacao}.`
-        : isSplitImportedTrecho(trecho)
-          ? `Serviço criado por Split na PG: ${trecho.programacao}.`
+      [f.obsInterna]: isSplitImportedTrecho(trecho)
+        ? `Serviço criado por Split na PG: ${trecho.programacao}.`
         : `Importado via XLSX. PG: ${trecho.programacao}. ST: ${(trecho.solicitacoes || []).join(", ") || "-"}.`,
       [f.obsFinal]: "",
       [f.perfilPassageiro]: "",
