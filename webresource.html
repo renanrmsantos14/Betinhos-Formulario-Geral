@@ -3151,8 +3151,8 @@ h3 {
 .passenger-edit-field textarea.passenger-edit-control {
   display: block;
   min-height: 96px;
-  max-height: 160px;
-  resize: none;
+  max-height: none;
+  resize: vertical;
   overflow: auto;
   line-height: 1.4;
   white-space: pre-wrap;
@@ -3975,6 +3975,14 @@ body.is-import-dragging .import-drop-overlay {
   line-height: 1.3;
 }
 
+.import-service-group-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+
 .import-add-service-button {
   display: inline-grid;
   place-items: center;
@@ -4018,6 +4026,70 @@ body.is-import-dragging .import-drop-overlay {
   background: var(--surface-muted);
   cursor: not-allowed;
   opacity: 0.68;
+}
+
+.import-same-car-button {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--accent-soft) 58%, #ffffff);
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 860;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.import-same-car-button:disabled {
+  border-color: var(--line);
+  background: var(--surface-muted);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.import-service-row-wrap {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 7px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.import-service-merge-toggle {
+  position: relative;
+  width: 28px;
+  min-height: 62px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  cursor: pointer;
+  transition:
+    border-color 160ms var(--ease-out),
+    background 160ms var(--ease-out);
+}
+
+.import-service-merge-toggle::after {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+}
+
+.import-service-merge-toggle.is-active {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 50%, #ffffff);
+}
+
+.import-service-merge-toggle.is-active::after {
+  border-color: var(--accent);
+  background: radial-gradient(circle, var(--accent) 0 46%, #ffffff 52% 100%);
 }
 
 .import-service-row {
@@ -4400,15 +4472,23 @@ body.is-import-dragging .import-drop-overlay {
   min-width: 0;
   padding: 12px;
   border: 1px solid color-mix(in srgb, var(--line) 82%, #ffffff);
-  border-left: 4px solid var(--accent);
   border-radius: var(--radius-sm);
   background: #ffffff;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.86);
 }
 
 .import-decision-panel.is-decision-pending {
-  border-left-color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 32%, var(--line));
   background: color-mix(in srgb, var(--warning-soft) 20%, #ffffff);
+}
+
+.import-decision-panel.is-multi-pickup {
+  border-color: color-mix(in srgb, var(--success) 28%, var(--line));
+  background: color-mix(in srgb, var(--success-soft) 24%, #ffffff);
+}
+
+.import-decision-panel.is-independent-services {
+  border-color: color-mix(in srgb, var(--warning) 32%, var(--line));
 }
 
 .import-decision-copy {
@@ -4620,10 +4700,8 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .import-trecho.is-locked [data-import-copy] input[readonly],
-.import-trecho.is-locked [data-import-copy] textarea[readonly],
 .import-trecho.is-locked [data-import-copy] select:disabled,
 .import-trecho.is-duplicated [data-import-copy] input[readonly],
-.import-trecho.is-duplicated [data-import-copy] textarea[readonly],
 .import-trecho.is-duplicated [data-import-copy] select:disabled {
   pointer-events: none;
 }
@@ -5749,7 +5827,7 @@ body.is-import-dragging .import-drop-overlay {
     max-width: 100%;
     min-height: 112px;
     max-height: none;
-    resize: none;
+    resize: vertical;
     overflow: auto;
   }
 
@@ -5942,7 +6020,7 @@ body.is-import-dragging .import-drop-overlay {
 
   .passenger-edit-field textarea.passenger-edit-control {
     min-height: 88px;
-    max-height: 128px;
+    max-height: none;
   }
 
   .passenger-directory {
@@ -6652,22 +6730,25 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   const REQUIRED_XLSX_HEADERS = [
     "Data da Viagem (inicial)",
-    "Número solicitação",
     "Número Programação",
+    "Horário Passageiro",
+    "Nome Passageiro",
+    "Origem",
+    "Destino"
+  ];
+
+  const OPTIONAL_XLSX_HEADERS = [
+    "Número solicitação",
     "Status",
     "Tipo Serviço",
     "Tipo Transporte",
-    "Horário Passageiro",
-    "Nome Passageiro",
     "Tel Res.",
     "Tel Cel.",
     "Centro Custo Passageiro",
     "Programador",
     "Gestor/Aprovador",
     "Solicitante",
-    "Origem",
     "Cidade Origem",
-    "Destino",
     "Cidade Destino",
     "Horário Vôo/Casv",
     "Número Vôo",
@@ -6694,6 +6775,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   const IMPORT_OPERATIONAL_MODES = Object.freeze({
     SINGLE: "single",
     WAITING: "waiting",
+    MULTI_PICKUP: "multi-pickup",
+    INDEPENDENT_SERVICES: "independent-services",
     SEPARABLE: "separable",
     MANUAL_REVIEW: "manual-review",
     MANUAL: "manual",
@@ -6780,7 +6863,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
           programacao: row.programacao,
           solicitacoes: new Set(),
           statusExternos: new Set(),
-          trecho: createTrecho(row),
+          rows: [],
           sourceRows: []
         });
       }
@@ -6788,12 +6871,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       if (row.solicitacao) program.solicitacoes.add(row.solicitacao);
       if (row.statusExterno) program.statusExternos.add(row.statusExterno);
       program.sourceRows.push(row.sourceRow);
-
-      mergeRowIntoTrecho(program.trecho, row);
+      program.rows.push(row);
     });
 
     return [...programs.values()].map((program) => {
-      const trechos = [finalizeTrecho(program.trecho)].sort(compareTrechos);
+      const trechos = buildProgramImportTrechos(program.rows).sort(compareTrechos);
       return {
         programacao: program.programacao,
         solicitacoes: [...program.solicitacoes],
@@ -6803,6 +6885,41 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         pendencias: collectProgramIssues(trechos)
       };
     }).sort((a, b) => compareProgramCodes(a.programacao, b.programacao));
+  }
+
+  function buildProgramImportTrechos(rows) {
+    return groupImportedRowsByDestinationWindow(rows).map((groupRows) => {
+      const trecho = createTrecho(groupRows[0]);
+      groupRows.forEach((row) => mergeRowIntoTrecho(trecho, row));
+      return finalizeTrecho(trecho);
+    });
+  }
+
+  function groupImportedRowsByDestinationWindow(rows) {
+    const sorted = sortImportedLines(rows);
+    const uniqueDates = new Set(sorted.map((row) => row.dataIso || parseBrazilianDate(row.data)).filter(Boolean));
+    const destinationKeys = new Set(sorted.map((row) => row.destinoKey || normalizeAddress(row.destino)).filter(Boolean));
+    if (uniqueDates.size > 1 || destinationKeys.size !== 1 || sorted.length <= 1) return [sorted];
+    const groups = [];
+    let current = [];
+    let currentStartMinutes = null;
+    sorted.forEach((row) => {
+      const minutes = timeToMinutes(row.horario);
+      if (!current.length || !Number.isFinite(minutes) || !Number.isFinite(currentStartMinutes)) {
+        current = [row];
+        currentStartMinutes = minutes;
+        groups.push(current);
+        return;
+      }
+      if (minutes - currentStartMinutes > 90) {
+        current = [row];
+        currentStartMinutes = minutes;
+        groups.push(current);
+        return;
+      }
+      current.push(row);
+    });
+    return groups;
   }
 
   function createTrecho(row) {
@@ -6885,10 +7002,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const firstLine = linhasImportadas[0] || null;
     const lastLine = linhasImportadas[linhasImportadas.length - 1] || null;
     const retornoLine = firstLine && lastLine && isLaterImportedLine(lastLine, firstLine) ? lastLine : null;
+    const displayLines = displayLinesForImportedTrecho(linhasImportadas, retornoLine);
+    const displayFirstLine = displayLines[0] || firstLine;
     const passageiros = dedupePassengers(trecho.passageiros);
     const solicitanteNome = trecho.solicitanteNome || passageiros.find((passenger) => passenger.solicitanteNome)?.solicitanteNome || "";
-    const origem = composeGroupedLineSummary(linhasImportadas, "origem") || trecho.origem;
-    const destino = composeGroupedLineSummary(linhasImportadas, "destino") || trecho.destino;
+    const origem = composeGroupedLineSummary(displayLines, "origem") || trecho.origem;
+    const destino = composeGroupedLineSummary(displayLines, "destino") || trecho.destino;
     const dataIso = firstLine?.dataIso || trecho.dataIso;
     const data = firstLine?.data || trecho.data;
     const horario = firstLine?.horario || trecho.horario;
@@ -6898,6 +7017,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       retornoLine,
       uniqueDates
     });
+    const retornoPrevistoLine = operational.mode === IMPORT_OPERATIONAL_MODES.MULTI_PICKUP ? null : retornoLine;
     if (operational.requiresDecision) pendencias.push(OPERATIONAL_DECISION_ISSUE);
     if (uniqueDates.size > 1) pendencias.push("PG com datas diferentes.");
     if (!trecho.dataIso) pendencias.push("Data inválida.");
@@ -6923,14 +7043,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       sourceRows: trecho.sourceRows.sort((a, b) => a - b),
       solicitanteNome,
       origem,
-      origemPrincipal: firstLine?.origem || trecho.origemPrincipal || trecho.origem,
+      origemPrincipal: displayFirstLine?.origem || trecho.origemPrincipal || trecho.origem,
       destino,
-      destinoPrincipal: firstLine?.destino || trecho.destinoPrincipal || trecho.destino,
+      destinoPrincipal: displayFirstLine?.destino || trecho.destinoPrincipal || trecho.destino,
       destinos: Array.from(new Set(trecho.destinos || [])),
       cidadeOrigem: firstLine?.cidadeOrigem || trecho.cidadeOrigem,
       cidadeDestino: lastLine?.cidadeDestino || trecho.cidadeDestino,
-      retornoPrevistoDataIso: retornoLine?.dataIso || "",
-      retornoPrevistoHorario: retornoLine?.horario || "",
+      retornoPrevistoDataIso: retornoPrevistoLine?.dataIso || "",
+      retornoPrevistoHorario: retornoPrevistoLine?.horario || "",
       trajetoCidades: composeCityRoute(linhasImportadas),
       linhasImportadas,
       passageiros,
@@ -6949,6 +7069,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function classifyImportOperationalInterpretation(lines, options = {}) {
     const sorted = sortImportedLines(lines);
     const distinctTimes = new Set(sorted.map((line) => importedLineDateTimeKey(line)).filter(Boolean));
+    const destinationKeys = new Set(sorted.map((line) => line?.destinoKey || normalizeAddress(line?.destino)).filter(Boolean));
+    const passengerKeys = new Set(sorted.map((line) => normalizeText(line?.nomePassageiro)).filter(Boolean));
+    const windowMinutes = importedLineWindowMinutes(sorted);
     if (options.uniqueDates?.size > 1) {
       return {
         mode: IMPORT_OPERATIONAL_MODES.MANUAL_REVIEW,
@@ -6956,6 +7079,26 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         suggestion: "Revisar manual",
         confidence: "alta",
         reason: "A PG tem datas diferentes. Nao e seguro inferir espera ou ida/busca.",
+        requiresDecision: false
+      };
+    }
+    if (destinationKeys.size === 1 && sorted.length > 1 && windowMinutes <= 90 && passengerKeys.size > 1) {
+      return {
+        mode: IMPORT_OPERATIONAL_MODES.MULTI_PICKUP,
+        decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING,
+        suggestion: "Multi-coleta",
+        confidence: "alta",
+        reason: "Mesmo destino dentro de 1h30. Trate como uma OS com coletas em sequencia.",
+        requiresDecision: false
+      };
+    }
+    if (destinationKeys.size === 1 && sorted.length > 1 && windowMinutes > 90) {
+      return {
+        mode: IMPORT_OPERATIONAL_MODES.INDEPENDENT_SERVICES,
+        decision: IMPORT_OPERATIONAL_DECISIONS.MANUAL_REVIEW,
+        suggestion: "Servicos separados",
+        confidence: "alta",
+        reason: "Mesmo destino, mas janela maior que 1h30. Trate como servicos separados.",
         requiresDecision: false
       };
     }
@@ -6987,6 +7130,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       reason: "A PG tem mais de um horario no mesmo dia e nao informa espera. Confirme se o motorista fica a disposicao.",
       requiresDecision: true
     };
+  }
+
+  function importedLineWindowMinutes(lines) {
+    const minutes = sortImportedLines(lines)
+      .map((line) => timeToMinutes(line?.horario))
+      .filter((value) => Number.isFinite(value) && value !== Number.MAX_SAFE_INTEGER);
+    if (minutes.length < 2) return 0;
+    return Math.max(...minutes) - Math.min(...minutes);
   }
 
   function importedLinesContainWaitingSignal(lines) {
@@ -7097,26 +7248,123 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function splitImportedTrecho(program, trecho, options = {}) {
     if (!program || !trecho) return null;
-    trecho.retornoPrevistoDataIso = "";
-    trecho.retornoPrevistoHorario = "";
+    const splitLines = splitImportedTrechoLines(trecho.linhasImportadas || []);
+    if (!splitLines.outboundLines.length || !splitLines.returnLines.length) return null;
+    const clone = createSplitImportTrecho(program, trecho, {
+      ...options,
+      returnLines: splitLines.returnLines
+    });
+    if (!clone) return null;
+    applyImportedLinesToTrecho(trecho, splitLines.outboundLines, trecho.passageiros || []);
     applyImportOperationalDecision(trecho, IMPORT_OPERATIONAL_DECISIONS.SPLIT);
     markImportedTrechoPending(trecho);
-    const clone = createSplitImportTrecho(program, trecho, options);
     program.trechos = Array.isArray(program.trechos) ? program.trechos : [];
     program.trechos.push(clone);
     program.pendencias = collectProgramIssues(program.trechos);
     return clone;
   }
 
+  function mergeImportedTrechosAsSameCar(program, trechoKeys, options = {}) {
+    if (!program || !Array.isArray(program.trechos)) return null;
+    const keys = new Set((trechoKeys || []).map((key) => String(key || "")).filter(Boolean));
+    if (keys.size < 2) return null;
+    const selected = program.trechos.filter((trecho) => keys.has(String(trecho?.key || "")));
+    if (selected.length !== keys.size || !canMergeImportedTrechosAsSameCar(selected)) return null;
+
+    const firstIndex = Math.min(...selected.map((trecho) => program.trechos.indexOf(trecho)).filter((index) => index >= 0));
+    const merged = createSameCarImportTrecho(program, selected, options);
+    if (!merged) return null;
+    program.trechos = program.trechos.filter((trecho) => !selected.includes(trecho));
+    program.trechos.splice(Number.isFinite(firstIndex) ? firstIndex : 0, 0, merged);
+    program.pendencias = collectProgramIssues(program.trechos);
+    return merged;
+  }
+
+  function canMergeImportedTrechosAsSameCar(trechos) {
+    if (!Array.isArray(trechos) || trechos.length < 2) return false;
+    if (trechos.some((trecho) => trecho?.savedRecordId || trecho?.duplicatedRecordIds?.length)) return false;
+    const dateKeys = new Set(trechos.flatMap(importedTrechoDateKeys));
+    if (dateKeys.size > 1) return false;
+    const destinationKeys = new Set();
+    for (const trecho of trechos) {
+      const keys = importedTrechoDestinationKeys(trecho);
+      if (keys.length !== 1) return false;
+      destinationKeys.add(keys[0]);
+    }
+    return destinationKeys.size === 1;
+  }
+
+  function createSameCarImportTrecho(program, trechos, options = {}) {
+    const lines = sortImportedLines(trechos.flatMap((trecho) => trecho?.linhasImportadas || []));
+    if (!lines.length) return null;
+    const firstLine = lines[0];
+    const lastLine = lines[lines.length - 1];
+    const programacao = String(options.programacao || program?.programacao || firstLine?.programacao || "").trim();
+    const sourceRows = Array.from(new Set(trechos.flatMap((trecho) => trecho?.sourceRows || []))).filter(Boolean).sort((a, b) => a - b);
+    const solicitacoes = new Set(trechos.flatMap((trecho) => trecho?.solicitacoes || []));
+    const base = {
+      key: "",
+      programacao,
+      solicitacoes,
+      statusExternos: new Set(),
+      sourceRows,
+      data: firstLine?.data || "",
+      dataIso: firstLine?.dataIso || "",
+      horario: firstLine?.horario || "",
+      origem: firstLine?.origem || "",
+      destino: firstLine?.destino || "",
+      destinos: Array.from(new Set(lines.map((line) => line.destino).filter(Boolean))),
+      cidadeOrigem: firstLine?.cidadeOrigem || "",
+      cidadeDestino: lastLine?.cidadeDestino || "",
+      solicitanteNome: firstFilledObjectValue(trechos, "solicitanteNome"),
+      tipoServicoSugerido: firstFilledObjectValue(trechos, "tipoServicoSugerido"),
+      tipoVeiculoSugerido: firstFilledObjectValue(trechos, "tipoVeiculoSugerido"),
+      tipoServicoValue: firstFilledObjectValue(trechos, "tipoServicoValue"),
+      tipoVeiculoValue: firstFilledObjectValue(trechos, "tipoVeiculoValue"),
+      valor: maxFiniteValue(trechos.map((trecho) => trecho?.valor)),
+      motoristaNome: firstFilledObjectValue(trechos, "motoristaNome"),
+      retornoPrevistoDataIso: "",
+      retornoPrevistoHorario: "",
+      trajetoCidades: "",
+      origemPrincipal: firstLine?.origem || "",
+      destinoPrincipal: firstLine?.destino || "",
+      linhasImportadas: lines,
+      passageiros: trechos.flatMap((trecho) => trecho?.passageiros || []),
+      observacoes: Array.from(new Set(trechos.flatMap((trecho) => trecho?.observacoes || []))),
+      observacaoOperacional: "",
+      pendencias: Array.from(new Set(trechos.flatMap((trecho) => trecho?.pendencias || []))),
+      reviewStatus: IMPORT_REVIEW_STATUSES.PENDING,
+      reviewBlockReason: "",
+      savedRecordId: "",
+      duplicatedRecordIds: [],
+      importOrigin: "same-car",
+      originStatus: "Mesmo carro"
+    };
+    const merged = finalizeTrecho(base);
+    merged.key = options.key || `${programacao}|same-car|${nextSameCarImportSequence(program)}`;
+    merged.importOrigin = "same-car";
+    merged.originStatus = "Mesmo carro";
+    merged.operationalMode = IMPORT_OPERATIONAL_MODES.MULTI_PICKUP;
+    merged.operationalDecision = IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING;
+    merged.operationalSuggestion = "Mesmo carro";
+    merged.operationalConfidence = "manual";
+    merged.operationalReason = "Usuario confirmou que os trechos separados usam o mesmo carro.";
+    merged.retornoPrevistoDataIso = "";
+    merged.retornoPrevistoHorario = "";
+    merged.pendencias = Array.from(new Set((merged.pendencias || []).filter((issue) => issue !== OPERATIONAL_DECISION_ISSUE)));
+    markImportedTrechoPending(merged);
+    return merged;
+  }
+
   function createSplitImportTrecho(program, source, options = {}) {
     const programacao = String(options.programacao || program?.programacao || source?.programacao || "").trim();
     const key = options.key || `${programacao}|split|${nextSplitImportSequence(program)}`;
-    const returnLines = latestImportedLineGroup(source?.linhasImportadas || []);
+    const returnLines = sortImportedLines(options.returnLines || latestImportedLineGroup(source?.linhasImportadas || []));
     const returnLine = returnLines[0] || null;
     return {
       key,
       programacao,
-      solicitacoes: Array.from(new Set(source?.solicitacoes || [])),
+      solicitacoes: uniqueSolicitacoesFromImportedLines(returnLines, source?.solicitacoes || []),
       sourceRows: returnLines.map((line) => line.sourceRow).filter(Boolean),
       data: returnLine?.data || "",
       dataIso: returnLine?.dataIso || "",
@@ -7139,7 +7387,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       origemPrincipal: returnLine?.origem || "",
       destinoPrincipal: returnLine?.destino || "",
       linhasImportadas: returnLines,
-      passageiros: (source?.passageiros || []).map(clonePassengerForSplit),
+      passageiros: passengersFromImportedLines(returnLines, source?.passageiros || []),
       observacoes: Array.from(new Set(source?.observacoes || [])),
       observacaoOperacional: source?.observacaoOperacional || "",
       pendencias: [],
@@ -7218,7 +7466,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       reasons.push("passageiros parecidos");
     }
 
-    const level = score >= 78 ? "exact" : score >= 48 ? "possible" : "";
+    const hasExactOperationalIdentity = reasons.includes("mesmo horario") && reasons.includes("mesmos passageiros");
+    const level = score >= 78 && hasExactOperationalIdentity ? "exact" : score >= 48 ? "possible" : "";
     return {
       recordId: existing.recordId || existing.id || existing.cr40f_reservadeveculosid || "",
       score,
@@ -7316,6 +7565,47 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       sequence += 1;
     }
     return sequence;
+  }
+
+  function nextSameCarImportSequence(program) {
+    const keys = new Set((program?.trechos || []).map((trecho) => String(trecho?.key || "")));
+    const programacao = program?.programacao || "";
+    let sequence = 1;
+    while (keys.has(`${programacao}|same-car|${sequence}`)) {
+      sequence += 1;
+    }
+    return sequence;
+  }
+
+  function importedTrechoDateKeys(trecho) {
+    const keys = (trecho?.linhasImportadas || [])
+      .map((line) => line?.dataIso || parseBrazilianDate(line?.data))
+      .filter(Boolean);
+    if (!keys.length) {
+      const fallback = trecho?.dataIso || parseBrazilianDate(trecho?.data);
+      if (fallback) keys.push(fallback);
+    }
+    return Array.from(new Set(keys));
+  }
+
+  function importedTrechoDestinationKeys(trecho) {
+    const keys = (trecho?.linhasImportadas || [])
+      .map((line) => line?.destinoKey || normalizeAddress(line?.destino))
+      .filter(Boolean);
+    if (!keys.length) {
+      const fallback = normalizeAddress(trecho?.destinoPrincipal || trecho?.destinos?.[0] || trecho?.destino);
+      if (fallback) keys.push(fallback);
+    }
+    return Array.from(new Set(keys));
+  }
+
+  function firstFilledObjectValue(items, field) {
+    return (items || []).find((item) => String(item?.[field] || "").trim())?.[field] || "";
+  }
+
+  function maxFiniteValue(values) {
+    const finite = (values || []).map(Number).filter(Number.isFinite);
+    return finite.length ? Math.max(...finite) : null;
   }
 
   function summarizeImportReviewTrechos(trechos) {
@@ -7503,11 +7793,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function composeGroupedLineSummary(lines, field) {
+    const includeTime = field !== "destino";
     const groups = [];
     const groupByKey = new Map();
     sortImportedLines(lines).forEach((line) => {
       const value = String(line?.[field] || "").trim();
-      const key = [line?.horario || "", normalizeAddress(value)].join("|");
+      const key = [includeTime ? line?.horario || "" : "", normalizeAddress(value)].join("|");
       if (!groupByKey.has(key)) {
         const group = {
           horario: line?.horario || "",
@@ -7527,7 +7818,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       const horario = group.horario || "--:--";
       const names = group.names.length ? group.names.join(", ") : "Passageiro";
       const value = group.value || (field === "origem" ? "endereço não informado" : "destino não informado");
-      return `${horario} - ${names} - ${value}`;
+      return includeTime ? `${horario} - ${names} - ${value}` : `${names} - ${value}`;
     }).join("\n");
   }
 
@@ -7564,6 +7855,66 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return sorted.filter((line) => importedLineDateTimeKey(line) === lastKey);
   }
 
+  function splitImportedTrechoLines(lines) {
+    const sorted = sortImportedLines(lines);
+    const returnLines = latestImportedLineGroup(sorted);
+    const returnRefs = new Set(returnLines);
+    const outboundLines = sorted.filter((line) => !returnRefs.has(line));
+    return {
+      outboundLines,
+      returnLines
+    };
+  }
+
+  function displayLinesForImportedTrecho(lines, retornoLine) {
+    const sorted = sortImportedLines(lines);
+    if (!retornoLine || sorted.length <= 1) return sorted;
+    const { outboundLines, returnLines } = splitImportedTrechoLines(sorted);
+    if (!outboundLines.length || !returnLines.length) return sorted;
+    return importedReturnLinesMatchOutboundDestination(outboundLines, returnLines) ? outboundLines : sorted;
+  }
+
+  function importedReturnLinesMatchOutboundDestination(outboundLines, returnLines) {
+    const outboundDestinations = outboundLines.map((line) => line?.destino).filter(Boolean);
+    const returnOrigins = returnLines.map((line) => line?.origem).filter(Boolean);
+    if (!outboundDestinations.length || !returnOrigins.length) return false;
+    return returnOrigins.every((origin) => (
+      outboundDestinations.some((destination) => importedAddressesMatch(origin, destination))
+    ));
+  }
+
+  function importedAddressesMatch(left, right) {
+    const leftKey = normalizeAddress(left);
+    const rightKey = normalizeAddress(right);
+    if (!leftKey || !rightKey) return false;
+    if (leftKey === rightKey || leftKey.includes(rightKey) || rightKey.includes(leftKey)) return true;
+    return textMatchScore(left, right) >= 0.7;
+  }
+
+  function applyImportedLinesToTrecho(trecho, lines, sourcePassengers = []) {
+    const sorted = sortImportedLines(lines);
+    const firstLine = sorted[0] || null;
+    const lastLine = sorted[sorted.length - 1] || null;
+    trecho.sourceRows = sorted.map((line) => line.sourceRow).filter(Boolean).sort((a, b) => a - b);
+    trecho.solicitacoes = uniqueSolicitacoesFromImportedLines(sorted, trecho.solicitacoes || []);
+    trecho.data = firstLine?.data || "";
+    trecho.dataIso = firstLine?.dataIso || "";
+    trecho.horario = firstLine?.horario || "";
+    trecho.origem = composeGroupedLineSummary(sorted, "origem");
+    trecho.destino = composeGroupedLineSummary(sorted, "destino");
+    trecho.destinos = Array.from(new Set(sorted.map((line) => line.destino).filter(Boolean)));
+    trecho.cidadeOrigem = firstLine?.cidadeOrigem || "";
+    trecho.cidadeDestino = lastLine?.cidadeDestino || "";
+    trecho.origemPrincipal = firstLine?.origem || "";
+    trecho.destinoPrincipal = firstLine?.destino || "";
+    trecho.retornoPrevistoDataIso = "";
+    trecho.retornoPrevistoHorario = "";
+    trecho.trajetoCidades = composeCityRoute(sorted);
+    trecho.linhasImportadas = sorted;
+    trecho.passageiros = passengersFromImportedLines(sorted, sourcePassengers);
+    return trecho;
+  }
+
   function applyImportOperationalDecision(trecho, decision) {
     if (!trecho) return null;
     const normalized = Object.values(IMPORT_OPERATIONAL_DECISIONS).includes(decision)
@@ -7587,23 +7938,45 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return trecho;
   }
 
-  function clonePassengerForSplit(passenger) {
+  function passengersFromImportedLines(lines, sourcePassengers = []) {
+    return dedupePassengers(sortImportedLines(lines).map((line) => passengerFromImportedLine(line, sourcePassengers)));
+  }
+
+  function uniqueSolicitacoesFromImportedLines(lines, fallback = []) {
+    const values = sortImportedLines(lines).map((line) => line?.solicitacao).filter(Boolean);
+    return Array.from(new Set(values.length ? values : fallback));
+  }
+
+  function passengerFromImportedLine(line, sourcePassengers = []) {
+    const source = findSourcePassengerForImportedLine(line, sourcePassengers);
     return {
-      sourceRow: "",
-      nome: passenger?.nome || "",
-      telefone: passenger?.telefone || "",
-      documento: passenger?.documento || "",
-      centroCusto: passenger?.centroCusto || "",
-      solicitanteNome: passenger?.solicitanteNome || "",
-      origem: "",
-      destino: "",
-      horario: "",
-      passageiroId: passenger?.passageiroId || "",
-      passageiroLabel: passenger?.passageiroLabel || "",
-      matchStatus: passenger?.matchStatus || "pending",
-      matchMessage: passenger?.matchMessage || "",
-      matchCandidates: passenger?.matchCandidates || []
+      sourceRow: line?.sourceRow || "",
+      nome: line?.nomePassageiro || source?.nome || "",
+      telefone: line?.telefone || source?.telefone || "",
+      documento: line?.documento || source?.documento || "",
+      centroCusto: line?.centroCusto || source?.centroCusto || "",
+      solicitanteNome: line?.solicitanteNome || source?.solicitanteNome || "",
+      origem: line?.origem || "",
+      destino: line?.destino || "",
+      horario: line?.horario || "",
+      passageiroId: source?.passageiroId || "",
+      passageiroLabel: source?.passageiroLabel || "",
+      matchStatus: source?.matchStatus || "pending",
+      matchMessage: source?.matchMessage || "",
+      matchCandidates: source?.matchCandidates || []
     };
+  }
+
+  function findSourcePassengerForImportedLine(line, sourcePassengers = []) {
+    const name = normalizeText(line?.nomePassageiro);
+    const phone = normalizePhone(line?.telefone);
+    const document = normalizeText(line?.documento);
+    return (sourcePassengers || []).find((passenger) => {
+      const sameName = name && normalizeText(passenger?.nome) === name;
+      const samePhone = phone && normalizePhone(passenger?.telefone) === phone;
+      const sameDocument = document && normalizeText(passenger?.documento) === document;
+      return (sameName && (samePhone || sameDocument || (!phone && !document))) || samePhone || sameDocument;
+    }) || null;
   }
 
   function collectProgramIssues(trechos) {
@@ -7786,6 +8159,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     inferVehicleType,
     markImportedTrechoPending,
     markImportedTrechoSaved,
+    mergeImportedTrechosAsSameCar,
     normalizeAddress,
     normalizeImportedRows,
     normalizeText,
@@ -13151,6 +13525,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       fileName,
       rows: normalizedRows,
       programs,
+      sameCarSelection: { programacao: "", trechoKeys: [] },
       createdAt: new Date().toISOString()
     };
   }
@@ -13567,6 +13942,19 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     };
   }
 
+  function importOperationalModes() {
+    return window.XlsxImportCore?.IMPORT_OPERATIONAL_MODES || {
+      SINGLE: "single",
+      WAITING: "waiting",
+      MULTI_PICKUP: "multi-pickup",
+      INDEPENDENT_SERVICES: "independent-services",
+      SEPARABLE: "separable",
+      MANUAL_REVIEW: "manual-review",
+      MANUAL: "manual",
+      SPLIT_RETURN: "split-return"
+    };
+  }
+
   function applyImportedOperationalDecision(trecho, decision) {
     if (window.XlsxImportCore?.applyImportOperationalDecision) {
       return window.XlsxImportCore.applyImportOperationalDecision(trecho, decision);
@@ -13670,6 +14058,114 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return clone;
   }
 
+  function mergeSelectedImportedTrechosAsSameCar(programacao) {
+    const program = findImportProgram(programacao);
+    const keys = selectedSameCarTrechoKeys(programacao);
+    if (!program || keys.length < 2) return null;
+    const merged = window.XlsxImportCore?.mergeImportedTrechosAsSameCar?.(program, keys);
+    if (!merged) return null;
+    state.importReview.selectedProgramacao = program.programacao;
+    state.importReview.selectedTrechoKey = merged.key;
+    state.importReview.sameCarSelection = { programacao: "", trechoKeys: [] };
+    setImportedTrechoEditMode(program.programacao, merged.key, false);
+    return merged;
+  }
+
+  function importSameCarSelection() {
+    if (!state.importReview) return { programacao: "", trechoKeys: [] };
+    if (!state.importReview.sameCarSelection) {
+      state.importReview.sameCarSelection = { programacao: "", trechoKeys: [] };
+    }
+    return state.importReview.sameCarSelection;
+  }
+
+  function normalizeSameCarSelection(programs) {
+    const selection = importSameCarSelection();
+    if (!selection.programacao) return selection;
+    const program = (programs || []).find((item) => item.programacao === selection.programacao);
+    if (!program) {
+      selection.programacao = "";
+      selection.trechoKeys = [];
+      return selection;
+    }
+    const available = new Set((program.trechos || []).map((trecho) => String(trecho.key || "")));
+    selection.trechoKeys = (selection.trechoKeys || []).filter((key) => available.has(String(key)));
+    if (!selection.trechoKeys.length) selection.programacao = "";
+    return selection;
+  }
+
+  function selectedSameCarTrechoKeys(programacao) {
+    const selection = importSameCarSelection();
+    return selection.programacao === programacao ? [...(selection.trechoKeys || [])] : [];
+  }
+
+  function isTrechoSelectedForSameCar(programacao, trechoKey) {
+    return selectedSameCarTrechoKeys(programacao).includes(String(trechoKey || ""));
+  }
+
+  function toggleSameCarTrechoSelection(programacao, trechoKey) {
+    const selection = importSameCarSelection();
+    const key = String(trechoKey || "");
+    if (!programacao || !key) return selection;
+    if (selection.programacao !== programacao) {
+      selection.programacao = programacao;
+      selection.trechoKeys = [key];
+      return selection;
+    }
+    if (selection.trechoKeys.includes(key)) {
+      selection.trechoKeys = selection.trechoKeys.filter((item) => item !== key);
+    } else {
+      selection.trechoKeys = [...selection.trechoKeys, key].slice(-2);
+    }
+    if (!selection.trechoKeys.length) selection.programacao = "";
+    return selection;
+  }
+
+  function sameCarSelectedTrechos(program) {
+    const keys = new Set(selectedSameCarTrechoKeys(program?.programacao));
+    return (program?.trechos || []).filter((trecho) => keys.has(String(trecho.key || "")));
+  }
+
+  function canMergeSameCarTrechos(trechos) {
+    if (!Array.isArray(trechos) || trechos.length < 2) return false;
+    if (trechos.some((trecho) => (
+      isDraftImportedTrecho(trecho)
+      || trecho?.duplicatedRecordIds?.length
+      || normalizeImportedReviewStatus(trecho) === importReviewStatuses().SAVED
+      || normalizeImportedReviewStatus(trecho) === importReviewStatuses().IGNORED
+      || !(trecho?.linhasImportadas || []).length
+    ))) return false;
+    const dates = new Set(trechos.flatMap((trecho) => importedTrechoDateKeysForSameCar(trecho)));
+    if (dates.size > 1) return false;
+    const destinations = new Set();
+    for (const trecho of trechos) {
+      const keys = importedTrechoDestinationKeysForSameCar(trecho);
+      if (keys.length !== 1) return false;
+      destinations.add(keys[0]);
+    }
+    return destinations.size === 1;
+  }
+
+  function importedTrechoDateKeysForSameCar(trecho) {
+    const keys = (trecho?.linhasImportadas || [])
+      .map((line) => line?.dataIso || "")
+      .filter(Boolean);
+    if (!keys.length && trecho?.dataIso) keys.push(trecho.dataIso);
+    return Array.from(new Set(keys));
+  }
+
+  function importedTrechoDestinationKeysForSameCar(trecho) {
+    const normalizeAddress = window.XlsxImportCore?.normalizeAddress || normalize;
+    const keys = (trecho?.linhasImportadas || [])
+      .map((line) => line?.destinoKey || normalizeAddress(line?.destino))
+      .filter(Boolean);
+    if (!keys.length) {
+      const fallback = normalizeAddress(trecho?.destinoPrincipal || trecho?.destinos?.[0] || trecho?.destino);
+      if (fallback) keys.push(fallback);
+    }
+    return Array.from(new Set(keys));
+  }
+
   function createLocalSplitImportedTrecho(program, source) {
     source.retornoPrevistoDataIso = "";
     source.retornoPrevistoHorario = "";
@@ -13768,6 +14264,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function buildImportWorkbench(programs) {
+    normalizeSameCarSelection(programs);
     const selected = ensureSelectedImportedTrecho(programs);
     const shell = document.createElement("div");
     shell.className = "import-workbench";
@@ -13788,11 +14285,17 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       const meta = document.createElement("span");
       meta.textContent = `${program.trechos.length} serviço(s) · ${program.solicitacoes.join(", ") || "sem ST"}`;
       titleText.append(strong, meta);
-      title.append(titleText, buildImportAddServiceButton(program));
+      const groupActions = document.createElement("div");
+      groupActions.className = "import-service-group-actions";
+      const sameCarButton = buildImportSameCarButton(program);
+      if (sameCarButton) groupActions.appendChild(sameCarButton);
+      groupActions.appendChild(buildImportAddServiceButton(program));
+      title.append(titleText, groupActions);
       group.appendChild(title);
       program.trechos.forEach((trecho, index) => {
         const isSelected = selected?.program.programacao === program.programacao && selected?.trecho.key === trecho.key;
-        group.appendChild(buildImportServiceListItem(program, trecho, index, isSelected));
+        const isSameCarSelected = isTrechoSelectedForSameCar(program.programacao, trecho.key);
+        group.appendChild(buildImportServiceListItem(program, trecho, index, isSelected, isSameCarSelected));
       });
       list.appendChild(group);
     });
@@ -13861,12 +14364,44 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return button;
   }
 
-  function buildImportServiceListItem(program, trecho, index, isSelected) {
+  function buildImportSameCarButton(program) {
+    const selectedTrechos = sameCarSelectedTrechos(program);
+    if (!selectedTrechos.length) return null;
+    const canMerge = canMergeSameCarTrechos(selectedTrechos);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "import-same-car-button";
+    button.dataset.importAction = "merge-same-car";
+    button.dataset.programacao = program?.programacao || "";
+    button.textContent = "É o mesmo carro";
+    button.disabled = !canMerge;
+    button.title = canMerge
+      ? "Mesclar os serviços selecionados em uma OS única."
+      : "Selecione dois serviços importados, não salvos, da mesma PG, mesma data e mesmo destino.";
+    return button;
+  }
+
+  function buildImportServiceListItem(program, trecho, index, isSelected, isSameCarSelected = false) {
     const issues = importedTrechoIssues(trecho);
     const status = importedTrechoReviewMeta(trecho, issues);
     const isDuplicated = !!trecho.duplicatedRecordIds?.length;
     const isManual = isManualImportedTrecho(trecho);
     const isSplit = isSplitImportedTrecho(trecho);
+    const wrap = document.createElement("div");
+    wrap.className = "import-service-row-wrap";
+    wrap.classList.toggle("is-same-car-selected", !!isSameCarSelected);
+    wrap.dataset.programacao = program.programacao;
+    wrap.dataset.trechoKey = trecho.key;
+    const selector = document.createElement("button");
+    selector.type = "button";
+    selector.className = "import-service-merge-toggle";
+    selector.classList.toggle("is-active", !!isSameCarSelected);
+    selector.dataset.importAction = "toggle-same-car-selection";
+    selector.dataset.programacao = program.programacao;
+    selector.dataset.trechoKey = trecho.key;
+    selector.setAttribute("aria-pressed", String(!!isSameCarSelected));
+    selector.setAttribute("aria-label", `Selecionar Serviço ${index + 1} para mesclar como mesmo carro`);
+    selector.title = isSameCarSelected ? "Remover da seleção de mesmo carro" : "Selecionar para mesclar como mesmo carro";
     const button = document.createElement("button");
     button.type = "button";
     button.className = "import-service-row";
@@ -13901,7 +14436,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     badge.textContent = isDuplicated ? "Não editar" : trecho.possibleDuplicateMatches?.length ? "Parecido" : isManual ? "Manual" : isSplit ? "Busca separada" : importedTrechoModeLabel(trecho);
     side.append(pax, badge);
     button.append(main, side);
-    return button;
+    wrap.append(selector, button);
+    return wrap;
   }
 
   function buildImportProgramCard(program) {
@@ -14054,16 +14590,22 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const isManual = isManualImportedTrecho(trecho);
     const isLocked = !!options.isDuplicated || options.reviewStatus === statuses.SAVED || options.reviewStatus === statuses.IGNORED;
     const decisions = importOperationalDecisions();
+    const modes = importOperationalModes();
+    const isMultiPickup = trecho?.operationalMode === modes.MULTI_PICKUP;
+    const isIndependentServices = trecho?.operationalMode === modes.INDEPENDENT_SERVICES;
     const currentDecision = trecho.operationalDecision || "";
-    const splitDisabled = isLocked || isDraft;
+    const splitDisabled = isLocked || isDraft || isMultiPickup || isIndependentServices || !hasReturn;
+    const keepLabel = hasReturn && !isMultiPickup ? "Manter espera" : "Manter 1 OS";
     const panel = document.createElement("section");
     panel.className = "import-decision-panel";
     panel.classList.toggle("is-decision-pending", currentDecision === decisions.PENDING);
+    panel.classList.toggle("is-multi-pickup", isMultiPickup);
+    panel.classList.toggle("is-independent-services", isIndependentServices);
 
     const copy = document.createElement("div");
     copy.className = "import-decision-copy";
     const label = document.createElement("span");
-    label.textContent = "Motorista fica à disposição?";
+    label.textContent = "Interpretação da PG";
     const strong = document.createElement("strong");
     strong.textContent = importedTrechoModeLabel(trecho);
     const detail = document.createElement("p");
@@ -14082,7 +14624,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
     const optionsWrap = document.createElement("div");
     optionsWrap.className = "import-decision-options";
-    const keepButton = buildImportAction("Manter espera", "keep-waiting", isLocked || isDraft || !hasReturn);
+    const keepButton = buildImportAction(keepLabel, "keep-waiting", isLocked || isDraft);
     keepButton.classList.add("import-decision-button", "is-keep-action");
     keepButton.classList.toggle("is-current", currentDecision === decisions.KEEP_WAITING);
     keepButton.setAttribute("aria-pressed", String(currentDecision === decisions.KEEP_WAITING));
@@ -14093,7 +14635,13 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     splitButton.title = splitDisabled
       ? isDraft
         ? "Split disponível apenas no serviço importado original."
-        : "Este serviço não pode ser separado neste estado."
+        : isMultiPickup
+          ? "Multi-coleta já nasce como uma OS única."
+          : isIndependentServices
+            ? "A PG já foi separada por janela operacional."
+            : !hasReturn
+              ? "Sem retorno previsto para separar ida/busca."
+              : "Este serviço não pode ser separado neste estado."
       : "Criar segunda OS rascunho na mesma PG.";
     const manualButton = buildImportAction("Revisar manual", "manual-operational-review", isLocked);
     manualButton.classList.add("import-decision-button", "is-manual-action");
@@ -14166,8 +14714,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       .replace(/Ida \+ busca separaveis/g, "Ida + busca separáveis")
       .replace(/Ida\/busca separadas/g, "Ida/busca separadas")
       .replace(/OS unica/g, "OS única")
+      .replace(/Servicos/g, "Serviços")
+      .replace(/servicos/g, "serviços")
       .replace(/Servico/g, "Serviço")
       .replace(/servico/g, "serviço")
+      .replace(/horario/g, "horário")
+      .replace(/sequencia/g, "sequência")
       .replace(/disposicao/g, "disposição")
       .replace(/Nao/g, "Não")
       .replace(/nao/g, "não")
@@ -14464,12 +15016,25 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       });
       return;
     }
+    if (action.dataset.importAction === "merge-same-car") {
+      const listScrollTop = action.closest(".import-service-list")?.scrollTop ?? 0;
+      const merged = mergeSelectedImportedTrechosAsSameCar(action.dataset.programacao || "");
+      renderImportReviewPreservingGallery(listScrollTop);
+      toast(merged ? "Serviços mesclados como mesmo carro." : "Seleção inválida para mesclar como mesmo carro.", merged ? "success" : "warning", 5000);
+      return;
+    }
     const trechoCard = action.closest("[data-trecho-key]");
     const passengerRow = action.closest("[data-passenger-index]");
     const trecho = trechoCard ? findImportedTrecho(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey) : null;
     if (!trecho) return;
 
     if (action.dataset.importAction === "noop") {
+      return;
+    }
+    if (action.dataset.importAction === "toggle-same-car-selection") {
+      const listScrollTop = action.closest(".import-service-list")?.scrollTop ?? 0;
+      toggleSameCarTrechoSelection(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey);
+      renderImportReviewPreservingGallery(listScrollTop);
       return;
     }
     if (action.dataset.importAction === "select-trecho") {
@@ -14501,7 +15066,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       if (trecho.duplicatedRecordIds?.length || isDraftImportedTrecho(trecho)) return;
       applyImportedOperationalDecision(trecho, importOperationalDecisions().KEEP_WAITING);
       renderImportReviewPreservingGallery();
-      toast("Decisão registrada: manter uma OS com espera.", "success", 4000);
+      const keepMessage = importedTrechoHasReturn(trecho) ? "manter uma OS com espera" : "manter 1 OS";
+      toast(`Decisão registrada: ${keepMessage}.`, "success", 4000);
       return;
     }
     if (action.dataset.importAction === "manual-operational-review") {
@@ -14518,6 +15084,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       }
       if (isDraftImportedTrecho(trecho)) {
         toast("Split disponível apenas no serviço importado original.", "warning", 5000);
+        return;
+      }
+      const modes = importOperationalModes();
+      const cannotSplitInterpretedPg = trecho.operationalMode === modes.MULTI_PICKUP
+        || trecho.operationalMode === modes.INDEPENDENT_SERVICES
+        || !importedTrechoHasReturn(trecho);
+      if (cannotSplitInterpretedPg) {
+        toast("Split indisponível para esta interpretação da PG.", "warning", 5000);
         return;
       }
       const listScrollTop = el.importReviewPrograms?.querySelector(".import-service-list")?.scrollTop ?? 0;

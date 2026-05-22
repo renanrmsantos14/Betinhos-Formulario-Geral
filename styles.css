@@ -3143,8 +3143,8 @@ h3 {
 .passenger-edit-field textarea.passenger-edit-control {
   display: block;
   min-height: 96px;
-  max-height: 160px;
-  resize: none;
+  max-height: none;
+  resize: vertical;
   overflow: auto;
   line-height: 1.4;
   white-space: pre-wrap;
@@ -3967,6 +3967,14 @@ body.is-import-dragging .import-drop-overlay {
   line-height: 1.3;
 }
 
+.import-service-group-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+
 .import-add-service-button {
   display: inline-grid;
   place-items: center;
@@ -4010,6 +4018,70 @@ body.is-import-dragging .import-drop-overlay {
   background: var(--surface-muted);
   cursor: not-allowed;
   opacity: 0.68;
+}
+
+.import-same-car-button {
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
+  border-radius: var(--radius-xs);
+  background: color-mix(in srgb, var(--accent-soft) 58%, #ffffff);
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 860;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.import-same-car-button:disabled {
+  border-color: var(--line);
+  background: var(--surface-muted);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.import-service-row-wrap {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  gap: 7px;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.import-service-merge-toggle {
+  position: relative;
+  width: 28px;
+  min-height: 62px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  cursor: pointer;
+  transition:
+    border-color 160ms var(--ease-out),
+    background 160ms var(--ease-out);
+}
+
+.import-service-merge-toggle::after {
+  content: "";
+  position: absolute;
+  top: 13px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+}
+
+.import-service-merge-toggle.is-active {
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--line));
+  background: color-mix(in srgb, var(--accent-soft) 50%, #ffffff);
+}
+
+.import-service-merge-toggle.is-active::after {
+  border-color: var(--accent);
+  background: radial-gradient(circle, var(--accent) 0 46%, #ffffff 52% 100%);
 }
 
 .import-service-row {
@@ -4392,15 +4464,23 @@ body.is-import-dragging .import-drop-overlay {
   min-width: 0;
   padding: 12px;
   border: 1px solid color-mix(in srgb, var(--line) 82%, #ffffff);
-  border-left: 4px solid var(--accent);
   border-radius: var(--radius-sm);
   background: #ffffff;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.86);
 }
 
 .import-decision-panel.is-decision-pending {
-  border-left-color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 32%, var(--line));
   background: color-mix(in srgb, var(--warning-soft) 20%, #ffffff);
+}
+
+.import-decision-panel.is-multi-pickup {
+  border-color: color-mix(in srgb, var(--success) 28%, var(--line));
+  background: color-mix(in srgb, var(--success-soft) 24%, #ffffff);
+}
+
+.import-decision-panel.is-independent-services {
+  border-color: color-mix(in srgb, var(--warning) 32%, var(--line));
 }
 
 .import-decision-copy {
@@ -4612,10 +4692,8 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .import-trecho.is-locked [data-import-copy] input[readonly],
-.import-trecho.is-locked [data-import-copy] textarea[readonly],
 .import-trecho.is-locked [data-import-copy] select:disabled,
 .import-trecho.is-duplicated [data-import-copy] input[readonly],
-.import-trecho.is-duplicated [data-import-copy] textarea[readonly],
 .import-trecho.is-duplicated [data-import-copy] select:disabled {
   pointer-events: none;
 }
@@ -5741,7 +5819,7 @@ body.is-import-dragging .import-drop-overlay {
     max-width: 100%;
     min-height: 112px;
     max-height: none;
-    resize: none;
+    resize: vertical;
     overflow: auto;
   }
 
@@ -5934,7 +6012,7 @@ body.is-import-dragging .import-drop-overlay {
 
   .passenger-edit-field textarea.passenger-edit-control {
     min-height: 88px;
-    max-height: 128px;
+    max-height: none;
   }
 
   .passenger-directory {

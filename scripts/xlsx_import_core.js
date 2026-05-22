@@ -9,22 +9,25 @@
 
   const REQUIRED_XLSX_HEADERS = [
     "Data da Viagem (inicial)",
-    "Número solicitação",
     "Número Programação",
+    "Horário Passageiro",
+    "Nome Passageiro",
+    "Origem",
+    "Destino"
+  ];
+
+  const OPTIONAL_XLSX_HEADERS = [
+    "Número solicitação",
     "Status",
     "Tipo Serviço",
     "Tipo Transporte",
-    "Horário Passageiro",
-    "Nome Passageiro",
     "Tel Res.",
     "Tel Cel.",
     "Centro Custo Passageiro",
     "Programador",
     "Gestor/Aprovador",
     "Solicitante",
-    "Origem",
     "Cidade Origem",
-    "Destino",
     "Cidade Destino",
     "Horário Vôo/Casv",
     "Número Vôo",
@@ -51,6 +54,8 @@
   const IMPORT_OPERATIONAL_MODES = Object.freeze({
     SINGLE: "single",
     WAITING: "waiting",
+    MULTI_PICKUP: "multi-pickup",
+    INDEPENDENT_SERVICES: "independent-services",
     SEPARABLE: "separable",
     MANUAL_REVIEW: "manual-review",
     MANUAL: "manual",
@@ -137,7 +142,7 @@
           programacao: row.programacao,
           solicitacoes: new Set(),
           statusExternos: new Set(),
-          trecho: createTrecho(row),
+          rows: [],
           sourceRows: []
         });
       }
@@ -145,12 +150,11 @@
       if (row.solicitacao) program.solicitacoes.add(row.solicitacao);
       if (row.statusExterno) program.statusExternos.add(row.statusExterno);
       program.sourceRows.push(row.sourceRow);
-
-      mergeRowIntoTrecho(program.trecho, row);
+      program.rows.push(row);
     });
 
     return [...programs.values()].map((program) => {
-      const trechos = [finalizeTrecho(program.trecho)].sort(compareTrechos);
+      const trechos = buildProgramImportTrechos(program.rows).sort(compareTrechos);
       return {
         programacao: program.programacao,
         solicitacoes: [...program.solicitacoes],
@@ -160,6 +164,41 @@
         pendencias: collectProgramIssues(trechos)
       };
     }).sort((a, b) => compareProgramCodes(a.programacao, b.programacao));
+  }
+
+  function buildProgramImportTrechos(rows) {
+    return groupImportedRowsByDestinationWindow(rows).map((groupRows) => {
+      const trecho = createTrecho(groupRows[0]);
+      groupRows.forEach((row) => mergeRowIntoTrecho(trecho, row));
+      return finalizeTrecho(trecho);
+    });
+  }
+
+  function groupImportedRowsByDestinationWindow(rows) {
+    const sorted = sortImportedLines(rows);
+    const uniqueDates = new Set(sorted.map((row) => row.dataIso || parseBrazilianDate(row.data)).filter(Boolean));
+    const destinationKeys = new Set(sorted.map((row) => row.destinoKey || normalizeAddress(row.destino)).filter(Boolean));
+    if (uniqueDates.size > 1 || destinationKeys.size !== 1 || sorted.length <= 1) return [sorted];
+    const groups = [];
+    let current = [];
+    let currentStartMinutes = null;
+    sorted.forEach((row) => {
+      const minutes = timeToMinutes(row.horario);
+      if (!current.length || !Number.isFinite(minutes) || !Number.isFinite(currentStartMinutes)) {
+        current = [row];
+        currentStartMinutes = minutes;
+        groups.push(current);
+        return;
+      }
+      if (minutes - currentStartMinutes > 90) {
+        current = [row];
+        currentStartMinutes = minutes;
+        groups.push(current);
+        return;
+      }
+      current.push(row);
+    });
+    return groups;
   }
 
   function createTrecho(row) {
@@ -242,10 +281,12 @@
     const firstLine = linhasImportadas[0] || null;
     const lastLine = linhasImportadas[linhasImportadas.length - 1] || null;
     const retornoLine = firstLine && lastLine && isLaterImportedLine(lastLine, firstLine) ? lastLine : null;
+    const displayLines = displayLinesForImportedTrecho(linhasImportadas, retornoLine);
+    const displayFirstLine = displayLines[0] || firstLine;
     const passageiros = dedupePassengers(trecho.passageiros);
     const solicitanteNome = trecho.solicitanteNome || passageiros.find((passenger) => passenger.solicitanteNome)?.solicitanteNome || "";
-    const origem = composeGroupedLineSummary(linhasImportadas, "origem") || trecho.origem;
-    const destino = composeGroupedLineSummary(linhasImportadas, "destino") || trecho.destino;
+    const origem = composeGroupedLineSummary(displayLines, "origem") || trecho.origem;
+    const destino = composeGroupedLineSummary(displayLines, "destino") || trecho.destino;
     const dataIso = firstLine?.dataIso || trecho.dataIso;
     const data = firstLine?.data || trecho.data;
     const horario = firstLine?.horario || trecho.horario;
@@ -255,6 +296,7 @@
       retornoLine,
       uniqueDates
     });
+    const retornoPrevistoLine = operational.mode === IMPORT_OPERATIONAL_MODES.MULTI_PICKUP ? null : retornoLine;
     if (operational.requiresDecision) pendencias.push(OPERATIONAL_DECISION_ISSUE);
     if (uniqueDates.size > 1) pendencias.push("PG com datas diferentes.");
     if (!trecho.dataIso) pendencias.push("Data inválida.");
@@ -280,14 +322,14 @@
       sourceRows: trecho.sourceRows.sort((a, b) => a - b),
       solicitanteNome,
       origem,
-      origemPrincipal: firstLine?.origem || trecho.origemPrincipal || trecho.origem,
+      origemPrincipal: displayFirstLine?.origem || trecho.origemPrincipal || trecho.origem,
       destino,
-      destinoPrincipal: firstLine?.destino || trecho.destinoPrincipal || trecho.destino,
+      destinoPrincipal: displayFirstLine?.destino || trecho.destinoPrincipal || trecho.destino,
       destinos: Array.from(new Set(trecho.destinos || [])),
       cidadeOrigem: firstLine?.cidadeOrigem || trecho.cidadeOrigem,
       cidadeDestino: lastLine?.cidadeDestino || trecho.cidadeDestino,
-      retornoPrevistoDataIso: retornoLine?.dataIso || "",
-      retornoPrevistoHorario: retornoLine?.horario || "",
+      retornoPrevistoDataIso: retornoPrevistoLine?.dataIso || "",
+      retornoPrevistoHorario: retornoPrevistoLine?.horario || "",
       trajetoCidades: composeCityRoute(linhasImportadas),
       linhasImportadas,
       passageiros,
@@ -306,6 +348,9 @@
   function classifyImportOperationalInterpretation(lines, options = {}) {
     const sorted = sortImportedLines(lines);
     const distinctTimes = new Set(sorted.map((line) => importedLineDateTimeKey(line)).filter(Boolean));
+    const destinationKeys = new Set(sorted.map((line) => line?.destinoKey || normalizeAddress(line?.destino)).filter(Boolean));
+    const passengerKeys = new Set(sorted.map((line) => normalizeText(line?.nomePassageiro)).filter(Boolean));
+    const windowMinutes = importedLineWindowMinutes(sorted);
     if (options.uniqueDates?.size > 1) {
       return {
         mode: IMPORT_OPERATIONAL_MODES.MANUAL_REVIEW,
@@ -313,6 +358,26 @@
         suggestion: "Revisar manual",
         confidence: "alta",
         reason: "A PG tem datas diferentes. Nao e seguro inferir espera ou ida/busca.",
+        requiresDecision: false
+      };
+    }
+    if (destinationKeys.size === 1 && sorted.length > 1 && windowMinutes <= 90 && passengerKeys.size > 1) {
+      return {
+        mode: IMPORT_OPERATIONAL_MODES.MULTI_PICKUP,
+        decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING,
+        suggestion: "Multi-coleta",
+        confidence: "alta",
+        reason: "Mesmo destino dentro de 1h30. Trate como uma OS com coletas em sequencia.",
+        requiresDecision: false
+      };
+    }
+    if (destinationKeys.size === 1 && sorted.length > 1 && windowMinutes > 90) {
+      return {
+        mode: IMPORT_OPERATIONAL_MODES.INDEPENDENT_SERVICES,
+        decision: IMPORT_OPERATIONAL_DECISIONS.MANUAL_REVIEW,
+        suggestion: "Servicos separados",
+        confidence: "alta",
+        reason: "Mesmo destino, mas janela maior que 1h30. Trate como servicos separados.",
         requiresDecision: false
       };
     }
@@ -344,6 +409,14 @@
       reason: "A PG tem mais de um horario no mesmo dia e nao informa espera. Confirme se o motorista fica a disposicao.",
       requiresDecision: true
     };
+  }
+
+  function importedLineWindowMinutes(lines) {
+    const minutes = sortImportedLines(lines)
+      .map((line) => timeToMinutes(line?.horario))
+      .filter((value) => Number.isFinite(value) && value !== Number.MAX_SAFE_INTEGER);
+    if (minutes.length < 2) return 0;
+    return Math.max(...minutes) - Math.min(...minutes);
   }
 
   function importedLinesContainWaitingSignal(lines) {
@@ -454,26 +527,123 @@
 
   function splitImportedTrecho(program, trecho, options = {}) {
     if (!program || !trecho) return null;
-    trecho.retornoPrevistoDataIso = "";
-    trecho.retornoPrevistoHorario = "";
+    const splitLines = splitImportedTrechoLines(trecho.linhasImportadas || []);
+    if (!splitLines.outboundLines.length || !splitLines.returnLines.length) return null;
+    const clone = createSplitImportTrecho(program, trecho, {
+      ...options,
+      returnLines: splitLines.returnLines
+    });
+    if (!clone) return null;
+    applyImportedLinesToTrecho(trecho, splitLines.outboundLines, trecho.passageiros || []);
     applyImportOperationalDecision(trecho, IMPORT_OPERATIONAL_DECISIONS.SPLIT);
     markImportedTrechoPending(trecho);
-    const clone = createSplitImportTrecho(program, trecho, options);
     program.trechos = Array.isArray(program.trechos) ? program.trechos : [];
     program.trechos.push(clone);
     program.pendencias = collectProgramIssues(program.trechos);
     return clone;
   }
 
+  function mergeImportedTrechosAsSameCar(program, trechoKeys, options = {}) {
+    if (!program || !Array.isArray(program.trechos)) return null;
+    const keys = new Set((trechoKeys || []).map((key) => String(key || "")).filter(Boolean));
+    if (keys.size < 2) return null;
+    const selected = program.trechos.filter((trecho) => keys.has(String(trecho?.key || "")));
+    if (selected.length !== keys.size || !canMergeImportedTrechosAsSameCar(selected)) return null;
+
+    const firstIndex = Math.min(...selected.map((trecho) => program.trechos.indexOf(trecho)).filter((index) => index >= 0));
+    const merged = createSameCarImportTrecho(program, selected, options);
+    if (!merged) return null;
+    program.trechos = program.trechos.filter((trecho) => !selected.includes(trecho));
+    program.trechos.splice(Number.isFinite(firstIndex) ? firstIndex : 0, 0, merged);
+    program.pendencias = collectProgramIssues(program.trechos);
+    return merged;
+  }
+
+  function canMergeImportedTrechosAsSameCar(trechos) {
+    if (!Array.isArray(trechos) || trechos.length < 2) return false;
+    if (trechos.some((trecho) => trecho?.savedRecordId || trecho?.duplicatedRecordIds?.length)) return false;
+    const dateKeys = new Set(trechos.flatMap(importedTrechoDateKeys));
+    if (dateKeys.size > 1) return false;
+    const destinationKeys = new Set();
+    for (const trecho of trechos) {
+      const keys = importedTrechoDestinationKeys(trecho);
+      if (keys.length !== 1) return false;
+      destinationKeys.add(keys[0]);
+    }
+    return destinationKeys.size === 1;
+  }
+
+  function createSameCarImportTrecho(program, trechos, options = {}) {
+    const lines = sortImportedLines(trechos.flatMap((trecho) => trecho?.linhasImportadas || []));
+    if (!lines.length) return null;
+    const firstLine = lines[0];
+    const lastLine = lines[lines.length - 1];
+    const programacao = String(options.programacao || program?.programacao || firstLine?.programacao || "").trim();
+    const sourceRows = Array.from(new Set(trechos.flatMap((trecho) => trecho?.sourceRows || []))).filter(Boolean).sort((a, b) => a - b);
+    const solicitacoes = new Set(trechos.flatMap((trecho) => trecho?.solicitacoes || []));
+    const base = {
+      key: "",
+      programacao,
+      solicitacoes,
+      statusExternos: new Set(),
+      sourceRows,
+      data: firstLine?.data || "",
+      dataIso: firstLine?.dataIso || "",
+      horario: firstLine?.horario || "",
+      origem: firstLine?.origem || "",
+      destino: firstLine?.destino || "",
+      destinos: Array.from(new Set(lines.map((line) => line.destino).filter(Boolean))),
+      cidadeOrigem: firstLine?.cidadeOrigem || "",
+      cidadeDestino: lastLine?.cidadeDestino || "",
+      solicitanteNome: firstFilledObjectValue(trechos, "solicitanteNome"),
+      tipoServicoSugerido: firstFilledObjectValue(trechos, "tipoServicoSugerido"),
+      tipoVeiculoSugerido: firstFilledObjectValue(trechos, "tipoVeiculoSugerido"),
+      tipoServicoValue: firstFilledObjectValue(trechos, "tipoServicoValue"),
+      tipoVeiculoValue: firstFilledObjectValue(trechos, "tipoVeiculoValue"),
+      valor: maxFiniteValue(trechos.map((trecho) => trecho?.valor)),
+      motoristaNome: firstFilledObjectValue(trechos, "motoristaNome"),
+      retornoPrevistoDataIso: "",
+      retornoPrevistoHorario: "",
+      trajetoCidades: "",
+      origemPrincipal: firstLine?.origem || "",
+      destinoPrincipal: firstLine?.destino || "",
+      linhasImportadas: lines,
+      passageiros: trechos.flatMap((trecho) => trecho?.passageiros || []),
+      observacoes: Array.from(new Set(trechos.flatMap((trecho) => trecho?.observacoes || []))),
+      observacaoOperacional: "",
+      pendencias: Array.from(new Set(trechos.flatMap((trecho) => trecho?.pendencias || []))),
+      reviewStatus: IMPORT_REVIEW_STATUSES.PENDING,
+      reviewBlockReason: "",
+      savedRecordId: "",
+      duplicatedRecordIds: [],
+      importOrigin: "same-car",
+      originStatus: "Mesmo carro"
+    };
+    const merged = finalizeTrecho(base);
+    merged.key = options.key || `${programacao}|same-car|${nextSameCarImportSequence(program)}`;
+    merged.importOrigin = "same-car";
+    merged.originStatus = "Mesmo carro";
+    merged.operationalMode = IMPORT_OPERATIONAL_MODES.MULTI_PICKUP;
+    merged.operationalDecision = IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING;
+    merged.operationalSuggestion = "Mesmo carro";
+    merged.operationalConfidence = "manual";
+    merged.operationalReason = "Usuario confirmou que os trechos separados usam o mesmo carro.";
+    merged.retornoPrevistoDataIso = "";
+    merged.retornoPrevistoHorario = "";
+    merged.pendencias = Array.from(new Set((merged.pendencias || []).filter((issue) => issue !== OPERATIONAL_DECISION_ISSUE)));
+    markImportedTrechoPending(merged);
+    return merged;
+  }
+
   function createSplitImportTrecho(program, source, options = {}) {
     const programacao = String(options.programacao || program?.programacao || source?.programacao || "").trim();
     const key = options.key || `${programacao}|split|${nextSplitImportSequence(program)}`;
-    const returnLines = latestImportedLineGroup(source?.linhasImportadas || []);
+    const returnLines = sortImportedLines(options.returnLines || latestImportedLineGroup(source?.linhasImportadas || []));
     const returnLine = returnLines[0] || null;
     return {
       key,
       programacao,
-      solicitacoes: Array.from(new Set(source?.solicitacoes || [])),
+      solicitacoes: uniqueSolicitacoesFromImportedLines(returnLines, source?.solicitacoes || []),
       sourceRows: returnLines.map((line) => line.sourceRow).filter(Boolean),
       data: returnLine?.data || "",
       dataIso: returnLine?.dataIso || "",
@@ -496,7 +666,7 @@
       origemPrincipal: returnLine?.origem || "",
       destinoPrincipal: returnLine?.destino || "",
       linhasImportadas: returnLines,
-      passageiros: (source?.passageiros || []).map(clonePassengerForSplit),
+      passageiros: passengersFromImportedLines(returnLines, source?.passageiros || []),
       observacoes: Array.from(new Set(source?.observacoes || [])),
       observacaoOperacional: source?.observacaoOperacional || "",
       pendencias: [],
@@ -575,7 +745,8 @@
       reasons.push("passageiros parecidos");
     }
 
-    const level = score >= 78 ? "exact" : score >= 48 ? "possible" : "";
+    const hasExactOperationalIdentity = reasons.includes("mesmo horario") && reasons.includes("mesmos passageiros");
+    const level = score >= 78 && hasExactOperationalIdentity ? "exact" : score >= 48 ? "possible" : "";
     return {
       recordId: existing.recordId || existing.id || existing.cr40f_reservadeveculosid || "",
       score,
@@ -673,6 +844,47 @@
       sequence += 1;
     }
     return sequence;
+  }
+
+  function nextSameCarImportSequence(program) {
+    const keys = new Set((program?.trechos || []).map((trecho) => String(trecho?.key || "")));
+    const programacao = program?.programacao || "";
+    let sequence = 1;
+    while (keys.has(`${programacao}|same-car|${sequence}`)) {
+      sequence += 1;
+    }
+    return sequence;
+  }
+
+  function importedTrechoDateKeys(trecho) {
+    const keys = (trecho?.linhasImportadas || [])
+      .map((line) => line?.dataIso || parseBrazilianDate(line?.data))
+      .filter(Boolean);
+    if (!keys.length) {
+      const fallback = trecho?.dataIso || parseBrazilianDate(trecho?.data);
+      if (fallback) keys.push(fallback);
+    }
+    return Array.from(new Set(keys));
+  }
+
+  function importedTrechoDestinationKeys(trecho) {
+    const keys = (trecho?.linhasImportadas || [])
+      .map((line) => line?.destinoKey || normalizeAddress(line?.destino))
+      .filter(Boolean);
+    if (!keys.length) {
+      const fallback = normalizeAddress(trecho?.destinoPrincipal || trecho?.destinos?.[0] || trecho?.destino);
+      if (fallback) keys.push(fallback);
+    }
+    return Array.from(new Set(keys));
+  }
+
+  function firstFilledObjectValue(items, field) {
+    return (items || []).find((item) => String(item?.[field] || "").trim())?.[field] || "";
+  }
+
+  function maxFiniteValue(values) {
+    const finite = (values || []).map(Number).filter(Number.isFinite);
+    return finite.length ? Math.max(...finite) : null;
   }
 
   function summarizeImportReviewTrechos(trechos) {
@@ -860,11 +1072,12 @@
   }
 
   function composeGroupedLineSummary(lines, field) {
+    const includeTime = field !== "destino";
     const groups = [];
     const groupByKey = new Map();
     sortImportedLines(lines).forEach((line) => {
       const value = String(line?.[field] || "").trim();
-      const key = [line?.horario || "", normalizeAddress(value)].join("|");
+      const key = [includeTime ? line?.horario || "" : "", normalizeAddress(value)].join("|");
       if (!groupByKey.has(key)) {
         const group = {
           horario: line?.horario || "",
@@ -884,7 +1097,7 @@
       const horario = group.horario || "--:--";
       const names = group.names.length ? group.names.join(", ") : "Passageiro";
       const value = group.value || (field === "origem" ? "endereço não informado" : "destino não informado");
-      return `${horario} - ${names} - ${value}`;
+      return includeTime ? `${horario} - ${names} - ${value}` : `${names} - ${value}`;
     }).join("\n");
   }
 
@@ -921,6 +1134,66 @@
     return sorted.filter((line) => importedLineDateTimeKey(line) === lastKey);
   }
 
+  function splitImportedTrechoLines(lines) {
+    const sorted = sortImportedLines(lines);
+    const returnLines = latestImportedLineGroup(sorted);
+    const returnRefs = new Set(returnLines);
+    const outboundLines = sorted.filter((line) => !returnRefs.has(line));
+    return {
+      outboundLines,
+      returnLines
+    };
+  }
+
+  function displayLinesForImportedTrecho(lines, retornoLine) {
+    const sorted = sortImportedLines(lines);
+    if (!retornoLine || sorted.length <= 1) return sorted;
+    const { outboundLines, returnLines } = splitImportedTrechoLines(sorted);
+    if (!outboundLines.length || !returnLines.length) return sorted;
+    return importedReturnLinesMatchOutboundDestination(outboundLines, returnLines) ? outboundLines : sorted;
+  }
+
+  function importedReturnLinesMatchOutboundDestination(outboundLines, returnLines) {
+    const outboundDestinations = outboundLines.map((line) => line?.destino).filter(Boolean);
+    const returnOrigins = returnLines.map((line) => line?.origem).filter(Boolean);
+    if (!outboundDestinations.length || !returnOrigins.length) return false;
+    return returnOrigins.every((origin) => (
+      outboundDestinations.some((destination) => importedAddressesMatch(origin, destination))
+    ));
+  }
+
+  function importedAddressesMatch(left, right) {
+    const leftKey = normalizeAddress(left);
+    const rightKey = normalizeAddress(right);
+    if (!leftKey || !rightKey) return false;
+    if (leftKey === rightKey || leftKey.includes(rightKey) || rightKey.includes(leftKey)) return true;
+    return textMatchScore(left, right) >= 0.7;
+  }
+
+  function applyImportedLinesToTrecho(trecho, lines, sourcePassengers = []) {
+    const sorted = sortImportedLines(lines);
+    const firstLine = sorted[0] || null;
+    const lastLine = sorted[sorted.length - 1] || null;
+    trecho.sourceRows = sorted.map((line) => line.sourceRow).filter(Boolean).sort((a, b) => a - b);
+    trecho.solicitacoes = uniqueSolicitacoesFromImportedLines(sorted, trecho.solicitacoes || []);
+    trecho.data = firstLine?.data || "";
+    trecho.dataIso = firstLine?.dataIso || "";
+    trecho.horario = firstLine?.horario || "";
+    trecho.origem = composeGroupedLineSummary(sorted, "origem");
+    trecho.destino = composeGroupedLineSummary(sorted, "destino");
+    trecho.destinos = Array.from(new Set(sorted.map((line) => line.destino).filter(Boolean)));
+    trecho.cidadeOrigem = firstLine?.cidadeOrigem || "";
+    trecho.cidadeDestino = lastLine?.cidadeDestino || "";
+    trecho.origemPrincipal = firstLine?.origem || "";
+    trecho.destinoPrincipal = firstLine?.destino || "";
+    trecho.retornoPrevistoDataIso = "";
+    trecho.retornoPrevistoHorario = "";
+    trecho.trajetoCidades = composeCityRoute(sorted);
+    trecho.linhasImportadas = sorted;
+    trecho.passageiros = passengersFromImportedLines(sorted, sourcePassengers);
+    return trecho;
+  }
+
   function applyImportOperationalDecision(trecho, decision) {
     if (!trecho) return null;
     const normalized = Object.values(IMPORT_OPERATIONAL_DECISIONS).includes(decision)
@@ -944,23 +1217,45 @@
     return trecho;
   }
 
-  function clonePassengerForSplit(passenger) {
+  function passengersFromImportedLines(lines, sourcePassengers = []) {
+    return dedupePassengers(sortImportedLines(lines).map((line) => passengerFromImportedLine(line, sourcePassengers)));
+  }
+
+  function uniqueSolicitacoesFromImportedLines(lines, fallback = []) {
+    const values = sortImportedLines(lines).map((line) => line?.solicitacao).filter(Boolean);
+    return Array.from(new Set(values.length ? values : fallback));
+  }
+
+  function passengerFromImportedLine(line, sourcePassengers = []) {
+    const source = findSourcePassengerForImportedLine(line, sourcePassengers);
     return {
-      sourceRow: "",
-      nome: passenger?.nome || "",
-      telefone: passenger?.telefone || "",
-      documento: passenger?.documento || "",
-      centroCusto: passenger?.centroCusto || "",
-      solicitanteNome: passenger?.solicitanteNome || "",
-      origem: "",
-      destino: "",
-      horario: "",
-      passageiroId: passenger?.passageiroId || "",
-      passageiroLabel: passenger?.passageiroLabel || "",
-      matchStatus: passenger?.matchStatus || "pending",
-      matchMessage: passenger?.matchMessage || "",
-      matchCandidates: passenger?.matchCandidates || []
+      sourceRow: line?.sourceRow || "",
+      nome: line?.nomePassageiro || source?.nome || "",
+      telefone: line?.telefone || source?.telefone || "",
+      documento: line?.documento || source?.documento || "",
+      centroCusto: line?.centroCusto || source?.centroCusto || "",
+      solicitanteNome: line?.solicitanteNome || source?.solicitanteNome || "",
+      origem: line?.origem || "",
+      destino: line?.destino || "",
+      horario: line?.horario || "",
+      passageiroId: source?.passageiroId || "",
+      passageiroLabel: source?.passageiroLabel || "",
+      matchStatus: source?.matchStatus || "pending",
+      matchMessage: source?.matchMessage || "",
+      matchCandidates: source?.matchCandidates || []
     };
+  }
+
+  function findSourcePassengerForImportedLine(line, sourcePassengers = []) {
+    const name = normalizeText(line?.nomePassageiro);
+    const phone = normalizePhone(line?.telefone);
+    const document = normalizeText(line?.documento);
+    return (sourcePassengers || []).find((passenger) => {
+      const sameName = name && normalizeText(passenger?.nome) === name;
+      const samePhone = phone && normalizePhone(passenger?.telefone) === phone;
+      const sameDocument = document && normalizeText(passenger?.documento) === document;
+      return (sameName && (samePhone || sameDocument || (!phone && !document))) || samePhone || sameDocument;
+    }) || null;
   }
 
   function collectProgramIssues(trechos) {
@@ -1143,6 +1438,7 @@
     inferVehicleType,
     markImportedTrechoPending,
     markImportedTrechoSaved,
+    mergeImportedTrechosAsSameCar,
     normalizeAddress,
     normalizeImportedRows,
     normalizeText,

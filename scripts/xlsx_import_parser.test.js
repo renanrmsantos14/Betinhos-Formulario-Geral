@@ -16,9 +16,11 @@ const {
   ignoreImportedTrechoReview,
   markImportedTrechoPending,
   markImportedTrechoSaved,
+  mergeImportedTrechosAsSameCar,
   scoreImportedTrechoDuplicate,
   splitImportedTrecho,
-  summarizeImportReviewTrechos
+  summarizeImportReviewTrechos,
+  validateImportHeaders
 } = require("./xlsx_import_core");
 
 const root = path.resolve(__dirname, "..");
@@ -124,6 +126,31 @@ assert.deepEqual(
   [],
   "todos os cabecalhos obrigatorios devem existir"
 );
+assert.deepEqual(
+  validateImportHeaders([
+    "Data da Viagem (inicial)",
+    "Número Programação",
+    "Horário Passageiro",
+    "Nome Passageiro",
+    "Origem",
+    "Destino"
+  ]),
+  [],
+  "colunas opcionais ausentes nao devem bloquear importacao"
+);
+const minimalColumnPrograms = buildImportPrograms(normalizeImportedRows([
+  {
+    "Data da Viagem (inicial)": "20/05/2026",
+    "Número Programação": "PGMIN/1",
+    "Horário Passageiro": "07:30",
+    "Nome Passageiro": "FULANO TESTE",
+    "Origem": "Casa Fulano",
+    "Destino": "Aeroporto de Congonhas"
+  }
+]));
+assert.equal(minimalColumnPrograms.length, 1, "planilha com apenas colunas essenciais deve importar a PG");
+assert.equal(minimalColumnPrograms[0].trechos.length, 1, "planilha com colunas opcionais ausentes deve criar OS");
+assert.equal(minimalColumnPrograms[0].trechos[0].passageiros[0].nome, "FULANO TESTE", "linha minima deve preservar passageiro");
 assert.equal(programs.length, 131, "deve agrupar 131 programacoes externas por PG");
 assert.ok(
   programs.some((program) => program.trechos.some((trecho) => trecho.solicitanteNome)),
@@ -188,7 +215,7 @@ assert.equal(sharedPickupPrograms[0].trechos.length, 1, "mesma PG deve virar um 
 assert.deepEqual(sharedPickupTrecho.passageiros.map((passenger) => passenger.nome), ["ANA TESTE", "BRUNO TESTE"], "ordem dos passageiros deve seguir a ordem da planilha");
 assert.deepEqual(sharedPickupTrecho.passageiros.map((passenger) => passenger.destino), ["Hotel A", "Hotel B"], "destino individual deve ficar editavel por passageiro");
 assert.equal(sharedPickupTrecho.origem, "08:00 - ANA, BRUNO - Av. Brigadeiro Faria Lima, 1000", "enderecos iguais devem agrupar passageiros no endereco de saida");
-assert.equal(sharedPickupTrecho.destino, "08:00 - ANA - Hotel A\n08:00 - BRUNO - Hotel B", "destinos diferentes devem ser consolidados por horario, pax e destino");
+assert.equal(sharedPickupTrecho.destino, "ANA - Hotel A\nBRUNO - Hotel B", "destinos diferentes devem ser consolidados por pax e destino, sem horario");
 assert.equal(sharedPickupTrecho.retornoPrevistoHorario, "", "horarios iguais nao devem preencher retorno previsto");
 
 const waitPrograms = buildImportPrograms([
@@ -263,17 +290,196 @@ assert.equal(waitTrecho.horario, "08:00", "saida deve usar o menor horario da PG
 assert.equal(waitTrecho.retornoPrevistoDataIso, "2026-05-20", "retorno previsto deve usar a data da linha mais tarde");
 assert.equal(waitTrecho.retornoPrevistoHorario, "17:00", "retorno previsto deve usar o maior horario da PG");
 assert.deepEqual(waitTrecho.passageiros.map((passenger) => passenger.nome), ["ANA TESTE", "BRUNO TESTE"], "mesmo pax em horarios diferentes nao deve duplicar relacionamento");
-assert.equal(waitTrecho.origem, "08:00 - ANA, BRUNO - Hotel A\n17:00 - ANA - Escritorio A", "endereco de saida deve listar todas as linhas agrupando endereco igual");
-assert.equal(waitTrecho.destino, "08:00 - ANA - Escritorio A\n08:00 - BRUNO - Escritorio B\n17:00 - ANA - Hotel A", "destino deve listar todas as linhas por horario e destino");
+assert.equal(waitTrecho.origem, "08:00 - ANA, BRUNO - Hotel A", "OS com retorno validado deve listar apenas a ida no endereco de saida");
+assert.equal(waitTrecho.destino, "ANA - Escritorio A\nBRUNO - Escritorio B", "OS com retorno validado deve listar apenas destino da ida, sem horario");
 assert.equal(waitTrecho.trajetoCidades, "Sao Paulo / Campinas / Sao Paulo", "trajeto deve usar sequencia unica de cidades");
 assert.equal(waitTrecho.operationalMode, IMPORT_OPERATIONAL_MODES.SEPARABLE, "PG com dois horarios sem indicacao de espera deve sugerir ida/busca separaveis");
 assert.equal(waitTrecho.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.PENDING, "PG separavel deve exigir decisao operacional antes de confirmar");
 assert.equal(waitTrecho.operationalSuggestion, "Ida + busca separaveis", "sugestao deve falar a linguagem operacional");
 assert.ok(waitTrecho.pendencias.includes("Decidir se motorista fica a disposicao ou separar ida/busca."), "PG separavel deve ficar pendente ate decisao humana");
 
+const validatedReturnPrograms = buildImportPrograms([
+  {
+    sourceRow: 70,
+    programacao: "PGRETURN/1",
+    solicitacao: "ST70",
+    data: "20/05/2026",
+    dataIso: "2026-05-20",
+    horario: "05:40",
+    origem: "Rua Francisco Ricci, 181 - Vila Ema, Sao Jose dos Campos, SP",
+    origemKey: "rua francisco ricci 181 vila ema sao jose dos campos sp",
+    destino: "Avenida das Nacoes Unidas, 8501 - Pinheiros, Sao Paulo, SP, ECO",
+    destinoKey: "avenida das nacoes unidas 8501 pinheiros sao paulo sp eco",
+    cidadeOrigem: "Sao Jose dos Campos",
+    cidadeDestino: "Sao Paulo",
+    nomePassageiro: "MARCOS TESTE",
+    telefone: "11933330000",
+    centroCusto: "CR1",
+    tipoServicoSugerido: "Intermunicipal",
+    tipoVeiculoSugerido: "Executivo",
+    valor: 100
+  },
+  {
+    sourceRow: 71,
+    programacao: "PGRETURN/1",
+    solicitacao: "ST71",
+    data: "20/05/2026",
+    dataIso: "2026-05-20",
+    horario: "05:50",
+    origem: "Rua Benedito Osvaldo Lecques, 300 - Parque Residencial Aquarius, Sao Jose dos Campos, SP",
+    origemKey: "rua benedito osvaldo lecques 300 parque residencial aquarius sao jose dos campos sp",
+    destino: "Avenida das Nacoes Unidas, 8501 - Pinheiros, Sao Paulo, SP",
+    destinoKey: "avenida das nacoes unidas 8501 pinheiros sao paulo sp",
+    cidadeOrigem: "Sao Jose dos Campos",
+    cidadeDestino: "Sao Paulo",
+    nomePassageiro: "DANIEL TESTE",
+    telefone: "11944440000",
+    centroCusto: "CR2",
+    tipoServicoSugerido: "Intermunicipal",
+    tipoVeiculoSugerido: "Executivo",
+    valor: 100
+  },
+  {
+    sourceRow: 72,
+    programacao: "PGRETURN/1",
+    solicitacao: "ST72",
+    data: "20/05/2026",
+    dataIso: "2026-05-20",
+    horario: "18:30",
+    origem: "Avenida das Nacoes Unidas, 8501 - Pinheiros, Sao Paulo, SP",
+    origemKey: "avenida das nacoes unidas 8501 pinheiros sao paulo sp",
+    destino: "Rua Benedito Osvaldo Lecques, 300 - Parque Residencial Aquarius, Sao Jose dos Campos, SP",
+    destinoKey: "rua benedito osvaldo lecques 300 parque residencial aquarius sao jose dos campos sp",
+    cidadeOrigem: "Sao Paulo",
+    cidadeDestino: "Sao Jose dos Campos",
+    nomePassageiro: "DANIEL TESTE",
+    telefone: "11944440000",
+    centroCusto: "CR2",
+    tipoServicoSugerido: "Intermunicipal",
+    tipoVeiculoSugerido: "Executivo",
+    valor: 100
+  },
+  {
+    sourceRow: 73,
+    programacao: "PGRETURN/1",
+    solicitacao: "ST73",
+    data: "20/05/2026",
+    dataIso: "2026-05-20",
+    horario: "18:30",
+    origem: "Avenida das Nacoes Unidas, 8501 - Pinheiros, Sao Paulo, SP, ECO",
+    origemKey: "avenida das nacoes unidas 8501 pinheiros sao paulo sp eco",
+    destino: "Rua Francisco Ricci, 181 - Vila Ema, Sao Jose dos Campos, SP",
+    destinoKey: "rua francisco ricci 181 vila ema sao jose dos campos sp",
+    cidadeOrigem: "Sao Paulo",
+    cidadeDestino: "Sao Jose dos Campos",
+    nomePassageiro: "MARCOS TESTE",
+    telefone: "11933330000",
+    centroCusto: "CR1",
+    tipoServicoSugerido: "Intermunicipal",
+    tipoVeiculoSugerido: "Executivo",
+    valor: 100
+  }
+]);
+const validatedReturnTrecho = validatedReturnPrograms[0].trechos[0];
+assert.equal(validatedReturnTrecho.retornoPrevistoHorario, "18:30", "retorno validado deve preencher horario previsto");
+assert.equal(validatedReturnTrecho.origem, "05:40 - MARCOS - Rua Francisco Ricci, 181 - Vila Ema, Sao Jose dos Campos, SP\n05:50 - DANIEL - Rua Benedito Osvaldo Lecques, 300 - Parque Residencial Aquarius, Sao Jose dos Campos, SP", "retorno validado nao deve incluir linhas do retorno no endereco de saida");
+assert.equal(validatedReturnTrecho.destino, "MARCOS - Avenida das Nacoes Unidas, 8501 - Pinheiros, Sao Paulo, SP, ECO\nDANIEL - Avenida das Nacoes Unidas, 8501 - Pinheiros, Sao Paulo, SP", "retorno validado deve manter apenas destino da ida");
+
+const invalidReturnPrograms = buildImportPrograms([
+  {
+    ...validatedReturnPrograms[0].trechos[0].linhasImportadas[0],
+    sourceRow: 74,
+    programacao: "PGRETURNBAD/1",
+    solicitacao: "ST74"
+  },
+  {
+    ...validatedReturnPrograms[0].trechos[0].linhasImportadas[3],
+    sourceRow: 75,
+    programacao: "PGRETURNBAD/1",
+    solicitacao: "ST75",
+    origem: "Shopping Morumbi, Sao Paulo, SP",
+    origemKey: "shopping morumbi sao paulo sp"
+  }
+]);
+const invalidReturnTrecho = invalidReturnPrograms[0].trechos[0];
+assert.equal(invalidReturnTrecho.retornoPrevistoHorario, "18:30", "retorno suspeito ainda deve preencher horario previsto");
+assert.equal(invalidReturnTrecho.origem, "05:40 - MARCOS - Rua Francisco Ricci, 181 - Vila Ema, Sao Jose dos Campos, SP\n18:30 - MARCOS - Shopping Morumbi, Sao Paulo, SP", "retorno suspeito deve continuar visivel no endereco de saida para revisao");
+
 applyImportOperationalDecision(waitTrecho, IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING);
 assert.equal(waitTrecho.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING, "decisao de manter espera deve ficar registrada");
 assert.ok(!waitTrecho.pendencias.includes("Decidir se motorista fica a disposicao ou separar ida/busca."), "manter espera deve liberar a pendencia operacional");
+
+const multiPickupPrograms = buildImportPrograms([
+  {
+    sourceRow: 30,
+    programacao: "PGMULTI/1",
+    solicitacao: "ST30",
+    data: "20/05/2026",
+    dataIso: "2026-05-20",
+    horario: "05:00",
+    origem: "Casa Fulano",
+    origemKey: "casa fulano",
+    destino: "Aeroporto de Congonhas",
+    destinoKey: "aeroporto de congonhas",
+    cidadeOrigem: "Sao Paulo",
+    cidadeDestino: "Sao Paulo",
+    nomePassageiro: "FULANO TESTE",
+    telefone: "11911110000",
+    centroCusto: "CR1",
+    tipoServicoSugerido: "Dentro de Sao Paulo",
+    tipoVeiculoSugerido: "Executivo",
+    valor: 100,
+    solicitanteNome: "SOLICITANTE TESTE"
+  },
+  {
+    sourceRow: 31,
+    programacao: "PGMULTI/1",
+    solicitacao: "ST30",
+    data: "20/05/2026",
+    dataIso: "2026-05-20",
+    horario: "05:20",
+    origem: "Casa Beltrano",
+    origemKey: "casa beltrano",
+    destino: "Aeroporto de Congonhas",
+    destinoKey: "aeroporto de congonhas",
+    cidadeOrigem: "Sao Paulo",
+    cidadeDestino: "Sao Paulo",
+    nomePassageiro: "BELTRANO TESTE",
+    telefone: "11922220000",
+    centroCusto: "CR2",
+    tipoServicoSugerido: "Dentro de Sao Paulo",
+    tipoVeiculoSugerido: "Executivo",
+    valor: 100,
+    solicitanteNome: "SOLICITANTE TESTE"
+  }
+]);
+const multiPickupTrecho = multiPickupPrograms[0].trechos[0];
+assert.equal(multiPickupPrograms[0].trechos.length, 1, "mesmo destino dentro de 1h30 deve virar uma OS multi-coleta");
+assert.equal(multiPickupTrecho.operationalMode, IMPORT_OPERATIONAL_MODES.MULTI_PICKUP, "mesmo destino com pax diferentes deve ser classificado como multi-coleta");
+assert.equal(multiPickupTrecho.operationalSuggestion, "Multi-coleta", "sugestao deve priorizar destino comum");
+assert.equal(multiPickupTrecho.retornoPrevistoHorario, "", "multi-coleta nao deve virar retorno previsto");
+assert.deepEqual(multiPickupTrecho.passageiros.map((passenger) => passenger.nome), ["FULANO TESTE", "BELTRANO TESTE"], "multi-coleta deve manter pax unicos na mesma OS");
+
+const distantSameDestinationPrograms = buildImportPrograms([
+  { ...multiPickupPrograms[0].trechos[0].linhasImportadas[0], sourceRow: 40, programacao: "PGDIST/1", horario: "05:00", nomePassageiro: "FULANO TESTE" },
+  { ...multiPickupPrograms[0].trechos[0].linhasImportadas[1], sourceRow: 41, programacao: "PGDIST/1", horario: "06:45", nomePassageiro: "BELTRANO TESTE" }
+]);
+assert.equal(distantSameDestinationPrograms[0].trechos.length, 2, "mesmo destino acima de 1h30 deve virar dois servicos");
+assert.deepEqual(distantSameDestinationPrograms[0].trechos.map((trecho) => trecho.horario), ["05:00", "06:45"], "servicos separados devem manter horarios originais");
+const sameCarMergedTrecho = mergeImportedTrechosAsSameCar(
+  distantSameDestinationPrograms[0],
+  distantSameDestinationPrograms[0].trechos.map((trecho) => trecho.key),
+  { key: "PGDIST/1|same-car|1" }
+);
+assert.ok(sameCarMergedTrecho, "usuario deve conseguir mesclar dois servicos separados da mesma PG");
+assert.equal(distantSameDestinationPrograms[0].trechos.length, 1, "mesclar como mesmo carro deve voltar para uma OS unica");
+assert.equal(sameCarMergedTrecho.key, "PGDIST/1|same-car|1", "merge mesmo carro deve criar chave estavel na PG");
+assert.equal(sameCarMergedTrecho.horario, "05:00", "merge mesmo carro deve usar o primeiro horario");
+assert.equal(sameCarMergedTrecho.retornoPrevistoHorario, "", "merge mesmo carro nao deve criar retorno previsto");
+assert.equal(sameCarMergedTrecho.operationalMode, IMPORT_OPERATIONAL_MODES.MULTI_PICKUP, "merge mesmo carro deve virar multi-coleta manual");
+assert.equal(sameCarMergedTrecho.operationalSuggestion, "Mesmo carro", "merge mesmo carro deve explicar a decisao do usuario");
+assert.deepEqual(sameCarMergedTrecho.passageiros.map((passenger) => passenger.nome), ["FULANO TESTE", "BELTRANO TESTE"], "merge mesmo carro deve manter pax unicos");
+assert.equal(sameCarMergedTrecho.destino, "FULANO, BELTRANO - Aeroporto de Congonhas", "merge mesmo carro deve agrupar destino igual sem horario");
 
 const multiDatePrograms = buildImportPrograms([
   { ...waitPrograms[0].trechos[0].linhasImportadas[0], sourceRow: 20, programacao: "PGDATE/1", data: "20/05/2026", dataIso: "2026-05-20" },
@@ -284,14 +490,22 @@ assert.ok(multiDatePrograms[0].trechos[0].pendencias.includes("PG com datas dife
 const splitClone = splitImportedTrecho(waitPrograms[0], waitTrecho, { key: "PGWAIT/1|split|1" });
 assert.equal(waitTrecho.retornoPrevistoHorario, "", "Split deve limpar retorno previsto da OS original");
 assert.equal(waitTrecho.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.SPLIT, "Split deve registrar decisao operacional na OS original");
+assert.deepEqual(waitTrecho.solicitacoes, ["ST10", "ST11"], "Split deve manter na OS original apenas STs da ida");
+assert.deepEqual(waitTrecho.sourceRows, [10, 11], "Split deve manter na OS original apenas as linhas de ida");
+assert.deepEqual(waitTrecho.passageiros.map((passenger) => passenger.nome), ["ANA TESTE", "BRUNO TESTE"], "OS original do Split deve manter apenas pax da ida");
+assert.equal(waitTrecho.origem, "08:00 - ANA, BRUNO - Hotel A", "Split deve recalcular saida original apenas com a ida");
+assert.equal(waitTrecho.destino, "ANA - Escritorio A\nBRUNO - Escritorio B", "Split deve recalcular destino original apenas com a ida e sem horario");
+assert.equal(waitTrecho.trajetoCidades, "Sao Paulo / Campinas", "Split deve recalcular trajeto original apenas com a ida");
 assert.equal(splitClone.key, "PGWAIT/1|split|1", "Split deve criar chave estavel na PG");
 assert.equal(splitClone.importOrigin, "split", "Split deve marcar origem tecnica");
 assert.equal(splitClone.reviewStatus, IMPORT_REVIEW_STATUSES.PENDING, "Split deve nascer pendente");
-assert.deepEqual(splitClone.passageiros.map((passenger) => passenger.nome), ["ANA TESTE", "BRUNO TESTE"], "Split deve copiar pax unicos");
+assert.deepEqual(splitClone.solicitacoes, ["ST12"], "Split deve manter no clone apenas STs da busca");
+assert.deepEqual(splitClone.sourceRows, [12], "Split deve manter no clone apenas as linhas de retorno");
+assert.deepEqual(splitClone.passageiros.map((passenger) => passenger.nome), ["ANA TESTE"], "Split deve copiar para o clone apenas pax da busca");
 assert.equal(splitClone.dataIso, "2026-05-20", "Split deve pre-preencher data da busca quando houver linha de retorno clara");
 assert.equal(splitClone.horario, "17:00", "Split deve pre-preencher horario da busca quando houver linha de retorno clara");
 assert.equal(splitClone.origem, "17:00 - ANA - Escritorio A", "Split deve pre-preencher endereco de saida da busca");
-assert.equal(splitClone.destino, "17:00 - ANA - Hotel A", "Split deve pre-preencher destino da busca");
+assert.equal(splitClone.destino, "ANA - Hotel A", "Split deve pre-preencher destino da busca sem horario");
 assert.equal(splitClone.trajetoCidades, "Campinas / Sao Paulo", "Split deve pre-preencher trajeto da busca");
 assert.equal(splitClone.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.SPLIT_DRAFT, "clone deve nascer como rascunho de busca separada");
 

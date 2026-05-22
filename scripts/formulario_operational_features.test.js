@@ -5,6 +5,7 @@ const path = require("node:path");
 const root = path.resolve(__dirname, "..");
 const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 
 function includes(source, value, label = value) {
   assert.ok(source.includes(value), `Esperado: ${label}`);
@@ -12,6 +13,14 @@ function includes(source, value, label = value) {
 
 function excludes(source, value, label = value) {
   assert.ok(!source.includes(value), `Nao esperado: ${label}`);
+}
+
+function extractCssRule(source, selector) {
+  const start = source.indexOf(selector);
+  assert.ok(start >= 0, `Regra CSS nao encontrada: ${selector}`);
+  const end = source.indexOf("}", start);
+  assert.ok(end > start, `Regra CSS incompleta: ${selector}`);
+  return source.slice(start, end + 1);
 }
 
 function extractFunction(source, name) {
@@ -226,7 +235,12 @@ includes(app, "import-add-service-button", "botao sutil de adicionar servico por
 includes(app, "originStatus: \"Manual\"", "servico manual deve carregar status visual Manual");
 includes(app, "function buildImportDecisionPanel", "revisao importada deve expor decisao operacional da PG");
 includes(app, "import-decision-panel", "revisao importada deve destacar manter espera ou separar busca");
-includes(app, "Motorista fica à disposição?", "revisao importada deve perguntar a decisao operacional correta");
+includes(app, "Interpretação da PG", "revisao importada deve apresentar interpretacao operacional generica");
+includes(app, "Multi-coleta", "revisao importada deve reconhecer PG com coletas sequenciais");
+includes(app, "Manter 1 OS", "revisao importada deve permitir confirmar OS unica quando nao for espera");
+includes(app, "É o mesmo carro", "revisao importada deve permitir mesclar trechos selecionados da mesma PG");
+includes(app, "toggle-same-car-selection", "lista de importacao deve permitir selecionar trechos para merge");
+includes(app, "merge-same-car", "lista de importacao deve expor acao de merge mesmo carro");
 includes(app, "Separar ida/busca", "Split deve aparecer com linguagem operacional");
 includes(app, "keep-waiting", "usuario deve conseguir registrar manter espera");
 includes(app, "manual-operational-review", "usuario deve conseguir deixar PG para revisao manual");
@@ -251,5 +265,13 @@ includes(app, "const storedPassengers = getMockDb().passageiros", "mock deve rec
 includes(app, "persistMockPassengerRecord(newPassenger)", "cadastro manual deve salvar passageiro no banco local");
 includes(app, "persistMockPassengerRecord(updatedPassenger)", "hot edit local deve salvar alteracoes do passageiro");
 includes(app, "persistMockPassengerRecord(record)", "importacao deve salvar solicitante/passageiro no banco local");
+
+const passengerTextareaRule = extractCssRule(css, ".passenger-edit-field textarea.passenger-edit-control {");
+includes(passengerTextareaRule, "resize: vertical;", "textarea de passageiro readonly deve permitir ajuste de tamanho");
+includes(passengerTextareaRule, "max-height: none;", "textarea de passageiro nao deve limitar resize vertical");
+excludes(passengerTextareaRule, "resize: none;", "textarea de passageiro nao pode bloquear resize");
+
+const importCopyPointerRule = extractCssRule(css, ".import-trecho.is-locked [data-import-copy] input[readonly]");
+excludes(importCopyPointerRule, "textarea[readonly]", "textarea importado bloqueado deve manter pointer events para resize");
 
 console.log("formulario_operational_features: ok");

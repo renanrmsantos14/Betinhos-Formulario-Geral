@@ -5350,6 +5350,7 @@
       fileName,
       rows: normalizedRows,
       programs,
+      sameCarSelection: { programacao: "", trechoKeys: [] },
       createdAt: new Date().toISOString()
     };
   }
@@ -5766,6 +5767,19 @@
     };
   }
 
+  function importOperationalModes() {
+    return window.XlsxImportCore?.IMPORT_OPERATIONAL_MODES || {
+      SINGLE: "single",
+      WAITING: "waiting",
+      MULTI_PICKUP: "multi-pickup",
+      INDEPENDENT_SERVICES: "independent-services",
+      SEPARABLE: "separable",
+      MANUAL_REVIEW: "manual-review",
+      MANUAL: "manual",
+      SPLIT_RETURN: "split-return"
+    };
+  }
+
   function applyImportedOperationalDecision(trecho, decision) {
     if (window.XlsxImportCore?.applyImportOperationalDecision) {
       return window.XlsxImportCore.applyImportOperationalDecision(trecho, decision);
@@ -5869,6 +5883,114 @@
     return clone;
   }
 
+  function mergeSelectedImportedTrechosAsSameCar(programacao) {
+    const program = findImportProgram(programacao);
+    const keys = selectedSameCarTrechoKeys(programacao);
+    if (!program || keys.length < 2) return null;
+    const merged = window.XlsxImportCore?.mergeImportedTrechosAsSameCar?.(program, keys);
+    if (!merged) return null;
+    state.importReview.selectedProgramacao = program.programacao;
+    state.importReview.selectedTrechoKey = merged.key;
+    state.importReview.sameCarSelection = { programacao: "", trechoKeys: [] };
+    setImportedTrechoEditMode(program.programacao, merged.key, false);
+    return merged;
+  }
+
+  function importSameCarSelection() {
+    if (!state.importReview) return { programacao: "", trechoKeys: [] };
+    if (!state.importReview.sameCarSelection) {
+      state.importReview.sameCarSelection = { programacao: "", trechoKeys: [] };
+    }
+    return state.importReview.sameCarSelection;
+  }
+
+  function normalizeSameCarSelection(programs) {
+    const selection = importSameCarSelection();
+    if (!selection.programacao) return selection;
+    const program = (programs || []).find((item) => item.programacao === selection.programacao);
+    if (!program) {
+      selection.programacao = "";
+      selection.trechoKeys = [];
+      return selection;
+    }
+    const available = new Set((program.trechos || []).map((trecho) => String(trecho.key || "")));
+    selection.trechoKeys = (selection.trechoKeys || []).filter((key) => available.has(String(key)));
+    if (!selection.trechoKeys.length) selection.programacao = "";
+    return selection;
+  }
+
+  function selectedSameCarTrechoKeys(programacao) {
+    const selection = importSameCarSelection();
+    return selection.programacao === programacao ? [...(selection.trechoKeys || [])] : [];
+  }
+
+  function isTrechoSelectedForSameCar(programacao, trechoKey) {
+    return selectedSameCarTrechoKeys(programacao).includes(String(trechoKey || ""));
+  }
+
+  function toggleSameCarTrechoSelection(programacao, trechoKey) {
+    const selection = importSameCarSelection();
+    const key = String(trechoKey || "");
+    if (!programacao || !key) return selection;
+    if (selection.programacao !== programacao) {
+      selection.programacao = programacao;
+      selection.trechoKeys = [key];
+      return selection;
+    }
+    if (selection.trechoKeys.includes(key)) {
+      selection.trechoKeys = selection.trechoKeys.filter((item) => item !== key);
+    } else {
+      selection.trechoKeys = [...selection.trechoKeys, key].slice(-2);
+    }
+    if (!selection.trechoKeys.length) selection.programacao = "";
+    return selection;
+  }
+
+  function sameCarSelectedTrechos(program) {
+    const keys = new Set(selectedSameCarTrechoKeys(program?.programacao));
+    return (program?.trechos || []).filter((trecho) => keys.has(String(trecho.key || "")));
+  }
+
+  function canMergeSameCarTrechos(trechos) {
+    if (!Array.isArray(trechos) || trechos.length < 2) return false;
+    if (trechos.some((trecho) => (
+      isDraftImportedTrecho(trecho)
+      || trecho?.duplicatedRecordIds?.length
+      || normalizeImportedReviewStatus(trecho) === importReviewStatuses().SAVED
+      || normalizeImportedReviewStatus(trecho) === importReviewStatuses().IGNORED
+      || !(trecho?.linhasImportadas || []).length
+    ))) return false;
+    const dates = new Set(trechos.flatMap((trecho) => importedTrechoDateKeysForSameCar(trecho)));
+    if (dates.size > 1) return false;
+    const destinations = new Set();
+    for (const trecho of trechos) {
+      const keys = importedTrechoDestinationKeysForSameCar(trecho);
+      if (keys.length !== 1) return false;
+      destinations.add(keys[0]);
+    }
+    return destinations.size === 1;
+  }
+
+  function importedTrechoDateKeysForSameCar(trecho) {
+    const keys = (trecho?.linhasImportadas || [])
+      .map((line) => line?.dataIso || "")
+      .filter(Boolean);
+    if (!keys.length && trecho?.dataIso) keys.push(trecho.dataIso);
+    return Array.from(new Set(keys));
+  }
+
+  function importedTrechoDestinationKeysForSameCar(trecho) {
+    const normalizeAddress = window.XlsxImportCore?.normalizeAddress || normalize;
+    const keys = (trecho?.linhasImportadas || [])
+      .map((line) => line?.destinoKey || normalizeAddress(line?.destino))
+      .filter(Boolean);
+    if (!keys.length) {
+      const fallback = normalizeAddress(trecho?.destinoPrincipal || trecho?.destinos?.[0] || trecho?.destino);
+      if (fallback) keys.push(fallback);
+    }
+    return Array.from(new Set(keys));
+  }
+
   function createLocalSplitImportedTrecho(program, source) {
     source.retornoPrevistoDataIso = "";
     source.retornoPrevistoHorario = "";
@@ -5967,6 +6089,7 @@
   }
 
   function buildImportWorkbench(programs) {
+    normalizeSameCarSelection(programs);
     const selected = ensureSelectedImportedTrecho(programs);
     const shell = document.createElement("div");
     shell.className = "import-workbench";
@@ -5987,11 +6110,17 @@
       const meta = document.createElement("span");
       meta.textContent = `${program.trechos.length} serviço(s) · ${program.solicitacoes.join(", ") || "sem ST"}`;
       titleText.append(strong, meta);
-      title.append(titleText, buildImportAddServiceButton(program));
+      const groupActions = document.createElement("div");
+      groupActions.className = "import-service-group-actions";
+      const sameCarButton = buildImportSameCarButton(program);
+      if (sameCarButton) groupActions.appendChild(sameCarButton);
+      groupActions.appendChild(buildImportAddServiceButton(program));
+      title.append(titleText, groupActions);
       group.appendChild(title);
       program.trechos.forEach((trecho, index) => {
         const isSelected = selected?.program.programacao === program.programacao && selected?.trecho.key === trecho.key;
-        group.appendChild(buildImportServiceListItem(program, trecho, index, isSelected));
+        const isSameCarSelected = isTrechoSelectedForSameCar(program.programacao, trecho.key);
+        group.appendChild(buildImportServiceListItem(program, trecho, index, isSelected, isSameCarSelected));
       });
       list.appendChild(group);
     });
@@ -6060,12 +6189,44 @@
     return button;
   }
 
-  function buildImportServiceListItem(program, trecho, index, isSelected) {
+  function buildImportSameCarButton(program) {
+    const selectedTrechos = sameCarSelectedTrechos(program);
+    if (!selectedTrechos.length) return null;
+    const canMerge = canMergeSameCarTrechos(selectedTrechos);
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "import-same-car-button";
+    button.dataset.importAction = "merge-same-car";
+    button.dataset.programacao = program?.programacao || "";
+    button.textContent = "É o mesmo carro";
+    button.disabled = !canMerge;
+    button.title = canMerge
+      ? "Mesclar os serviços selecionados em uma OS única."
+      : "Selecione dois serviços importados, não salvos, da mesma PG, mesma data e mesmo destino.";
+    return button;
+  }
+
+  function buildImportServiceListItem(program, trecho, index, isSelected, isSameCarSelected = false) {
     const issues = importedTrechoIssues(trecho);
     const status = importedTrechoReviewMeta(trecho, issues);
     const isDuplicated = !!trecho.duplicatedRecordIds?.length;
     const isManual = isManualImportedTrecho(trecho);
     const isSplit = isSplitImportedTrecho(trecho);
+    const wrap = document.createElement("div");
+    wrap.className = "import-service-row-wrap";
+    wrap.classList.toggle("is-same-car-selected", !!isSameCarSelected);
+    wrap.dataset.programacao = program.programacao;
+    wrap.dataset.trechoKey = trecho.key;
+    const selector = document.createElement("button");
+    selector.type = "button";
+    selector.className = "import-service-merge-toggle";
+    selector.classList.toggle("is-active", !!isSameCarSelected);
+    selector.dataset.importAction = "toggle-same-car-selection";
+    selector.dataset.programacao = program.programacao;
+    selector.dataset.trechoKey = trecho.key;
+    selector.setAttribute("aria-pressed", String(!!isSameCarSelected));
+    selector.setAttribute("aria-label", `Selecionar Serviço ${index + 1} para mesclar como mesmo carro`);
+    selector.title = isSameCarSelected ? "Remover da seleção de mesmo carro" : "Selecionar para mesclar como mesmo carro";
     const button = document.createElement("button");
     button.type = "button";
     button.className = "import-service-row";
@@ -6100,7 +6261,8 @@
     badge.textContent = isDuplicated ? "Não editar" : trecho.possibleDuplicateMatches?.length ? "Parecido" : isManual ? "Manual" : isSplit ? "Busca separada" : importedTrechoModeLabel(trecho);
     side.append(pax, badge);
     button.append(main, side);
-    return button;
+    wrap.append(selector, button);
+    return wrap;
   }
 
   function buildImportProgramCard(program) {
@@ -6253,16 +6415,22 @@
     const isManual = isManualImportedTrecho(trecho);
     const isLocked = !!options.isDuplicated || options.reviewStatus === statuses.SAVED || options.reviewStatus === statuses.IGNORED;
     const decisions = importOperationalDecisions();
+    const modes = importOperationalModes();
+    const isMultiPickup = trecho?.operationalMode === modes.MULTI_PICKUP;
+    const isIndependentServices = trecho?.operationalMode === modes.INDEPENDENT_SERVICES;
     const currentDecision = trecho.operationalDecision || "";
-    const splitDisabled = isLocked || isDraft;
+    const splitDisabled = isLocked || isDraft || isMultiPickup || isIndependentServices || !hasReturn;
+    const keepLabel = hasReturn && !isMultiPickup ? "Manter espera" : "Manter 1 OS";
     const panel = document.createElement("section");
     panel.className = "import-decision-panel";
     panel.classList.toggle("is-decision-pending", currentDecision === decisions.PENDING);
+    panel.classList.toggle("is-multi-pickup", isMultiPickup);
+    panel.classList.toggle("is-independent-services", isIndependentServices);
 
     const copy = document.createElement("div");
     copy.className = "import-decision-copy";
     const label = document.createElement("span");
-    label.textContent = "Motorista fica à disposição?";
+    label.textContent = "Interpretação da PG";
     const strong = document.createElement("strong");
     strong.textContent = importedTrechoModeLabel(trecho);
     const detail = document.createElement("p");
@@ -6281,7 +6449,7 @@
 
     const optionsWrap = document.createElement("div");
     optionsWrap.className = "import-decision-options";
-    const keepButton = buildImportAction("Manter espera", "keep-waiting", isLocked || isDraft || !hasReturn);
+    const keepButton = buildImportAction(keepLabel, "keep-waiting", isLocked || isDraft);
     keepButton.classList.add("import-decision-button", "is-keep-action");
     keepButton.classList.toggle("is-current", currentDecision === decisions.KEEP_WAITING);
     keepButton.setAttribute("aria-pressed", String(currentDecision === decisions.KEEP_WAITING));
@@ -6292,7 +6460,13 @@
     splitButton.title = splitDisabled
       ? isDraft
         ? "Split disponível apenas no serviço importado original."
-        : "Este serviço não pode ser separado neste estado."
+        : isMultiPickup
+          ? "Multi-coleta já nasce como uma OS única."
+          : isIndependentServices
+            ? "A PG já foi separada por janela operacional."
+            : !hasReturn
+              ? "Sem retorno previsto para separar ida/busca."
+              : "Este serviço não pode ser separado neste estado."
       : "Criar segunda OS rascunho na mesma PG.";
     const manualButton = buildImportAction("Revisar manual", "manual-operational-review", isLocked);
     manualButton.classList.add("import-decision-button", "is-manual-action");
@@ -6365,8 +6539,12 @@
       .replace(/Ida \+ busca separaveis/g, "Ida + busca separáveis")
       .replace(/Ida\/busca separadas/g, "Ida/busca separadas")
       .replace(/OS unica/g, "OS única")
+      .replace(/Servicos/g, "Serviços")
+      .replace(/servicos/g, "serviços")
       .replace(/Servico/g, "Serviço")
       .replace(/servico/g, "serviço")
+      .replace(/horario/g, "horário")
+      .replace(/sequencia/g, "sequência")
       .replace(/disposicao/g, "disposição")
       .replace(/Nao/g, "Não")
       .replace(/nao/g, "não")
@@ -6663,12 +6841,25 @@
       });
       return;
     }
+    if (action.dataset.importAction === "merge-same-car") {
+      const listScrollTop = action.closest(".import-service-list")?.scrollTop ?? 0;
+      const merged = mergeSelectedImportedTrechosAsSameCar(action.dataset.programacao || "");
+      renderImportReviewPreservingGallery(listScrollTop);
+      toast(merged ? "Serviços mesclados como mesmo carro." : "Seleção inválida para mesclar como mesmo carro.", merged ? "success" : "warning", 5000);
+      return;
+    }
     const trechoCard = action.closest("[data-trecho-key]");
     const passengerRow = action.closest("[data-passenger-index]");
     const trecho = trechoCard ? findImportedTrecho(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey) : null;
     if (!trecho) return;
 
     if (action.dataset.importAction === "noop") {
+      return;
+    }
+    if (action.dataset.importAction === "toggle-same-car-selection") {
+      const listScrollTop = action.closest(".import-service-list")?.scrollTop ?? 0;
+      toggleSameCarTrechoSelection(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey);
+      renderImportReviewPreservingGallery(listScrollTop);
       return;
     }
     if (action.dataset.importAction === "select-trecho") {
@@ -6700,7 +6891,8 @@
       if (trecho.duplicatedRecordIds?.length || isDraftImportedTrecho(trecho)) return;
       applyImportedOperationalDecision(trecho, importOperationalDecisions().KEEP_WAITING);
       renderImportReviewPreservingGallery();
-      toast("Decisão registrada: manter uma OS com espera.", "success", 4000);
+      const keepMessage = importedTrechoHasReturn(trecho) ? "manter uma OS com espera" : "manter 1 OS";
+      toast(`Decisão registrada: ${keepMessage}.`, "success", 4000);
       return;
     }
     if (action.dataset.importAction === "manual-operational-review") {
@@ -6717,6 +6909,14 @@
       }
       if (isDraftImportedTrecho(trecho)) {
         toast("Split disponível apenas no serviço importado original.", "warning", 5000);
+        return;
+      }
+      const modes = importOperationalModes();
+      const cannotSplitInterpretedPg = trecho.operationalMode === modes.MULTI_PICKUP
+        || trecho.operationalMode === modes.INDEPENDENT_SERVICES
+        || !importedTrechoHasReturn(trecho);
+      if (cannotSplitInterpretedPg) {
+        toast("Split indisponível para esta interpretação da PG.", "warning", 5000);
         return;
       }
       const listScrollTop = el.importReviewPrograms?.querySelector(".import-service-list")?.scrollTop ?? 0;
