@@ -1,0 +1,5 @@
+{
+  "scripts": {
+    "rw": "node scripts/build_webresource.js"
+  }
+}
