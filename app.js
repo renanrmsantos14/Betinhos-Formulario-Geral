@@ -232,6 +232,7 @@
     importReviewStats: $("importReviewStats"),
     importReviewIssues: $("importReviewIssues"),
     importReviewPrograms: $("importReviewPrograms"),
+    content: document.querySelector(".content"),
     tabs: [...document.querySelectorAll(".tab")],
     panels: [...document.querySelectorAll(".panel")],
     statusOperacao: $("statusOperacao"),
@@ -380,6 +381,8 @@
   let passengerMatchResolve = null;
   let passengerMatchCandidates = [];
   const importPassengerCreateLocks = new Map();
+  let contentTouchStartY = 0;
+  let contentTouchPull = 0;
 
   state.mockMode = QUERY_MOCK_MODE || state.xrm === null;
 
@@ -418,16 +421,109 @@
 
   function getRecordIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    const direct = params.get("id") || params.get("recordId") || params.get("recordid");
-    if (direct) return cleanGuid(direct);
-    const data = params.get("data");
-    if (!data) return "";
+    const direct = getUrlParam(params, ["id", "recordId", "recordid", "entityId", "entityid", "ids", "recordIds", "selectedIds"]);
+    if (direct) return findGuidInValue(direct) || cleanGuid(direct);
+    const data = getUrlParam(params, ["data"]);
+    if (!data) return getRecordIdFromHostContext();
+    const directGuid = findGuidInValue(data);
+    if (directGuid) return directGuid;
     try {
-      const decoded = JSON.parse(decodeURIComponent(data));
-      return cleanGuid(decoded.id || decoded.recordId || "");
+      const decoded = parseLaunchDataParam(data);
+      return findRecordIdInLaunchData(decoded) || getRecordIdFromHostContext();
     } catch (_) {
+      return getRecordIdFromHostContext();
+    }
+  }
+
+  function getUrlParam(params, names) {
+    for (const name of names) {
+      const exact = params.get(name);
+      if (exact) return exact;
+    }
+    const wanted = new Set(names.map((name) => name.toLowerCase()));
+    for (const [key, value] of params.entries()) {
+      if (wanted.has(String(key).toLowerCase()) && value) return value;
+    }
+    return "";
+  }
+
+  function parseLaunchDataParam(data) {
+    const raw = String(data || "");
+    const candidates = [raw];
+    try {
+      const decoded = decodeURIComponent(raw);
+      if (decoded && decoded !== raw) candidates.push(decoded);
+    } catch (_) {
+    }
+    for (const candidate of candidates) {
+      try {
+        return JSON.parse(candidate);
+      } catch (_) {
+      }
+    }
+    return raw;
+  }
+
+  function findRecordIdInLaunchData(value) {
+    if (!value) return "";
+    if (typeof value === "string") return findGuidInValue(value);
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = findRecordIdInLaunchData(item);
+        if (found) return found;
+      }
       return "";
     }
+    if (typeof value !== "object") return "";
+
+    const priorityKeys = [
+      "id",
+      "Id",
+      "recordId",
+      "recordid",
+      "recordID",
+      "entityId",
+      "entityid",
+      "ids",
+      "recordIds",
+      "selectedIds",
+      "selectedItemIds",
+      "selectedItemReferences",
+      "SelectedItemReferences"
+    ];
+    for (const key of priorityKeys) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        const found = findRecordIdInLaunchData(value[key]);
+        if (found) return found;
+      }
+    }
+    for (const item of Object.values(value)) {
+      const found = findRecordIdInLaunchData(item);
+      if (found) return found;
+    }
+    return "";
+  }
+
+  function findGuidInValue(value) {
+    const match = String(value || "").match(/[({]?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[)}]?/i);
+    return match ? cleanGuid(match[0]) : "";
+  }
+
+  function getRecordIdFromHostContext() {
+    const scopes = [window, window.parent, window.top, window.opener].filter(Boolean);
+    for (const scope of scopes) {
+      try {
+        const formId = scope.Xrm?.Page?.data?.entity?.getId?.();
+        const cleanFormId = findGuidInValue(formId);
+        if (cleanFormId) return cleanFormId;
+
+        const pageContext = scope.Xrm?.Utility?.getPageContext?.();
+        const contextId = findRecordIdInLaunchData(pageContext?.input || pageContext);
+        if (contextId) return contextId;
+      } catch (_) {
+      }
+    }
+    return "";
   }
 
   function shouldAutofocusSearchInputs() {
@@ -631,10 +727,66 @@
     window?.addEventListener("resize", repositionPassengerPreview);
     window?.addEventListener("resize", syncPassengerNameColumnWidth);
     window?.addEventListener("resize", syncDateTimeFieldRowWidths);
+    bindContentScrollBoundaryFeedback();
     bindInputFormatters();
     const appRoot = $("app");
     appRoot?.addEventListener("input", handleOperationalInput);
     appRoot?.addEventListener("change", handleOperationalInput);
+  }
+
+  function bindContentScrollBoundaryFeedback() {
+    const scroller = el.content;
+    if (!scroller || scroller.dataset.scrollBoundaryFeedback === "1") return;
+    scroller.dataset.scrollBoundaryFeedback = "1";
+
+    scroller.addEventListener("touchstart", (event) => {
+      contentTouchStartY = event.touches?.[0]?.clientY || 0;
+      contentTouchPull = 0;
+    }, { passive: true });
+
+    scroller.addEventListener("touchmove", (event) => {
+      const currentY = event.touches?.[0]?.clientY || contentTouchStartY;
+      const deltaY = currentY - contentTouchStartY;
+      if (deltaY < -8 && isScrollAtEnd(scroller)) {
+        contentTouchPull = Math.max(contentTouchPull, Math.abs(deltaY));
+        triggerContentScrollStretch("end", contentTouchPull);
+      } else if (deltaY > 8 && isScrollAtStart(scroller)) {
+        contentTouchPull = Math.max(contentTouchPull, deltaY);
+        triggerContentScrollStretch("start", contentTouchPull);
+      }
+    }, { passive: true });
+
+    scroller.addEventListener("touchend", resetContentScrollStretch, { passive: true });
+    scroller.addEventListener("touchcancel", resetContentScrollStretch, { passive: true });
+  }
+
+  function isScrollAtStart(scroller) {
+    return scroller.scrollTop <= 1;
+  }
+
+  function isScrollAtEnd(scroller) {
+    return scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+  }
+
+  function triggerContentScrollStretch(position, force = 24) {
+    const scroller = el.content;
+    if (!scroller) return;
+    const pull = Math.min(1, Math.max(0.18, Math.abs(force) / 180));
+    const distance = Math.round(4 + pull * 13);
+    const scale = (1 + pull * 0.026).toFixed(3);
+    scroller.classList.add("is-scroll-stretching");
+    scroller.style.setProperty("--scroll-stretch-y", `${position === "start" ? distance : -distance}px`);
+    scroller.style.setProperty("--scroll-stretch-scale", scale);
+    scroller.style.setProperty("--scroll-stretch-origin", position === "start" ? "top" : "bottom");
+  }
+
+  function resetContentScrollStretch() {
+    const scroller = el.content;
+    if (!scroller) return;
+    contentTouchPull = 0;
+    scroller.classList.remove("is-scroll-stretching");
+    scroller.style.setProperty("--scroll-stretch-y", "0px");
+    scroller.style.setProperty("--scroll-stretch-scale", "1");
   }
 
   function bindInputFormatters() {
@@ -3823,16 +3975,19 @@
       return optionsKey ? optionLabel(optionsKey, raw) || raw : raw;
     };
     const rows = [
-      ["Cliente", passenger.clienteLabel],
-      ["Tipo de veículo", passenger.tipoVeiculoLabel || previewValue(passenger.tipoVeiculo, "bdTipoVeiculo")],
-      ["Cargo", previewValue(passenger.cargo, "bdCargo")],
-      ["Idioma", previewValue(passenger.idioma, "bdIdioma")],
-      ["Sexo", previewValue(passenger.sexo, "bdSexo")],
-      ["Classificação", previewValue(passenger.classificacao, "bdClassificacao")],
-      ["Endereço", passenger.endereco],
+      ["Nome", passenger.label],
       ["Telefone", passenger.telefone],
       ["Email", passenger.email],
-      ["Preferências", passenger.preferencias]
+      ["Cliente", passenger.clienteLabel],
+      ["Cargo", previewValue(passenger.cargo, "bdCargo")],
+      ["Departamento", passenger.departamento],
+      ["CR", passenger.cr],
+      ["Preferências", passenger.preferencias],
+      ["Tipo de veículo", passenger.tipoVeiculoLabel || previewValue(passenger.tipoVeiculo, "bdTipoVeiculo")],
+      ["Endereço", passenger.endereco],
+      ["Idioma", previewValue(passenger.idioma, "bdIdioma")],
+      ["Sexo", previewValue(passenger.sexo, "bdSexo")],
+      ["Classificação", previewValue(passenger.classificacao, "bdClassificacao")]
     ].filter((item) => (item[1] || "").toString().trim());
     if (!rows.length) {
       const empty = document.createElement("p");

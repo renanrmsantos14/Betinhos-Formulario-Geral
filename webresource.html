@@ -12,7 +12,7 @@
   color-scheme: light;
   --shell-padding-top: max(10px, var(--safe-top));
   --topbar-height: 46px;
-  --topbar-menu-gap: 40px;
+  --topbar-menu-gap: 35px;
   --date-field-width: 160px;
   --datetime-field-width: 210px;
   --bg: #f3f6fb;
@@ -67,6 +67,7 @@
 
 html,
 body {
+  height: 100%;
   min-height: 100%;
 }
 
@@ -76,6 +77,7 @@ body {
   background:
     radial-gradient(720px 300px at 98% -12%, rgb(33 89 210 / 0.08), transparent 50%),
     linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+  overflow: hidden;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -108,6 +110,8 @@ p {
 
 .app-shell {
   width: 100%;
+  height: 100vh;
+  height: 100dvh;
   min-height: 100vh;
   min-height: 100svh;
   display: grid;
@@ -121,6 +125,11 @@ p {
   margin: 0;
   padding: var(--shell-padding-top) max(10px, var(--safe-right)) max(10px, var(--safe-bottom)) max(10px, var(--safe-left));
   position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(720px 300px at 98% -12%, rgb(33 89 210 / 0.08), transparent 50%),
+    linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
+  isolation: isolate;
 }
 
 .app-shell::before {
@@ -540,9 +549,15 @@ h3 {
 }
 
 .content {
+  --scroll-stretch-y: 0px;
+  --scroll-stretch-scale: 1;
   grid-area: content;
   min-height: 0;
-  overflow: visible;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  position: relative;
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   background: #ffffff;
@@ -551,6 +566,18 @@ h3 {
   scrollbar-width: thin;
   scrollbar-color: var(--line-strong) transparent;
   scroll-behavior: smooth;
+}
+
+.content .panel.is-active > * {
+  transform: translate3d(0, var(--scroll-stretch-y), 0) scaleY(var(--scroll-stretch-scale));
+  transform-origin: center var(--scroll-stretch-origin, center);
+  transition: transform 520ms cubic-bezier(0.18, 0.9, 0.22, 1);
+  will-change: transform;
+}
+
+.content.is-scroll-stretching .panel.is-active > * {
+  transition-duration: 120ms;
+  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
 
 /* ==========================================================================
@@ -673,134 +700,6 @@ h3 {
   align-items: stretch;
   justify-content: flex-start;
   align-content: flex-start;
-}
-
-.review-lists {
-  display: grid;
-  gap: 10px;
-}
-
-.review-block-title {
-  margin: 0;
-  color: var(--text-soft);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: none;
-}
-
-.review-summary-list,
-.review-risk-list,
-.save-log-list {
-  margin: 0;
-  min-height: 0;
-  list-style: none;
-  display: grid;
-  gap: 7px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-left-width: 3px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-soft);
-}
-
-.review-summary-list {
-  grid-template-columns: 130px minmax(0, 1fr);
-  align-items: start;
-}
-
-.review-summary-list dt,
-.review-summary-list dd {
-  margin: 0;
-  min-width: 0;
-  line-height: 1.3;
-}
-
-.review-summary-list dt {
-  color: var(--text-soft);
-  font-size: 11px;
-  font-weight: 800;
-}
-
-.review-summary-list dd {
-  overflow-wrap: anywhere;
-  font-size: 12px;
-}
-
-.review-risk-list {
-  border-left-color: var(--line-strong);
-}
-
-.review-risk-list.is-warning {
-  border-left-color: var(--warning);
-  background: var(--warning-soft);
-  border-color: color-mix(in srgb, var(--warning) 36%, var(--line));
-}
-
-.review-risk-list.is-clear {
-  border-left-color: var(--success);
-  background: var(--surface);
-}
-
-.review-risk-list li {
-  display: grid;
-  grid-template-columns: 14px minmax(0, 1fr);
-  gap: 8px;
-  align-items: start;
-  color: var(--text);
-  font-size: 12px;
-}
-
-.review-risk-list li::before {
-  content: "•";
-  color: var(--warning);
-  font-size: 14px;
-  line-height: 1.1;
-  transform: translateY(1px);
-}
-
-.review-risk-list.is-clear li,
-.review-risk-list.is-clear li::before {
-  color: var(--success);
-}
-
-.save-log-list {
-  max-height: 190px;
-  overflow: auto;
-}
-
-.save-log-item {
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
-  background: #fff;
-  box-shadow: var(--shadow-control);
-}
-
-.save-log-header {
-  margin: 0 0 2px;
-  color: var(--text);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
-.save-log-detail {
-  margin: 0;
-  color: var(--text-soft);
-  font-size: 11px;
-}
-
-.save-log-item-success {
-  border-left: 3px solid var(--success);
-}
-
-.save-log-item-info {
-  border-left: 3px solid var(--accent);
-}
-
-.save-log-item-error {
-  border-left: 3px solid var(--danger);
 }
 
 /* ==========================================================================
@@ -6425,26 +6324,6 @@ body.is-import-dragging .import-drop-overlay {
             </div>
           </section>
 
-          <section class="form-section compact-section review-panel" aria-labelledby="reviewPanelTitle">
-            <div class="form-section-title">
-              <h3 id="reviewPanelTitle">Pré-validação do save</h3>
-              <p>Resumo operacional e alertas antes do envio.</p>
-            </div>
-            <div class="review-lists">
-              <div>
-                <p class="review-block-title">Resumo</p>
-                <dl id="reviewSummaryList" class="review-summary-list" hidden></dl>
-              </div>
-              <div>
-                <p class="review-block-title">Riscos e atenção</p>
-                <ul id="reviewRiskList" class="review-risk-list is-clear" hidden></ul>
-              </div>
-              <div>
-                <p class="review-block-title">Log local</p>
-                <ul id="saveLogList" class="save-log-list" hidden></ul>
-              </div>
-            </div>
-          </section>
         </div>
 
       </section>
@@ -8397,6 +8276,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     importReviewStats: $("importReviewStats"),
     importReviewIssues: $("importReviewIssues"),
     importReviewPrograms: $("importReviewPrograms"),
+    content: document.querySelector(".content"),
     tabs: [...document.querySelectorAll(".tab")],
     panels: [...document.querySelectorAll(".panel")],
     statusOperacao: $("statusOperacao"),
@@ -8545,6 +8425,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   let passengerMatchResolve = null;
   let passengerMatchCandidates = [];
   const importPassengerCreateLocks = new Map();
+  let contentTouchStartY = 0;
+  let contentTouchPull = 0;
 
   state.mockMode = QUERY_MOCK_MODE || state.xrm === null;
 
@@ -8583,16 +8465,109 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function getRecordIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    const direct = params.get("id") || params.get("recordId") || params.get("recordid");
-    if (direct) return cleanGuid(direct);
-    const data = params.get("data");
-    if (!data) return "";
+    const direct = getUrlParam(params, ["id", "recordId", "recordid", "entityId", "entityid", "ids", "recordIds", "selectedIds"]);
+    if (direct) return findGuidInValue(direct) || cleanGuid(direct);
+    const data = getUrlParam(params, ["data"]);
+    if (!data) return getRecordIdFromHostContext();
+    const directGuid = findGuidInValue(data);
+    if (directGuid) return directGuid;
     try {
-      const decoded = JSON.parse(decodeURIComponent(data));
-      return cleanGuid(decoded.id || decoded.recordId || "");
+      const decoded = parseLaunchDataParam(data);
+      return findRecordIdInLaunchData(decoded) || getRecordIdFromHostContext();
     } catch (_) {
+      return getRecordIdFromHostContext();
+    }
+  }
+
+  function getUrlParam(params, names) {
+    for (const name of names) {
+      const exact = params.get(name);
+      if (exact) return exact;
+    }
+    const wanted = new Set(names.map((name) => name.toLowerCase()));
+    for (const [key, value] of params.entries()) {
+      if (wanted.has(String(key).toLowerCase()) && value) return value;
+    }
+    return "";
+  }
+
+  function parseLaunchDataParam(data) {
+    const raw = String(data || "");
+    const candidates = [raw];
+    try {
+      const decoded = decodeURIComponent(raw);
+      if (decoded && decoded !== raw) candidates.push(decoded);
+    } catch (_) {
+    }
+    for (const candidate of candidates) {
+      try {
+        return JSON.parse(candidate);
+      } catch (_) {
+      }
+    }
+    return raw;
+  }
+
+  function findRecordIdInLaunchData(value) {
+    if (!value) return "";
+    if (typeof value === "string") return findGuidInValue(value);
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        const found = findRecordIdInLaunchData(item);
+        if (found) return found;
+      }
       return "";
     }
+    if (typeof value !== "object") return "";
+
+    const priorityKeys = [
+      "id",
+      "Id",
+      "recordId",
+      "recordid",
+      "recordID",
+      "entityId",
+      "entityid",
+      "ids",
+      "recordIds",
+      "selectedIds",
+      "selectedItemIds",
+      "selectedItemReferences",
+      "SelectedItemReferences"
+    ];
+    for (const key of priorityKeys) {
+      if (Object.prototype.hasOwnProperty.call(value, key)) {
+        const found = findRecordIdInLaunchData(value[key]);
+        if (found) return found;
+      }
+    }
+    for (const item of Object.values(value)) {
+      const found = findRecordIdInLaunchData(item);
+      if (found) return found;
+    }
+    return "";
+  }
+
+  function findGuidInValue(value) {
+    const match = String(value || "").match(/[({]?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[)}]?/i);
+    return match ? cleanGuid(match[0]) : "";
+  }
+
+  function getRecordIdFromHostContext() {
+    const scopes = [window, window.parent, window.top, window.opener].filter(Boolean);
+    for (const scope of scopes) {
+      try {
+        const formId = scope.Xrm?.Page?.data?.entity?.getId?.();
+        const cleanFormId = findGuidInValue(formId);
+        if (cleanFormId) return cleanFormId;
+
+        const pageContext = scope.Xrm?.Utility?.getPageContext?.();
+        const contextId = findRecordIdInLaunchData(pageContext?.input || pageContext);
+        if (contextId) return contextId;
+      } catch (_) {
+      }
+    }
+    return "";
   }
 
   function shouldAutofocusSearchInputs() {
@@ -8796,10 +8771,66 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     window?.addEventListener("resize", repositionPassengerPreview);
     window?.addEventListener("resize", syncPassengerNameColumnWidth);
     window?.addEventListener("resize", syncDateTimeFieldRowWidths);
+    bindContentScrollBoundaryFeedback();
     bindInputFormatters();
     const appRoot = $("app");
     appRoot?.addEventListener("input", handleOperationalInput);
     appRoot?.addEventListener("change", handleOperationalInput);
+  }
+
+  function bindContentScrollBoundaryFeedback() {
+    const scroller = el.content;
+    if (!scroller || scroller.dataset.scrollBoundaryFeedback === "1") return;
+    scroller.dataset.scrollBoundaryFeedback = "1";
+
+    scroller.addEventListener("touchstart", (event) => {
+      contentTouchStartY = event.touches?.[0]?.clientY || 0;
+      contentTouchPull = 0;
+    }, { passive: true });
+
+    scroller.addEventListener("touchmove", (event) => {
+      const currentY = event.touches?.[0]?.clientY || contentTouchStartY;
+      const deltaY = currentY - contentTouchStartY;
+      if (deltaY < -8 && isScrollAtEnd(scroller)) {
+        contentTouchPull = Math.max(contentTouchPull, Math.abs(deltaY));
+        triggerContentScrollStretch("end", contentTouchPull);
+      } else if (deltaY > 8 && isScrollAtStart(scroller)) {
+        contentTouchPull = Math.max(contentTouchPull, deltaY);
+        triggerContentScrollStretch("start", contentTouchPull);
+      }
+    }, { passive: true });
+
+    scroller.addEventListener("touchend", resetContentScrollStretch, { passive: true });
+    scroller.addEventListener("touchcancel", resetContentScrollStretch, { passive: true });
+  }
+
+  function isScrollAtStart(scroller) {
+    return scroller.scrollTop <= 1;
+  }
+
+  function isScrollAtEnd(scroller) {
+    return scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 1;
+  }
+
+  function triggerContentScrollStretch(position, force = 24) {
+    const scroller = el.content;
+    if (!scroller) return;
+    const pull = Math.min(1, Math.max(0.18, Math.abs(force) / 180));
+    const distance = Math.round(4 + pull * 13);
+    const scale = (1 + pull * 0.026).toFixed(3);
+    scroller.classList.add("is-scroll-stretching");
+    scroller.style.setProperty("--scroll-stretch-y", `${position === "start" ? distance : -distance}px`);
+    scroller.style.setProperty("--scroll-stretch-scale", scale);
+    scroller.style.setProperty("--scroll-stretch-origin", position === "start" ? "top" : "bottom");
+  }
+
+  function resetContentScrollStretch() {
+    const scroller = el.content;
+    if (!scroller) return;
+    contentTouchPull = 0;
+    scroller.classList.remove("is-scroll-stretching");
+    scroller.style.setProperty("--scroll-stretch-y", "0px");
+    scroller.style.setProperty("--scroll-stretch-scale", "1");
   }
 
   function bindInputFormatters() {
@@ -11988,16 +12019,19 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       return optionsKey ? optionLabel(optionsKey, raw) || raw : raw;
     };
     const rows = [
-      ["Cliente", passenger.clienteLabel],
-      ["Tipo de veículo", passenger.tipoVeiculoLabel || previewValue(passenger.tipoVeiculo, "bdTipoVeiculo")],
-      ["Cargo", previewValue(passenger.cargo, "bdCargo")],
-      ["Idioma", previewValue(passenger.idioma, "bdIdioma")],
-      ["Sexo", previewValue(passenger.sexo, "bdSexo")],
-      ["Classificação", previewValue(passenger.classificacao, "bdClassificacao")],
-      ["Endereço", passenger.endereco],
+      ["Nome", passenger.label],
       ["Telefone", passenger.telefone],
       ["Email", passenger.email],
-      ["Preferências", passenger.preferencias]
+      ["Cliente", passenger.clienteLabel],
+      ["Cargo", previewValue(passenger.cargo, "bdCargo")],
+      ["Departamento", passenger.departamento],
+      ["CR", passenger.cr],
+      ["Preferências", passenger.preferencias],
+      ["Tipo de veículo", passenger.tipoVeiculoLabel || previewValue(passenger.tipoVeiculo, "bdTipoVeiculo")],
+      ["Endereço", passenger.endereco],
+      ["Idioma", previewValue(passenger.idioma, "bdIdioma")],
+      ["Sexo", previewValue(passenger.sexo, "bdSexo")],
+      ["Classificação", previewValue(passenger.classificacao, "bdClassificacao")]
     ].filter((item) => (item[1] || "").toString().trim());
     if (!rows.length) {
       const empty = document.createElement("p");

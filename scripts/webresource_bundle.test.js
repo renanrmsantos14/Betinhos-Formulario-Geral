@@ -44,6 +44,8 @@ assert.ok(html.includes("IGNORAR"), "bundle deve exibir acao IGNORAR");
 assert.ok(html.includes("import-ignored-list"), "bundle deve exibir lista de ignorados");
 assert.ok(html.includes("import-timeline"), "bundle deve conter timeline de saida e retorno");
 assert.ok(html.includes("Janela da PG"), "bundle deve explicar a janela operacional da PG");
+assert.ok(html.includes("function getRecordIdFromHostContext"), "bundle deve ler id do formulario pai no Model-driven App");
+assert.ok(html.includes("selectedItemReferences"), "bundle deve aceitar data de comando com selecao da grid");
 assert.ok(html.includes(".passenger-edit-field textarea.passenger-edit-control"), "bundle deve conter regra dos textareas de passageiro");
 assert.ok(html.includes("resize: vertical;"), "bundle deve manter textareas redimensionaveis");
 assert.ok(html.includes("max-height: none;"), "bundle deve permitir crescimento vertical dos textareas");

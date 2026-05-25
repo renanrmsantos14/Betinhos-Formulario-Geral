@@ -92,6 +92,30 @@ return { getMockDb, setMockDb, persistMockPassengerRecord };`;
   return Function(body)();
 }
 
+function buildLaunchParamHarness() {
+  const body = `
+let window = { location: { search: "" } };
+${extractFunction(app, "cleanGuid")}
+${extractFunction(app, "getUrlParam")}
+${extractFunction(app, "parseLaunchDataParam")}
+${extractFunction(app, "findRecordIdInLaunchData")}
+${extractFunction(app, "findGuidInValue")}
+${extractFunction(app, "getRecordIdFromHostContext")}
+${extractFunction(app, "getRecordIdFromUrl")}
+return function parse(search, hostId = "") {
+  window = {
+    location: { search },
+    parent: hostId
+      ? { Xrm: { WebApi: {}, Page: { data: { entity: { getId: () => hostId } } } } }
+      : null,
+    top: null,
+    opener: null
+  };
+  return getRecordIdFromUrl();
+};`;
+  return Function(body)();
+}
+
 [
   "riskList",
   "saveLogList",
@@ -201,6 +225,29 @@ assert.equal(mockDb.getMockDb().passageiros.length, 1, "mock deve persistir pass
 mockDb.persistMockPassengerRecord({ id: "local-pax-1", label: "Pessoa Editada", clienteId: "cliente-embraer" });
 assert.equal(mockDb.getMockDb().passageiros.length, 1, "mock deve atualizar passageiro local sem duplicar");
 assert.equal(mockDb.getMockDb().passageiros[0].label, "Pessoa Editada", "mock deve manter hot edit local");
+
+const parseLaunchRecordId = buildLaunchParamHarness();
+const launchGuid = "11111111-2222-3333-4444-555555555555";
+assert.equal(
+  parseLaunchRecordId(`?data=${encodeURIComponent(JSON.stringify({ entityId: `{${launchGuid}}` }))}`),
+  launchGuid,
+  "abertura por command bar deve aceitar data.entityId"
+);
+assert.equal(
+  parseLaunchRecordId(`?data=${encodeURIComponent(JSON.stringify({ selectedItemReferences: [{ Id: `{${launchGuid}}` }] }))}`),
+  launchGuid,
+  "abertura por lista deve aceitar selectedItemReferences"
+);
+assert.equal(
+  parseLaunchRecordId(`?ids=%7B${launchGuid}%7D`),
+  launchGuid,
+  "abertura por comando de grid deve aceitar ids"
+);
+assert.equal(
+  parseLaunchRecordId("", `{${launchGuid}}`),
+  launchGuid,
+  "web resource em formulario principal deve ler o id do formulario pai"
+);
 
 includes(app, "MAX_FREQUENT_SERVICE_DAYS", "limite para periodo recorrente");
 includes(app, "Data de retorno nao pode ser anterior a saida", "validacao retorno antes da saida");
