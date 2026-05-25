@@ -9,7 +9,7 @@ const commandPath = path.join(root, "model_driven_formulario_geral_command.js");
 assert.ok(fs.existsSync(commandPath), "arquivo de comando do Model-driven deve existir");
 
 const source = fs.readFileSync(commandPath, "utf8");
-assert.ok(source.includes("cr40f_formulario_geral.html"), "comando deve apontar para o web resource HTML final");
+assert.ok(source.includes("new_formulario_geral.html"), "comando deve apontar para o web resource HTML publicado");
 assert.ok(source.includes("openCreate"), "comando deve expor abertura de criacao");
 assert.ok(source.includes("openEdit"), "comando deve expor abertura de edicao");
 assert.ok(source.includes("selectedItemReferences"), "comando deve aceitar selecao da grid");
@@ -45,8 +45,9 @@ assert.ok(source.includes("safeCall(() => global.top?.Xrm)"), "comando deve prot
   assert.ok(sandbox.BetinhosFormularioGeral, "namespace global deve existir");
   await sandbox.BetinhosFormularioGeral.openCreate();
   assert.equal(calls[0].pageInput.pageType, "webresource", "criacao deve abrir webresource");
-  assert.equal(calls[0].pageInput.webresourceName, "cr40f_formulario_geral.html", "criacao deve usar o HTML final");
+  assert.equal(calls[0].pageInput.webresourceName, "new_formulario_geral.html", "criacao deve usar o HTML publicado");
   assert.equal(JSON.parse(calls[0].pageInput.data).mode, "create", "criacao deve enviar modo create");
+  assert.equal(calls[0].navigationOptions.target, 1, "criacao deve abrir integrada ao Model-driven App");
 
   const selectedId = "{11111111-2222-3333-4444-555555555555}";
   await sandbox.BetinhosFormularioGeral.openEdit(null, [{ Id: selectedId }]);

@@ -3,11 +3,8 @@
 
   const TABLE_NAME = "cr40f_reservadeveculos";
   const WEBRESOURCE_NAME = "new_formulario_geral.html";
-  const DIALOG_OPTIONS = {
-    target: 2,
-    position: 1,
-    width: { value: 95, unit: "%" },
-    height: { value: 95, unit: "%" }
+  const PAGE_OPTIONS = {
+    target: 1
   };
 
   function openCreate(primaryControl) {
@@ -47,7 +44,7 @@
         pageType: "webresource",
         webresourceName: WEBRESOURCE_NAME,
         data: JSON.stringify(data)
-      }, DIALOG_OPTIONS)
+      }, PAGE_OPTIONS)
       .then(() => refreshHost(primaryControl));
   }
 
