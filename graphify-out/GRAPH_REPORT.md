@@ -1,16 +1,16 @@
 # Graph Report - Tela Formulário Geral  (2026-05-25)
 
 ## Corpus Check
-- 35 files · ~151,311 words
+- 35 files · ~151,788 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1200 nodes · 2094 edges · 69 communities (62 shown, 7 thin omitted)
+- 1201 nodes · 2098 edges · 69 communities (62 shown, 7 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 2 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `928030db`
+- Built from commit: `f505d6ec`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -35,7 +35,9 @@
 - [[_COMMUNITY_Community 17|Community 17]]
 - [[_COMMUNITY_Community 18|Community 18]]
 - [[_COMMUNITY_Community 19|Community 19]]
+- [[_COMMUNITY_Community 20|Community 20]]
 - [[_COMMUNITY_Community 21|Community 21]]
+- [[_COMMUNITY_Community 22|Community 22]]
 - [[_COMMUNITY_Community 23|Community 23]]
 - [[_COMMUNITY_Community 24|Community 24]]
 - [[_COMMUNITY_Community 25|Community 25]]
@@ -76,10 +78,8 @@
 - [[_COMMUNITY_Community 63|Community 63]]
 - [[_COMMUNITY_Community 64|Community 64]]
 - [[_COMMUNITY_Community 70|Community 70]]
-- [[_COMMUNITY_Community 71|Community 71]]
 - [[_COMMUNITY_Community 72|Community 72]]
 - [[_COMMUNITY_Community 73|Community 73]]
-- [[_COMMUNITY_Community 78|Community 78]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `DefaultCohort` - 153 edges
@@ -110,20 +110,20 @@ Cohesion: 0.05
 Nodes (73): appendCity(), applyImportedLinesToTrecho(), applyImportOperationalDecision(), buildOperationalNotes(), buildOperationalTrechoKey(), buildProgramImportTrechos(), buildTrechoRuntimeKey(), canMergeImportedTrechosAsSameCar() (+65 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.04
-Nodes (45): buildImportPassengerRow(), buildImportSameCarButton(), buildPassengerImportInput(), canMergeSameCarTrechos(), CONFIG, copyTextToClipboard(), createCountryFlagNode(), customSelectRoots (+37 more)
+Cohesion: 0.03
+Nodes (52): applyBrandLogo(), buildBrandLogoUrl(), buildImportPassengerRow(), buildImportSameCarButton(), buildPassengerImportInput(), canMergeSameCarTrechos(), CONFIG, copyTextToClipboard() (+44 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.06
-Nodes (66): addClassIfPresent(), applyImportedOperationalDecision(), buildImportAction(), buildImportDecisionPanel(), buildImportDuplicateLockNotice(), buildImportEditorSection(), buildImportEditToggle(), buildImportIgnoredList() (+58 more)
+Nodes (61): applyImportedOperationalDecision(), buildImportAction(), buildImportDecisionPanel(), buildImportDuplicateLockNotice(), buildImportEditorSection(), buildImportEditToggle(), buildImportIgnoredList(), buildImportInput() (+53 more)
 
 ### Community 4 - "Community 4"
-Cohesion: 0.06
-Nodes (64): addPassengerFromId(), animatePassengerRowExit(), animatePassengerRowReflow(), applyImportedTrechoToForm(), applyPassengerDefaults(), applyStatusFaturamentoDefault(), buildImportedReservaPayload(), clearCustomSelectValue() (+56 more)
+Cohesion: 0.05
+Nodes (84): addPassengerFromId(), animatePassengerRowExit(), animatePassengerRowReflow(), applyImportedTrechoToForm(), applyPassengerDefaults(), applyPhoneCountrySelection(), applyStatusFaturamentoDefault(), bindLookup() (+76 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.08
-Nodes (48): applyPhoneCountrySelection(), buildReservaPayload(), clearFieldValidation(), createPassenger(), detectPhoneCountry(), emptyPhoneResult(), formatBrazilianPhone(), formatCpf() (+40 more)
+Cohesion: 0.24
+Nodes (18): detectPhoneCountry(), emptyPhoneResult(), formatBrazilianPhone(), formatCpf(), formatGroupedPhone(), formatInternationalNationalNumber(), formatPhoneNumberForCountry(), getPhoneCountryByCode() (+10 more)
 
 ### Community 6 - "Community 6"
 Cohesion: 0.05
@@ -138,16 +138,16 @@ Cohesion: 0.06
 Nodes (30): allTrechos, assert, distantSameDestinationPrograms, exactDuplicateScore, fs, importCore, invalidReturnPrograms, keepOnePrograms (+22 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.14
-Nodes (24): buildImportedSaveContext(), buildImportReview(), combineDateTime(), composeImportTrajeto(), createImportedPassenger(), createImportedPersonRecord(), ensureImportedPassengerRecord(), ensureImportedSolicitanteRecord() (+16 more)
+Cohesion: 0.10
+Nodes (33): buildImportedSaveContext(), combineDateTime(), composeImportTrajeto(), createImportedPassenger(), createImportedPersonRecord(), damerauLevenshteinDistance(), emailsProbablySame(), ensureImportedPassengerRecord() (+25 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.07
 Nodes (27): dependencies, react, react-dom, remotion, @remotion/cli, @remotion/tailwind-v4, tailwindcss, description (+19 more)
 
 ### Community 11 - "Community 11"
-Cohesion: 0.14
-Nodes (22): bindLookup(), buildPassengerEditPayload(), cleanGuid(), findGuidInValue(), findRecordIdInLaunchData(), getPassengerSelectionRecencyIndex(), getRecordIdFromHostContext(), getRecordIdFromUrl() (+14 more)
+Cohesion: 0.53
+Nodes (6): findGuidInValue(), findRecordIdInLaunchData(), getRecordIdFromHostContext(), getRecordIdFromUrl(), getUrlParam(), parseLaunchDataParam()
 
 ### Community 12 - "Community 12"
 Cohesion: 0.11
@@ -162,8 +162,8 @@ Cohesion: 0.07
 Nodes (23): bdFields, clamp, Confirmation(), Cursor(), detailFields, ease, fade(), Field (+15 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.11
-Nodes (30): buildRetornoPrevisto(), buildSaveContext(), buildScheduleRetornoPrevisto(), captureObsState(), collectOperationalRisks(), composeEnderecoCompleto(), composeEnderecoCompletoInvertido(), composePassageirosTelefones() (+22 more)
+Cohesion: 0.14
+Nodes (20): buildSaveContext(), captureObsState(), composeEnderecoCompleto(), composeEnderecoCompletoInvertido(), composePassageirosTelefones(), composePreferencias(), createDraftSnapshot(), firstPassengerValue() (+12 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.11
@@ -174,20 +174,28 @@ Cohesion: 0.11
 Nodes (19): 23. Exemplos rápidos de decisão, code:text (PG1), code:text (1 OS), code:text (PG2), code:text (1 OS), code:text (PG3), code:text (1 OS), code:text (PG4) (+11 more)
 
 ### Community 18 - "Community 18"
-Cohesion: 0.14
-Nodes (16): addSaveLog(), applyPassengerFieldToState(), buildPassengerEditControl(), clearSaveLog(), closeReviewOverlay(), fillPassengerEditSelect(), formatDateTime(), formatPhoneNumber() (+8 more)
+Cohesion: 0.15
+Nodes (19): applyPassengerFieldToState(), buildRetornoPrevisto(), buildScheduleRetornoPrevisto(), collectOperationalRisks(), createFrequentServices(), dateRangeDays(), formatDateTime(), generateFrequentDates() (+11 more)
 
 ### Community 19 - "Community 19"
-Cohesion: 0.12
-Nodes (17): clearCopyNotice(), clearPassengerPreviewCloseTimer(), closePassengerPreview(), currentViewportMetrics(), ensurePassengerPreviewPortal(), handleGlobalCustomSelectScroll(), handlePassengerPreviewEnter(), handlePassengerPreviewFocusIn() (+9 more)
+Cohesion: 0.10
+Nodes (22): clearCopyNotice(), clearPassengerPreviewCloseTimer(), closeAllCustomSelects(), closePassengerPreview(), currentViewportMetrics(), ensurePassengerPreviewPortal(), handleGlobalCustomSelectClick(), handleGlobalCustomSelectKeydown() (+14 more)
+
+### Community 20 - "Community 20"
+Cohesion: 0.25
+Nodes (8): $(), bindContentScrollBoundaryFeedback(), bindCurrencyInput(), bindFormattedInput(), bindInputFormatters(), bindPhoneInput(), bindStaticEvents(), initializePhoneCountrySelect()
+
+### Community 22 - "Community 22"
+Cohesion: 0.40
+Nodes (5): buildPassengerEditControl(), fillPassengerEditSelect(), formatPhoneNumber(), getPassengerEditValue(), mapPassageiro()
 
 ### Community 23 - "Community 23"
 Cohesion: 0.14
 Nodes (12): assert, calls, commandPath, editData, fs, guardedCalls, guardedSandbox, path (+4 more)
 
 ### Community 24 - "Community 24"
-Cohesion: 0.15
-Nodes (13): closeAllCustomSelects(), closePassengerEditPopup(), flushPassengerEditSaves(), getPassengerById(), getPassengerEditField(), getPassengerEditFields(), handleGlobalCustomSelectClick(), handleGlobalCustomSelectKeydown() (+5 more)
+Cohesion: 0.09
+Nodes (32): addClassIfPresent(), buildPassengerEditPayload(), cleanGuid(), closePassengerEditPopup(), flushPassengerEditSaves(), getMockDb(), getMockRelations(), getPassengerById() (+24 more)
 
 ### Community 25 - "Community 25"
 Cohesion: 0.15
@@ -254,8 +262,8 @@ Cohesion: 0.29
 Nodes (6): Arquivos para subir, Botão Criar da tabela, Clicar em um item para editar, Comando Editar na grid, Implantação do Web Resource no Model-driven App, Teste obrigatório
 
 ### Community 44 - "Community 44"
-Cohesion: 0.12
-Nodes (17): applyBrandLogo(), buildBrandLogoUrl(), clearDraftSnapshot(), closeWebResourceToGeral(), fallbackCloseWebResource(), fillOptions(), getXrm(), init() (+9 more)
+Cohesion: 0.11
+Nodes (27): addSaveLog(), buildImportReview(), checkImportedProgramDuplicates(), clearDraftSnapshot(), clearSaveLog(), closeReviewOverlay(), closeWebResourceToGeral(), ensureXlsxLibrary() (+19 more)
 
 ### Community 45 - "Community 45"
 Cohesion: 0.33
@@ -319,22 +327,14 @@ Nodes (3): 3. Colunas do XLSX, Obrigatórias, Opcionais
 
 ### Community 70 - "Community 70"
 Cohesion: 0.18
-Nodes (17): checkImportedProgramDuplicates(), emptyPassenger(), ensurePassengersByIds(), getMockDb(), getMockRecordById(), getMockRelations(), hydrateMockCurrentRecord(), hydratePassengerSelectionRecencyFromRows() (+9 more)
-
-### Community 71 - "Community 71"
-Cohesion: 0.18
-Nodes (12): damerauLevenshteinDistance(), emailsProbablySame(), hammingDistance(), nameSimilarity(), normalizeName(), phoneNumbersMatch(), phoneNumbersNearlyMatch(), sameId() (+4 more)
+Nodes (15): emptyPassenger(), ensurePassengersByIds(), getMockRecordById(), hydrateMockCurrentRecord(), hydratePassengerSelectionRecencyFromRows(), loadChoices(), loadCurrentRecord(), loadLookups() (+7 more)
 
 ### Community 72 - "Community 72"
-Cohesion: 0.14
-Nodes (16): addPassengerRow(), closeCustomSelect(), getAvailablePassengers(), getAvailablePassengersFrom(), getCustomSelectState(), handlePassengerRowAction(), handlePassengerRowPointerDown(), openCustomSelect() (+8 more)
-
-### Community 78 - "Community 78"
-Cohesion: 0.25
-Nodes (8): $(), bindContentScrollBoundaryFeedback(), bindCurrencyInput(), bindFormattedInput(), bindInputFormatters(), bindPhoneInput(), bindStaticEvents(), initializePhoneCountrySelect()
+Cohesion: 0.16
+Nodes (14): addPassengerRow(), clearCustomSelectValue(), closeCustomSelect(), getAvailablePassengers(), getAvailablePassengersFrom(), getCustomSelectState(), isCustomSelectClearable(), openCustomSelect() (+6 more)
 
 ## Knowledge Gaps
-- **528 isolated node(s):** `graphify`, `version`, `tasks`, `CONFIG`, `URL_PARAMS` (+523 more)
+- **528 isolated node(s):** `CONFIG`, `URL_PARAMS`, `FALLBACK`, `el`, `state` (+523 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **7 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -346,12 +346,12 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `normalizeAddress()` connect `Community 1` to `Community 2`?**
   _High betweenness centrality (0.072) - this node is a cross-community bridge._
 - **Why does `DefaultCohort` connect `Community 0` to `Community 7`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
-- **What connects `graphify`, `version`, `tasks` to the rest of the system?**
+  _High betweenness centrality (0.025) - this node is a cross-community bridge._
+- **What connects `CONFIG`, `URL_PARAMS`, `FALLBACK` to the rest of the system?**
   _528 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.013071895424836602 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.05253077975376197 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.036384976525821594 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0344044141512496 - nodes in this community are weakly interconnected._

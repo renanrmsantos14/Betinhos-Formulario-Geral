@@ -26,7 +26,7 @@ const placeholders = {
 
 html = html
   .replace(/<link rel="stylesheet" href="styles\.css">\s*/u, placeholders.css)
-  .replace(/\s*<script src="vendor\/xlsx\.full\.min\.js"><\/script>/u, placeholders.sheetjs)
+  .replace(/\s*<script src="vendor\/xlsx\.full\.min\.js"><\/script>/u, `\n  ${placeholders.sheetjs}`)
   .replace(/\s*<script src="scripts\/xlsx_import_core\.js"><\/script>/u, placeholders.core)
   .replace(/\s*<script src="app\.js"><\/script>/u, placeholders.app);
 
@@ -38,7 +38,7 @@ for (const [name, marker] of Object.entries(placeholders)) {
 
 html = html
   .replace(placeholders.css, () => `<style>\n${css}\n</style>\n`)
-  .replace(placeholders.sheetjs, () => `\n  <script>\n${inlineScript(sheetjs)}\n  </script>`)
+  .replace(placeholders.sheetjs, () => `\n  <script id="xlsxLibrarySource" type="application/x-formulario-vendor">\n${inlineScript(sheetjs)}\n  </script>`)
   .replace(placeholders.core, () => `\n  <script>\n${inlineScript(core)}\n  </script>`)
   .replace(placeholders.app, () => `\n  <script>\n${inlineScript(app)}\n  </script>`);
 

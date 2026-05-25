@@ -100,6 +100,7 @@
   const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
   const PASSENGER_RECENCY_KEY = "formulario_geral_passenger_recency_v1";
+  const XLSX_SOURCE_ELEMENT_ID = "xlsxLibrarySource";
   const BRAND_LOGO_WEBRESOURCE = "cr40f_LogoBetinhosB";
   const MAX_FREQUENT_SERVICE_DAYS = 90;
   const MAX_FREQUENT_SERVICE_RECORDS = 120;
@@ -383,6 +384,7 @@
   let passengerMatchResolve = null;
   let passengerMatchCandidates = [];
   const importPassengerCreateLocks = new Map();
+  let xlsxLibraryLoadPromise = null;
   let contentTouchStartY = 0;
   let contentTouchPull = 0;
 
@@ -674,9 +676,7 @@
     el.tabs.forEach((button) => {
       button?.addEventListener("click", () => setTab(button.dataset.tab));
     });
-    el.closeSuccess?.addEventListener("click", () => {
-      el.success.hidden = true;
-    });
+    el.closeSuccess?.addEventListener("click", closeWebResourceToGeral);
     el.closeRwButton?.addEventListener("click", closeWebResourceToGeral);
     el.saveButton?.addEventListener("click", saveForm);
     el.importXlsxButton?.addEventListener("click", openXlsxImportPicker);
@@ -1115,7 +1115,13 @@
       clearButton.hidden = !isCustomSelectClearable(nativeSelect);
     }
     trigger.disabled = nativeSelect.disabled;
-    renderCustomSelectOptions(select, state.searchInput?.value || "");
+    if (state.wrapper.classList.contains("is-open")) {
+      renderCustomSelectOptions(select, state.searchInput?.value || "");
+    } else {
+      state.optionsContainer.textContent = "";
+      state.noResults.hidden = true;
+      panel.classList.remove("is-empty");
+    }
     panel.classList.toggle("is-disabled", nativeSelect.disabled);
     syncReturnPreviewTimeSelectWidths(nativeSelect);
   }
@@ -1338,6 +1344,9 @@
     const trigger = wrapper.querySelector(".custom-select-trigger");
     wrapper.classList.remove("is-open");
     state.panel.classList.remove("is-open");
+    state.optionsContainer.textContent = "";
+    state.noResults.hidden = true;
+    state.panel.classList.remove("is-empty");
     if (trigger) trigger.setAttribute("aria-expanded", "false");
     if (activeCustomSelect === wrapper) activeCustomSelect = null;
   }
@@ -2883,11 +2892,15 @@
       "_cr40f_financeiro_value"
     ].join(",");
 
-    state.record = await state.xrm.WebApi.retrieveRecord(CONFIG.entities.reserva, state.recordId, `?$select=${select}`);
-    state.relacoes = await retrieveAll(
-      CONFIG.entities.servicoPassageiro,
-      `?$select=${CONFIG.fields.servicoPassageiro.id},${CONFIG.fields.servicoPassageiro.ordem},${CONFIG.fields.servicoPassageiro.endereco},_cr40f_bancodedados_value&$filter=_cr40f_geral_value eq ${state.recordId}&$orderby=${CONFIG.fields.servicoPassageiro.ordem} asc`
-    );
+    const [record, relacoes] = await Promise.all([
+      state.xrm.WebApi.retrieveRecord(CONFIG.entities.reserva, state.recordId, `?$select=${select}`),
+      retrieveAll(
+        CONFIG.entities.servicoPassageiro,
+        `?$select=${CONFIG.fields.servicoPassageiro.id},${CONFIG.fields.servicoPassageiro.ordem},${CONFIG.fields.servicoPassageiro.endereco},_cr40f_bancodedados_value&$filter=_cr40f_geral_value eq ${state.recordId}&$orderby=${CONFIG.fields.servicoPassageiro.ordem} asc`
+      )
+    ]);
+    state.record = record;
+    state.relacoes = relacoes;
     await ensurePassengersByIds([
       state.record._cr40f_solicitante_value,
       ...state.relacoes.map((rel) => rel._cr40f_bancodedados_value)
@@ -5519,8 +5532,55 @@
     return fields;
   }
 
-  function openXlsxImportPicker() {
-    if (!window.XLSX || !window.XlsxImportCore) {
+  async function ensureXlsxLibrary() {
+    if (window.XLSX) return window.XLSX;
+    if (xlsxLibraryLoadPromise) return xlsxLibraryLoadPromise;
+
+    const source = document.getElementById(XLSX_SOURCE_ELEMENT_ID);
+    const inlineSource = source?.textContent || "";
+    if (inlineSource.trim()) {
+      xlsxLibraryLoadPromise = new Promise((resolve, reject) => {
+        try {
+          const script = document.createElement("script");
+          script.text = inlineSource;
+          document.head.appendChild(script);
+          if (window.XLSX) {
+            resolve(window.XLSX);
+          } else {
+            reject(new Error("Biblioteca XLSX nao inicializou."));
+          }
+        } catch (error) {
+          reject(error);
+        }
+      }).catch((error) => {
+        xlsxLibraryLoadPromise = null;
+        throw error;
+      });
+      return xlsxLibraryLoadPromise;
+    }
+
+    xlsxLibraryLoadPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "vendor/xlsx.full.min.js";
+      script.async = true;
+      script.onload = () => {
+        if (window.XLSX) {
+          resolve(window.XLSX);
+        } else {
+          reject(new Error("Biblioteca XLSX nao inicializou."));
+        }
+      };
+      script.onerror = () => reject(new Error("Falha ao carregar vendor/xlsx.full.min.js."));
+      document.head.appendChild(script);
+    }).catch((error) => {
+      xlsxLibraryLoadPromise = null;
+      throw error;
+    });
+    return xlsxLibraryLoadPromise;
+  }
+
+  async function openXlsxImportPicker() {
+    if (!window.XlsxImportCore) {
       toast("Leitor XLSX não carregado. Verifique os scripts do web resource.", "error", 8000);
       return;
     }
@@ -5528,7 +5588,16 @@
       toast("Importação XLSX só cria novos serviços. Abra uma tela nova para importar.", "warning", 6000);
       return;
     }
-    el.xlsxImportInput?.click();
+    setLoading(true);
+    try {
+      await ensureXlsxLibrary();
+      el.xlsxImportInput?.click();
+    } catch (error) {
+      console.error(error);
+      toast(error.message || "Falha ao carregar leitor XLSX.", "error", 8000);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleXlsxImportFile(event) {
@@ -5536,6 +5605,7 @@
     if (!file) return;
     setLoading(true);
     try {
+      await ensureXlsxLibrary();
       const rows = await readXlsxPassengersRows(file);
       const review = await buildImportReview(rows, file.name);
       state.importReview = review;
@@ -7662,8 +7732,8 @@
 
       const total = results.length;
       const message = state.isNew
-        ? `${total} serviço(s) solicitado(s) com sucesso!`
-        : `Serviço editado com sucesso! Data: ${formatDateTime(context.dataHoraPrincipal)}   Trajeto: ${context.trajeto}   Tipo do Veículo: ${optionLabel("tipoVeiculo", el.tipoVeiculo.value)}`;
+        ? (total === 1 ? "Serviço criado com sucesso" : `${total} serviços criados com sucesso!`)
+        : "Serviço editado com sucesso!";
       addSaveLog("success", "Fluxo concluído", message);
       showSuccess(message);
       clearDraftSnapshot(false);
@@ -7897,12 +7967,12 @@
         CONFIG.entities.servicoPassageiro,
         `?$select=${CONFIG.fields.servicoPassageiro.id}&$filter=_cr40f_geral_value eq ${reservaId}`
       );
-      for (const row of existing) {
-        await state.xrm.WebApi.deleteRecord(CONFIG.entities.servicoPassageiro, row[CONFIG.fields.servicoPassageiro.id]);
-      }
+      await Promise.all(existing.map((row) => (
+        state.xrm.WebApi.deleteRecord(CONFIG.entities.servicoPassageiro, row[CONFIG.fields.servicoPassageiro.id])
+      )));
     }
 
-    for (const item of passengers) {
+    await Promise.all(passengers.map((item) => {
       const payload = {
         [CONFIG.fields.servicoPassageiro.ordem]: item.ordem
       };
@@ -7912,8 +7982,8 @@
         const sharedAddress = context?.enderecoPersonalizadoAtivo ?? state.enderecoPersonalizadoAtivo;
         payload[CONFIG.fields.servicoPassageiro.endereco] = sharedAddress ? "" : (item.enderecoSaidaBD || "");
       }
-      await state.xrm.WebApi.createRecord(CONFIG.entities.servicoPassageiro, payload);
-    }
+      return state.xrm.WebApi.createRecord(CONFIG.entities.servicoPassageiro, payload);
+    }));
   }
 
   function setChoice(payload, field, value) {

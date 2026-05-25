@@ -25,6 +25,8 @@ assert.ok(!html.includes("add-manual-trecho"), "bundle nao deve expor acao de ad
 assert.ok(!html.includes("Adicionar serviço manual"), "bundle nao deve exibir botao de servico manual");
 assert.ok(html.includes("clienteLabel: \"Embraer\""), "bundle deve fixar Embraer como cliente padrao do import");
 assert.ok(html.includes("function persistMockPassengerRecord"), "bundle deve persistir passageiros no mock local");
+assert.ok(html.includes("async function ensureXlsxLibrary"), "bundle deve carregar SheetJS sob demanda");
+assert.ok(html.includes('id="xlsxLibrarySource" type="application/x-formulario-vendor"'), "bundle deve manter SheetJS inerte no boot");
 assert.ok(html.includes("cr40f_idexterno"), "bundle deve conter o campo externo PG");
 assert.ok(html.includes("split-trecho"), "bundle deve expor acao Split na revisao de importacao");
 assert.ok(html.includes("importedTrechoReturnDateTimeLocal"), "bundle deve editar horario previsto de retorno importado");

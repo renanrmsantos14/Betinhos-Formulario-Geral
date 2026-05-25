@@ -152,6 +152,7 @@ includes(app, "function currentViewportMetrics", "app deve calcular viewport rea
 includes(app, "window.visualViewport?.addEventListener(\"resize\", syncViewportMetrics)", "iPhone deve recalcular altura visual ao mudar viewport");
 includes(html, "id=\"closeRwButton\"", "topbar deve ter botao de fechar RW");
 includes(app, "function closeWebResourceToGeral", "botao fechar deve voltar para Geral");
+includes(app, "el.closeSuccess?.addEventListener(\"click\", closeWebResourceToGeral);", "OK de sucesso deve fechar RW pela mesma funcao do botao fechar");
 includes(app, "pageType: \"entitylist\"", "fechar RW deve navegar para lista Model-driven");
 includes(app, "entityName: CONFIG.entities.reserva", "fechar RW deve usar tabela real Geral");
 includes(css, "--app-viewport-height", "CSS deve usar altura visual calculada");
@@ -281,7 +282,9 @@ excludes(html, "Voltar aos detalhes", "botao voltar aos detalhes deve ser removi
 excludes(app, "saveAllValidImportedTrechos", "handler de salvar todos validos deve ser removido");
 excludes(app, "closeImportReview", "handler de voltar aos detalhes deve ser removido");
 includes(html, "scripts/xlsx_import_core.js", "core de import XLSX carregado antes do app");
-includes(html, "vendor/xlsx.full.min.js", "SheetJS local carregado antes do app");
+excludes(html, "vendor/xlsx.full.min.js", "SheetJS nao deve carregar no boot");
+includes(app, "async function ensureXlsxLibrary", "SheetJS deve carregar sob demanda");
+includes(app, "script.src = \"vendor/xlsx.full.min.js\";", "SheetJS local deve continuar disponivel para importacao");
 includes(app, "idExterno: \"cr40f_idexterno\"", "campo externo PG no payload da reserva");
 includes(app, "importDefaults:", "configuracao padrao de importacao");
 includes(app, "clienteLabel: \"Embraer\"", "cliente padrao Embraer para importacao");
@@ -298,6 +301,11 @@ includes(app, "async function checkImportedProgramDuplicates", "checagem de dupl
 includes(app, "function scoreImportedTrechoDuplicate", "pontuacao de duplicidade por horario/trajeto/endereco/passageiros");
 includes(app, "possibleDuplicateMatches", "alerta de servico parecido sem bloquear automaticamente");
 includes(app, "function handleImportFieldCopy", "campo bloqueado deve copiar valor clicado");
+includes(app, "Serviço criado com sucesso", "mensagem simples ao criar 1 servico");
+includes(app, "serviços criados com sucesso!", "mensagem simples ao criar varios servicos");
+includes(app, "Serviço editado com sucesso!", "mensagem simples ao editar");
+excludes(app, "serviço(s) solicitado(s) com sucesso!", "mensagem antiga com plural generico removida");
+excludes(app, "Tipo do Veículo:", "mensagem de conclusao nao deve detalhar veiculo");
 includes(app, "dataset.importCopy = \"1\"", "campos bloqueados devem expor acao de copia");
 includes(app, "function addClassIfPresent", "classList.add dinamico deve ignorar token vazio");
 includes(app, "addClassIfPresent(button, `is-${normalizeImportedReviewStatus(trecho) || \"\"}`)", "status de importacao deve usar classe segura");
