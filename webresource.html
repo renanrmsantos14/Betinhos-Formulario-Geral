@@ -154,7 +154,7 @@ p {
   min-height: var(--topbar-height);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
   padding: 6px 9px;
   border: 1px solid rgb(148 163 184 / 0.3);
@@ -258,6 +258,7 @@ h3 {
   justify-content: flex-end;
   gap: 8px;
   flex-wrap: wrap;
+  margin-left: auto;
 }
 
 .status-select,
@@ -351,7 +352,7 @@ h3 {
   min-height: 34px;
   display: inline-grid;
   place-items: center;
-  align-self: end;
+  align-self: center;
   padding: 0;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
@@ -1955,7 +1956,7 @@ h3 {
 
 .secondary-action,
 .text-action {
-  min-height: 38px;
+  min-height: 34px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: #ffffff;
@@ -3469,7 +3470,7 @@ h3 {
 }
 
 .top-import-action {
-  min-height: 38px;
+  min-height: 34px;
   white-space: nowrap;
   display: inline-flex;
   align-items: center;
@@ -5427,10 +5428,11 @@ body.is-import-dragging .import-drop-overlay {
   .top-actions {
     width: 100%;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 40px 40px;
+    grid-template-columns: minmax(0, 1fr) 40px;
     align-items: center;
     justify-content: stretch;
     gap: 5px;
+    margin-left: 0;
   }
 
   .top-import-action {
@@ -6169,6 +6171,11 @@ body.is-import-dragging .import-drop-overlay {
 <body>
   <div id="app" class="app-shell">
     <header class="topbar">
+      <button id="closeRwButton" class="close-rw-action" type="button" title="Fechar e voltar para Geral" aria-label="Fechar e voltar para Geral">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18"></path>
+        </svg>
+      </button>
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">
           <span class="brand-mark-fallback">B</span>
@@ -6200,11 +6207,6 @@ body.is-import-dragging .import-drop-overlay {
         <input id="xlsxImportInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
         <button id="saveButton" class="primary-action" type="button">
           <span id="saveButtonText">Agendar serviços</span>
-        </button>
-        <button id="closeRwButton" class="close-rw-action" type="button" title="Fechar e voltar para Geral" aria-label="Fechar e voltar para Geral">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M6 6l12 12M18 6 6 18"></path>
-          </svg>
         </button>
       </div>
     </header>

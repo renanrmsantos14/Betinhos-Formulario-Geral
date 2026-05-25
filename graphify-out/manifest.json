@@ -4,11 +4,6 @@
     "ast_hash": "155744d27dad90c39bf689fb5f3508b5",
     "semantic_hash": ""
   },
-  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\metadata-AppBetinhos-2026-05-18T12-03-52-460Z.json": {
-    "mtime": 1779105833.165377,
-    "ast_hash": "f1837746cd671dc952651f055d18e8a6",
-    "semantic_hash": ""
-  },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\model_driven_formulario_geral_command.js": {
     "mtime": 1779714816.2645254,
     "ast_hash": "2640892168ff8492d9399306390189c9",
@@ -135,8 +130,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\AGENTS.md": {
-    "mtime": 1779711126.118752,
-    "ast_hash": "7588939434e12554a93553aa79be0559",
+    "mtime": 1779721332.102888,
+    "ast_hash": "8a53734a9ff80d9c51d4eb4d11d13f96",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\CONTEXTO_PROJETO.md": {
@@ -160,8 +155,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\index.html": {
-    "mtime": 1779721215.8028164,
-    "ast_hash": "d7216d2074a2fafa7b423ef5e153d85d",
+    "mtime": 1779728063.114141,
+    "ast_hash": "d554943536cd97d907ba78496014b3b3",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\MODEL_DRIVEN_WEBRESOURCE.md": {
@@ -175,8 +170,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\webresource.html": {
-    "mtime": 1779721261.847162,
-    "ast_hash": "64caf997cf71753faa3b920879f3d4cc",
+    "mtime": 1779728131.073285,
+    "ast_hash": "becf5cea0a501c9e5b047a69125cfb4b",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.playwright-cli\\page-2026-05-20T19-31-49-541Z.yml": {

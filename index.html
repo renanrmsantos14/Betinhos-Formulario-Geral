@@ -10,6 +10,11 @@
 <body>
   <div id="app" class="app-shell">
     <header class="topbar">
+      <button id="closeRwButton" class="close-rw-action" type="button" title="Fechar e voltar para Geral" aria-label="Fechar e voltar para Geral">
+        <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+          <path d="M6 6l12 12M18 6 6 18"></path>
+        </svg>
+      </button>
       <div class="brand">
         <div class="brand-mark" aria-hidden="true">
           <span class="brand-mark-fallback">B</span>
@@ -41,11 +46,6 @@
         <input id="xlsxImportInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
         <button id="saveButton" class="primary-action" type="button">
           <span id="saveButtonText">Agendar serviços</span>
-        </button>
-        <button id="closeRwButton" class="close-rw-action" type="button" title="Fechar e voltar para Geral" aria-label="Fechar e voltar para Geral">
-          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
-            <path d="M6 6l12 12M18 6 6 18"></path>
-          </svg>
         </button>
       </div>
     </header>
