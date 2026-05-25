@@ -2,6 +2,9 @@
 
 This project is configured for graphify. Use graphify-out/ only after graphify-out/graph.json exists.
 
+Windows local binary: `C:\Users\mendo\AppData\Local\Python\pythoncore-3.14-64\Scripts\graphify.exe`.
+If `graphify` is not on PATH, use this full path for `query`, `path`, `explain`, `update`, and `watch`.
+
 When the user types `/graphify`, invoke the `skill` tool with `skill: "graphify"` before doing anything else.
 
 Rules:
