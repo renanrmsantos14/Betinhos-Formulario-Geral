@@ -2,7 +2,7 @@
   "use strict";
 
   const TABLE_NAME = "cr40f_reservadeveculos";
-  const WEBRESOURCE_NAME = "cr40f_formulario_geral.html";
+  const WEBRESOURCE_NAME = "new_formulario_geral.html";
   const DIALOG_OPTIONS = {
     target: 2,
     position: 1,
