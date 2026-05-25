@@ -1321,19 +1321,6 @@ Screens:
                                 true
                             )
                         );
-                        // ✅ FIX 9: Impede Repetir + AgendarRetorno simultâneos na criação
-                        If(
-                            !varErroGlobalOcorreu && gblIsNewRecord = true && CampoRepetir_1.Value = true && CampoAgendarRet_2.Value = true,
-                            Notify(
-                                "Não é possível usar 'Serviços Frequentes' e 'Agendar Retorno' ao mesmo tempo. Escolha apenas um.",
-                                NotificationType.Error,
-                                7000
-                            );
-                            Set(
-                                varErroGlobalOcorreu,
-                                true
-                            )
-                        );
                         // ================================================================================
                         // VALIDAÇÃO: PASSAGEIROS DUPLICADOS
                         // ================================================================================

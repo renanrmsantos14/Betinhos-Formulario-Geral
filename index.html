@@ -533,6 +533,24 @@
       </div>
     </div>
 
+    <div id="activationGuardOverlay" class="overlay" hidden>
+      <div class="dialog activation-guard-dialog" role="dialog" aria-labelledby="activationGuardTitle" aria-modal="true" tabindex="-1">
+        <header class="activation-guard-head">
+          <div>
+            <p class="passenger-picker-eyebrow">Atenção antes de salvar</p>
+            <h3 id="activationGuardTitle">Há abas preenchidas sem ativar</h3>
+            <p>Você editou Retorno ou Repetir, mas a chave Ativado está desligada.</p>
+          </div>
+        </header>
+        <div id="activationGuardList" class="activation-guard-list"></div>
+        <footer class="activation-guard-actions">
+          <button id="activationGuardReview" type="button" class="secondary-action">Revisar abas</button>
+          <button id="activationGuardSkip" type="button" class="secondary-action warning">Salvar sem ativar</button>
+          <button id="activationGuardActivate" type="button" class="primary-action">Ativar e agendar</button>
+        </footer>
+      </div>
+    </div>
+
   </div>
 
   <!-- INLINE_SHEETJS -->

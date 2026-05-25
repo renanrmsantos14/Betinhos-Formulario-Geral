@@ -122,7 +122,8 @@ O novo formulario sera publicado como web resource e usado dentro de um Model-dr
 - `mock mode` ativável via `?mock=1` / `?mockData=1` para execução fora do host do Dataverse.
 - Salvar principal/retorno e serviços frequentes respeitando as regras:
   - retorno e repetição só no contexto de criação;
-  - na edição, não permite combinação retorno + repetição;
+  - na criação, retorno separado e repetição podem ser usados juntos;
+  - na edição, retorno e repetição continuam bloqueados;
   - na edição, remove e recria relações de passageiros.
 - Feedback operacional com overlay de carregamento, toast stack e overlay de sucesso.
 - Favicon embutido no HTML para evitar 404 em ambiente local.
@@ -480,7 +481,7 @@ Ao trocar o tipo de observacao, o texto atual e salvo no buffer anterior.
 - Se repetir ativado:
   - Data de Inicio e Data de Fim obrigatorias.
   - Tipo de Servico Frequente obrigatorio.
-- Novo registro nao pode usar Retorno e Repetir ao mesmo tempo.
+- Novo registro pode usar Retorno e Repetir ao mesmo tempo.
 - Passageiro duplicado bloqueia salvamento.
 
 ## Regras de data e retorno
@@ -505,6 +506,15 @@ Ao trocar o tipo de observacao, o texto atual e salvo no buffer anterior.
 - Tipo `Retorno` cria registros de retorno.
 - Tipo `Ida e retorno` cria ambos.
 - Retorno frequente usa horario de retorno informado; se vazio, usa 18:00.
+- Quando Retorno e Repetir estao juntos, o sistema cria:
+  - servico principal;
+  - recorrencia conforme `Tipo`;
+  - retorno separado original.
+- A previsao de retorno das idas recorrentes e recalculada por data gerada, usando o horario previsto e a mesma regra de virada de dia do Canvas App.
+- Se Retorno ou Repetir tiverem campos editados mas a chave `Ativado` estiver desligada:
+  - a aba mostra bolinha amarela;
+  - ao clicar em `Agendar servicos`, o sistema abre popup para revisar, salvar sem ativar ou ativar e agendar;
+  - bolinha verde continua significando aba ativada.
 - Data final anterior a inicial bloqueia.
 
 ## Validacao local - 2026-05-18

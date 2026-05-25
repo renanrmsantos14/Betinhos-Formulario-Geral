@@ -410,6 +410,64 @@
         gap: 8px;
       }
 
+      .ds-process-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 10px;
+      }
+
+      .ds-flow-card {
+        display: grid;
+        gap: 8px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: var(--surface-soft);
+        box-shadow: var(--shadow-control);
+      }
+
+      .ds-flow-card strong {
+        color: var(--text);
+        font-size: 13px;
+      }
+
+      .ds-flow-card span {
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      .ds-flow-steps {
+        margin: 0;
+        padding-left: 18px;
+        color: var(--text-soft);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+
+      .ds-combo-panel {
+        display: grid;
+        gap: 12px;
+      }
+
+      .ds-import-preview {
+        display: grid;
+        gap: 10px;
+      }
+
+      .ds-current-contract {
+        display: grid;
+        gap: 6px;
+        padding: 10px;
+        border: 1px solid var(--accent-soft);
+        border-radius: var(--radius-md);
+        background: #f8fbff;
+      }
+
+      .ds-current-contract b {
+        color: var(--text);
+      }
+
       .ds-toast-row {
         display: grid;
         gap: 8px;
@@ -520,7 +578,7 @@
         <div class="ds-meta" aria-label="Metadados do design system">
           <div class="ds-meta-item"><span>Projeto</span><strong>Formulário Geral</strong></div>
           <div class="ds-meta-item"><span>Registro</span><strong>Produto operacional</strong></div>
-          <div class="ds-meta-item"><span>Atualizado</span><strong>2026-05-20</strong></div>
+          <div class="ds-meta-item"><span>Atualizado</span><strong>2026-05-25</strong></div>
         </div>
       </header>
 
@@ -529,10 +587,13 @@
           <a href="#tokens">Tokens</a>
           <a href="#typography">Tipografia</a>
           <a href="#shell">Shell</a>
+          <a href="#process">Processo</a>
           <a href="#fields">Campos</a>
           <a href="#selects">Selects</a>
           <a href="#actions">Ações</a>
           <a href="#passengers">Passageiros</a>
+          <a href="#return-repeat">Retorno + Repetir</a>
+          <a href="#import">Importação</a>
           <a href="#feedback">Feedback</a>
           <a href="#rules">Regras</a>
         </nav>
@@ -672,6 +733,45 @@
             </div>
           </section>
 
+          <section id="process" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Processo Real</h2>
+                <p>Fluxo atual do formulário. O design system documenta a operação viva, não um mock idealizado.</p>
+              </div>
+              <span class="ds-code">index.html + app.js</span>
+            </div>
+
+            <div class="ds-process-grid">
+              <article class="ds-flow-card">
+                <strong>Detalhes</strong>
+                <span>Cria ou edita a reserva principal. Campos críticos: saída, cliente, solicitante, tipo, veículo, trajeto, passageiros, destino e faturamento.</span>
+              </article>
+              <article class="ds-flow-card">
+                <strong>Banco de Dados</strong>
+                <span>Cadastra passageiro e mantém dados existentes sem sair do agendamento. Usa o mesmo padrão de campo, validação e custom select.</span>
+              </article>
+              <article class="ds-flow-card">
+                <strong>Retorno</strong>
+                <span>Cria uma OS de retorno separada, com endereço, destino, observações próprias e trajeto invertido.</span>
+              </article>
+              <article class="ds-flow-card">
+                <strong>Repetir</strong>
+                <span>Gera serviços frequentes por período. Tipos reais: Ida, Retorno, Ida e retorno. Pode operar junto com Retorno na criação.</span>
+              </article>
+              <article class="ds-flow-card">
+                <strong>Serviços importados</strong>
+                <span>Revisão XLSX por PG, galeria, inspector, validação, bloqueio de duplicados e ações Split, manter espera e mesmo carro.</span>
+              </article>
+            </div>
+
+            <div class="ds-current-contract">
+              <b>Contrato atual</b>
+              <span>Na criação, Retorno e Repetir podem ficar ativos ao mesmo tempo. Na edição, ambos continuam bloqueados.</span>
+              <span>Para idas recorrentes, a previsão de retorno é recalculada por data gerada. Não reutilizar a data absoluta da OS principal.</span>
+            </div>
+          </section>
+
           <section id="fields" class="ds-section">
             <div class="ds-section-head">
               <div>
@@ -791,6 +891,23 @@
                       </span>
                       <span class="custom-select-option-code">+1</span>
                       <span class="custom-select-option-check">✓</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ds-surface">
+                <strong class="ds-title">Solicitante com cliente</strong>
+                <div class="custom-select-panel custom-select-panel--person-client is-open">
+                  <input class="custom-select-search" placeholder="Buscar passageiro, cliente ou telefone">
+                  <div class="custom-select-options">
+                    <button class="custom-select-option custom-select-option--person-client is-active" type="button">
+                      <span class="custom-select-option-name">Renan Oliveira</span>
+                      <span class="custom-select-option-subtitle">Betinhos Executive Service</span>
+                    </button>
+                    <button class="custom-select-option custom-select-option--person-client" type="button">
+                      <span class="custom-select-option-name">Maria Santos</span>
+                      <span class="custom-select-option-subtitle">Cliente executivo</span>
                     </button>
                   </div>
                 </div>
@@ -928,6 +1045,145 @@
             </div>
           </section>
 
+          <section id="return-repeat" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Retorno + Repetir</h2>
+                <p>Ambos podem ficar ativos juntos na criação. Esta é a regra real do web resource.</p>
+              </div>
+              <span class="ds-code">agendarRetorno + repetirServico</span>
+            </div>
+
+            <div class="ds-grid-wide">
+              <div class="ds-surface ds-combo-panel">
+                <div class="section-head inline">
+                  <div>
+                    <h2>Agendar retorno</h2>
+                    <p>Disponível apenas na criação.</p>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" checked>
+                    <span>Ativado</span>
+                  </label>
+                </div>
+                <section class="form-section">
+                  <div class="form-grid">
+                    <label class="field span-2 datetime-field">
+                      <span>Data e horário de retorno</span>
+                      <div class="inline-time">
+                        <input type="datetime-local" value="2026-05-25T18:00">
+                      </div>
+                    </label>
+                    <label class="field span-2">
+                      <span>Endereço de saída</span>
+                      <textarea rows="2">Aeroporto Internacional de Guarulhos</textarea>
+                    </label>
+                    <label class="field span-2">
+                      <span>Destino</span>
+                      <textarea rows="2">Av. Paulista, 1000</textarea>
+                    </label>
+                  </div>
+                </section>
+              </div>
+
+              <div class="ds-surface ds-combo-panel">
+                <div class="section-head inline">
+                  <div>
+                    <h2>Serviços frequentes</h2>
+                    <p>Disponível apenas na criação.</p>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" checked>
+                    <span>Ativado</span>
+                  </label>
+                </div>
+                <section class="form-section">
+                  <div class="form-grid">
+                    <label class="field date-field">
+                      <span>Data de início</span>
+                      <input type="date" value="2026-05-25">
+                    </label>
+                    <label class="field date-field">
+                      <span>Data de fim</span>
+                      <input type="date" value="2026-05-29">
+                    </label>
+                    <label class="field">
+                      <span>Tipo</span>
+                      <select>
+                        <option>Ida</option>
+                        <option>Retorno</option>
+                        <option selected>Ida e retorno</option>
+                      </select>
+                    </label>
+                    <label class="toggle-field">
+                      <input type="checkbox" checked>
+                      <span>Contabilizar Sáb e Dom?</span>
+                    </label>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            <ol class="ds-flow-steps">
+              <li>Salva a OS principal.</li>
+              <li>Gera idas recorrentes e recalcula a previsão de retorno em cada data.</li>
+              <li>Gera retornos recorrentes conforme o tipo selecionado.</li>
+              <li>Cria o retorno separado original quando `Agendar retorno` estiver ativo.</li>
+            </ol>
+
+            <div class="ds-current-contract">
+              <b>Estado de ativação</b>
+              <span>Bolinha verde: aba ativada e será salva.</span>
+              <span>Bolinha amarela: usuário preencheu a aba, mas não ligou `Ativado`.</span>
+              <span>Ao salvar com bolinha amarela, abrir popup com três escolhas: revisar abas, salvar sem ativar, ativar e agendar.</span>
+            </div>
+          </section>
+
+          <section id="import" class="ds-section">
+            <div class="ds-section-head">
+              <div>
+                <h2>Importação XLSX</h2>
+                <p>Aba operacional de revisão. Não é modal, não é wizard e não salva lote cego.</p>
+              </div>
+              <span class="ds-code">import-review-panel</span>
+            </div>
+
+            <div class="ds-import-preview">
+              <section class="panel import-review-panel import-review-panel--compact is-active">
+                <div class="section-head inline import-review-head">
+                  <div>
+                    <p class="passenger-picker-eyebrow">Importação XLSX</p>
+                    <h2>Serviços importados</h2>
+                    <p class="import-review-summary">2 PGs · 3 trechos · 1 bloqueado por duplicidade</p>
+                  </div>
+                </div>
+
+                <div class="import-review-stats">
+                  <span>Confirmados: 1</span>
+                  <span>Pendentes: 1</span>
+                  <span>Bloqueados: 1</span>
+                </div>
+
+                <div class="import-review-programs">
+                  <article class="import-service-row is-selected">
+                    <div class="import-service-main">
+                      <strong>PG 2026/31241</strong>
+                      <span>05:40 · São José dos Campos / São Paulo</span>
+                    </div>
+                    <span class="import-service-status">VALIDAR</span>
+                  </article>
+                  <article class="import-service-row is-blocked">
+                    <div class="import-service-main">
+                      <strong>PG 2026/31242</strong>
+                      <span>Duplicado no Dataverse. Sem edição e sem salvar.</span>
+                    </div>
+                    <span class="import-service-status">BLOQUEADO</span>
+                  </article>
+                </div>
+              </section>
+            </div>
+          </section>
+
           <section id="feedback" class="ds-section">
             <div class="ds-section-head">
               <div>
@@ -1004,6 +1260,7 @@
                   <li>Preserve IDs, `data-*` e handlers.</li>
                   <li>Use `.field` para campos comuns.</li>
                   <li>Use custom select compartilhado.</li>
+                  <li>Permita Retorno + Repetir juntos na criação.</li>
                   <li>Teste popup, overflow, z-index e mobile.</li>
                   <li>Escreva pt-BR com acentos.</li>
                 </ul>
@@ -1017,6 +1274,7 @@
                   <li>Não espalhe azul sem função.</li>
                   <li>Não troque IDs por estética.</li>
                   <li>Não duplique dropdown custom.</li>
+                  <li>Não bloqueie combinações válidas do Canvas sem regra atual.</li>
                   <li>Não use fonte mono como acento visual.</li>
                 </ul>
               </div>

@@ -299,6 +299,11 @@
     passengerMatchList: $("passengerMatchList"),
     passengerMatchCancel: $("passengerMatchCancel"),
     passengerMatchContinue: $("passengerMatchContinue"),
+    activationGuardOverlay: $("activationGuardOverlay"),
+    activationGuardList: $("activationGuardList"),
+    activationGuardReview: $("activationGuardReview"),
+    activationGuardSkip: $("activationGuardSkip"),
+    activationGuardActivate: $("activationGuardActivate"),
     createPassenger: $("createPassenger"),
     agendarRetorno: $("agendarRetorno"),
     retornoData: $("retornoData"),
@@ -362,6 +367,11 @@
     draftRestoring: false,
     lastDraftSavedAt: null,
     draftCommonEdited: false,
+    activationDraftEditState: {
+      return: false,
+      repeat: false
+    },
+    activationGuardDrafts: [],
     importDraftEditState: {
       common: false,
       retorno: false
@@ -571,6 +581,17 @@
     return true;
   }
 
+  function isMobilePassengerPreviewDisabled() {
+    try {
+      const coarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches;
+      const noHover = window.matchMedia?.("(hover: none)")?.matches;
+      const mobileWidth = window.matchMedia?.("(max-width: 760px)")?.matches;
+      return !!(coarsePointer || noHover || mobileWidth);
+    } catch (_) {
+      return currentViewportMetrics().width <= 760;
+    }
+  }
+
   function currentViewportMetrics() {
     const visual = window.visualViewport;
     const width = Math.floor(visual?.width || window.innerWidth || document.documentElement.clientWidth || 0);
@@ -703,6 +724,18 @@
     el.passengerMatchOverlay?.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || el.passengerMatchOverlay.hidden) return;
       resolvePassengerMatchReview({ action: "cancel" });
+    });
+    el.activationGuardReview?.addEventListener("click", () => resolveActivationGuard("review"));
+    el.activationGuardSkip?.addEventListener("click", () => resolveActivationGuard("skip"));
+    el.activationGuardActivate?.addEventListener("click", () => resolveActivationGuard("activate"));
+    el.activationGuardOverlay?.addEventListener("click", (event) => {
+      if (event.target === el.activationGuardOverlay) {
+        resolveActivationGuard("review");
+      }
+    });
+    el.activationGuardOverlay?.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || el.activationGuardOverlay.hidden) return;
+      resolveActivationGuard("review");
     });
     el.passengerEditFields?.addEventListener("input", handlePassengerEditInput);
     el.passengerEditFields?.addEventListener("change", handlePassengerEditInput);
@@ -1464,16 +1497,16 @@
 
     state.passageiros = uniquePassengersById(passageiros.map(mapPassageiro))
       .sort((a, b) => (a.label || "").localeCompare(b.label || "", "pt-BR"));
-    state.clientes = clientes.map((r) => ({
+    state.clientes = sortByLabel(clientes.map((r) => ({
       id: r[f.cliente.id],
       label: r[f.cliente.nome] || "(cliente)"
-    }));
-    state.motoristas = motoristas.map((r) => ({
+    })));
+    state.motoristas = sortByLabel(motoristas.map((r) => ({
       id: r[f.funcionario.id],
       label: r[f.funcionario.apelido] || r[f.funcionario.nome] || "(motorista)",
       nomeCompleto: r[f.funcionario.nome] || "",
       search: [r[f.funcionario.apelido], r[f.funcionario.nome]].filter(Boolean).join(" ")
-    }));
+    })));
     state.ordensPagamento = ops.map((r) => ({
       id: r[f.financeiro.id],
       label: r[f.financeiro.label] || r[f.financeiro.id]
@@ -1606,6 +1639,10 @@
     return String(value || "").replace(/\D/g, "");
   }
 
+  function sortByLabel(rows) {
+    return [...(rows || [])].sort((a, b) => (a.label || "").localeCompare(b.label || "", "pt-BR", { sensitivity: "base" }));
+  }
+
   function getCustomSelectDisplayText(option, select = null) {
     if (!option) return "";
     if (option.value === "" && select?.dataset?.placeholderLabel) {
@@ -1621,6 +1658,16 @@
   }
 
   function renderCustomSelectOptionContent(button, option) {
+    if (option.dataset?.subtitle) {
+      const name = document.createElement("span");
+      name.className = "custom-select-option-name";
+      name.textContent = option.textContent.trim();
+      const subtitle = document.createElement("span");
+      subtitle.className = "custom-select-option-subtitle";
+      subtitle.textContent = option.dataset.subtitle;
+      button.append(name, subtitle);
+      return;
+    }
     if (option.dataset?.flag && option.dataset?.name) {
       const main = document.createElement("span");
       main.className = "custom-select-option-main";
@@ -2994,13 +3041,13 @@
   function renderAll() {
     renderChoiceSelect(el.statusOperacao, state.options.statusOperacao);
     renderStatusFaturamento();
-    renderChoiceSelect(el.tipoServico, state.options.tipoServico);
+    renderChoiceSelect(el.tipoServico, sortByLabel(state.options.tipoServico));
     renderChoiceSelect(el.tipoVeiculo, state.options.tipoVeiculo);
     renderChoiceSelect(el.formaPagamento, state.options.formaPagamento);
-    renderLookupSelect(el.cliente, state.clientes);
-    renderLookupSelect(el.bdCliente, state.clientes);
+    renderLookupSelect(el.cliente, sortByLabel(state.clientes));
+    renderLookupSelect(el.bdCliente, sortByLabel(state.clientes));
     renderLookupSelect(el.solicitante, state.passageiros);
-    renderLookupSelect(el.motorista, state.motoristas);
+    renderLookupSelect(el.motorista, sortByLabel(state.motoristas));
     renderLookupSelect(el.op, state.ordensPagamento);
     renderChoiceSelect(el.bdClassificacao, state.options.bdClassificacao);
     renderChoiceSelect(el.bdSexo, state.options.bdSexo);
@@ -3039,18 +3086,28 @@
 
   function renderLookupSelect(select, rows) {
     if (!select) return;
+    const isSolicitante = select === el.solicitante;
+    if (isSolicitante) {
+      select.dataset.selectVariant = "person-client";
+    }
     const previous = select.value;
     select.innerHTML = '<option value=""></option>';
     rows.forEach((item) => {
       const option = document.createElement("option");
       option.value = item.id;
       option.textContent = item.label;
-      if (item.search) option.dataset.search = item.search;
+      if (isSolicitante && item.clienteLabel) option.dataset.subtitle = item.clienteLabel;
+      option.dataset.search = [item.search, item.clienteLabel].filter(Boolean).join(" ");
       select.appendChild(option);
     });
     if (previous) select.value = previous;
     if (!select.hidden) {
       ensureCustomSelect(select);
+      if (isSolicitante) {
+        const custom = customSelectRoots.get(select);
+        custom?.wrapper?.classList.add("custom-select--person-client");
+        custom?.panel?.classList.add("custom-select-panel--person-client");
+      }
       refreshCustomSelect(select);
     }
   }
@@ -3893,6 +3950,7 @@
   }
 
   function handlePassengerPreviewEnter(event) {
+    if (isMobilePassengerPreviewDisabled()) return;
     const wrap = event.target.closest(".row-title-wrap");
     if (!wrap || !el.passengerRows.contains(wrap)) return;
     if (event.relatedTarget && wrap.contains(event.relatedTarget)) return;
@@ -3909,6 +3967,7 @@
   }
 
   function handlePassengerPreviewFocusIn(event) {
+    if (isMobilePassengerPreviewDisabled()) return;
     const wrap = event.target.closest(".row-title-wrap");
     if (!wrap || !el.passengerRows.contains(wrap)) return;
     openPassengerPreview(wrap);
@@ -3951,6 +4010,7 @@
   }
 
   function openPassengerPreview(wrap) {
+    if (isMobilePassengerPreviewDisabled()) return;
     const source = wrap.querySelector(".passenger-preview");
     const anchor = wrap.querySelector(".row-title") || wrap;
     if (anchor.disabled) return;
@@ -4013,6 +4073,10 @@
   }
 
   function repositionPassengerPreview() {
+    if (isMobilePassengerPreviewDisabled()) {
+      closePassengerPreview();
+      return;
+    }
     if (!activePassengerPreview || passengerPreviewPositionRaf) return;
     passengerPreviewPositionRaf = requestAnimationFrame(() => {
       passengerPreviewPositionRaf = null;
@@ -4146,8 +4210,27 @@
 
   function renderTabBadges() {
     el.tabImport?.classList.toggle("is-marked", !!state.importReview);
-    el.tabReturn.classList.toggle("is-marked", el.agendarRetorno.checked);
-    el.tabRepeat.classList.toggle("is-marked", el.repetirServico.checked);
+    renderActivationTabBadge(el.tabReturn, {
+      label: "Retorno",
+      active: !!el.agendarRetorno.checked,
+      pending: hasInactiveReturnDraft()
+    });
+    renderActivationTabBadge(el.tabRepeat, {
+      label: "Repetir",
+      active: !!el.repetirServico.checked,
+      pending: hasInactiveRepeatDraft()
+    });
+  }
+
+  function renderActivationTabBadge(tab, options) {
+    if (!tab) return;
+    const active = !!options.active;
+    const pending = !active && !!options.pending;
+    tab.classList.toggle("is-marked", active);
+    tab.classList.toggle("is-pending", pending);
+    const suffix = active ? " ativo" : (pending ? " com dados não ativados" : "");
+    tab.setAttribute("aria-label", `${options.label}${suffix}`);
+    tab.title = pending ? `${options.label}: dados preenchidos sem ativar` : options.label;
   }
 
   function handleOperationalInput(event) {
@@ -4159,18 +4242,73 @@
 
     clearFieldValidation(target);
     captureObsState();
+    markActivationDraftEdited(target);
     renderTabBadges();
     renderRiskPanel();
-    const isReturnField = (
+    markDraftDirty({ touchCommon: !isActivationGuardField(target) });
+  }
+
+  function markActivationDraftEdited(target) {
+    if (!target || target === el.agendarRetorno || target === el.repetirServico) return;
+    if (isReturnActivationField(target)) state.activationDraftEditState.return = true;
+    if (isRepeatActivationField(target)) state.activationDraftEditState.repeat = true;
+  }
+
+  function isActivationGuardField(target) {
+    return (
+      target === el.agendarRetorno ||
+      target === el.repetirServico ||
+      isReturnActivationField(target) ||
+      isRepeatActivationField(target)
+    );
+  }
+
+  function isReturnActivationField(target) {
+    return (
       target === el.retornoData ||
       target === el.retornoHora ||
       target === el.retornoMinuto ||
       target === el.retornoEndereco ||
       target === el.retornoDestino ||
       target === el.retornoObservacao ||
-      target === el.agendarRetorno
+      target?.closest?.("#tab-panel-return")
     );
-    markDraftDirty({ touchCommon: !isReturnField });
+  }
+
+  function isRepeatActivationField(target) {
+    return (
+      target === el.frequenteInicio ||
+      target === el.frequenteFim ||
+      target === el.frequenteTipo ||
+      target === el.contabilizarFds ||
+      target?.closest?.("#tab-panel-repeat")
+    );
+  }
+
+  function hasInactiveReturnDraft() {
+    return state.isNew && !el.agendarRetorno.checked && state.activationDraftEditState.return && hasReturnDraftContent();
+  }
+
+  function hasInactiveRepeatDraft() {
+    return state.isNew && !el.repetirServico.checked && state.activationDraftEditState.repeat && hasRepeatDraftContent();
+  }
+
+  function hasReturnDraftContent() {
+    return [
+      el.retornoData?.value,
+      el.retornoEndereco?.value,
+      el.retornoDestino?.value,
+      el.retornoObservacao?.value,
+      ...Object.values(state.obsRet || {})
+    ].some((value) => String(value || "").trim());
+  }
+
+  function hasRepeatDraftContent() {
+    return [
+      el.frequenteInicio?.value,
+      el.frequenteFim?.value,
+      el.frequenteTipo?.value
+    ].some((value) => String(value || "").trim()) || el.contabilizarFds.checked === false;
   }
 
   function renderRiskPanel() {
@@ -4366,12 +4504,14 @@
     const snapshot = readDraftSnapshot();
     if (!snapshot) {
       state.draftCommonEdited = false;
+      state.activationDraftEditState = { return: false, repeat: false };
       state.importDraftEditState = { common: false, retorno: false };
       renderDraftStatus();
       return;
     }
     if ((snapshot.recordId || "") !== (state.recordId || "")) {
       state.draftCommonEdited = false;
+      state.activationDraftEditState = { return: false, repeat: false };
       state.importDraftEditState = { common: false, retorno: false };
       renderDraftStatus();
       return;
@@ -4418,6 +4558,10 @@
       state.obsRet = { ...state.obsRet, ...(snapshot.obsRet || {}) };
       state.obsAtual = snapshot.obsAtual || "motorista";
       state.retObsAtual = snapshot.retObsAtual || "motorista";
+      state.activationDraftEditState = {
+        return: !fields.agendarRetorno && hasReturnDraftContent(),
+        repeat: !fields.repetirServico && hasRepeatDraftContent()
+      };
       state.enderecoPersonalizadoAtivo = !!snapshot.enderecoPersonalizadoAtivo;
       state.scheduleDrafts = [];
       state.enderecoRascunho = Array.isArray(snapshot.enderecoRascunho) ? snapshot.enderecoRascunho.map((item) => ({ ...item })) : [];
@@ -7675,15 +7819,108 @@
     captureObsState();
     const context = buildSaveContext();
     clearValidationStates();
+    proceedSaveContext(context);
+  }
+
+  function proceedSaveContext(context, options = {}) {
     const validation = validateContext(context);
     if (validation) {
+      state.pendingSaveContext = null;
       toast(validation, "error", 7000);
       focusInvalidField(validation);
       return;
     }
 
+    if (!options.skipActivationGuard) {
+      const inactiveDrafts = collectInactiveActivationDrafts();
+      if (inactiveDrafts.length) {
+        state.pendingSaveContext = context;
+        openActivationGuard(inactiveDrafts);
+        return;
+      }
+    }
+
     state.pendingSaveContext = context;
     openReviewBeforeSave(context);
+  }
+
+  function collectInactiveActivationDrafts() {
+    const drafts = [];
+    if (hasInactiveReturnDraft()) {
+      drafts.push({
+        type: "return",
+        tab: "return",
+        label: "Retorno",
+        detail: "Campos de retorno preenchidos, mas a chave Ativado está desligada."
+      });
+    }
+    if (hasInactiveRepeatDraft()) {
+      drafts.push({
+        type: "repeat",
+        tab: "repeat",
+        label: "Repetir",
+        detail: "Campos de repetição preenchidos, mas a chave Ativado está desligada."
+      });
+    }
+    return drafts;
+  }
+
+  function openActivationGuard(drafts) {
+    if (!el.activationGuardOverlay || !el.activationGuardList) {
+      proceedSaveContext(state.pendingSaveContext || buildSaveContext(), { skipActivationGuard: true });
+      return;
+    }
+    state.activationGuardDrafts = drafts;
+    el.activationGuardList.innerHTML = "";
+    drafts.forEach((draft) => {
+      const item = document.createElement("article");
+      item.className = "activation-guard-item";
+      const dot = document.createElement("span");
+      dot.className = "activation-guard-dot";
+      dot.setAttribute("aria-hidden", "true");
+      const text = document.createElement("div");
+      const title = document.createElement("strong");
+      title.textContent = draft.label;
+      const detail = document.createElement("span");
+      detail.textContent = draft.detail;
+      text.append(title, detail);
+      item.append(dot, text);
+      el.activationGuardList.appendChild(item);
+    });
+    el.activationGuardOverlay.hidden = false;
+    requestAnimationFrame(() => {
+      el.activationGuardActivate?.focus();
+    });
+  }
+
+  function closeActivationGuard() {
+    if (el.activationGuardOverlay) el.activationGuardOverlay.hidden = true;
+    state.activationGuardDrafts = [];
+  }
+
+  function resolveActivationGuard(action) {
+    const drafts = [...(state.activationGuardDrafts || [])];
+    const context = state.pendingSaveContext || buildSaveContext();
+    closeActivationGuard();
+
+    if (action === "review") {
+      state.pendingSaveContext = null;
+      const first = drafts[0];
+      if (first?.tab) setTab(first.tab);
+      return;
+    }
+
+    if (action === "activate") {
+      drafts.forEach((draft) => {
+        if (draft.type === "return") el.agendarRetorno.checked = true;
+        if (draft.type === "repeat") el.repetirServico.checked = true;
+      });
+      renderTabBadges();
+      proceedSaveContext(buildSaveContext());
+      return;
+    }
+
+    proceedSaveContext(context, { skipActivationGuard: true });
   }
 
   async function performSave() {
@@ -7832,7 +8069,6 @@
     const frequentPeriodError = validateFrequentServicePeriod();
     if (frequentPeriodError) return frequentPeriodError;
     if (el.repetirServico.checked && !el.frequenteTipo.value) return "'Tipo de Serviço Frequente' é obrigatório.";
-    if (state.isNew && el.repetirServico.checked && el.agendarRetorno.checked) return "Não é possível usar 'Serviços Frequentes' e 'Agendar Retorno' ao mesmo tempo. Escolha apenas um.";
     if (hasDuplicatePassengers()) return "Erro: passageiro duplicado na lista. Remova as duplicatas.";
     return "";
   }
@@ -7915,7 +8151,8 @@
         const dataIda = withTime(date, context.dataHoraPrincipal);
         if (dataIda.getTime() === principalTime) continue;
         const payload = buildReservaPayload(context, "frequenteIda", dataIda);
-        const retornoPrev = buildRetornoPrevisto(dataIda);
+        delete payload[CONFIG.fields.reserva.previsaoRetorno];
+        const retornoPrev = buildRecurringRetornoPrevisto(context, dataIda);
         if (retornoPrev) payload[CONFIG.fields.reserva.previsaoRetorno] = retornoPrev.toISOString();
         const saved = await saveReserva(payload);
         results.push({ tipo: "Ida", data: dataIda, result: saved });
@@ -8003,6 +8240,7 @@
     state.selectedPassengers = [];
     state.scheduleDrafts = [];
     state.enderecoRascunho = [];
+    state.activationDraftEditState = { return: false, repeat: false };
     state.obs = { motorista: "", interna: "", final: "", passageiro: "" };
     state.obsRet = { motorista: "", interna: "", final: "", passageiro: "" };
     state.obsAtual = "motorista";
@@ -8062,6 +8300,30 @@
     const retornoTime = timeFromParts(el.retPrevHora.value, el.retPrevMinuto.value);
     const base = new Date(baseDateTime);
     if (retornoTime.minutesTotal < saidaTime.minutesTotal) base.setDate(base.getDate() + 1);
+    return withClock(base, retornoTime.hours, retornoTime.minutes);
+  }
+
+  function buildRecurringRetornoPrevisto(context, baseDateTime) {
+    if (!baseDateTime || !el.retPrevHora.value || !el.retPrevMinuto.value) return null;
+    const saidaTime = timeFromParts(el.saidaHora.value, el.saidaMinuto.value);
+    const retornoTime = timeFromParts(el.retPrevHora.value, el.retPrevMinuto.value);
+    const base = new Date(baseDateTime);
+    const explicitRetorno = parseDateTimeInputValue(el.retPrevDateTime?.value);
+    let dayOffsetApplied = false;
+    if (explicitRetorno && context?.dataHoraPrincipal) {
+      const principalDay = new Date(context.dataHoraPrincipal);
+      const retornoDay = new Date(explicitRetorno);
+      principalDay.setHours(0, 0, 0, 0);
+      retornoDay.setHours(0, 0, 0, 0);
+      const dayOffset = Math.round((retornoDay.getTime() - principalDay.getTime()) / 86400000);
+      if (dayOffset > 0) {
+        base.setDate(base.getDate() + dayOffset);
+        dayOffsetApplied = true;
+      }
+    }
+    if (!dayOffsetApplied && retornoTime.minutesTotal < saidaTime.minutesTotal) {
+      base.setDate(base.getDate() + 1);
+    }
     return withClock(base, retornoTime.hours, retornoTime.minutes);
   }
 

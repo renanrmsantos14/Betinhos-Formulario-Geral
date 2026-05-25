@@ -268,6 +268,30 @@ assert.equal(
 includes(app, "MAX_FREQUENT_SERVICE_DAYS", "limite para periodo recorrente");
 includes(app, "Data de retorno nao pode ser anterior a saida", "validacao retorno antes da saida");
 includes(app, "Periodo frequente muito grande", "validacao de recorrencia grande demais");
+includes(app, "buildRecurringRetornoPrevisto", "recorrencia deve recalcular previsao de retorno por data gerada");
+excludes(app, "Agendar Retorno' ao mesmo tempo", "Retorno e Repetir podem ser usados juntos na criacao");
+includes(app, "collectInactiveActivationDrafts", "save deve interceptar abas preenchidas sem ativar");
+includes(app, "hasInactiveReturnDraft", "retorno preenchido sem ativar deve ter estado pendente");
+includes(app, "hasInactiveRepeatDraft", "repetir preenchido sem ativar deve ter estado pendente");
+{
+  const proceedStart = app.indexOf("function proceedSaveContext");
+  assert.ok(proceedStart >= 0, "Funcao proceedSaveContext deve existir");
+  const proceedEnd = app.indexOf("async function performSave", proceedStart);
+  assert.ok(proceedEnd > proceedStart, "Funcao proceedSaveContext deve vir antes de performSave");
+  const proceedSaveContext = app.slice(proceedStart, proceedEnd);
+  const validationIndex = proceedSaveContext.indexOf("const validation = validateContext(context);");
+  const guardIndex = proceedSaveContext.indexOf("const inactiveDrafts = collectInactiveActivationDrafts();");
+  assert.ok(validationIndex >= 0, "proceedSaveContext deve validar campos obrigatorios");
+  assert.ok(guardIndex >= 0, "proceedSaveContext deve checar abas pendentes");
+  assert.ok(
+    validationIndex < guardIndex,
+    "guard de ativacao deve rodar depois das validacoes obrigatorias"
+  );
+  includes(proceedSaveContext, "skipActivationGuard", "salvar sem ativar nao deve reabrir o mesmo popup");
+}
+includes(html, "id=\"activationGuardOverlay\"", "popup de confirmacao para abas preenchidas sem ativar");
+includes(html, "id=\"activationGuardActivate\"", "popup deve permitir ativar e agendar");
+includes(css, ".tab.is-pending::after", "aba pendente deve ter bolinha amarela propria");
 
 includes(html, "id=\"importXlsxButton\"", "botao de upload XLSX");
 includes(html, "id=\"xlsxImportInput\"", "input de arquivo XLSX");

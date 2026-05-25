@@ -50,6 +50,10 @@ assert.ok(html.includes("function getRecordIdFromHostContext"), "bundle deve ler
 assert.ok(html.includes("selectedItemReferences"), "bundle deve aceitar data de comando com selecao da grid");
 assert.ok(html.includes("clearDraftSnapshot(false);"), "bundle deve iniciar sem rascunho local anterior");
 assert.ok(!html.includes("await restoreDraftSnapshot();"), "bundle nao deve restaurar rascunho ao abrir o RW");
+assert.ok(html.includes("buildRecurringRetornoPrevisto"), "bundle deve recalcular previsao de retorno por data recorrente");
+assert.ok(!html.includes("Agendar Retorno' ao mesmo tempo"), "bundle deve permitir Retorno e Repetir juntos na criacao");
+assert.ok(html.includes("activationGuardOverlay"), "bundle deve conter popup para abas preenchidas sem ativar");
+assert.ok(html.includes(".tab.is-pending::after"), "bundle deve conter bolinha amarela para aba pendente");
 assert.ok(html.includes("id=\"closeRwButton\""), "bundle deve conter botao sutil para fechar o RW");
 assert.ok(html.includes("pageType: \"entitylist\""), "bundle deve voltar para a lista da tabela Geral");
 assert.ok(html.includes("entityName: CONFIG.entities.reserva"), "bundle deve navegar para a entidade real da Geral");
