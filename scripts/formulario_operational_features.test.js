@@ -138,12 +138,27 @@ excludes(app, "Adicionar serviço manual", "botao de servico manual nao deve exi
 excludes(app, "originStatus: \"Manual\"", "trecho manual nao deve ser criado pela importacao");
 excludes(app, "importOrigin: \"manual\"", "origem tecnica manual nao deve ser criada pela importacao");
 
-includes(app, "const MIN_PASSENGER_SEARCH_LENGTH", "limite minimo para busca server-side");
 includes(app, "async function searchPassengersServer", "busca server-side de passageiros");
 includes(app, "async function ensurePassengersByIds", "carga pontual por ids de passageiros");
-excludes(app, "retrieveAll(CONFIG.entities.passageiro, [", "carga inicial de 5000 passageiros");
+includes(app, "INITIAL_PASSENGER_LOOKUP_LIMIT", "solicitante deve carregar Banco de Dados no inicio");
+includes(app, "renderPassengerPickerHint(query ? \"Pesquisando passageiros...\" : \"Carregando Banco de Dados...\")", "picker deve listar Banco de Dados sem exigir texto");
+excludes(app, "Digite pelo menos 1 caractere", "busca no Banco de Dados nao deve exigir 1 caractere");
+includes(app, "apelido: \"new_apelido\"", "motorista deve usar campo de apelido");
+includes(app, "label: r[f.funcionario.apelido] || r[f.funcionario.nome]", "motorista deve exibir apelido com fallback para nome completo");
 
 includes(html, "id=\"passengerMatchOverlay\"", "overlay de possivel duplicidade de passageiro");
+includes(html, "viewport-fit=cover", "webresource deve permitir calculo correto de safe area no iPhone");
+includes(app, "function currentViewportMetrics", "app deve calcular viewport real via visualViewport");
+includes(app, "window.visualViewport?.addEventListener(\"resize\", syncViewportMetrics)", "iPhone deve recalcular altura visual ao mudar viewport");
+includes(html, "id=\"closeRwButton\"", "topbar deve ter botao de fechar RW");
+includes(app, "function closeWebResourceToGeral", "botao fechar deve voltar para Geral");
+includes(app, "pageType: \"entitylist\"", "fechar RW deve navegar para lista Model-driven");
+includes(app, "entityName: CONFIG.entities.reserva", "fechar RW deve usar tabela real Geral");
+includes(css, "--app-viewport-height", "CSS deve usar altura visual calculada");
+includes(css, "--shell-padding-top: 8px;", "mobile nao deve duplicar safe-area do host Power Apps");
+includes(css, ".status-select > span,", "regra do label de status nao deve afetar valor do select customizado");
+includes(css, ".topbar .status-select > span", "mobile deve ocultar so o label direto do status");
+excludes(css, ".topbar .status-select span {\n    display: none;", "mobile nao pode esconder o texto selecionado do status");
 includes(app, "function findPassengerDuplicateCandidates", "validacao multipla de duplicidade");
 includes(app, "function scorePassengerCandidate", "pontuacao de candidato duplicado");
 includes(app, "Certeza que este nao e o passageiro desejado?", "pergunta de confirmacao de duplicidade");

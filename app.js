@@ -68,7 +68,8 @@
       },
       funcionario: {
         id: "cr40f_funcionariosid",
-        nome: "cr40f_nomecompleto"
+        nome: "cr40f_nomecompleto",
+        apelido: "new_apelido"
       },
       servicoPassageiro: {
         id: "cr40f_servicosporpassageiroid",
@@ -100,9 +101,9 @@
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
   const PASSENGER_RECENCY_KEY = "formulario_geral_passenger_recency_v1";
   const BRAND_LOGO_WEBRESOURCE = "cr40f_LogoBetinhosB";
-  const MIN_PASSENGER_SEARCH_LENGTH = 1;
   const MAX_FREQUENT_SERVICE_DAYS = 90;
   const MAX_FREQUENT_SERVICE_RECORDS = 120;
+  const INITIAL_PASSENGER_LOOKUP_LIMIT = 5000;
 
   const FALLBACK = buildFallbackChoices();
 
@@ -222,6 +223,7 @@
     toastStack: $("toastStack"),
     saveButton: $("saveButton"),
     saveButtonText: $("saveButtonText"),
+    closeRwButton: $("closeRwButton"),
     recordIdBox: $("recordIdBox"),
     recordIdText: $("recordIdText"),
     importXlsxButton: $("importXlsxButton"),
@@ -388,6 +390,7 @@
 
   async function init() {
     state.isNew = !state.recordId;
+    syncViewportMetrics();
     setLoading(true);
     applyBrandLogo();
     bindStaticEvents();
@@ -397,7 +400,7 @@
     await loadCurrentRecord();
     hydrateForm();
     renderAll();
-    await restoreDraftSnapshot();
+    clearDraftSnapshot(false);
     initializeCustomSelects();
     syncDateTimeFieldRowWidths();
     setLoading(false);
@@ -417,6 +420,36 @@
       }
     }
     return null;
+  }
+
+  function closeWebResourceToGeral() {
+    clearDraftSnapshot(false);
+    const xrm = state.xrm || getXrm();
+    if (xrm?.Navigation?.navigateTo) {
+      setLoading(true);
+      xrm.Navigation.navigateTo({
+        pageType: "entitylist",
+        entityName: CONFIG.entities.reserva
+      }, { target: 1 }).catch((error) => {
+        console.warn("Falha ao voltar para Geral", error);
+        setLoading(false);
+        fallbackCloseWebResource();
+      });
+      return;
+    }
+    fallbackCloseWebResource();
+  }
+
+  function fallbackCloseWebResource() {
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    try {
+      window.close();
+    } catch (_) {
+      toast("Não foi possível fechar automaticamente.", "warning", 5000);
+    }
   }
 
   function getRecordIdFromUrl() {
@@ -536,6 +569,25 @@
     return true;
   }
 
+  function currentViewportMetrics() {
+    const visual = window.visualViewport;
+    const width = Math.floor(visual?.width || window.innerWidth || document.documentElement.clientWidth || 0);
+    const height = Math.floor(visual?.height || window.innerHeight || document.documentElement.clientHeight || 0);
+    const offsetLeft = Math.floor(visual?.offsetLeft || 0);
+    const offsetTop = Math.floor(visual?.offsetTop || 0);
+    return { width, height, offsetLeft, offsetTop };
+  }
+
+  function syncViewportMetrics() {
+    const metrics = currentViewportMetrics();
+    if (metrics.height > 0) {
+      document.documentElement.style.setProperty("--app-viewport-height", `${metrics.height}px`);
+    }
+    document.documentElement.classList.toggle("is-ios-viewport", /iPad|iPhone|iPod/.test(navigator.userAgent || ""));
+    repositionOpenCustomSelectPanels();
+    repositionPassengerPreview();
+  }
+
   function resolveEnvironmentBaseUrl() {
     if (state.xrm?.Utility?.getGlobalContext) {
       try {
@@ -625,6 +677,7 @@
     el.closeSuccess?.addEventListener("click", () => {
       el.success.hidden = true;
     });
+    el.closeRwButton?.addEventListener("click", closeWebResourceToGeral);
     el.saveButton?.addEventListener("click", saveForm);
     el.importXlsxButton?.addEventListener("click", openXlsxImportPicker);
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
@@ -727,6 +780,9 @@
     window?.addEventListener("resize", repositionPassengerPreview);
     window?.addEventListener("resize", syncPassengerNameColumnWidth);
     window?.addEventListener("resize", syncDateTimeFieldRowWidths);
+    window?.addEventListener("resize", syncViewportMetrics);
+    window.visualViewport?.addEventListener("resize", syncViewportMetrics);
+    window.visualViewport?.addEventListener("scroll", syncViewportMetrics);
     bindContentScrollBoundaryFeedback();
     bindInputFormatters();
     const appRoot = $("app");
@@ -1246,26 +1302,31 @@
   function updateCustomSelectPanelPosition(state) {
     if (!state || !state.wrapper.classList.contains("is-open")) return;
     const rect = state.trigger.getBoundingClientRect();
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    const viewport = currentViewportMetrics();
+    const viewportHeight = viewport.height;
+    const viewportWidth = viewport.width;
+    const viewportTop = viewport.offsetTop;
+    const viewportLeft = viewport.offsetLeft;
+    const viewportBottom = viewportTop + viewportHeight;
+    const viewportRight = viewportLeft + viewportWidth;
     const safeInset = 8;
     const availableWidth = Math.max(120, viewportWidth - safeInset * 2);
     const minWidth = state.select?.dataset?.selectVariant === "phone-country" ? 280 : 140;
     const desiredWidth = Math.max(minWidth, Math.ceil(rect.width || state.trigger.offsetWidth || 120));
     const width = Math.max(120, Math.min(availableWidth, desiredWidth));
     const maxHeight = Math.min(260, Math.max(120, Math.floor(viewportHeight * 0.42)));
-    const spaceBelow = viewportHeight - rect.bottom - safeInset;
-    const spaceAbove = rect.top - safeInset;
+    const spaceBelow = viewportBottom - rect.bottom - safeInset;
+    const spaceAbove = rect.top - viewportTop - safeInset;
     const menuHeight = Math.min(maxHeight, Math.max(80, state.panel.scrollHeight || 0));
     const showAbove = spaceBelow < Math.min(maxHeight, 180) && spaceAbove > spaceBelow;
     const top = showAbove
-      ? Math.max(safeInset, rect.top - menuHeight - safeInset)
-      : Math.min(viewportHeight - menuHeight - safeInset, rect.bottom + safeInset);
+      ? Math.max(viewportTop + safeInset, rect.top - menuHeight - safeInset)
+      : Math.min(viewportBottom - menuHeight - safeInset, rect.bottom + safeInset);
 
-    const safeLeft = Math.max(safeInset, Math.min(rect.left, viewportWidth - width - safeInset));
+    const safeLeft = Math.max(viewportLeft + safeInset, Math.min(rect.left, viewportRight - width - safeInset));
 
     state.panel.style.left = `${safeLeft}px`;
-    state.panel.style.top = `${Math.max(safeInset, top)}px`;
+    state.panel.style.top = `${Math.max(viewportTop + safeInset, top)}px`;
     state.panel.style.width = `${width}px`;
     state.panel.style.maxHeight = `${maxHeight}px`;
   }
@@ -1385,20 +1446,24 @@
     }
 
     const f = CONFIG.fields;
-    const [clientes, motoristas, ops] = await Promise.all([
+    const [clientes, passageiros, motoristas, ops] = await Promise.all([
       retrieveAll(CONFIG.entities.cliente, `?$select=${f.cliente.id},${f.cliente.nome}&$orderby=${f.cliente.nome} asc&$top=5000`),
-      retrieveAll(CONFIG.entities.funcionario, `?$select=${f.funcionario.id},${f.funcionario.nome}&$orderby=${f.funcionario.nome} asc&$top=5000`),
+      retrieveAll(CONFIG.entities.passageiro, `?$select=${passengerSelectFields()}&$orderby=${f.passageiro.nome} asc&$top=${INITIAL_PASSENGER_LOOKUP_LIMIT}`),
+      retrieveAll(CONFIG.entities.funcionario, `?$select=${f.funcionario.id},${f.funcionario.nome},${f.funcionario.apelido}&$orderby=${f.funcionario.apelido} asc,${f.funcionario.nome} asc&$top=5000`),
       retrieveAll(CONFIG.entities.financeiro, `?$select=${f.financeiro.id},${f.financeiro.label},createdon&$orderby=createdon desc&$top=500`)
     ]);
 
-    state.passageiros = [];
+    state.passageiros = uniquePassengersById(passageiros.map(mapPassageiro))
+      .sort((a, b) => (a.label || "").localeCompare(b.label || "", "pt-BR"));
     state.clientes = clientes.map((r) => ({
       id: r[f.cliente.id],
       label: r[f.cliente.nome] || "(cliente)"
     }));
     state.motoristas = motoristas.map((r) => ({
       id: r[f.funcionario.id],
-      label: r[f.funcionario.nome] || "(motorista)"
+      label: r[f.funcionario.apelido] || r[f.funcionario.nome] || "(motorista)",
+      nomeCompleto: r[f.funcionario.nome] || "",
+      search: [r[f.funcionario.apelido], r[f.funcionario.nome]].filter(Boolean).join(" ")
     }));
     state.ordensPagamento = ops.map((r) => ({
       id: r[f.financeiro.id],
@@ -1433,9 +1498,16 @@
     if (!state.xrm || state.mockMode) {
       return searchPassengersLocal(search, limit);
     }
-    if (normalize(search).length < MIN_PASSENGER_SEARCH_LENGTH) return [];
 
     const f = CONFIG.fields.passageiro;
+    if (!normalize(search)) {
+      const rows = await retrieveAll(
+        CONFIG.entities.passageiro,
+        `?$select=${passengerSelectFields()}&$orderby=${f.nome} asc&$top=${limit}`
+      );
+      return mergePassengerRecords(rows.map(mapPassageiro));
+    }
+
     const escaped = escapeODataString(search);
     const digits = onlyDigits(search);
     const filters = [
@@ -2960,6 +3032,7 @@
       const option = document.createElement("option");
       option.value = item.id;
       option.textContent = item.label;
+      if (item.search) option.dataset.search = item.search;
       select.appendChild(option);
     });
     if (previous) select.value = previous;
@@ -3942,21 +4015,28 @@
       return;
     }
     const rect = anchor.getBoundingClientRect();
-    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const viewport = currentViewportMetrics();
+    const viewportWidth = viewport.width;
+    const viewportHeight = viewport.height;
+    const viewportTop = viewport.offsetTop;
+    const viewportLeft = viewport.offsetLeft;
+    const viewportBottom = viewportTop + viewportHeight;
+    const viewportRight = viewportLeft + viewportWidth;
     const gap = 8;
     const safeGap = 10;
     const width = Math.min(360, Math.max(280, viewportWidth - safeGap * 2));
     const height = Math.min(portal.scrollHeight || 120, viewportHeight - safeGap * 2);
-    const showAbove = rect.bottom + gap + height > viewportHeight && rect.top > viewportHeight - rect.bottom;
+    const spaceBelow = viewportBottom - rect.bottom;
+    const spaceAbove = rect.top - viewportTop;
+    const showAbove = spaceBelow < gap + height && spaceAbove > spaceBelow;
     const top = showAbove
-      ? Math.max(safeGap, rect.top - height - gap)
-      : Math.min(viewportHeight - height - safeGap, rect.bottom + gap);
-    const left = Math.max(safeGap, Math.min(rect.left, viewportWidth - width - safeGap));
+      ? Math.max(viewportTop + safeGap, rect.top - height - gap)
+      : Math.min(viewportBottom - height - safeGap, rect.bottom + gap);
+    const left = Math.max(viewportLeft + safeGap, Math.min(rect.left, viewportRight - width - safeGap));
 
     portal.style.width = `${width}px`;
     portal.style.left = `${left}px`;
-    portal.style.top = `${Math.max(safeGap, top)}px`;
+    portal.style.top = `${Math.max(viewportTop + safeGap, top)}px`;
   }
 
   function renderPassengerPreview(container, passenger) {
@@ -3980,7 +4060,7 @@
       ["Email", passenger.email],
       ["Cliente", passenger.clienteLabel],
       ["Cargo", previewValue(passenger.cargo, "bdCargo")],
-      ["Departamento", passenger.departamento],
+      ["Dpto", passenger.departamento],
       ["CR", passenger.cr],
       ["Preferências", passenger.preferencias],
       ["Tipo de veículo", passenger.tipoVeiculoLabel || previewValue(passenger.tipoVeiculo, "bdTipoVeiculo")],
@@ -4608,7 +4688,7 @@
     passengerPickerTargetOrder = Number.isFinite(normalizedOrder) && normalizedOrder > 0 ? normalizedOrder : null;
     if (!el.passengerPickerOverlay || !el.passengerPickerSearch || !el.passengerPickerResults) return;
     el.passengerPickerSearch.value = "";
-    renderPassengerPickerHint("Digite pelo menos 1 caractere para pesquisar no Banco de Dados.");
+    renderPassengerPickerResults();
     el.passengerPickerOverlay.hidden = false;
     if (shouldAutofocusSearchInputs()) {
       requestAnimationFrame(() => {
@@ -4639,12 +4719,8 @@
   async function renderPassengerPickerResults() {
     if (!el.passengerPickerSearch || !el.passengerPickerResults) return;
     const query = el.passengerPickerSearch.value.trim();
-    if (normalize(query).length < MIN_PASSENGER_SEARCH_LENGTH) {
-      renderPassengerPickerHint("Digite pelo menos 1 caractere para pesquisar no Banco de Dados.");
-      return;
-    }
     const searchSeq = ++passengerPickerSearchSeq;
-    renderPassengerPickerHint("Pesquisando passageiros...");
+    renderPassengerPickerHint(query ? "Pesquisando passageiros..." : "Carregando Banco de Dados...");
     let list = [];
     try {
       list = getAvailablePassengersFrom(await searchPassengersServer(query, 30));
@@ -5133,7 +5209,7 @@
     return Array.from(new Set(
       terms
         .map((term) => String(term || "").trim())
-        .filter((term) => normalize(term).length >= MIN_PASSENGER_SEARCH_LENGTH)
+        .filter((term) => normalize(term).length > 0)
     )).slice(0, 5);
   }
 
@@ -7506,7 +7582,10 @@
   function findMotoristaByName(name) {
     const wanted = normalize(name);
     if (!wanted) return null;
-    return state.motoristas.find((motorista) => normalize(motorista.label).includes(wanted) || wanted.includes(normalize(motorista.label))) || null;
+    return state.motoristas.find((motorista) => {
+      const searchable = normalize([motorista.label, motorista.nomeCompleto, motorista.search].filter(Boolean).join(" "));
+      return searchable.includes(wanted) || wanted.includes(searchable);
+    }) || null;
   }
 
   function formatDateInputForDisplay(value) {

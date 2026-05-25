@@ -46,6 +46,11 @@ assert.ok(html.includes("import-timeline"), "bundle deve conter timeline de said
 assert.ok(html.includes("Janela da PG"), "bundle deve explicar a janela operacional da PG");
 assert.ok(html.includes("function getRecordIdFromHostContext"), "bundle deve ler id do formulario pai no Model-driven App");
 assert.ok(html.includes("selectedItemReferences"), "bundle deve aceitar data de comando com selecao da grid");
+assert.ok(html.includes("clearDraftSnapshot(false);"), "bundle deve iniciar sem rascunho local anterior");
+assert.ok(!html.includes("await restoreDraftSnapshot();"), "bundle nao deve restaurar rascunho ao abrir o RW");
+assert.ok(html.includes("id=\"closeRwButton\""), "bundle deve conter botao sutil para fechar o RW");
+assert.ok(html.includes("pageType: \"entitylist\""), "bundle deve voltar para a lista da tabela Geral");
+assert.ok(html.includes("entityName: CONFIG.entities.reserva"), "bundle deve navegar para a entidade real da Geral");
 assert.ok(html.includes(".passenger-edit-field textarea.passenger-edit-control"), "bundle deve conter regra dos textareas de passageiro");
 assert.ok(html.includes("resize: vertical;"), "bundle deve manter textareas redimensionaveis");
 assert.ok(html.includes("max-height: none;"), "bundle deve permitir crescimento vertical dos textareas");

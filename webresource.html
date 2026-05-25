@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Formulário de Agendamento</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2318244d'/%3E%3Ctext x='32' y='43' font-size='34' text-anchor='middle' fill='white' font-family='Arial'%3EB%3C/text%3E%3C/svg%3E">
   <style>
@@ -10,6 +10,7 @@
 
 :root {
   color-scheme: light;
+  --app-viewport-height: 100dvh;
   --shell-padding-top: max(10px, var(--safe-top));
   --topbar-height: 46px;
   --topbar-menu-gap: 35px;
@@ -109,9 +110,9 @@ p {
 .app-shell {
   width: 100%;
   height: 100vh;
-  height: 100dvh;
+  height: var(--app-viewport-height);
   min-height: 100vh;
-  min-height: 100svh;
+  min-height: var(--app-viewport-height);
   display: grid;
   grid-template-columns: 58px minmax(0, 1fr);
   grid-template-rows: auto auto minmax(0, 1fr);
@@ -266,7 +267,7 @@ h3 {
   min-width: 168px;
 }
 
-.status-select span,
+.status-select > span,
 .record-id span,
 .field span,
 .field legend,
@@ -344,6 +345,46 @@ h3 {
   padding: 0 9px;
 }
 
+.close-rw-action {
+  width: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  display: inline-grid;
+  place-items: center;
+  align-self: end;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: #64748b;
+  box-shadow: none;
+  transition:
+    color 150ms var(--ease-out),
+    border-color 150ms var(--ease-out),
+    background-color 150ms var(--ease-out),
+    transform 150ms var(--ease-out);
+}
+
+.close-rw-action:hover {
+  border-color: var(--line);
+  background: #ffffff;
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+.close-rw-action:active {
+  transform: scale(0.98);
+}
+
+.close-rw-action svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
 .icon {
   min-width: 16px;
   font-size: 12px;
@@ -357,7 +398,7 @@ h3 {
 .tabs {
   grid-area: tabs;
   width: 100%;
-  max-height: calc(100dvh - 84px);
+  max-height: calc(var(--app-viewport-height) - 84px);
   min-height: 0;
   display: grid;
   align-content: start;
@@ -383,7 +424,7 @@ h3 {
   --tabs-top-offset: calc(var(--shell-padding-top) + var(--topbar-height) + var(--topbar-menu-gap));
   top: var(--tabs-top-offset);
   left: max(10px, var(--safe-left));
-  height: calc(100dvh - var(--tabs-top-offset) - max(10px, var(--safe-bottom)));
+  height: calc(var(--app-viewport-height) - var(--tabs-top-offset) - max(10px, var(--safe-bottom)));
   width: 58px;
 }
 
@@ -1191,6 +1232,10 @@ h3 {
 .custom-select-panel.is-status .custom-select-option:focus-visible,
 .custom-select-panel.is-status .custom-select-option.is-active {
   background: var(--surface-muted);
+}
+
+.custom-select-panel.is-status .custom-select-search {
+  display: none;
 }
 
 .status-select .custom-select-panel,
@@ -5337,7 +5382,8 @@ body.is-import-dragging .import-drop-overlay {
 
 @media (max-width: 760px) {
   .app-shell {
-    padding: max(8px, var(--safe-top)) max(8px, var(--safe-right)) max(8px, var(--safe-bottom)) max(8px, var(--safe-left));
+    --shell-padding-top: 8px;
+    padding: var(--shell-padding-top) max(8px, var(--safe-right)) max(8px, var(--safe-bottom)) max(8px, var(--safe-left));
     gap: 8px;
     grid-template-rows: auto auto minmax(0, 1fr);
     grid-template-areas:
@@ -5355,10 +5401,11 @@ body.is-import-dragging .import-drop-overlay {
   }
 
   .topbar {
-    align-items: stretch;
-    flex-direction: column;
-    min-height: 46px;
-    padding: 5px 6px;
+    align-items: center;
+    flex-direction: row;
+    min-height: 44px;
+    padding: 4px;
+    top: 0;
   }
 
   .brand {
@@ -5380,10 +5427,10 @@ body.is-import-dragging .import-drop-overlay {
   .top-actions {
     width: 100%;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 42px;
+    grid-template-columns: minmax(0, 1fr) 40px 40px;
     align-items: center;
     justify-content: stretch;
-    gap: 6px;
+    gap: 5px;
   }
 
   .top-import-action {
@@ -5397,14 +5444,34 @@ body.is-import-dragging .import-drop-overlay {
     grid-template-columns: minmax(0, 1fr);
     align-items: center;
     gap: 0;
-    padding: 3px 6px;
+    padding: 0;
     border: 1px solid var(--line);
     border-radius: 10px;
-    background: var(--surface-soft);
+    background: #ffffff;
     box-shadow: var(--shadow-control);
   }
 
-  .topbar .status-select span {
+  .topbar .status-select .custom-select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .topbar .status-select .custom-select-trigger {
+    min-height: 34px;
+    padding: 0 9px;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .topbar .status-select .custom-select-value {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .topbar .status-select > span {
     display: none;
   }
 
@@ -5413,8 +5480,8 @@ body.is-import-dragging .import-drop-overlay {
   }
 
   #saveButton {
-    width: 42px;
-    min-width: 42px;
+    width: 40px;
+    min-width: 40px;
     min-height: 36px;
     height: 36px;
     line-height: 1;
@@ -5422,6 +5489,17 @@ body.is-import-dragging .import-drop-overlay {
     place-items: center;
     padding: 0;
     border-radius: 10px;
+  }
+
+  .close-rw-action {
+    width: 40px;
+    min-width: 40px;
+    min-height: 36px;
+    height: 36px;
+    border-color: var(--line);
+    border-radius: 10px;
+    background: #ffffff;
+    box-shadow: var(--shadow-control);
   }
 
   #saveButton::before {
@@ -6122,6 +6200,11 @@ body.is-import-dragging .import-drop-overlay {
         <input id="xlsxImportInput" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
         <button id="saveButton" class="primary-action" type="button">
           <span id="saveButtonText">Agendar serviços</span>
+        </button>
+        <button id="closeRwButton" class="close-rw-action" type="button" title="Fechar e voltar para Geral" aria-label="Fechar e voltar para Geral">
+          <svg viewBox="0 0 24 24" focusable="false" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18"></path>
+          </svg>
         </button>
       </div>
     </header>
@@ -8108,7 +8191,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       },
       funcionario: {
         id: "cr40f_funcionariosid",
-        nome: "cr40f_nomecompleto"
+        nome: "cr40f_nomecompleto",
+        apelido: "new_apelido"
       },
       servicoPassageiro: {
         id: "cr40f_servicosporpassageiroid",
@@ -8140,9 +8224,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
   const PASSENGER_RECENCY_KEY = "formulario_geral_passenger_recency_v1";
   const BRAND_LOGO_WEBRESOURCE = "cr40f_LogoBetinhosB";
-  const MIN_PASSENGER_SEARCH_LENGTH = 1;
   const MAX_FREQUENT_SERVICE_DAYS = 90;
   const MAX_FREQUENT_SERVICE_RECORDS = 120;
+  const INITIAL_PASSENGER_LOOKUP_LIMIT = 5000;
 
   const FALLBACK = buildFallbackChoices();
 
@@ -8262,6 +8346,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     toastStack: $("toastStack"),
     saveButton: $("saveButton"),
     saveButtonText: $("saveButtonText"),
+    closeRwButton: $("closeRwButton"),
     recordIdBox: $("recordIdBox"),
     recordIdText: $("recordIdText"),
     importXlsxButton: $("importXlsxButton"),
@@ -8428,6 +8513,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   async function init() {
     state.isNew = !state.recordId;
+    syncViewportMetrics();
     setLoading(true);
     applyBrandLogo();
     bindStaticEvents();
@@ -8437,7 +8523,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     await loadCurrentRecord();
     hydrateForm();
     renderAll();
-    await restoreDraftSnapshot();
+    clearDraftSnapshot(false);
     initializeCustomSelects();
     syncDateTimeFieldRowWidths();
     setLoading(false);
@@ -8457,6 +8543,36 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       }
     }
     return null;
+  }
+
+  function closeWebResourceToGeral() {
+    clearDraftSnapshot(false);
+    const xrm = state.xrm || getXrm();
+    if (xrm?.Navigation?.navigateTo) {
+      setLoading(true);
+      xrm.Navigation.navigateTo({
+        pageType: "entitylist",
+        entityName: CONFIG.entities.reserva
+      }, { target: 1 }).catch((error) => {
+        console.warn("Falha ao voltar para Geral", error);
+        setLoading(false);
+        fallbackCloseWebResource();
+      });
+      return;
+    }
+    fallbackCloseWebResource();
+  }
+
+  function fallbackCloseWebResource() {
+    if (window.history.length > 1) {
+      window.history.back();
+      return;
+    }
+    try {
+      window.close();
+    } catch (_) {
+      toast("Não foi possível fechar automaticamente.", "warning", 5000);
+    }
   }
 
   function getRecordIdFromUrl() {
@@ -8576,6 +8692,25 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return true;
   }
 
+  function currentViewportMetrics() {
+    const visual = window.visualViewport;
+    const width = Math.floor(visual?.width || window.innerWidth || document.documentElement.clientWidth || 0);
+    const height = Math.floor(visual?.height || window.innerHeight || document.documentElement.clientHeight || 0);
+    const offsetLeft = Math.floor(visual?.offsetLeft || 0);
+    const offsetTop = Math.floor(visual?.offsetTop || 0);
+    return { width, height, offsetLeft, offsetTop };
+  }
+
+  function syncViewportMetrics() {
+    const metrics = currentViewportMetrics();
+    if (metrics.height > 0) {
+      document.documentElement.style.setProperty("--app-viewport-height", `${metrics.height}px`);
+    }
+    document.documentElement.classList.toggle("is-ios-viewport", /iPad|iPhone|iPod/.test(navigator.userAgent || ""));
+    repositionOpenCustomSelectPanels();
+    repositionPassengerPreview();
+  }
+
   function resolveEnvironmentBaseUrl() {
     if (state.xrm?.Utility?.getGlobalContext) {
       try {
@@ -8665,6 +8800,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.closeSuccess?.addEventListener("click", () => {
       el.success.hidden = true;
     });
+    el.closeRwButton?.addEventListener("click", closeWebResourceToGeral);
     el.saveButton?.addEventListener("click", saveForm);
     el.importXlsxButton?.addEventListener("click", openXlsxImportPicker);
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
@@ -8767,6 +8903,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     window?.addEventListener("resize", repositionPassengerPreview);
     window?.addEventListener("resize", syncPassengerNameColumnWidth);
     window?.addEventListener("resize", syncDateTimeFieldRowWidths);
+    window?.addEventListener("resize", syncViewportMetrics);
+    window.visualViewport?.addEventListener("resize", syncViewportMetrics);
+    window.visualViewport?.addEventListener("scroll", syncViewportMetrics);
     bindContentScrollBoundaryFeedback();
     bindInputFormatters();
     const appRoot = $("app");
@@ -9286,26 +9425,31 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function updateCustomSelectPanelPosition(state) {
     if (!state || !state.wrapper.classList.contains("is-open")) return;
     const rect = state.trigger.getBoundingClientRect();
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
+    const viewport = currentViewportMetrics();
+    const viewportHeight = viewport.height;
+    const viewportWidth = viewport.width;
+    const viewportTop = viewport.offsetTop;
+    const viewportLeft = viewport.offsetLeft;
+    const viewportBottom = viewportTop + viewportHeight;
+    const viewportRight = viewportLeft + viewportWidth;
     const safeInset = 8;
     const availableWidth = Math.max(120, viewportWidth - safeInset * 2);
     const minWidth = state.select?.dataset?.selectVariant === "phone-country" ? 280 : 140;
     const desiredWidth = Math.max(minWidth, Math.ceil(rect.width || state.trigger.offsetWidth || 120));
     const width = Math.max(120, Math.min(availableWidth, desiredWidth));
     const maxHeight = Math.min(260, Math.max(120, Math.floor(viewportHeight * 0.42)));
-    const spaceBelow = viewportHeight - rect.bottom - safeInset;
-    const spaceAbove = rect.top - safeInset;
+    const spaceBelow = viewportBottom - rect.bottom - safeInset;
+    const spaceAbove = rect.top - viewportTop - safeInset;
     const menuHeight = Math.min(maxHeight, Math.max(80, state.panel.scrollHeight || 0));
     const showAbove = spaceBelow < Math.min(maxHeight, 180) && spaceAbove > spaceBelow;
     const top = showAbove
-      ? Math.max(safeInset, rect.top - menuHeight - safeInset)
-      : Math.min(viewportHeight - menuHeight - safeInset, rect.bottom + safeInset);
+      ? Math.max(viewportTop + safeInset, rect.top - menuHeight - safeInset)
+      : Math.min(viewportBottom - menuHeight - safeInset, rect.bottom + safeInset);
 
-    const safeLeft = Math.max(safeInset, Math.min(rect.left, viewportWidth - width - safeInset));
+    const safeLeft = Math.max(viewportLeft + safeInset, Math.min(rect.left, viewportRight - width - safeInset));
 
     state.panel.style.left = `${safeLeft}px`;
-    state.panel.style.top = `${Math.max(safeInset, top)}px`;
+    state.panel.style.top = `${Math.max(viewportTop + safeInset, top)}px`;
     state.panel.style.width = `${width}px`;
     state.panel.style.maxHeight = `${maxHeight}px`;
   }
@@ -9425,20 +9569,24 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }
 
     const f = CONFIG.fields;
-    const [clientes, motoristas, ops] = await Promise.all([
+    const [clientes, passageiros, motoristas, ops] = await Promise.all([
       retrieveAll(CONFIG.entities.cliente, `?$select=${f.cliente.id},${f.cliente.nome}&$orderby=${f.cliente.nome} asc&$top=5000`),
-      retrieveAll(CONFIG.entities.funcionario, `?$select=${f.funcionario.id},${f.funcionario.nome}&$orderby=${f.funcionario.nome} asc&$top=5000`),
+      retrieveAll(CONFIG.entities.passageiro, `?$select=${passengerSelectFields()}&$orderby=${f.passageiro.nome} asc&$top=${INITIAL_PASSENGER_LOOKUP_LIMIT}`),
+      retrieveAll(CONFIG.entities.funcionario, `?$select=${f.funcionario.id},${f.funcionario.nome},${f.funcionario.apelido}&$orderby=${f.funcionario.apelido} asc,${f.funcionario.nome} asc&$top=5000`),
       retrieveAll(CONFIG.entities.financeiro, `?$select=${f.financeiro.id},${f.financeiro.label},createdon&$orderby=createdon desc&$top=500`)
     ]);
 
-    state.passageiros = [];
+    state.passageiros = uniquePassengersById(passageiros.map(mapPassageiro))
+      .sort((a, b) => (a.label || "").localeCompare(b.label || "", "pt-BR"));
     state.clientes = clientes.map((r) => ({
       id: r[f.cliente.id],
       label: r[f.cliente.nome] || "(cliente)"
     }));
     state.motoristas = motoristas.map((r) => ({
       id: r[f.funcionario.id],
-      label: r[f.funcionario.nome] || "(motorista)"
+      label: r[f.funcionario.apelido] || r[f.funcionario.nome] || "(motorista)",
+      nomeCompleto: r[f.funcionario.nome] || "",
+      search: [r[f.funcionario.apelido], r[f.funcionario.nome]].filter(Boolean).join(" ")
     }));
     state.ordensPagamento = ops.map((r) => ({
       id: r[f.financeiro.id],
@@ -9473,9 +9621,16 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (!state.xrm || state.mockMode) {
       return searchPassengersLocal(search, limit);
     }
-    if (normalize(search).length < MIN_PASSENGER_SEARCH_LENGTH) return [];
 
     const f = CONFIG.fields.passageiro;
+    if (!normalize(search)) {
+      const rows = await retrieveAll(
+        CONFIG.entities.passageiro,
+        `?$select=${passengerSelectFields()}&$orderby=${f.nome} asc&$top=${limit}`
+      );
+      return mergePassengerRecords(rows.map(mapPassageiro));
+    }
+
     const escaped = escapeODataString(search);
     const digits = onlyDigits(search);
     const filters = [
@@ -11000,6 +11155,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       const option = document.createElement("option");
       option.value = item.id;
       option.textContent = item.label;
+      if (item.search) option.dataset.search = item.search;
       select.appendChild(option);
     });
     if (previous) select.value = previous;
@@ -11982,21 +12138,28 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       return;
     }
     const rect = anchor.getBoundingClientRect();
-    const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
-    const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
+    const viewport = currentViewportMetrics();
+    const viewportWidth = viewport.width;
+    const viewportHeight = viewport.height;
+    const viewportTop = viewport.offsetTop;
+    const viewportLeft = viewport.offsetLeft;
+    const viewportBottom = viewportTop + viewportHeight;
+    const viewportRight = viewportLeft + viewportWidth;
     const gap = 8;
     const safeGap = 10;
     const width = Math.min(360, Math.max(280, viewportWidth - safeGap * 2));
     const height = Math.min(portal.scrollHeight || 120, viewportHeight - safeGap * 2);
-    const showAbove = rect.bottom + gap + height > viewportHeight && rect.top > viewportHeight - rect.bottom;
+    const spaceBelow = viewportBottom - rect.bottom;
+    const spaceAbove = rect.top - viewportTop;
+    const showAbove = spaceBelow < gap + height && spaceAbove > spaceBelow;
     const top = showAbove
-      ? Math.max(safeGap, rect.top - height - gap)
-      : Math.min(viewportHeight - height - safeGap, rect.bottom + gap);
-    const left = Math.max(safeGap, Math.min(rect.left, viewportWidth - width - safeGap));
+      ? Math.max(viewportTop + safeGap, rect.top - height - gap)
+      : Math.min(viewportBottom - height - safeGap, rect.bottom + gap);
+    const left = Math.max(viewportLeft + safeGap, Math.min(rect.left, viewportRight - width - safeGap));
 
     portal.style.width = `${width}px`;
     portal.style.left = `${left}px`;
-    portal.style.top = `${Math.max(safeGap, top)}px`;
+    portal.style.top = `${Math.max(viewportTop + safeGap, top)}px`;
   }
 
   function renderPassengerPreview(container, passenger) {
@@ -12020,7 +12183,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       ["Email", passenger.email],
       ["Cliente", passenger.clienteLabel],
       ["Cargo", previewValue(passenger.cargo, "bdCargo")],
-      ["Departamento", passenger.departamento],
+      ["Dpto", passenger.departamento],
       ["CR", passenger.cr],
       ["Preferências", passenger.preferencias],
       ["Tipo de veículo", passenger.tipoVeiculoLabel || previewValue(passenger.tipoVeiculo, "bdTipoVeiculo")],
@@ -12648,7 +12811,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     passengerPickerTargetOrder = Number.isFinite(normalizedOrder) && normalizedOrder > 0 ? normalizedOrder : null;
     if (!el.passengerPickerOverlay || !el.passengerPickerSearch || !el.passengerPickerResults) return;
     el.passengerPickerSearch.value = "";
-    renderPassengerPickerHint("Digite pelo menos 1 caractere para pesquisar no Banco de Dados.");
+    renderPassengerPickerResults();
     el.passengerPickerOverlay.hidden = false;
     if (shouldAutofocusSearchInputs()) {
       requestAnimationFrame(() => {
@@ -12679,12 +12842,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   async function renderPassengerPickerResults() {
     if (!el.passengerPickerSearch || !el.passengerPickerResults) return;
     const query = el.passengerPickerSearch.value.trim();
-    if (normalize(query).length < MIN_PASSENGER_SEARCH_LENGTH) {
-      renderPassengerPickerHint("Digite pelo menos 1 caractere para pesquisar no Banco de Dados.");
-      return;
-    }
     const searchSeq = ++passengerPickerSearchSeq;
-    renderPassengerPickerHint("Pesquisando passageiros...");
+    renderPassengerPickerHint(query ? "Pesquisando passageiros..." : "Carregando Banco de Dados...");
     let list = [];
     try {
       list = getAvailablePassengersFrom(await searchPassengersServer(query, 30));
@@ -13173,7 +13332,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return Array.from(new Set(
       terms
         .map((term) => String(term || "").trim())
-        .filter((term) => normalize(term).length >= MIN_PASSENGER_SEARCH_LENGTH)
+        .filter((term) => normalize(term).length > 0)
     )).slice(0, 5);
   }
 
@@ -15546,7 +15705,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function findMotoristaByName(name) {
     const wanted = normalize(name);
     if (!wanted) return null;
-    return state.motoristas.find((motorista) => normalize(motorista.label).includes(wanted) || wanted.includes(normalize(motorista.label))) || null;
+    return state.motoristas.find((motorista) => {
+      const searchable = normalize([motorista.label, motorista.nomeCompleto, motorista.search].filter(Boolean).join(" "));
+      return searchable.includes(wanted) || wanted.includes(searchable);
+    }) || null;
   }
 
   function formatDateInputForDisplay(value) {
