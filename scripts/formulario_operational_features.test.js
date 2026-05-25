@@ -292,6 +292,29 @@ includes(app, "hasInactiveRepeatDraft", "repetir preenchido sem ativar deve ter 
 includes(html, "id=\"activationGuardOverlay\"", "popup de confirmacao para abas preenchidas sem ativar");
 includes(html, "id=\"activationGuardActivate\"", "popup deve permitir ativar e agendar");
 includes(css, ".tab.is-pending::after", "aba pendente deve ter bolinha amarela propria");
+includes(html, "section-head inline activation-head", "cabecalho de ativacao deve ter layout proprio");
+includes(css, ".activation-head .activation-switch", "switch de ativacao deve ter estilo compacto proprio");
+includes(css, ".switch", "switch deve ter regra CSS propria");
+includes(css, "cursor: pointer;", "controles clicaveis devem exibir cursor de clique");
+includes(css, "input[type=\"datetime-local\"]:not(:disabled)", "seletor de data/hora deve ter cursor clicavel");
+includes(css, "::-webkit-calendar-picker-indicator", "icone nativo de calendario deve ter cursor clicavel");
+{
+  const returnPanelStart = html.indexOf("id=\"tab-panel-return\"");
+  const returnPanelEnd = html.indexOf("<section class=\"form-section\">", returnPanelStart);
+  const returnHead = html.slice(returnPanelStart, returnPanelEnd);
+  assert.ok(
+    returnHead.indexOf("<h2>Agendar retorno</h2>") < returnHead.indexOf("class=\"switch activation-switch\""),
+    "switch de retorno deve ficar a direita do titulo"
+  );
+
+  const repeatPanelStart = html.indexOf("id=\"tab-panel-repeat\"");
+  const repeatPanelEnd = html.indexOf("<section class=\"form-section\">", repeatPanelStart);
+  const repeatHead = html.slice(repeatPanelStart, repeatPanelEnd);
+  assert.ok(
+    repeatHead.indexOf("<h2>Serviços frequentes</h2>") < repeatHead.indexOf("class=\"switch activation-switch\""),
+    "switch de repetir deve ficar a direita do titulo"
+  );
+}
 
 includes(html, "id=\"importXlsxButton\"", "botao de upload XLSX");
 includes(html, "id=\"xlsxImportInput\"", "input de arquivo XLSX");

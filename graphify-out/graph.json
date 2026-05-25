@@ -126,7 +126,7 @@
       "source_file": "app.js",
       "source_location": "L403",
       "id": "tela_formul\u00e1rio_geral_app_init",
-      "community": 35,
+      "community": 11,
       "norm_label": "init()"
     },
     {
@@ -135,7 +135,7 @@
       "source_file": "app.js",
       "source_location": "L425",
       "id": "tela_formul\u00e1rio_geral_app_getxrm",
-      "community": 35,
+      "community": 11,
       "norm_label": "getxrm()"
     },
     {
@@ -144,7 +144,7 @@
       "source_file": "app.js",
       "source_location": "L437",
       "id": "tela_formul\u00e1rio_geral_app_closewebresourcetogeral",
-      "community": 35,
+      "community": 11,
       "norm_label": "closewebresourcetogeral()"
     },
     {
@@ -153,7 +153,7 @@
       "source_file": "app.js",
       "source_location": "L455",
       "id": "tela_formul\u00e1rio_geral_app_fallbackclosewebresource",
-      "community": 35,
+      "community": 11,
       "norm_label": "fallbackclosewebresource()"
     },
     {
@@ -162,7 +162,7 @@
       "source_file": "app.js",
       "source_location": "L467",
       "id": "tela_formul\u00e1rio_geral_app_getrecordidfromurl",
-      "community": 11,
+      "community": 70,
       "norm_label": "getrecordidfromurl()"
     },
     {
@@ -171,7 +171,7 @@
       "source_file": "app.js",
       "source_location": "L483",
       "id": "tela_formul\u00e1rio_geral_app_geturlparam",
-      "community": 11,
+      "community": 70,
       "norm_label": "geturlparam()"
     },
     {
@@ -180,7 +180,7 @@
       "source_file": "app.js",
       "source_location": "L495",
       "id": "tela_formul\u00e1rio_geral_app_parselaunchdataparam",
-      "community": 11,
+      "community": 70,
       "norm_label": "parselaunchdataparam()"
     },
     {
@@ -189,7 +189,7 @@
       "source_file": "app.js",
       "source_location": "L512",
       "id": "tela_formul\u00e1rio_geral_app_findrecordidinlaunchdata",
-      "community": 11,
+      "community": 70,
       "norm_label": "findrecordidinlaunchdata()"
     },
     {
@@ -198,7 +198,7 @@
       "source_file": "app.js",
       "source_location": "L552",
       "id": "tela_formul\u00e1rio_geral_app_findguidinvalue",
-      "community": 11,
+      "community": 70,
       "norm_label": "findguidinvalue()"
     },
     {
@@ -207,7 +207,7 @@
       "source_file": "app.js",
       "source_location": "L557",
       "id": "tela_formul\u00e1rio_geral_app_getrecordidfromhostcontext",
-      "community": 11,
+      "community": 70,
       "norm_label": "getrecordidfromhostcontext()"
     },
     {
@@ -216,7 +216,7 @@
       "source_file": "app.js",
       "source_location": "L574",
       "id": "tela_formul\u00e1rio_geral_app_shouldautofocussearchinputs",
-      "community": 22,
+      "community": 72,
       "norm_label": "shouldautofocussearchinputs()"
     },
     {
@@ -279,7 +279,7 @@
       "source_file": "app.js",
       "source_location": "L644",
       "id": "tela_formul\u00e1rio_geral_app_cleanguid",
-      "community": 11,
+      "community": 70,
       "norm_label": "cleanguid()"
     },
     {
@@ -288,7 +288,7 @@
       "source_file": "app.js",
       "source_location": "L648",
       "id": "tela_formul\u00e1rio_geral_app_loadpassengerselectionrecency",
-      "community": 2,
+      "community": 11,
       "norm_label": "loadpassengerselectionrecency()"
     },
     {
@@ -297,7 +297,7 @@
       "source_file": "app.js",
       "source_location": "L653",
       "id": "tela_formul\u00e1rio_geral_app_readpassengerselectionrecency",
-      "community": 2,
+      "community": 11,
       "norm_label": "readpassengerselectionrecency()"
     },
     {
@@ -306,7 +306,7 @@
       "source_file": "app.js",
       "source_location": "L665",
       "id": "tela_formul\u00e1rio_geral_app_persistpassengerselectionrecency",
-      "community": 11,
+      "community": 5,
       "norm_label": "persistpassengerselectionrecency()"
     },
     {
@@ -315,7 +315,7 @@
       "source_file": "app.js",
       "source_location": "L673",
       "id": "tela_formul\u00e1rio_geral_app_touchpassengerselectionrecency",
-      "community": 11,
+      "community": 5,
       "norm_label": "touchpassengerselectionrecency()"
     },
     {
@@ -324,7 +324,7 @@
       "source_file": "app.js",
       "source_location": "L682",
       "id": "tela_formul\u00e1rio_geral_app_getpassengerselectionrecencyindex",
-      "community": 11,
+      "community": 70,
       "norm_label": "getpassengerselectionrecencyindex()"
     },
     {
@@ -441,7 +441,7 @@
       "source_file": "app.js",
       "source_location": "L975",
       "id": "tela_formul\u00e1rio_geral_app_addclassifpresent",
-      "community": 24,
+      "community": 70,
       "norm_label": "addclassifpresent()"
     },
     {
@@ -450,7 +450,7 @@
       "source_file": "app.js",
       "source_location": "L980",
       "id": "tela_formul\u00e1rio_geral_app_initializecustomselects",
-      "community": 35,
+      "community": 11,
       "norm_label": "initializecustomselects()"
     },
     {
@@ -477,7 +477,7 @@
       "source_file": "app.js",
       "source_location": "L1162",
       "id": "tela_formul\u00e1rio_geral_app_rendercustomselectoptions",
-      "community": 22,
+      "community": 72,
       "norm_label": "rendercustomselectoptions()"
     },
     {
@@ -531,7 +531,7 @@
       "source_file": "app.js",
       "source_location": "L1305",
       "id": "tela_formul\u00e1rio_geral_app_togglecustomselect",
-      "community": 22,
+      "community": 72,
       "norm_label": "togglecustomselect()"
     },
     {
@@ -540,7 +540,7 @@
       "source_file": "app.js",
       "source_location": "L1316",
       "id": "tela_formul\u00e1rio_geral_app_opencustomselect",
-      "community": 22,
+      "community": 72,
       "norm_label": "opencustomselect()"
     },
     {
@@ -558,7 +558,7 @@
       "source_file": "app.js",
       "source_location": "L1373",
       "id": "tela_formul\u00e1rio_geral_app_closecustomselect",
-      "community": 22,
+      "community": 72,
       "norm_label": "closecustomselect()"
     },
     {
@@ -567,7 +567,7 @@
       "source_file": "app.js",
       "source_location": "L1387",
       "id": "tela_formul\u00e1rio_geral_app_getcustomselectstate",
-      "community": 22,
+      "community": 72,
       "norm_label": "getcustomselectstate()"
     },
     {
@@ -576,7 +576,7 @@
       "source_file": "app.js",
       "source_location": "L1394",
       "id": "tela_formul\u00e1rio_geral_app_closeallcustomselects",
-      "community": 24,
+      "community": 19,
       "norm_label": "closeallcustomselects()"
     },
     {
@@ -585,7 +585,7 @@
       "source_file": "app.js",
       "source_location": "L1400",
       "id": "tela_formul\u00e1rio_geral_app_handleglobalcustomselectclick",
-      "community": 24,
+      "community": 19,
       "norm_label": "handleglobalcustomselectclick()"
     },
     {
@@ -603,7 +603,7 @@
       "source_file": "app.js",
       "source_location": "L1411",
       "id": "tela_formul\u00e1rio_geral_app_handleglobalcustomselectkeydown",
-      "community": 24,
+      "community": 19,
       "norm_label": "handleglobalcustomselectkeydown()"
     },
     {
@@ -621,7 +621,7 @@
       "source_file": "app.js",
       "source_location": "L1430",
       "id": "tela_formul\u00e1rio_geral_app_loadreferencedata",
-      "community": 70,
+      "community": 11,
       "norm_label": "loadreferencedata()"
     },
     {
@@ -630,7 +630,7 @@
       "source_file": "app.js",
       "source_location": "L1447",
       "id": "tela_formul\u00e1rio_geral_app_loadchoices",
-      "community": 70,
+      "community": 11,
       "norm_label": "loadchoices()"
     },
     {
@@ -720,7 +720,7 @@
       "source_file": "app.js",
       "source_location": "L1646",
       "id": "tela_formul\u00e1rio_geral_app_getcustomselectdisplaytext",
-      "community": 2,
+      "community": 72,
       "norm_label": "getcustomselectdisplaytext()"
     },
     {
@@ -729,7 +729,7 @@
       "source_file": "app.js",
       "source_location": "L1660",
       "id": "tela_formul\u00e1rio_geral_app_rendercustomselectoptioncontent",
-      "community": 2,
+      "community": 72,
       "norm_label": "rendercustomselectoptioncontent()"
     },
     {
@@ -738,7 +738,7 @@
       "source_file": "app.js",
       "source_location": "L1693",
       "id": "tela_formul\u00e1rio_geral_app_setcustomselecttriggerdisplay",
-      "community": 2,
+      "community": 72,
       "norm_label": "setcustomselecttriggerdisplay()"
     },
     {
@@ -747,7 +747,7 @@
       "source_file": "app.js",
       "source_location": "L1707",
       "id": "tela_formul\u00e1rio_geral_app_createcountryflagnode",
-      "community": 2,
+      "community": 72,
       "norm_label": "createcountryflagnode()"
     },
     {
@@ -828,7 +828,7 @@
       "source_file": "app.js",
       "source_location": "L1876",
       "id": "tela_formul\u00e1rio_geral_app_formatphonenumber",
-      "community": 74,
+      "community": 22,
       "norm_label": "formatphonenumber()"
     },
     {
@@ -1152,7 +1152,7 @@
       "source_file": "app.js",
       "source_location": "L2863",
       "id": "tela_formul\u00e1rio_geral_app_mappassageiro",
-      "community": 74,
+      "community": 22,
       "norm_label": "mappassageiro()"
     },
     {
@@ -1179,7 +1179,7 @@
       "source_file": "app.js",
       "source_location": "L2993",
       "id": "tela_formul\u00e1rio_geral_app_hydrateform",
-      "community": 35,
+      "community": 5,
       "norm_label": "hydrateform()"
     },
     {
@@ -1188,7 +1188,7 @@
       "source_file": "app.js",
       "source_location": "L3041",
       "id": "tela_formul\u00e1rio_geral_app_renderall",
-      "community": 72,
+      "community": 5,
       "norm_label": "renderall()"
     },
     {
@@ -1197,7 +1197,7 @@
       "source_file": "app.js",
       "source_location": "L3064",
       "id": "tela_formul\u00e1rio_geral_app_renderstatusfaturamento",
-      "community": 72,
+      "community": 5,
       "norm_label": "renderstatusfaturamento()"
     },
     {
@@ -1206,7 +1206,7 @@
       "source_file": "app.js",
       "source_location": "L3070",
       "id": "tela_formul\u00e1rio_geral_app_renderchoiceselect",
-      "community": 72,
+      "community": 5,
       "norm_label": "renderchoiceselect()"
     },
     {
@@ -1215,7 +1215,7 @@
       "source_file": "app.js",
       "source_location": "L3087",
       "id": "tela_formul\u00e1rio_geral_app_renderlookupselect",
-      "community": 72,
+      "community": 5,
       "norm_label": "renderlookupselect()"
     },
     {
@@ -1224,7 +1224,7 @@
       "source_file": "app.js",
       "source_location": "L3115",
       "id": "tela_formul\u00e1rio_geral_app_getpassengerbyid",
-      "community": 24,
+      "community": 70,
       "norm_label": "getpassengerbyid()"
     },
     {
@@ -1233,7 +1233,7 @@
       "source_file": "app.js",
       "source_location": "L3119",
       "id": "tela_formul\u00e1rio_geral_app_getpassengereditfields",
-      "community": 24,
+      "community": 70,
       "norm_label": "getpassengereditfields()"
     },
     {
@@ -1242,7 +1242,7 @@
       "source_file": "app.js",
       "source_location": "L3139",
       "id": "tela_formul\u00e1rio_geral_app_getpassengereditfield",
-      "community": 24,
+      "community": 70,
       "norm_label": "getpassengereditfield()"
     },
     {
@@ -1251,7 +1251,7 @@
       "source_file": "app.js",
       "source_location": "L3143",
       "id": "tela_formul\u00e1rio_geral_app_openpassengeredit",
-      "community": 24,
+      "community": 70,
       "norm_label": "openpassengeredit()"
     },
     {
@@ -1260,7 +1260,7 @@
       "source_file": "app.js",
       "source_location": "L3168",
       "id": "tela_formul\u00e1rio_geral_app_renderpassengereditheader",
-      "community": 24,
+      "community": 70,
       "norm_label": "renderpassengereditheader()"
     },
     {
@@ -1269,7 +1269,7 @@
       "source_file": "app.js",
       "source_location": "L3177",
       "id": "tela_formul\u00e1rio_geral_app_renderpassengereditfields",
-      "community": 24,
+      "community": 70,
       "norm_label": "renderpassengereditfields()"
     },
     {
@@ -1278,7 +1278,7 @@
       "source_file": "app.js",
       "source_location": "L3209",
       "id": "tela_formul\u00e1rio_geral_app_resolvepassengereditlayout",
-      "community": 24,
+      "community": 70,
       "norm_label": "resolvepassengereditlayout()"
     },
     {
@@ -1287,7 +1287,7 @@
       "source_file": "app.js",
       "source_location": "L3240",
       "id": "tela_formul\u00e1rio_geral_app_buildpassengereditcontrol",
-      "community": 74,
+      "community": 22,
       "norm_label": "buildpassengereditcontrol()"
     },
     {
@@ -1296,7 +1296,7 @@
       "source_file": "app.js",
       "source_location": "L3267",
       "id": "tela_formul\u00e1rio_geral_app_fillpassengereditselect",
-      "community": 74,
+      "community": 22,
       "norm_label": "fillpassengereditselect()"
     },
     {
@@ -1305,7 +1305,7 @@
       "source_file": "app.js",
       "source_location": "L3280",
       "id": "tela_formul\u00e1rio_geral_app_getpassengereditvalue",
-      "community": 74,
+      "community": 22,
       "norm_label": "getpassengereditvalue()"
     },
     {
@@ -1314,7 +1314,7 @@
       "source_file": "app.js",
       "source_location": "L3286",
       "id": "tela_formul\u00e1rio_geral_app_togglepassengereditmode",
-      "community": 24,
+      "community": 70,
       "norm_label": "togglepassengereditmode()"
     },
     {
@@ -1323,7 +1323,7 @@
       "source_file": "app.js",
       "source_location": "L3290",
       "id": "tela_formul\u00e1rio_geral_app_setpassengereditmode",
-      "community": 24,
+      "community": 70,
       "norm_label": "setpassengereditmode()"
     },
     {
@@ -1332,7 +1332,7 @@
       "source_file": "app.js",
       "source_location": "L3310",
       "id": "tela_formul\u00e1rio_geral_app_handlepassengereditinput",
-      "community": 24,
+      "community": 70,
       "norm_label": "handlepassengereditinput()"
     },
     {
@@ -1350,7 +1350,7 @@
       "source_file": "app.js",
       "source_location": "L3326",
       "id": "tela_formul\u00e1rio_geral_app_schedulepassengereditsave",
-      "community": 24,
+      "community": 70,
       "norm_label": "schedulepassengereditsave()"
     },
     {
@@ -1359,7 +1359,7 @@
       "source_file": "app.js",
       "source_location": "L3338",
       "id": "tela_formul\u00e1rio_geral_app_flushpassengereditsaves",
-      "community": 24,
+      "community": 19,
       "norm_label": "flushpassengereditsaves()"
     },
     {
@@ -1368,7 +1368,7 @@
       "source_file": "app.js",
       "source_location": "L3347",
       "id": "tela_formul\u00e1rio_geral_app_savepassengereditfield",
-      "community": 24,
+      "community": 70,
       "norm_label": "savepassengereditfield()"
     },
     {
@@ -1386,7 +1386,7 @@
       "source_file": "app.js",
       "source_location": "L3409",
       "id": "tela_formul\u00e1rio_geral_app_buildpassengereditpayload",
-      "community": 24,
+      "community": 70,
       "norm_label": "buildpassengereditpayload()"
     },
     {
@@ -1395,7 +1395,7 @@
       "source_file": "app.js",
       "source_location": "L3429",
       "id": "tela_formul\u00e1rio_geral_app_applypassengerfieldtostate",
-      "community": 74,
+      "community": 22,
       "norm_label": "applypassengerfieldtostate()"
     },
     {
@@ -1404,7 +1404,7 @@
       "source_file": "app.js",
       "source_location": "L3460",
       "id": "tela_formul\u00e1rio_geral_app_refreshpassengerdependentviews",
-      "community": 72,
+      "community": 5,
       "norm_label": "refreshpassengerdependentviews()"
     },
     {
@@ -1413,7 +1413,7 @@
       "source_file": "app.js",
       "source_location": "L3469",
       "id": "tela_formul\u00e1rio_geral_app_setpassengereditstatus",
-      "community": 24,
+      "community": 70,
       "norm_label": "setpassengereditstatus()"
     },
     {
@@ -1422,7 +1422,7 @@
       "source_file": "app.js",
       "source_location": "L3487",
       "id": "tela_formul\u00e1rio_geral_app_setpassengerfieldstatus",
-      "community": 24,
+      "community": 70,
       "norm_label": "setpassengerfieldstatus()"
     },
     {
@@ -1431,7 +1431,7 @@
       "source_file": "app.js",
       "source_location": "L3499",
       "id": "tela_formul\u00e1rio_geral_app_closepassengereditpopup",
-      "community": 24,
+      "community": 19,
       "norm_label": "closepassengereditpopup()"
     },
     {
@@ -1494,7 +1494,7 @@
       "source_file": "app.js",
       "source_location": "L3654",
       "id": "tela_formul\u00e1rio_geral_app_renderpassengers",
-      "community": 32,
+      "community": 5,
       "norm_label": "renderpassengers()"
     },
     {
@@ -1503,7 +1503,7 @@
       "source_file": "app.js",
       "source_location": "L3723",
       "id": "tela_formul\u00e1rio_geral_app_syncpassengernamecolumnwidth",
-      "community": 32,
+      "community": 5,
       "norm_label": "syncpassengernamecolumnwidth()"
     },
     {
@@ -1530,7 +1530,7 @@
       "source_file": "app.js",
       "source_location": "L3848",
       "id": "tela_formul\u00e1rio_geral_app_animatepassengerrowexit",
-      "community": 32,
+      "community": 5,
       "norm_label": "animatepassengerrowexit()"
     },
     {
@@ -1539,7 +1539,7 @@
       "source_file": "app.js",
       "source_location": "L3884",
       "id": "tela_formul\u00e1rio_geral_app_animatepassengerrowreflow",
-      "community": 32,
+      "community": 5,
       "norm_label": "animatepassengerrowreflow()"
     },
     {
@@ -1548,7 +1548,7 @@
       "source_file": "app.js",
       "source_location": "L3908",
       "id": "tela_formul\u00e1rio_geral_app_handlepassengerrowaction",
-      "community": 22,
+      "community": 70,
       "norm_label": "handlepassengerrowaction()"
     },
     {
@@ -1557,7 +1557,7 @@
       "source_file": "app.js",
       "source_location": "L3934",
       "id": "tela_formul\u00e1rio_geral_app_handlepassengerrowpointerdown",
-      "community": 22,
+      "community": 19,
       "norm_label": "handlepassengerrowpointerdown()"
     },
     {
@@ -1566,7 +1566,7 @@
       "source_file": "app.js",
       "source_location": "L3942",
       "id": "tela_formul\u00e1rio_geral_app_handlepassengerrowinput",
-      "community": 40,
+      "community": 5,
       "norm_label": "handlepassengerrowinput()"
     },
     {
@@ -1656,7 +1656,7 @@
       "source_file": "app.js",
       "source_location": "L4051",
       "id": "tela_formul\u00e1rio_geral_app_suppresspassengerrowhover",
-      "community": 22,
+      "community": 19,
       "norm_label": "suppresspassengerrowhover()"
     },
     {
@@ -1692,7 +1692,7 @@
       "source_file": "app.js",
       "source_location": "L4185",
       "id": "tela_formul\u00e1rio_geral_app_openpassengerrecord",
-      "community": 22,
+      "community": 70,
       "norm_label": "openpassengerrecord()"
     },
     {
@@ -1809,7 +1809,7 @@
       "source_file": "app.js",
       "source_location": "L4317",
       "id": "tela_formul\u00e1rio_geral_app_collectoperationalrisks",
-      "community": 74,
+      "community": 15,
       "norm_label": "collectoperationalrisks()"
     },
     {
@@ -1845,7 +1845,7 @@
       "source_file": "app.js",
       "source_location": "L4362",
       "id": "tela_formul\u00e1rio_geral_app_openreviewbeforesave",
-      "community": 69,
+      "community": 15,
       "norm_label": "openreviewbeforesave()"
     },
     {
@@ -1863,7 +1863,7 @@
       "source_file": "app.js",
       "source_location": "L4370",
       "id": "tela_formul\u00e1rio_geral_app_renderreviewsummary",
-      "community": 74,
+      "community": 22,
       "norm_label": "renderreviewsummary()"
     },
     {
@@ -1872,7 +1872,7 @@
       "source_file": "app.js",
       "source_location": "L4395",
       "id": "tela_formul\u00e1rio_geral_app_renderreviewrisks",
-      "community": 74,
+      "community": 15,
       "norm_label": "renderreviewrisks()"
     },
     {
@@ -1926,7 +1926,7 @@
       "source_file": "app.js",
       "source_location": "L4608",
       "id": "tela_formul\u00e1rio_geral_app_cleardraftsnapshot",
-      "community": 35,
+      "community": 11,
       "norm_label": "cleardraftsnapshot()"
     },
     {
@@ -1935,7 +1935,7 @@
       "source_file": "app.js",
       "source_location": "L4625",
       "id": "tela_formul\u00e1rio_geral_app_renderdraftstatus",
-      "community": 5,
+      "community": 15,
       "norm_label": "renderdraftstatus()"
     },
     {
@@ -1953,7 +1953,7 @@
       "source_file": "app.js",
       "source_location": "L4637",
       "id": "tela_formul\u00e1rio_geral_app_setfieldvalue",
-      "community": 4,
+      "community": 18,
       "norm_label": "setfieldvalue()"
     },
     {
@@ -1962,7 +1962,7 @@
       "source_file": "app.js",
       "source_location": "L4646",
       "id": "tela_formul\u00e1rio_geral_app_selectedtext",
-      "community": 74,
+      "community": 22,
       "norm_label": "selectedtext()"
     },
     {
@@ -1980,7 +1980,7 @@
       "source_file": "app.js",
       "source_location": "L4659",
       "id": "tela_formul\u00e1rio_geral_app_populatetimeselects",
-      "community": 2,
+      "community": 11,
       "norm_label": "populatetimeselects()"
     },
     {
@@ -1989,7 +1989,7 @@
       "source_file": "app.js",
       "source_location": "L4674",
       "id": "tela_formul\u00e1rio_geral_app_filloptions",
-      "community": 2,
+      "community": 11,
       "norm_label": "filloptions()"
     },
     {
@@ -1998,7 +1998,7 @@
       "source_file": "app.js",
       "source_location": "L4685",
       "id": "tela_formul\u00e1rio_geral_app_settab",
-      "community": 4,
+      "community": 18,
       "norm_label": "settab()"
     },
     {
@@ -2016,7 +2016,7 @@
       "source_file": "app.js",
       "source_location": "L4726",
       "id": "tela_formul\u00e1rio_geral_app_emptypassenger",
-      "community": 70,
+      "community": 5,
       "norm_label": "emptypassenger()"
     },
     {
@@ -2025,7 +2025,7 @@
       "source_file": "app.js",
       "source_location": "L4737",
       "id": "tela_formul\u00e1rio_geral_app_nextpassengerrowkey",
-      "community": 70,
+      "community": 5,
       "norm_label": "nextpassengerrowkey()"
     },
     {
@@ -2079,7 +2079,7 @@
       "source_file": "app.js",
       "source_location": "L4817",
       "id": "tela_formul\u00e1rio_geral_app_sortpassengers",
-      "community": 32,
+      "community": 5,
       "norm_label": "sortpassengers()"
     },
     {
@@ -2088,7 +2088,7 @@
       "source_file": "app.js",
       "source_location": "L4821",
       "id": "tela_formul\u00e1rio_geral_app_getavailablepassengers",
-      "community": 22,
+      "community": 5,
       "norm_label": "getavailablepassengers()"
     },
     {
@@ -2097,7 +2097,7 @@
       "source_file": "app.js",
       "source_location": "L4825",
       "id": "tela_formul\u00e1rio_geral_app_getavailablepassengersfrom",
-      "community": 22,
+      "community": 5,
       "norm_label": "getavailablepassengersfrom()"
     },
     {
@@ -2106,7 +2106,7 @@
       "source_file": "app.js",
       "source_location": "L4843",
       "id": "tela_formul\u00e1rio_geral_app_openpassengerpicker",
-      "community": 22,
+      "community": 9,
       "norm_label": "openpassengerpicker()"
     },
     {
@@ -2115,7 +2115,7 @@
       "source_file": "app.js",
       "source_location": "L4857",
       "id": "tela_formul\u00e1rio_geral_app_closepassengerpicker",
-      "community": 40,
+      "community": 5,
       "norm_label": "closepassengerpicker()"
     },
     {
@@ -2133,7 +2133,7 @@
       "source_file": "app.js",
       "source_location": "L4876",
       "id": "tela_formul\u00e1rio_geral_app_renderpassengerpickerresults",
-      "community": 22,
+      "community": 9,
       "norm_label": "renderpassengerpickerresults()"
     },
     {
@@ -2142,7 +2142,7 @@
       "source_file": "app.js",
       "source_location": "L4929",
       "id": "tela_formul\u00e1rio_geral_app_renderpassengerpickerhint",
-      "community": 22,
+      "community": 9,
       "norm_label": "renderpassengerpickerhint()"
     },
     {
@@ -2151,7 +2151,7 @@
       "source_file": "app.js",
       "source_location": "L4938",
       "id": "tela_formul\u00e1rio_geral_app_handlepassengerpickeraction",
-      "community": 40,
+      "community": 5,
       "norm_label": "handlepassengerpickeraction()"
     },
     {
@@ -2160,7 +2160,7 @@
       "source_file": "app.js",
       "source_location": "L4946",
       "id": "tela_formul\u00e1rio_geral_app_handlepassengerpickerkeydown",
-      "community": 40,
+      "community": 5,
       "norm_label": "handlepassengerpickerkeydown()"
     },
     {
@@ -2169,7 +2169,7 @@
       "source_file": "app.js",
       "source_location": "L4984",
       "id": "tela_formul\u00e1rio_geral_app_addpassengerfromid",
-      "community": 40,
+      "community": 5,
       "norm_label": "addpassengerfromid()"
     },
     {
@@ -2178,7 +2178,7 @@
       "source_file": "app.js",
       "source_location": "L5042",
       "id": "tela_formul\u00e1rio_geral_app_addpassengerrow",
-      "community": 22,
+      "community": 9,
       "norm_label": "addpassengerrow()"
     },
     {
@@ -2187,7 +2187,7 @@
       "source_file": "app.js",
       "source_location": "L5051",
       "id": "tela_formul\u00e1rio_geral_app_removepassengerrow",
-      "community": 32,
+      "community": 5,
       "norm_label": "removepassengerrow()"
     },
     {
@@ -2196,7 +2196,7 @@
       "source_file": "app.js",
       "source_location": "L5066",
       "id": "tela_formul\u00e1rio_geral_app_reindexpassengers",
-      "community": 32,
+      "community": 5,
       "norm_label": "reindexpassengers()"
     },
     {
@@ -2214,7 +2214,7 @@
       "source_file": "app.js",
       "source_location": "L5095",
       "id": "tela_formul\u00e1rio_geral_app_setdraftaddress",
-      "community": 40,
+      "community": 5,
       "norm_label": "setdraftaddress()"
     },
     {
@@ -2232,7 +2232,7 @@
       "source_file": "app.js",
       "source_location": "L5105",
       "id": "tela_formul\u00e1rio_geral_app_applypassengerdefaults",
-      "community": 40,
+      "community": 5,
       "norm_label": "applypassengerdefaults()"
     },
     {
@@ -2241,7 +2241,7 @@
       "source_file": "app.js",
       "source_location": "L5121",
       "id": "tela_formul\u00e1rio_geral_app_applystatusfaturamentodefault",
-      "community": 35,
+      "community": 5,
       "norm_label": "applystatusfaturamentodefault()"
     },
     {
@@ -2250,7 +2250,7 @@
       "source_file": "app.js",
       "source_location": "L5131",
       "id": "tela_formul\u00e1rio_geral_app_syncrepeatdefaultdates",
-      "community": 35,
+      "community": 15,
       "norm_label": "syncrepeatdefaultdates()"
     },
     {
@@ -2259,7 +2259,7 @@
       "source_file": "app.js",
       "source_location": "L5143",
       "id": "tela_formul\u00e1rio_geral_app_syncreturndefaults",
-      "community": 32,
+      "community": 18,
       "norm_label": "syncreturndefaults()"
     },
     {
@@ -2277,7 +2277,7 @@
       "source_file": "app.js",
       "source_location": "L5244",
       "id": "tela_formul\u00e1rio_geral_app_clearpassengercreateform",
-      "community": 4,
+      "community": 18,
       "norm_label": "clearpassengercreateform()"
     },
     {
@@ -2322,7 +2322,7 @@
       "source_file": "app.js",
       "source_location": "L5326",
       "id": "tela_formul\u00e1rio_geral_app_searchpassengerduplicateclientpool",
-      "community": 11,
+      "community": 70,
       "norm_label": "searchpassengerduplicateclientpool()"
     },
     {
@@ -2448,7 +2448,7 @@
       "source_file": "app.js",
       "source_location": "L5577",
       "id": "tela_formul\u00e1rio_geral_app_openpassengermatchreview",
-      "community": 2,
+      "community": 4,
       "norm_label": "openpassengermatchreview()"
     },
     {
@@ -2457,7 +2457,7 @@
       "source_file": "app.js",
       "source_location": "L5596",
       "id": "tela_formul\u00e1rio_geral_app_renderpassengermatchlist",
-      "community": 2,
+      "community": 4,
       "norm_label": "renderpassengermatchlist()"
     },
     {
@@ -2475,7 +2475,7 @@
       "source_file": "app.js",
       "source_location": "L5679",
       "id": "tela_formul\u00e1rio_geral_app_ensurexlsxlibrary",
-      "community": 35,
+      "community": 11,
       "norm_label": "ensurexlsxlibrary()"
     },
     {
@@ -2484,7 +2484,7 @@
       "source_file": "app.js",
       "source_location": "L5726",
       "id": "tela_formul\u00e1rio_geral_app_openxlsximportpicker",
-      "community": 35,
+      "community": 11,
       "norm_label": "openxlsximportpicker()"
     },
     {
@@ -2493,7 +2493,7 @@
       "source_file": "app.js",
       "source_location": "L5747",
       "id": "tela_formul\u00e1rio_geral_app_handlexlsximportfile",
-      "community": 35,
+      "community": 11,
       "norm_label": "handlexlsximportfile()"
     },
     {
@@ -2502,7 +2502,7 @@
       "source_file": "app.js",
       "source_location": "L5769",
       "id": "tela_formul\u00e1rio_geral_app_readxlsxpassengersrows",
-      "community": 35,
+      "community": 11,
       "norm_label": "readxlsxpassengersrows()"
     },
     {
@@ -2610,7 +2610,7 @@
       "source_file": "app.js",
       "source_location": "L6000",
       "id": "tela_formul\u00e1rio_geral_app_importedduplicatecandidatefromreserva",
-      "community": 11,
+      "community": 70,
       "norm_label": "importedduplicatecandidatefromreserva()"
     },
     {
@@ -2808,7 +2808,7 @@
       "source_file": "app.js",
       "source_location": "L6264",
       "id": "tela_formul\u00e1rio_geral_app_importsamecarselection",
-      "community": 44,
+      "community": 2,
       "norm_label": "importsamecarselection()"
     },
     {
@@ -2817,7 +2817,7 @@
       "source_file": "app.js",
       "source_location": "L6272",
       "id": "tela_formul\u00e1rio_geral_app_normalizesamecarselection",
-      "community": 44,
+      "community": 2,
       "norm_label": "normalizesamecarselection()"
     },
     {
@@ -2826,7 +2826,7 @@
       "source_file": "app.js",
       "source_location": "L6287",
       "id": "tela_formul\u00e1rio_geral_app_selectedsamecartrechokeys",
-      "community": 44,
+      "community": 2,
       "norm_label": "selectedsamecartrechokeys()"
     },
     {
@@ -2835,7 +2835,7 @@
       "source_file": "app.js",
       "source_location": "L6292",
       "id": "tela_formul\u00e1rio_geral_app_istrechoselectedforsamecar",
-      "community": 44,
+      "community": 2,
       "norm_label": "istrechoselectedforsamecar()"
     },
     {
@@ -2844,7 +2844,7 @@
       "source_file": "app.js",
       "source_location": "L6296",
       "id": "tela_formul\u00e1rio_geral_app_togglesamecartrechoselection",
-      "community": 44,
+      "community": 2,
       "norm_label": "togglesamecartrechoselection()"
     },
     {
@@ -2853,7 +2853,7 @@
       "source_file": "app.js",
       "source_location": "L6314",
       "id": "tela_formul\u00e1rio_geral_app_samecarselectedtrechos",
-      "community": 44,
+      "community": 2,
       "norm_label": "samecarselectedtrechos()"
     },
     {
@@ -2862,7 +2862,7 @@
       "source_file": "app.js",
       "source_location": "L6319",
       "id": "tela_formul\u00e1rio_geral_app_canmergesamecartrechos",
-      "community": 44,
+      "community": 2,
       "norm_label": "canmergesamecartrechos()"
     },
     {
@@ -2880,7 +2880,7 @@
       "source_file": "app.js",
       "source_location": "L6347",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechodestinationkeysforsamecar",
-      "community": 44,
+      "community": 2,
       "norm_label": "importedtrechodestinationkeysforsamecar()"
     },
     {
@@ -2952,7 +2952,7 @@
       "source_file": "app.js",
       "source_location": "L6578",
       "id": "tela_formul\u00e1rio_geral_app_buildimportsamecarbutton",
-      "community": 44,
+      "community": 2,
       "norm_label": "buildimportsamecarbutton()"
     },
     {
@@ -3195,7 +3195,7 @@
       "source_file": "app.js",
       "source_location": "L7159",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechoissues",
-      "community": 35,
+      "community": 3,
       "norm_label": "importedtrechoissues()"
     },
     {
@@ -3258,7 +3258,7 @@
       "source_file": "app.js",
       "source_location": "L7455",
       "id": "tela_formul\u00e1rio_geral_app_applyimportedtrechotoform",
-      "community": 35,
+      "community": 3,
       "norm_label": "applyimportedtrechotoform()"
     },
     {
@@ -3276,7 +3276,7 @@
       "source_file": "app.js",
       "source_location": "L7530",
       "id": "tela_formul\u00e1rio_geral_app_saveimportedtrecho",
-      "community": 35,
+      "community": 3,
       "norm_label": "saveimportedtrecho()"
     },
     {
@@ -3285,7 +3285,7 @@
       "source_file": "app.js",
       "source_location": "L7571",
       "id": "tela_formul\u00e1rio_geral_app_buildimportedsavecontext",
-      "community": 9,
+      "community": 3,
       "norm_label": "buildimportedsavecontext()"
     },
     {
@@ -3348,7 +3348,7 @@
       "source_file": "app.js",
       "source_location": "L7761",
       "id": "tela_formul\u00e1rio_geral_app_resolveimportoption",
-      "community": 35,
+      "community": 3,
       "norm_label": "resolveimportoption()"
     },
     {
@@ -3357,7 +3357,7 @@
       "source_file": "app.js",
       "source_location": "L7769",
       "id": "tela_formul\u00e1rio_geral_app_composeimporttrajeto",
-      "community": 9,
+      "community": 3,
       "norm_label": "composeimporttrajeto()"
     },
     {
@@ -3411,7 +3411,7 @@
       "source_file": "app.js",
       "source_location": "L7818",
       "id": "tela_formul\u00e1rio_geral_app_saveform",
-      "community": 69,
+      "community": 15,
       "norm_label": "saveform()"
     },
     {
@@ -3420,7 +3420,7 @@
       "source_file": "app.js",
       "source_location": "L7825",
       "id": "tela_formul\u00e1rio_geral_app_proceedsavecontext",
-      "community": 69,
+      "community": 15,
       "norm_label": "proceedsavecontext()"
     },
     {
@@ -3429,7 +3429,7 @@
       "source_file": "app.js",
       "source_location": "L7847",
       "id": "tela_formul\u00e1rio_geral_app_collectinactiveactivationdrafts",
-      "community": 69,
+      "community": 15,
       "norm_label": "collectinactiveactivationdrafts()"
     },
     {
@@ -3438,7 +3438,7 @@
       "source_file": "app.js",
       "source_location": "L7868",
       "id": "tela_formul\u00e1rio_geral_app_openactivationguard",
-      "community": 69,
+      "community": 15,
       "norm_label": "openactivationguard()"
     },
     {
@@ -3447,7 +3447,7 @@
       "source_file": "app.js",
       "source_location": "L7896",
       "id": "tela_formul\u00e1rio_geral_app_closeactivationguard",
-      "community": 69,
+      "community": 18,
       "norm_label": "closeactivationguard()"
     },
     {
@@ -3456,7 +3456,7 @@
       "source_file": "app.js",
       "source_location": "L7901",
       "id": "tela_formul\u00e1rio_geral_app_resolveactivationguard",
-      "community": 69,
+      "community": 18,
       "norm_label": "resolveactivationguard()"
     },
     {
@@ -3510,7 +3510,7 @@
       "source_file": "app.js",
       "source_location": "L8051",
       "id": "tela_formul\u00e1rio_geral_app_validatecontext",
-      "community": 69,
+      "community": 15,
       "norm_label": "validatecontext()"
     },
     {
@@ -3519,7 +3519,7 @@
       "source_file": "app.js",
       "source_location": "L8076",
       "id": "tela_formul\u00e1rio_geral_app_validatefrequentserviceperiod",
-      "community": 74,
+      "community": 15,
       "norm_label": "validatefrequentserviceperiod()"
     },
     {
@@ -3528,7 +3528,7 @@
       "source_file": "app.js",
       "source_location": "L8090",
       "id": "tela_formul\u00e1rio_geral_app_daterangedays",
-      "community": 74,
+      "community": 15,
       "norm_label": "daterangedays()"
     },
     {
@@ -3555,7 +3555,7 @@
       "source_file": "app.js",
       "source_location": "L8181",
       "id": "tela_formul\u00e1rio_geral_app_savereserva",
-      "community": 35,
+      "community": 3,
       "norm_label": "savereserva()"
     },
     {
@@ -3564,7 +3564,7 @@
       "source_file": "app.js",
       "source_location": "L8195",
       "id": "tela_formul\u00e1rio_geral_app_replacepassengerrelations",
-      "community": 35,
+      "community": 70,
       "norm_label": "replacepassengerrelations()"
     },
     {
@@ -3591,7 +3591,7 @@
       "source_file": "app.js",
       "source_location": "L8237",
       "id": "tela_formul\u00e1rio_geral_app_resetaftersuccess",
-      "community": 4,
+      "community": 18,
       "norm_label": "resetaftersuccess()"
     },
     {
@@ -3618,7 +3618,7 @@
       "source_file": "app.js",
       "source_location": "L8330",
       "id": "tela_formul\u00e1rio_geral_app_combinedatetime",
-      "community": 9,
+      "community": 3,
       "norm_label": "combinedatetime()"
     },
     {
@@ -3672,7 +3672,7 @@
       "source_file": "app.js",
       "source_location": "L8370",
       "id": "tela_formul\u00e1rio_geral_app_generatefrequentdates",
-      "community": 74,
+      "community": 15,
       "norm_label": "generatefrequentdates()"
     },
     {
@@ -3735,7 +3735,7 @@
       "source_file": "app.js",
       "source_location": "L8424",
       "id": "tela_formul\u00e1rio_geral_app_hasduplicatepassengers",
-      "community": 74,
+      "community": 15,
       "norm_label": "hasduplicatepassengers()"
     },
     {
@@ -3762,7 +3762,7 @@
       "source_file": "app.js",
       "source_location": "L8438",
       "id": "tela_formul\u00e1rio_geral_app_setselectvalue",
-      "community": 40,
+      "community": 5,
       "norm_label": "setselectvalue()"
     },
     {
@@ -3771,7 +3771,7 @@
       "source_file": "app.js",
       "source_location": "L8454",
       "id": "tela_formul\u00e1rio_geral_app_focusinvalidfield",
-      "community": 69,
+      "community": 15,
       "norm_label": "focusinvalidfield()"
     },
     {
@@ -3780,7 +3780,7 @@
       "source_file": "app.js",
       "source_location": "L8514",
       "id": "tela_formul\u00e1rio_geral_app_revealinvalidfieldbymessage",
-      "community": 69,
+      "community": 15,
       "norm_label": "revealinvalidfieldbymessage()"
     },
     {
@@ -3816,7 +3816,7 @@
       "source_file": "app.js",
       "source_location": "L8629",
       "id": "tela_formul\u00e1rio_geral_app_clearvalidationstates",
-      "community": 4,
+      "community": 18,
       "norm_label": "clearvalidationstates()"
     },
     {
@@ -3852,7 +3852,7 @@
       "source_file": "app.js",
       "source_location": "L8652",
       "id": "tela_formul\u00e1rio_geral_app_focusfield",
-      "community": 69,
+      "community": 15,
       "norm_label": "focusfield()"
     },
     {
@@ -3879,7 +3879,7 @@
       "source_file": "app.js",
       "source_location": "L8702",
       "id": "tela_formul\u00e1rio_geral_app_findoptionvalue",
-      "community": 35,
+      "community": 5,
       "norm_label": "findoptionvalue()"
     },
     {
@@ -3888,7 +3888,7 @@
       "source_file": "app.js",
       "source_location": "L8707",
       "id": "tela_formul\u00e1rio_geral_app_optionlabel",
-      "community": 74,
+      "community": 22,
       "norm_label": "optionlabel()"
     },
     {
@@ -3951,7 +3951,7 @@
       "source_file": "app.js",
       "source_location": "L8815",
       "id": "tela_formul\u00e1rio_geral_app_synclegacytimepartsfromdatetime",
-      "community": 35,
+      "community": 15,
       "norm_label": "synclegacytimepartsfromdatetime()"
     },
     {
@@ -3996,7 +3996,7 @@
       "source_file": "app.js",
       "source_location": "L8854",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechodatetimelocal",
-      "community": 35,
+      "community": 3,
       "norm_label": "importedtrechodatetimelocal()"
     },
     {
@@ -4005,7 +4005,7 @@
       "source_file": "app.js",
       "source_location": "L8858",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechoreturndatetimelocal",
-      "community": 35,
+      "community": 3,
       "norm_label": "importedtrechoreturndatetimelocal()"
     },
     {
@@ -4023,7 +4023,7 @@
       "source_file": "app.js",
       "source_location": "L8878",
       "id": "tela_formul\u00e1rio_geral_app_isguid",
-      "community": 11,
+      "community": 70,
       "norm_label": "isguid()"
     },
     {
@@ -4113,7 +4113,7 @@
       "source_file": "app.js",
       "source_location": "L8991",
       "id": "tela_formul\u00e1rio_geral_app_formatdatetime",
-      "community": 74,
+      "community": 22,
       "norm_label": "formatdatetime()"
     },
     {
@@ -4122,7 +4122,7 @@
       "source_file": "app.js",
       "source_location": "L9001",
       "id": "tela_formul\u00e1rio_geral_app_setloading",
-      "community": 35,
+      "community": 11,
       "norm_label": "setloading()"
     },
     {
@@ -4140,7 +4140,7 @@
       "source_file": "app.js",
       "source_location": "L9012",
       "id": "tela_formul\u00e1rio_geral_app_toast",
-      "community": 35,
+      "community": 11,
       "norm_label": "toast()"
     },
     {
@@ -7294,10 +7294,64 @@
       "norm_label": "guardindex"
     },
     {
+      "label": "returnPanelStart",
+      "file_type": "code",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L302",
+      "id": "scripts_formulario_operational_features_test_returnpanelstart",
+      "community": 12,
+      "norm_label": "returnpanelstart"
+    },
+    {
+      "label": "returnPanelEnd",
+      "file_type": "code",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L303",
+      "id": "scripts_formulario_operational_features_test_returnpanelend",
+      "community": 12,
+      "norm_label": "returnpanelend"
+    },
+    {
+      "label": "returnHead",
+      "file_type": "code",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L304",
+      "id": "scripts_formulario_operational_features_test_returnhead",
+      "community": 12,
+      "norm_label": "returnhead"
+    },
+    {
+      "label": "repeatPanelStart",
+      "file_type": "code",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L310",
+      "id": "scripts_formulario_operational_features_test_repeatpanelstart",
+      "community": 12,
+      "norm_label": "repeatpanelstart"
+    },
+    {
+      "label": "repeatPanelEnd",
+      "file_type": "code",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L311",
+      "id": "scripts_formulario_operational_features_test_repeatpanelend",
+      "community": 12,
+      "norm_label": "repeatpanelend"
+    },
+    {
+      "label": "repeatHead",
+      "file_type": "code",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L312",
+      "id": "scripts_formulario_operational_features_test_repeathead",
+      "community": 12,
+      "norm_label": "repeathead"
+    },
+    {
       "label": "passengerTextareaRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L377",
+      "source_location": "L400",
       "id": "scripts_formulario_operational_features_test_passengertextarearule",
       "community": 12,
       "norm_label": "passengertextarearule"
@@ -7306,7 +7360,7 @@
       "label": "importCopyPointerRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L382",
+      "source_location": "L405",
       "id": "scripts_formulario_operational_features_test_importcopypointerrule",
       "community": 12,
       "norm_label": "importcopypointerrule"
@@ -23705,9 +23759,9 @@
       "source_file": "app.js",
       "source_location": "L7835",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_app_proceedsavecontext",
-      "target": "tela_formul\u00e1rio_geral_app_collectinactiveactivationdrafts",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_app_collectinactiveactivationdrafts"
     },
     {
       "relation": "calls",
@@ -28389,9 +28443,9 @@
       "source_file": "scripts/formulario_operational_features.test.js",
       "source_location": "L277",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_formulario_operational_features_test_js",
-      "target": "scripts_formulario_operational_features_test_proceedstart",
-      "confidence_score": 1.0
+      "target": "scripts_formulario_operational_features_test_proceedstart"
     },
     {
       "relation": "contains",
@@ -28399,9 +28453,9 @@
       "source_file": "scripts/formulario_operational_features.test.js",
       "source_location": "L279",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_formulario_operational_features_test_js",
-      "target": "scripts_formulario_operational_features_test_proceedend",
-      "confidence_score": 1.0
+      "target": "scripts_formulario_operational_features_test_proceedend"
     },
     {
       "relation": "contains",
@@ -28409,9 +28463,9 @@
       "source_file": "scripts/formulario_operational_features.test.js",
       "source_location": "L281",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_formulario_operational_features_test_js",
-      "target": "scripts_formulario_operational_features_test_proceedsavecontext",
-      "confidence_score": 1.0
+      "target": "scripts_formulario_operational_features_test_proceedsavecontext"
     },
     {
       "relation": "contains",
@@ -28419,9 +28473,9 @@
       "source_file": "scripts/formulario_operational_features.test.js",
       "source_location": "L282",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_formulario_operational_features_test_js",
-      "target": "scripts_formulario_operational_features_test_validationindex",
-      "confidence_score": 1.0
+      "target": "scripts_formulario_operational_features_test_validationindex"
     },
     {
       "relation": "contains",
@@ -28429,9 +28483,69 @@
       "source_file": "scripts/formulario_operational_features.test.js",
       "source_location": "L283",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_formulario_operational_features_test_js",
-      "target": "scripts_formulario_operational_features_test_guardindex",
-      "confidence_score": 1.0
+      "target": "scripts_formulario_operational_features_test_guardindex"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L298",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_formulario_operational_features_test_js",
+      "target": "scripts_formulario_operational_features_test_returnpanelstart"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L299",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_formulario_operational_features_test_js",
+      "target": "scripts_formulario_operational_features_test_returnpanelend"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L300",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_formulario_operational_features_test_js",
+      "target": "scripts_formulario_operational_features_test_returnhead"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L306",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_formulario_operational_features_test_js",
+      "target": "scripts_formulario_operational_features_test_repeatpanelstart"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L307",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_formulario_operational_features_test_js",
+      "target": "scripts_formulario_operational_features_test_repeatpanelend"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L308",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_formulario_operational_features_test_js",
+      "target": "scripts_formulario_operational_features_test_repeathead"
     },
     {
       "relation": "contains",
@@ -33608,5 +33722,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "3ed078e125a67cb49677e963f1ed4d8afd31574e"
+  "built_at_commit": "8e7a65ba8f777676869af7f272075272b2ee73a7"
 }
