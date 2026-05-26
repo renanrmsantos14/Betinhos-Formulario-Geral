@@ -27,7 +27,7 @@
       </div>
 
       <div class="top-actions">
-        <div id="globalImportHistoryActions" class="global-history-actions" role="group" aria-label="Histórico da importação"></div>
+        <div id="globalImportHistoryActions" class="global-history-actions" role="group" aria-label="Histórico global de desfazer e refazer"></div>
         <label class="status-select">
           <span>Status</span>
           <select id="statusOperacao" aria-label="Status da operação"></select>
@@ -547,6 +547,22 @@
           <button id="activationGuardReview" type="button" class="secondary-action">Revisar abas</button>
           <button id="activationGuardSkip" type="button" class="secondary-action warning">Salvar sem ativar</button>
           <button id="activationGuardActivate" type="button" class="primary-action">Ativar e agendar</button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="clearAllFormsOverlay" class="overlay" hidden>
+      <div class="dialog activation-guard-dialog" role="dialog" aria-labelledby="clearAllFormsTitle" aria-modal="true" tabindex="-1">
+        <header class="activation-guard-head">
+          <div>
+            <p class="passenger-picker-eyebrow">Perigo</p>
+            <h3 id="clearAllFormsTitle">Apagar todos os dados</h3>
+            <p>Essa ação remove todas as informações do formulário atual. Você perde os dados não salvos e volta ao estado inicial.</p>
+          </div>
+        </header>
+        <footer class="activation-guard-actions">
+          <button id="clearAllFormsCancel" type="button" class="secondary-action">Cancelar</button>
+          <button id="clearAllFormsConfirm" type="button" class="primary-action">Apagar e recomeçar</button>
         </footer>
       </div>
     </div>

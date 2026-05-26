@@ -460,6 +460,11 @@ excludes(importedPassengerEditFields, 'key: "destino"', "popup de passageiro imp
 const importedPassengerPreviewFields = extractFunction(app, "importedPassengerPreviewRecord");
 excludes(importedPassengerPreviewFields, "origem:", "hover do passageiro importado nao deve tratar origem como dado cadastral");
 excludes(importedPassengerPreviewFields, "destino:", "hover do passageiro importado nao deve tratar destino como dado cadastral");
+includes(importedPassengerPreviewFields, "cr: passenger.centroCusto || existing?.cr || \"\"", "hover do passageiro importado deve priorizar CR do servico sobre CR do BD");
+const importedCrResolver = extractFunction(app, "importedTrechoCr");
+includes(importedCrResolver, ".join(\" / \")", "CR da reserva importada deve juntar centros de custo distintos com barra");
+includes(importedCrResolver, "new Set", "CR da reserva importada deve remover centros de custo repetidos");
+includes(app, "[f.cr]: importedTrechoCr(trecho)", "reserva importada deve gravar CR consolidado do servico");
 const importPassengerDraftFields = extractFunction(app, "createImportPassengerDraft");
 excludes(importPassengerDraftFields, "origem:", "rascunho manual de passageiro importado nao deve herdar origem do servico");
 excludes(importPassengerDraftFields, "destino:", "rascunho manual de passageiro importado nao deve carregar destino proprio");

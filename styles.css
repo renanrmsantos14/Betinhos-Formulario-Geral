@@ -257,7 +257,7 @@ h3 {
   min-height: 34px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   align-self: end;
 }
 
@@ -3891,13 +3891,13 @@ body.is-import-dragging .import-drop-overlay {
 
 .import-history-button {
   flex: 0 0 auto;
-  width: 36px;
   min-width: 36px;
   min-height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  gap: 7px;
+  padding: 0 10px;
   border: 1px solid color-mix(in srgb, var(--line) 82%, #ffffff);
   border-radius: 999px;
   background: color-mix(in srgb, var(--surface) 86%, var(--surface-soft));
@@ -3915,9 +3915,29 @@ body.is-import-dragging .import-drop-overlay {
     opacity 150ms var(--ease-out);
 }
 
+.import-history-label {
+  line-height: 1;
+}
+
+.import-history-shortcut {
+  min-width: 34px;
+  min-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, #ffffff);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-muted) 72%, #ffffff);
+  color: var(--muted);
+  font-family: "Manrope", "Aptos", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 850;
+}
+
 .import-history-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -3949,6 +3969,22 @@ body.is-import-dragging .import-drop-overlay {
   opacity: 0.62;
 }
 
+.import-history-button:disabled .import-history-shortcut {
+  opacity: 0.72;
+}
+
+.import-history-button--clear {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--line));
+  background: color-mix(in srgb, var(--danger-soft) 24%, var(--surface));
+}
+
+.import-history-button--clear:hover,
+.import-history-button--clear:focus-visible {
+  border-color: color-mix(in srgb, var(--danger) 38%, var(--line));
+  background: color-mix(in srgb, var(--danger-soft) 45%, #ffffff);
+}
+
 .import-filter-label {
   line-height: 1;
 }
@@ -3971,26 +4007,6 @@ body.is-import-dragging .import-drop-overlay {
 .import-filter.is-active .import-filter-count {
   color: #ffffff;
   background: var(--accent);
-}
-
-.import-filter[data-import-filter="validated"].is-active {
-  color: var(--success);
-  border-color: color-mix(in srgb, var(--success) 30%, var(--line));
-  background: var(--success-soft);
-}
-
-.import-filter[data-import-filter="validated"].is-active .import-filter-count {
-  background: var(--success);
-}
-
-.import-filter[data-import-filter="ignored"].is-active {
-  color: var(--warning);
-  border-color: color-mix(in srgb, var(--warning) 32%, var(--line));
-  background: var(--warning-soft);
-}
-
-.import-filter[data-import-filter="ignored"].is-active .import-filter-count {
-  background: var(--warning);
 }
 
 .import-filter[data-import-filter="pending"].is-active {
@@ -5547,11 +5563,22 @@ body.is-import-dragging .import-drop-overlay {
     width: 44px;
     min-width: 44px;
     min-height: 44px;
+    padding: 0;
   }
 
   .import-history-icon {
     width: 20px;
     height: 20px;
+  }
+
+  .import-history-label,
+  .import-history-shortcut {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .import-passenger-row.passenger-row {
@@ -6054,6 +6081,28 @@ body.is-import-dragging .import-drop-overlay {
   .global-history-actions {
     min-height: 36px;
     align-self: center;
+  }
+
+  .global-history-actions .import-history-button {
+    width: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+  }
+
+  .global-history-actions .import-history-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .global-history-actions .import-history-label,
+  .global-history-actions .import-history-shortcut {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .top-import-action {

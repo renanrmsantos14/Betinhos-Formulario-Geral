@@ -265,7 +265,7 @@ h3 {
   min-height: 34px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
   align-self: end;
 }
 
@@ -3899,13 +3899,13 @@ body.is-import-dragging .import-drop-overlay {
 
 .import-history-button {
   flex: 0 0 auto;
-  width: 36px;
   min-width: 36px;
   min-height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0;
+  gap: 7px;
+  padding: 0 10px;
   border: 1px solid color-mix(in srgb, var(--line) 82%, #ffffff);
   border-radius: 999px;
   background: color-mix(in srgb, var(--surface) 86%, var(--surface-soft));
@@ -3923,9 +3923,29 @@ body.is-import-dragging .import-drop-overlay {
     opacity 150ms var(--ease-out);
 }
 
+.import-history-label {
+  line-height: 1;
+}
+
+.import-history-shortcut {
+  min-width: 34px;
+  min-height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, #ffffff);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-muted) 72%, #ffffff);
+  color: var(--muted);
+  font-family: "Manrope", "Aptos", "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  font-size: 10px;
+  font-weight: 850;
+}
+
 .import-history-icon {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -3957,6 +3977,22 @@ body.is-import-dragging .import-drop-overlay {
   opacity: 0.62;
 }
 
+.import-history-button:disabled .import-history-shortcut {
+  opacity: 0.72;
+}
+
+.import-history-button--clear {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--line));
+  background: color-mix(in srgb, var(--danger-soft) 24%, var(--surface));
+}
+
+.import-history-button--clear:hover,
+.import-history-button--clear:focus-visible {
+  border-color: color-mix(in srgb, var(--danger) 38%, var(--line));
+  background: color-mix(in srgb, var(--danger-soft) 45%, #ffffff);
+}
+
 .import-filter-label {
   line-height: 1;
 }
@@ -3979,26 +4015,6 @@ body.is-import-dragging .import-drop-overlay {
 .import-filter.is-active .import-filter-count {
   color: #ffffff;
   background: var(--accent);
-}
-
-.import-filter[data-import-filter="validated"].is-active {
-  color: var(--success);
-  border-color: color-mix(in srgb, var(--success) 30%, var(--line));
-  background: var(--success-soft);
-}
-
-.import-filter[data-import-filter="validated"].is-active .import-filter-count {
-  background: var(--success);
-}
-
-.import-filter[data-import-filter="ignored"].is-active {
-  color: var(--warning);
-  border-color: color-mix(in srgb, var(--warning) 32%, var(--line));
-  background: var(--warning-soft);
-}
-
-.import-filter[data-import-filter="ignored"].is-active .import-filter-count {
-  background: var(--warning);
 }
 
 .import-filter[data-import-filter="pending"].is-active {
@@ -5555,11 +5571,22 @@ body.is-import-dragging .import-drop-overlay {
     width: 44px;
     min-width: 44px;
     min-height: 44px;
+    padding: 0;
   }
 
   .import-history-icon {
     width: 20px;
     height: 20px;
+  }
+
+  .import-history-label,
+  .import-history-shortcut {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .import-passenger-row.passenger-row {
@@ -6062,6 +6089,28 @@ body.is-import-dragging .import-drop-overlay {
   .global-history-actions {
     min-height: 36px;
     align-self: center;
+  }
+
+  .global-history-actions .import-history-button {
+    width: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+  }
+
+  .global-history-actions .import-history-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .global-history-actions .import-history-label,
+  .global-history-actions .import-history-shortcut {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
   }
 
   .top-import-action {
@@ -6825,7 +6874,7 @@ body.is-import-dragging .import-drop-overlay {
       </div>
 
       <div class="top-actions">
-        <div id="globalImportHistoryActions" class="global-history-actions" role="group" aria-label="Histórico da importação"></div>
+        <div id="globalImportHistoryActions" class="global-history-actions" role="group" aria-label="Histórico global de desfazer e refazer"></div>
         <label class="status-select">
           <span>Status</span>
           <select id="statusOperacao" aria-label="Status da operação"></select>
@@ -7345,6 +7394,22 @@ body.is-import-dragging .import-drop-overlay {
           <button id="activationGuardReview" type="button" class="secondary-action">Revisar abas</button>
           <button id="activationGuardSkip" type="button" class="secondary-action warning">Salvar sem ativar</button>
           <button id="activationGuardActivate" type="button" class="primary-action">Ativar e agendar</button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="clearAllFormsOverlay" class="overlay" hidden>
+      <div class="dialog activation-guard-dialog" role="dialog" aria-labelledby="clearAllFormsTitle" aria-modal="true" tabindex="-1">
+        <header class="activation-guard-head">
+          <div>
+            <p class="passenger-picker-eyebrow">Perigo</p>
+            <h3 id="clearAllFormsTitle">Apagar todos os dados</h3>
+            <p>Essa ação remove todas as informações do formulário atual. Você perde os dados não salvos e volta ao estado inicial.</p>
+          </div>
+        </header>
+        <footer class="activation-guard-actions">
+          <button id="clearAllFormsCancel" type="button" class="secondary-action">Cancelar</button>
+          <button id="clearAllFormsConfirm" type="button" class="primary-action">Apagar e recomeçar</button>
         </footer>
       </div>
     </div>
@@ -9066,6 +9131,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     activationGuardReview: $("activationGuardReview"),
     activationGuardSkip: $("activationGuardSkip"),
     activationGuardActivate: $("activationGuardActivate"),
+    clearAllFormsOverlay: $("clearAllFormsOverlay"),
+    clearAllFormsCancel: $("clearAllFormsCancel"),
+    clearAllFormsConfirm: $("clearAllFormsConfirm"),
     createPassenger: $("createPassenger"),
     agendarRetorno: $("agendarRetorno"),
     retornoData: $("retornoData"),
@@ -9130,6 +9198,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     draftRestoring: false,
     lastDraftSavedAt: null,
     draftCommonEdited: false,
+    globalHistory: {
+      undo: [],
+      redo: [],
+      pending: null
+    },
     activationDraftEditState: {
       return: false,
       repeat: false
@@ -9157,9 +9230,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   const passengerEditSaveTimers = new Map();
   let passengerMatchResolve = null;
   let passengerMatchCandidates = [];
+  let clearAllFormsConfirmationResolve = null;
   const importPassengerCreateLocks = new Map();
   const IMPORT_REVIEW_HISTORY_LIMIT = 80;
+  const GLOBAL_HISTORY_LIMIT = 80;
   let isRestoringImportHistory = false;
+  let isRestoringGlobalHistory = false;
   let xlsxLibraryLoadPromise = null;
   let contentTouchStartY = 0;
   let contentTouchPull = 0;
@@ -9501,14 +9577,25 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.activationGuardReview?.addEventListener("click", () => resolveActivationGuard("review"));
     el.activationGuardSkip?.addEventListener("click", () => resolveActivationGuard("skip"));
     el.activationGuardActivate?.addEventListener("click", () => resolveActivationGuard("activate"));
+    el.clearAllFormsCancel?.addEventListener("click", () => resolveClearAllFormsConfirmation(false));
+    el.clearAllFormsConfirm?.addEventListener("click", () => resolveClearAllFormsConfirmation(true));
     el.activationGuardOverlay?.addEventListener("click", (event) => {
       if (event.target === el.activationGuardOverlay) {
         resolveActivationGuard("review");
       }
     });
+    el.clearAllFormsOverlay?.addEventListener("click", (event) => {
+      if (event.target === el.clearAllFormsOverlay) {
+        resolveClearAllFormsConfirmation(false);
+      }
+    });
     el.activationGuardOverlay?.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || el.activationGuardOverlay.hidden) return;
       resolveActivationGuard("review");
+    });
+    el.clearAllFormsOverlay?.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || el.clearAllFormsOverlay.hidden) return;
+      resolveClearAllFormsConfirmation(false);
     });
     el.passengerEditFields?.addEventListener("input", handlePassengerEditInput);
     el.passengerEditFields?.addEventListener("change", handlePassengerEditInput);
@@ -9592,6 +9679,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     bindContentScrollBoundaryFeedback();
     bindInputFormatters();
     const appRoot = $("app");
+    appRoot?.addEventListener("focusin", handleGlobalHistoryBeforeChange, true);
+    appRoot?.addEventListener("pointerdown", handleGlobalHistoryBeforeChange, true);
+    appRoot?.addEventListener("keydown", handleGlobalHistoryBeforeChange, true);
     appRoot?.addEventListener("input", handleOperationalInput);
     appRoot?.addEventListener("change", handleOperationalInput);
   }
@@ -11766,7 +11856,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function hydrateForm() {
     const r = state.record || {};
     const f = CONFIG.fields.reserva;
-    el.saveButtonText.textContent = state.isNew ? "Agendar serviços" : "Salvar edições";
+    updateSaveButtonText();
     el.tabImport.hidden = !state.isNew;
     el.tabBd.hidden = !state.isNew;
     el.tabReturn.hidden = !state.isNew;
@@ -13151,6 +13241,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     renderTabBadges();
     renderRiskPanel();
     markDraftDirty({ touchCommon: !isActivationGuardField(target) });
+    if (event.type !== "input" || !isTextEditingTarget(target)) {
+      commitGlobalHistoryChange(globalHistoryLabelFromTarget(target));
+    }
   }
 
   function markActivationDraftEdited(target) {
@@ -13342,8 +13435,159 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       renderDraftStatus();
     } catch (error) {
       console.warn("Falha ao salvar dados locais", error);
-    renderDraftStatus("Dados locais não salvos.");
+      renderDraftStatus("Dados locais não salvos.");
     }
+  }
+
+  function cloneGlobalHistoryValue(value) {
+    return JSON.parse(JSON.stringify(value ?? null));
+  }
+
+  function createGlobalHistorySnapshot() {
+    captureObsState();
+    const draft = createDraftSnapshot();
+    draft.updatedAt = "";
+    const importReview = cloneGlobalHistoryValue(state.importReview);
+    if (importReview?.history) importReview.history = { undo: [], redo: [] };
+    return {
+      draft,
+      importReview,
+      importReviewFilter: normalizeImportReviewFilter(state.importReviewFilter),
+      currentTab: state.currentTab
+    };
+  }
+
+  function areGlobalHistorySnapshotsEqual(a, b) {
+    return JSON.stringify(a || null) === JSON.stringify(b || null);
+  }
+
+  function globalHistoryCanTrack() {
+    return !state.draftRestoring && !isRestoringGlobalHistory && !state.loading;
+  }
+
+  function shouldTrackGlobalHistoryTarget(target) {
+    if (!target) return false;
+    if (target.closest?.("#loadingOverlay, #successOverlay, #passengerPickerOverlay, #activationGuardOverlay, #clearAllFormsOverlay")) return false;
+    if (target.closest?.(".custom-select-search")) return false;
+    if (target === el.passengerPickerSearch) return false;
+    if (target.closest?.("#passengerEditOverlay") && !activeImportedPassengerEditRef) return false;
+    return !!target.closest?.(
+      "input, textarea, select, button, [data-passenger-action], [data-import-action], [data-import-filter], [data-schedule-action], [data-obs], [data-ret-obs], .custom-select-option"
+    );
+  }
+
+  function captureGlobalHistoryBeforeMutation(label = "Alteração") {
+    if (!globalHistoryCanTrack()) return;
+    state.globalHistory.pending = {
+      label,
+      snapshot: createGlobalHistorySnapshot()
+    };
+  }
+
+  function handleGlobalHistoryBeforeChange(event) {
+    if (!globalHistoryCanTrack()) return;
+    const target = event.target;
+    if (!shouldTrackGlobalHistoryTarget(target)) return;
+    if (event.type === "keydown") {
+      if (!isGlobalHistoryMutationKey(event) || !isTextEditingTarget(target)) return;
+      if (state.globalHistory.pending?.textTarget === target) return;
+    }
+    if (event.type === "focusin" && !isTextEditingTarget(target)) return;
+    captureGlobalHistoryBeforeMutation(globalHistoryLabelFromTarget(target));
+    if (isTextEditingTarget(target)) state.globalHistory.pending.textTarget = target;
+  }
+
+  function isGlobalHistoryMutationKey(event) {
+    if (event.ctrlKey || event.metaKey || event.altKey) return false;
+    const key = String(event.key || "");
+    if (key.length === 1) return true;
+    return ["Backspace", "Delete", "Enter", " ", "Spacebar"].includes(key);
+  }
+
+  function globalHistoryLabelFromTarget(target) {
+    if (target?.closest?.("[data-import-action], [data-import-field], [data-import-passenger-field]")) return "Alterar importação";
+    if (target?.closest?.("[data-passenger-action], [data-passenger-field]")) return "Alterar passageiro";
+    if (target?.closest?.("[data-schedule-action], [data-schedule-field]")) return "Alterar agendamento";
+    if (target?.closest?.("[data-obs]")) return "Trocar observação";
+    if (target?.closest?.("[data-ret-obs]")) return "Trocar observação do retorno";
+    if (target?.id === "globalImportHistoryActions" || target?.closest?.("#globalImportHistoryActions")) return "";
+    const label = target?.closest?.("label")?.querySelector?.("span, legend")?.textContent?.trim();
+    return label ? `Editar ${label}` : "Alteração";
+  }
+
+  function commitGlobalHistoryChange(label = "") {
+    if (state.draftRestoring || isRestoringGlobalHistory) return;
+    const pending = state.globalHistory.pending;
+    if (!pending?.snapshot) return;
+    const current = createGlobalHistorySnapshot();
+    if (areGlobalHistorySnapshotsEqual(pending.snapshot, current)) {
+      state.globalHistory.pending = null;
+      return;
+    }
+    const undo = state.globalHistory.undo;
+    const last = undo[undo.length - 1]?.snapshot;
+    if (!areGlobalHistorySnapshotsEqual(last, pending.snapshot)) {
+      undo.push({ label: label || pending.label || "Alteração", snapshot: pending.snapshot });
+      if (undo.length > GLOBAL_HISTORY_LIMIT) undo.shift();
+    }
+    state.globalHistory.redo = [];
+    state.globalHistory.pending = null;
+    renderGlobalImportHistoryControls();
+  }
+
+  async function restoreGlobalHistorySnapshot(snapshot) {
+    if (!snapshot?.draft) return;
+    isRestoringGlobalHistory = true;
+    state.draftRestoring = true;
+    try {
+      closePassengerPicker();
+      closePassengerEditPopup();
+      closeImportedPassengerPopupWithoutSave();
+      closeAllCustomSelects();
+      await applyDraftSnapshotToForm(snapshot.draft, { restoreTab: false });
+      state.importReview = cloneGlobalHistoryValue(snapshot.importReview);
+      state.importReviewFilter = normalizeImportReviewFilter(snapshot.importReviewFilter);
+      renderScheduleDrafts();
+      renderPassengers();
+      renderTabBadges();
+      renderRiskPanel();
+      renderImportReview();
+      setTab(state.isNew ? (snapshot.currentTab || snapshot.draft.currentTab || "details") : "details");
+      renderGlobalImportHistoryControls();
+    } finally {
+      state.draftRestoring = false;
+      isRestoringGlobalHistory = false;
+      saveDraftSnapshot();
+    }
+  }
+
+  async function undoGlobalHistoryChange() {
+    const history = state.globalHistory;
+    if (!history.undo.length) {
+      toast("Nada para desfazer.", "warning", 2500);
+      return false;
+    }
+    const current = createGlobalHistorySnapshot();
+    const previous = history.undo.pop();
+    history.redo.push({ label: previous.label, snapshot: current });
+    await restoreGlobalHistorySnapshot(previous.snapshot);
+    toast(`Desfeito: ${previous.label || "alteração"}.`, "success", 2600);
+    return true;
+  }
+
+  async function redoGlobalHistoryChange() {
+    const history = state.globalHistory;
+    if (!history.redo.length) {
+      toast("Nada para refazer.", "warning", 2500);
+      return false;
+    }
+    const current = createGlobalHistorySnapshot();
+    const next = history.redo.pop();
+    history.undo.push({ label: next.label, snapshot: current });
+    if (history.undo.length > GLOBAL_HISTORY_LIMIT) history.undo.shift();
+    await restoreGlobalHistorySnapshot(next.snapshot);
+    toast(`Refeito: ${next.label || "alteração"}.`, "success", 2600);
+    return true;
   }
 
   function createDraftSnapshot() {
@@ -13356,6 +13600,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       obsAtual: state.obsAtual,
       retObsAtual: state.retObsAtual,
       enderecoPersonalizadoAtivo: state.enderecoPersonalizadoAtivo,
+      activationDraftEditState: { ...state.activationDraftEditState },
       fields: {
         statusOperacao: el.statusOperacao.value,
         statusFaturamento: el.statusFaturamento.value,
@@ -13493,6 +13738,73 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }
   }
 
+  async function applyDraftSnapshotToForm(snapshot, options = {}) {
+    const config = { restoreTab: true, ...options };
+    await ensurePassengersByIds((snapshot.selectedPassengers || []).map((item) => item.guid));
+    const fields = snapshot.fields || {};
+    setSelectValue(el.statusOperacao, fields.statusOperacao || "");
+    setSelectValue(el.statusFaturamento, fields.statusFaturamento || "");
+    setFieldValue(el.saidaData, dateTimeLocalFromParts(fields.saidaData, fields.saidaHora, fields.saidaMinuto) || fields.saidaData);
+    setSelectValue(el.saidaHora, fields.saidaHora || "");
+    setSelectValue(el.saidaMinuto, fields.saidaMinuto || "");
+    setFieldValue(el.retPrevDateTime, fields.retPrevDateTime || dateTimeLocalFromParts(fields.saidaData, fields.retPrevHora, fields.retPrevMinuto));
+    setSelectValue(el.retPrevHora, fields.retPrevHora || "");
+    setSelectValue(el.retPrevMinuto, fields.retPrevMinuto || "");
+    setSelectValue(el.cliente, fields.cliente || "");
+    setSelectValue(el.solicitante, fields.solicitante || "");
+    setSelectValue(el.tipoServico, fields.tipoServico || "");
+    setSelectValue(el.tipoVeiculo, fields.tipoVeiculo || "");
+    setSelectValue(el.motorista, fields.motorista || "");
+    setFieldValue(el.trajeto, fields.trajeto);
+    setFieldValue(el.receber, fields.receber);
+    setFieldValue(el.cotacao, formatCurrencyDisplayValue(fields.cotacao));
+    setSelectValue(el.op, fields.op || "");
+    setSelectValue(el.formaPagamento, fields.formaPagamento || "");
+    setFieldValue(el.cr, fields.cr);
+    setFieldValue(el.enderecoPersonalizado, fields.enderecoPersonalizado);
+    setFieldValue(el.destino, fields.destino);
+    setFieldValue(el.agendarRetorno, fields.agendarRetorno);
+    setFieldValue(el.retornoData, dateTimeLocalFromParts(fields.retornoData, fields.retornoHora, fields.retornoMinuto) || fields.retornoData);
+    setSelectValue(el.retornoHora, fields.retornoHora || "");
+    setSelectValue(el.retornoMinuto, fields.retornoMinuto || "");
+    setFieldValue(el.retornoEndereco, fields.retornoEndereco);
+    setFieldValue(el.retornoDestino, fields.retornoDestino);
+    setFieldValue(el.retornoObservacao, fields.retornoObservacao);
+    setFieldValue(el.repetirServico, fields.repetirServico);
+    setFieldValue(el.frequenteInicio, fields.frequenteInicio);
+    setFieldValue(el.frequenteFim, fields.frequenteFim);
+    setSelectValue(el.frequenteTipo, fields.frequenteTipo || "");
+    setFieldValue(el.contabilizarFds, fields.contabilizarFds);
+
+    state.obs = { motorista: "", interna: "", final: "", passageiro: "", ...(snapshot.obs || {}) };
+    state.obsRet = { motorista: "", interna: "", final: "", passageiro: "", ...(snapshot.obsRet || {}) };
+    state.obsAtual = snapshot.obsAtual || "motorista";
+    state.retObsAtual = snapshot.retObsAtual || "motorista";
+    state.activationDraftEditState = snapshot.activationDraftEditState
+      ? {
+          return: !!snapshot.activationDraftEditState.return,
+          repeat: !!snapshot.activationDraftEditState.repeat
+        }
+      : { return: false, repeat: false };
+    state.enderecoPersonalizadoAtivo = !!snapshot.enderecoPersonalizadoAtivo;
+    state.scheduleDrafts = Array.isArray(snapshot.scheduleDrafts) ? snapshot.scheduleDrafts.map((item) => ({ ...item })) : [];
+    state.enderecoRascunho = Array.isArray(snapshot.enderecoRascunho) ? snapshot.enderecoRascunho.map((item) => ({ ...item })) : [];
+    state.selectedPassengers = restoreDraftPassengers(snapshot.selectedPassengers || []);
+    state.draftCommonEdited = hasCommonDraftContent(snapshot);
+    state.importDraftEditState = { common: false, retorno: false };
+    hydratePassengerSelectionRecencyFromRows(state.selectedPassengers);
+
+    el.observacao.value = state.obs[state.obsAtual] || fields.observacao || "";
+    el.retornoObservacao.value = state.obsRet[state.retObsAtual] || fields.retornoObservacao || "";
+
+    renderScheduleDrafts();
+    renderPassengers();
+    renderTabBadges();
+    renderRiskPanel();
+    renderDraftStatus();
+    if (config.restoreTab) setTab(state.isNew ? (snapshot.currentTab || "details") : "details");
+  }
+
   function restoreDraftPassengers(rows) {
     return rows
       .map((item, index) => {
@@ -13600,9 +13912,21 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     });
     el.panels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === tab));
     if (tab === "return") syncReturnDefaults();
+    updateSaveButtonText();
+  }
+
+  function updateSaveButtonText() {
+    if (!el.saveButtonText) return;
+    const text = state.isNew
+      ? isImportSaveMode()
+        ? "Agendar serviços importados"
+        : "Agendar serviços"
+      : "Salvar edições";
+    el.saveButtonText.textContent = text;
   }
 
   function switchObs(next, isReturn) {
+    captureGlobalHistoryBeforeMutation(isReturn ? "Trocar observação do retorno" : "Trocar observação");
     if (isReturn) {
       state.obsRet[state.retObsAtual] = el.retornoObservacao.value;
       state.retObsAtual = next;
@@ -13626,6 +13950,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       el.observacao?.focus();
       el.observacao?.setSelectionRange?.(el.observacao.value.length, el.observacao.value.length);
     });
+    commitGlobalHistoryChange("Trocar observação");
   }
 
   function emptyPassenger(ordem) {
@@ -13681,21 +14006,25 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const action = button.dataset.scheduleAction;
 
     if (action === "remove") {
+      captureGlobalHistoryBeforeMutation("Remover agendamento");
       state.scheduleDrafts = state.scheduleDrafts.filter((item) => item.key !== key);
       renderScheduleDrafts();
       renderRiskPanel();
       markDraftDirty();
+      commitGlobalHistoryChange("Remover agendamento");
       return;
     }
 
     if (action === "copy") {
       const current = state.scheduleDrafts.find((item) => item.key === key);
       if (!current) return;
+      captureGlobalHistoryBeforeMutation("Copiar agendamento principal");
       Object.assign(current, mainScheduleSnapshot(), { key });
       renderScheduleDrafts();
       renderRiskPanel();
       markDraftDirty();
       toast("Dados do principal copiados", "success", 2500);
+      commitGlobalHistoryChange("Copiar agendamento principal");
     }
   }
 
@@ -13900,6 +14229,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       renderPassengers();
       return;
     }
+    captureGlobalHistoryBeforeMutation("Adicionar passageiro");
     const targetOrder = Number(passengerPickerTargetOrder);
     const targetIndex = Number.isFinite(targetOrder)
       ? state.selectedPassengers.findIndex((item) => item.ordem === targetOrder && (!item.passageiro || !item.guid))
@@ -13941,6 +14271,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     renderPassengers();
     renderRiskPanel();
     markDraftDirty();
+    commitGlobalHistoryChange("Adicionar passageiro");
     toast(`${selected.label || "Passageiro"} adicionado.`, "success", 2200);
   }
 
@@ -13954,6 +14285,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function removePassengerRow(ordem, row = null) {
+    captureGlobalHistoryBeforeMutation("Remover passageiro");
     if (row) {
       closePassengerPreview(row.querySelector(".row-title-wrap"));
       animatePassengerRowExit(row);
@@ -13965,6 +14297,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     applyPassengerDefaults(false);
     renderRiskPanel();
     markDraftDirty();
+    commitGlobalHistoryChange("Remover passageiro");
     toast(`Passageiro ${ordem} removido`, "success", 3000);
   }
 
@@ -13978,6 +14311,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function toggleEnderecoPersonalizado() {
+    captureGlobalHistoryBeforeMutation("Alternar endereço dos passageiros");
     if (state.enderecoPersonalizadoAtivo) {
       state.selectedPassengers = state.selectedPassengers.map((item) => ({
         ...item,
@@ -13995,6 +14329,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     renderPassengers();
     renderRiskPanel();
     markDraftDirty();
+    commitGlobalHistoryChange("Alternar endereço dos passageiros");
   }
 
   function setDraftAddress(ordem, endereco) {
@@ -14637,6 +14972,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       toast("Importação XLSX só cria novos serviços. Abra uma tela nova para importar.", "warning", 6000);
       return;
     }
+    if (state.isNew && hasPrimaryDraftChanges()) {
+      toast("Finalize o agendamento principal antes de importar novos serviços.", "warning", 7000);
+      return;
+    }
     setLoading(true);
     try {
       await ensureXlsxLibrary();
@@ -14734,6 +15073,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function captureImportReviewHistory(label = "Alteração") {
     if (!state.importReview || isRestoringImportHistory) return;
+    captureGlobalHistoryBeforeMutation(label);
+    window.setTimeout(() => commitGlobalHistoryChange(label), 0);
     const history = importReviewHistory();
     const snapshot = createImportReviewSnapshot();
     if (!history || !snapshot) return;
@@ -14771,7 +15112,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function undoImportReviewChange() {
-    if (!state.importReview) return false;
+    if (!state.importReview) {
+      toast("Sem histórico da importação para desfazer.", "warning", 2800);
+      return false;
+    }
     flushImportedPassengerEditBeforeHistory();
     const history = importReviewHistory();
     if (!history?.undo?.length) {
@@ -14792,7 +15136,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function redoImportReviewChange() {
-    if (!state.importReview) return false;
+    if (!state.importReview) {
+      toast("Sem histórico da importação para refazer.", "warning", 2800);
+      return false;
+    }
     flushImportedPassengerEditBeforeHistory();
     const history = importReviewHistory();
     if (!history?.redo?.length) {
@@ -14867,12 +15214,23 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return String(value || "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\a ");
   }
 
+  function isTextEditingTarget(target) {
+    if (!target) return false;
+    if (target.isContentEditable) return true;
+    const tag = String(target.tagName || "").toUpperCase();
+    if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+    return false;
+  }
+
   function shouldHandleImportHistoryShortcut(event) {
-    if (!state.importReview || event.altKey) return false;
-    const isImportContext = state.currentTab === "import"
-      || !!activeImportedPassengerEditRef
-      || !!event.target?.closest?.("#tab-panel-import");
-    return isImportContext;
+    if (event.altKey) return false;
+    const key = String(event.key || "").toLowerCase();
+    const command = event.ctrlKey || event.metaKey;
+    const undo = command && key === "z" && !event.shiftKey;
+    const redo = command && (key === "y" || (key === "z" && event.shiftKey));
+    if (!undo && !redo) return false;
+    if (isTextEditingTarget(event.target)) return false;
+    return true;
   }
 
   function handleImportHistoryShortcut(event) {
@@ -14883,8 +15241,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const redo = command && (key === "y" || (key === "z" && event.shiftKey));
     if (!undo && !redo) return;
     event.preventDefault();
-    if (undo) undoImportReviewChange();
-    if (redo) redoImportReviewChange();
+    if (undo) undoGlobalHistoryChange();
+    if (redo) redoGlobalHistoryChange();
   }
 
   function importReviewStatuses() {
@@ -15243,11 +15601,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (!snapshot) return false;
     if (state.draftCommonEdited) return true;
     const fields = snapshot?.fields || {};
-    const hasPassengers = (snapshot?.selectedPassengers || []).length > 0;
-    const hasAddressDraft = (snapshot?.enderecoRascunho || []).length > 0;
+    const hasPassengers = (snapshot?.selectedPassengers || []).some((item) => item?.passageiro || item?.guid || hasText(item?.telefone) || hasText(item?.enderecoEditado));
+    const hasAddressDraft = (snapshot?.enderecoRascunho || []).some((item) => hasText(item?.endereco));
     const hasLookupDraft = hasText(fields.cliente) || hasText(fields.solicitante) || hasText(fields.motorista);
-    return hasPassengers || hasAddressDraft || hasLookupDraft || hasText(fields.saidaData) || hasText(fields.saidaHora)
-      || hasText(fields.saidaMinuto) || hasText(fields.trajeto) || hasText(fields.destino) || hasText(fields.observacao)
+    return hasPassengers || hasAddressDraft || hasLookupDraft || hasText(fields.trajeto) || hasText(fields.destino) || hasText(fields.observacao)
       || hasText(fields.tipoServico) || hasText(fields.tipoVeiculo) || hasText(fields.formaPagamento) || hasText(fields.cr) || hasText(fields.cotacao);
   }
 
@@ -15264,38 +15621,129 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function renderGlobalImportHistoryControls() {
     if (!el.globalImportHistoryActions) return;
-    const history = importReviewHistory();
+    const history = state.globalHistory;
     el.globalImportHistoryActions.replaceChildren(
-      buildImportHistoryButton("Voltar", "undo", !(history?.undo?.length), "Ctrl+Z"),
-      buildImportHistoryButton("Para frente", "redo", !(history?.redo?.length), "Ctrl+Y")
+      buildImportHistoryButton(
+        "Desfazer",
+        "undo",
+        !(history?.undo?.length),
+        "Ctrl+Z",
+        history?.undo?.length ? "Desfazer última alteração do app (Ctrl+Z)" : "Nada para desfazer neste formulário"
+      ),
+      buildImportHistoryButton(
+        "Refazer",
+        "redo",
+        !(history?.redo?.length),
+        "Ctrl+Y / Ctrl+Shift+Z",
+        history?.redo?.length ? "Refazer última alteração do app (Ctrl+Y ou Ctrl+Shift+Z)" : "Nada para refazer neste formulário"
+      ),
+      buildImportHistoryButton("Limpar", "clear", false, "", "Apagar todos os dados do formulário e recomeçar")
     );
   }
 
-  function buildImportHistoryButton(label, action, disabled, shortcut) {
+  function buildImportHistoryButton(label, action, disabled, shortcut, tooltip) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = `import-history-button import-history-button--${action}`;
     button.dataset.importHistoryAction = action;
     button.disabled = !!disabled;
-    button.title = `${label} (${shortcut})`;
-    button.setAttribute("aria-label", `${label} alteração na importação`);
-    button.setAttribute("aria-keyshortcuts", shortcut);
-    button.innerHTML = importHistoryIconSvg(action);
+    button.title = tooltip || (shortcut ? `${label} (${shortcut})` : label);
+    button.setAttribute("aria-label", tooltip || label);
+    if (shortcut) button.setAttribute("aria-keyshortcuts", shortcut);
+    button.innerHTML = `${importHistoryIconSvg(action)}<span class="import-history-label">${label}</span>${shortcut ? `<kbd class="import-history-shortcut">${shortcut}</kbd>` : ""}`;
     return button;
   }
 
   function importHistoryIconSvg(action) {
     const path = action === "undo"
       ? '<path d="M9 14 4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 0 12h-1"></path>'
-      : '<path d="m15 14 5-5-5-5"></path><path d="M20 9H10a6 6 0 0 0 0 12h1"></path>';
+      : action === "redo"
+        ? '<path d="m15 14 5-5-5-5"></path><path d="M20 9H10a6 6 0 0 0 0 12h1"></path>'
+        : '<path d="M4.75 6.75h14.5"></path><path d="M9.25 6.75V5.5c0-.69.56-1.25 1.25-1.25h3c.69 0 1.25.56 1.25 1.25v1.25"></path><path d="M7.25 9.25 8 19.05c.06.96.87 1.7 1.83 1.7h4.34c.96 0 1.77-.74 1.83-1.7l.75-9.8"></path><path d="M10.25 11.25v6.25"></path><path d="M13.75 11.25v6.25"></path>';
     return `<svg class="import-history-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${path}</svg>`;
+  }
+
+  async function clearAllFormsCompletely() {
+    const approved = await requestClearAllFormsConfirmation();
+    if (!approved) return;
+    captureGlobalHistoryBeforeMutation("Limpar formulário");
+    const currentRecordId = state.recordId || "";
+    setLoading(true);
+    try {
+      if (el.passengerPickerOverlay && !el.passengerPickerOverlay.hidden) {
+        closePassengerPicker();
+      }
+      if (el.activationGuardOverlay && !el.activationGuardOverlay.hidden) {
+        closeActivationGuard();
+      }
+      state.pendingSaveContext = null;
+      state.importReview = null;
+      state.importReviewFilter = importReviewFilters().ALL;
+      state.importDraftEditState = { common: false, retorno: false };
+      state.activationDraftEditState = { return: false, repeat: false };
+      state.scheduleDrafts = [];
+      state.draftCommonEdited = false;
+      clearSaveLog();
+      clearDraftSnapshot(false);
+
+      if (currentRecordId) {
+        await loadCurrentRecord();
+      } else {
+        state.record = null;
+        state.relacoes = [];
+        state.enderecoPersonalizadoAtivo = false;
+        state.selectedPassengers = [emptyPassenger(1)];
+        state.enderecoRascunho = [{ ordem: 1, endereco: "" }];
+      }
+
+      clearPassengerCreateForm();
+      closePassengerPicker();
+      closePassengerEditPopup();
+      clearValidationStates();
+      hydrateForm();
+      renderImportReview();
+      renderGlobalImportHistoryControls();
+      renderScheduleDrafts();
+      renderPassengers();
+      renderRiskPanel();
+      renderTabBadges();
+      setTab("details");
+      renderDraftStatus("Formulário limpo.");
+      commitGlobalHistoryChange("Limpar formulário");
+      toast("Dados removidos. Formulário reaberto do zero.", "success", 4500);
+    } catch (error) {
+      console.error(error);
+      toast(error.message || "Falha ao limpar o formulário.", "error", 9000);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function requestClearAllFormsConfirmation() {
+    if (!el.clearAllFormsOverlay || !el.clearAllFormsCancel || !el.clearAllFormsConfirm) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      clearAllFormsConfirmationResolve = resolve;
+      el.clearAllFormsOverlay.hidden = false;
+      requestAnimationFrame(() => {
+        el.clearAllFormsCancel?.focus();
+      });
+    });
+  }
+
+  function resolveClearAllFormsConfirmation(confirmed) {
+    const resolve = clearAllFormsConfirmationResolve;
+    clearAllFormsConfirmationResolve = null;
+    if (el.clearAllFormsOverlay) el.clearAllFormsOverlay.hidden = true;
+    resolve?.(!!confirmed);
   }
 
   function handleGlobalImportHistoryAction(event) {
     const button = event.target.closest("[data-import-history-action]");
     if (!button || !el.globalImportHistoryActions?.contains(button)) return;
-    if (button.dataset.importHistoryAction === "undo") undoImportReviewChange();
-    if (button.dataset.importHistoryAction === "redo") redoImportReviewChange();
+    const action = button.dataset.importHistoryAction;
+    if (action === "undo") return undoGlobalHistoryChange();
+    if (action === "redo") return redoGlobalHistoryChange();
+    if (action === "clear") return clearAllFormsCompletely();
   }
 
   function buildImportReviewFilterButton(label, filter, count, activeFilter) {
@@ -15511,6 +15959,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function renderImportReviewPreservingGallery(scrollTop = null) {
+    commitGlobalHistoryChange("Alterar importação");
     const list = el.importReviewPrograms?.querySelector(".import-service-list");
     const nextScrollTop = scrollTop ?? list?.scrollTop ?? 0;
     renderImportReview();
@@ -16336,7 +16785,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       clienteLabel: existing?.clienteLabel || importClient?.label || CONFIG.importDefaults.clienteLabel || "",
       cargo: existing?.cargo || "",
       departamento: existing?.departamento || "",
-      cr: existing?.cr || passenger.centroCusto || "",
+      cr: passenger.centroCusto || existing?.cr || "",
       preferencias: existing?.preferencias || "",
       tipoVeiculoLabel: existing?.tipoVeiculoLabel || "",
       endereco: existing?.endereco || "",
@@ -16700,6 +17149,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       toast("Serviço repetido não abre no formulário. Edite o registro original no Dataverse.", "warning", 7000);
       return;
     }
+    captureGlobalHistoryBeforeMutation("Aplicar importação no formulário");
     setLoading(true);
     try {
       const context = await buildImportedSaveContext(trecho);
@@ -16717,7 +17167,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       setFieldValue(el.trajeto, context.trajeto);
       setFieldValue(el.destino, trecho.destino || "");
       setFieldValue(el.cotacao, "");
-      setFieldValue(el.cr, firstImportedCr(trecho));
+      setFieldValue(el.cr, importedTrechoCr(trecho));
       state.obs.motorista = trecho.observacaoOperacional || "";
       state.obs.interna = `ID externo: ${trecho.programacao}`;
       state.obs.final = "";
@@ -16745,6 +17195,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       markDraftDirty();
       renderImportReview();
       setTab("details");
+      commitGlobalHistoryChange("Aplicar importação no formulário");
       toast(resolved.length ? "Trecho aplicado ao formulário." : "Trecho aplicado sem passageiros resolvidos.", resolved.length ? "success" : "warning", 5000);
     } catch (error) {
       console.error(error);
@@ -16893,7 +17344,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       nome,
       telefone: "",
       origem: "",
-      centroCusto: firstImportedCr(trecho),
+      centroCusto: importedTrechoCr(trecho),
       matchStatus: "create-new",
       passageiroId: "",
       passageiroLabel: ""
@@ -16979,7 +17430,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       [f.trajeto]: context.trajeto,
       [f.paxView]: context.passageirosTelefones,
       [f.receber]: false,
-      [f.cr]: firstImportedCr(trecho)
+      [f.cr]: importedTrechoCr(trecho)
     };
     setChoice(payload, f.status, findOptionValue("statusOperacao", "Solicitado") || findOptionValue("statusOperacao", "Pre-reserva"));
     setChoice(payload, f.statusFaturamento, el.statusFaturamento.value || findOptionValue("statusFaturamento", "Pendente"));
@@ -17007,8 +17458,17 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return [trecho.cidadeOrigem, trecho.cidadeDestino].filter(Boolean).join(" / ") || [trecho.origem, trecho.destino].filter(Boolean).join(" / ");
   }
 
-  function firstImportedCr(trecho) {
-    return (trecho.passageiros || []).find((passenger) => passenger.centroCusto)?.centroCusto || "";
+  function importedTrechoCr(trecho) {
+    const seen = new Set();
+    return (trecho.passageiros || [])
+      .map((passenger) => String(passenger.centroCusto || "").trim())
+      .filter((centroCusto) => {
+        const key = normalize(centroCusto);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .join(" / ");
   }
 
   function composeImportPassengerDestinations(trecho) {
@@ -17053,9 +17513,135 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   async function saveForm() {
     captureObsState();
+    if (isImportSaveMode()) {
+      performImportedServicesSave();
+      return;
+    }
+
+    if (state.isNew && !hasPrimaryDraftChanges()) {
+      toast("Preencha e valide o formulário antes de agendar. Nada alterado para salvar.", "warning", 7000);
+      return;
+    }
+
     const context = buildSaveContext();
     clearValidationStates();
     proceedSaveContext(context);
+  }
+
+  function isImportSaveMode() {
+    return state.currentTab === "import" && !!state.importReview?.programs?.length;
+  }
+
+  function collectImportedTrechos(review = state.importReview) {
+    return (review?.programs || []).flatMap((program) => (program?.trechos || []));
+  }
+
+  function summarizeImportTrechoStatuses(trechos = []) {
+    const statuses = importReviewStatuses();
+    const counts = {
+      pending: 0,
+      confirmed: 0,
+      blocked: 0,
+      ignored: 0,
+      saved: 0,
+      total: 0
+    };
+    (trechos || []).forEach((trecho) => {
+      const status = normalizeImportedReviewStatus(trecho);
+      if (Object.prototype.hasOwnProperty.call(counts, status)) {
+        counts[status] += 1;
+      } else {
+        counts.pending += 1;
+      }
+      counts.total += 1;
+    });
+    return counts;
+  }
+
+  function hasPrimaryDraftChanges() {
+    if (!state.isNew) return true;
+    if (state.draftCommonEdited) return true;
+    if (state.scheduleDrafts?.length) return true;
+    if (state.activationDraftEditState?.return || state.activationDraftEditState?.repeat) return true;
+    if ((state.selectedPassengers || []).some((item) => item?.passageiro || item?.guid || hasText(item?.telefone) || hasText(item?.enderecoEditado))) return true;
+    if ((state.enderecoRascunho || []).some((item) => hasText(item?.endereco))) return true;
+
+    const snapshot = createDraftSnapshot();
+    return hasCommonDraftContent(snapshot);
+  }
+
+  async function performImportedServicesSave() {
+    if (!state.importReview?.programs?.length) {
+      toast("Importe um XLSX antes de agendar serviços importados.", "warning", 7000);
+      return;
+    }
+
+    const trechos = collectImportedTrechos(state.importReview);
+    const counts = summarizeImportTrechoStatuses(trechos);
+    const statuses = importReviewStatuses();
+    if (!counts.total) {
+      toast("Nenhum serviço importado para agendar.", "warning", 5000);
+      return;
+    }
+
+    if (counts.ignored === counts.total) {
+      toast("Todos os serviços importados estão ignorados. Revise ou remova os itens antes de agendar.", "warning", 7000);
+      return;
+    }
+
+    if (counts.pending || counts.blocked) {
+      const parts = [];
+      if (counts.pending) parts.push(`${counts.pending} pendente(s)`);
+      if (counts.blocked) parts.push(`${counts.blocked} bloqueado(s)`);
+      toast(`Validação incompleta dos serviços importados: ${parts.join(" e ")}. ${counts.ignored ? `${counts.ignored} ignorado(s). ` : ""}Confirme ou descarte os itens antes de agendar.`, "warning", 8000);
+      return;
+    }
+
+    const confirmedTrechos = trechos.filter((trecho) => normalizeImportedReviewStatus(trecho) === statuses.CONFIRMED);
+    const validatedTrechos = confirmedTrechos.filter((trecho) => !importedTrechoIssues(trecho).length);
+    if (!validatedTrechos.length) {
+      toast("Não há serviços importados confirmados com validação completa.", "warning", 7000);
+      return;
+    }
+
+    if (activeImportedPassengerEditRef) {
+      flushImportedPassengerEditBeforeHistory();
+    }
+
+    setLoading(true);
+    state.pendingSaveContext = null;
+    clearSaveLog();
+    let savedCount = 0;
+    let failedCount = 0;
+
+    try {
+      for (const trecho of validatedTrechos) {
+        const saved = await saveImportedTrecho(trecho, { silentSuccess: true });
+        if (saved) {
+          savedCount += 1;
+        } else {
+          failedCount += 1;
+        }
+      }
+
+      if (!savedCount) {
+        toast("Falha ao agendar serviços importados. Verifique os erros e tente novamente.", "error", 9000);
+        return;
+      }
+
+      if (failedCount) {
+        toast(`${savedCount} serviço(s) agendado(s). ${failedCount} serviço(s) falharam.`, "warning", 8000);
+      } else {
+        toast(`${savedCount} serviço(s) importado(s) agendado(s) com sucesso.`, "success", 7000);
+      }
+      renderImportReview();
+      renderTabBadges();
+    } catch (error) {
+      console.error(error);
+      toast(error.message || "Falha ao agendar serviços importados.", "error", 9000);
+    } finally {
+      setLoading(false);
+    }
   }
 
   function proceedSaveContext(context, options = {}) {
