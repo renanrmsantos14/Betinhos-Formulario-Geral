@@ -362,6 +362,7 @@
     scheduleDraftSeq: 0,
     pendingSaveContext: null,
     importReview: null,
+    importReviewFilter: "all",
     saveLog: [],
     draftTimer: null,
     draftRestoring: false,
@@ -702,6 +703,7 @@
     el.saveButton?.addEventListener("click", saveForm);
     el.importXlsxButton?.addEventListener("click", openXlsxImportPicker);
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
+    el.importReviewStats?.addEventListener("click", handleImportReviewFilterAction);
     el.importReviewPrograms?.addEventListener("click", handleImportFieldCopy);
     el.importReviewPrograms?.addEventListener("click", handleImportReviewAction);
     el.importReviewPrograms?.addEventListener("input", handleImportReviewInput);
@@ -5753,6 +5755,7 @@
       const rows = await readXlsxPassengersRows(file);
       const review = await buildImportReview(rows, file.name);
       state.importReview = review;
+      state.importReviewFilter = importReviewFilters().ALL;
       renderImportReview();
       renderTabBadges();
       setTab("import");
@@ -5804,6 +5807,20 @@
       IGNORED: "ignored",
       SAVED: "saved"
     };
+  }
+
+  function importReviewFilters() {
+    return {
+      ALL: "all",
+      VALIDATED: "validated",
+      PENDING: "pending",
+      IGNORED: "ignored"
+    };
+  }
+
+  function normalizeImportReviewFilter(value) {
+    const filters = importReviewFilters();
+    return Object.values(filters).includes(value) ? value : filters.ALL;
   }
 
   function normalizeImportedReviewStatus(trecho) {
@@ -6023,7 +6040,15 @@
     const review = state.importReview;
     const importedPrograms = review?.programs || [];
     const trechos = importedPrograms.flatMap((program) => program.trechos || []);
-    const visiblePrograms = getImportProgramsForReview(importedPrograms);
+    const pendingPrograms = getImportProgramsForReview(importedPrograms);
+    const pendingTrechos = pendingPrograms.flatMap((program) => program.trechos || []);
+    const validatedTrechos = getValidatedImportTrechos(importedPrograms);
+    const ignoredTrechos = getIgnoredImportTrechos(importedPrograms);
+    const activeFilter = normalizeImportReviewFilter(state.importReviewFilter);
+    state.importReviewFilter = activeFilter;
+    const visiblePrograms = activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().PENDING ? pendingPrograms : [];
+    const visibleValidatedTrechos = activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().VALIDATED ? validatedTrechos : [];
+    const visibleIgnoredTrechos = activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().IGNORED ? ignoredTrechos : [];
     const reviewState = summarizeCurrentImportTrechos(trechos);
     const duplicatedTrechos = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
     const hasImportedRows = Array.isArray(review?.rows) && review.rows.length > 0;
@@ -6052,16 +6077,12 @@
       summary.push(`${reviewState.counts.blocked} bloqueado(s)`);
       summary.push(`${reviewState.counts.ignored} ignorado(s)`);
       summary.push(`Cliente: ${importClient?.label || CONFIG.importDefaults.clienteLabel}`);
-      el.importReviewStats.replaceChildren(
-        importStat("Linhas", review.rows.length),
-        importStat("PGs", review.programs.length),
-        importStat("Trechos", trechos.length),
-        importStat("Repetidos", duplicatedTrechos.length, duplicatedTrechos.length ? "danger" : ""),
-        importStat("Confirmados", reviewState.counts.confirmed),
-        importStat("Pendentes", reviewState.counts.pending),
-        importStat("Bloqueados", reviewState.counts.blocked),
-        importStat("Ignorados", reviewState.counts.ignored)
-      );
+      renderImportReviewFilters({
+        all: trechos.length,
+        validated: validatedTrechos.length,
+        pending: pendingTrechos.length,
+        ignored: ignoredTrechos.length
+      }, activeFilter);
       renderImportGlobalIssues(trechos);
     } else {
       el.importReviewStats?.replaceChildren();
@@ -6073,12 +6094,16 @@
     el.importReviewSummary.textContent = summary.join("  ");
 
     el.importReviewPrograms.replaceChildren();
-    if (hasImportData && visiblePrograms.length > 0) {
-      el.importReviewPrograms.appendChild(buildImportWorkbench(visiblePrograms));
-    }
-    const ignoredTrechos = getIgnoredImportTrechos(importedPrograms);
-    if (hasImportData && ignoredTrechos.length) {
-      el.importReviewPrograms.appendChild(buildImportIgnoredList(ignoredTrechos));
+    if (hasImportData) {
+      el.importReviewPrograms.appendChild(buildImportWorkbench(visiblePrograms, {
+        activeFilter,
+        validatedTrechos: visibleValidatedTrechos,
+        ignoredTrechos: visibleIgnoredTrechos,
+        showValidatedGroup: activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().VALIDATED,
+        showIgnoredGroup: activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().IGNORED,
+        openValidated: activeFilter === importReviewFilters().VALIDATED,
+        openIgnored: activeFilter === importReviewFilters().IGNORED
+      }));
     }
     syncDateTimeFieldRowWidths();
   }
@@ -6089,7 +6114,7 @@
       const trechos = (program.trechos || []).filter(
         (trecho) => {
           const status = normalizeImportedReviewStatus(trecho);
-          return status !== statuses.SAVED && status !== statuses.IGNORED;
+          return status !== statuses.CONFIRMED && status !== statuses.SAVED && status !== statuses.IGNORED;
         }
       );
       return {
@@ -6097,6 +6122,20 @@
         trechos
       };
     }).filter((program) => program.trechos.length > 0);
+  }
+
+  function isValidatedImportedTrecho(trecho) {
+    const statuses = importReviewStatuses();
+    const status = normalizeImportedReviewStatus(trecho);
+    return status === statuses.CONFIRMED || status === statuses.SAVED;
+  }
+
+  function getValidatedImportTrechos(programs) {
+    return (programs || []).flatMap((program) => (
+      (program.trechos || [])
+        .filter(isValidatedImportedTrecho)
+        .map((trecho) => ({ program, trecho }))
+    ));
   }
 
   function getIgnoredImportTrechos(programs) {
@@ -6126,16 +6165,32 @@
       || hasText(fields.tipoServico) || hasText(fields.tipoVeiculo) || hasText(fields.formaPagamento) || hasText(fields.cr) || hasText(fields.cotacao);
   }
 
-  function importStat(label, value, tone = "") {
-    const item = document.createElement("div");
-    item.className = "import-stat";
-    if (tone) item.classList.add(tone);
-    const strong = document.createElement("strong");
-    strong.textContent = String(value);
-    const span = document.createElement("span");
-    span.textContent = label;
-    item.append(strong, span);
-    return item;
+  function renderImportReviewFilters(counts, activeFilter) {
+    if (!el.importReviewStats) return;
+    const filters = importReviewFilters();
+    el.importReviewStats.replaceChildren(
+      buildImportReviewFilterButton("Todos", filters.ALL, counts.all, activeFilter),
+      buildImportReviewFilterButton("Validados", filters.VALIDATED, counts.validated, activeFilter),
+      buildImportReviewFilterButton("Pendentes", filters.PENDING, counts.pending, activeFilter),
+      buildImportReviewFilterButton("Ignorados", filters.IGNORED, counts.ignored, activeFilter)
+    );
+  }
+
+  function buildImportReviewFilterButton(label, filter, count, activeFilter) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "import-filter";
+    button.classList.toggle("is-active", filter === activeFilter);
+    button.dataset.importFilter = filter;
+    button.setAttribute("aria-pressed", String(filter === activeFilter));
+    const text = document.createElement("span");
+    text.className = "import-filter-label";
+    text.textContent = label;
+    const value = document.createElement("span");
+    value.className = "import-filter-count";
+    value.textContent = String(count || 0);
+    button.append(text, value);
+    return button;
   }
 
   function renderImportGlobalIssues(trechos) {
@@ -6453,7 +6508,7 @@
     });
   }
 
-  function buildImportWorkbench(programs) {
+  function buildImportWorkbench(programs, options = {}) {
     normalizeSameCarSelection(programs);
     const selected = ensureSelectedImportedTrecho(programs);
     const shell = document.createElement("div");
@@ -6488,6 +6543,23 @@
       });
       list.appendChild(group);
     });
+    if (options.showValidatedGroup) {
+      list.appendChild(buildImportCollapsedStatusList("Validados", options.validatedTrechos || [], {
+        tone: "success",
+        open: !!options.openValidated,
+        emptyText: "Nenhum serviço validado ainda."
+      }));
+    }
+    if (options.showIgnoredGroup) {
+      list.appendChild(buildImportCollapsedStatusList("Ignorados", options.ignoredTrechos || [], {
+        tone: "warning",
+        open: !!options.openIgnored,
+        emptyText: "Nenhum serviço ignorado."
+      }));
+    }
+    if (!list.children.length) {
+      list.appendChild(buildImportServiceListEmpty(options.activeFilter));
+    }
 
     const inspector = document.createElement("aside");
     inspector.className = "import-inspector";
@@ -6508,13 +6580,94 @@
       const actions = document.createElement("div");
       actions.className = "import-inspector-actions";
       if (isDuplicated) actions.classList.add("duplicado");
-      actions.appendChild(buildImportEditToggle(selected.program.programacao, selected.trecho.key, isEditing, isDuplicated));
+      const editToggle = buildImportEditToggle(selected.program.programacao, selected.trecho.key, isEditing, isDuplicated);
+      const reviewActions = buildImportInspectorReviewActions(selected.program.programacao, selected.trecho.key, selected.trecho, normalizeImportedReviewStatus(selected.trecho), isDuplicated);
+      actions.append(editToggle, ...reviewActions);
       inspectorHead.append(title, actions);
       inspector.append(inspectorHead, buildImportTrechoCard(selected.program, selected.trecho, selected.program.trechos.indexOf(selected.trecho), { editable: isEditing }));
+    } else {
+      const empty = document.createElement("div");
+      empty.className = "import-inspector-empty";
+      const strong = document.createElement("strong");
+      strong.textContent = "Nenhum serviço pendente";
+      const span = document.createElement("span");
+      span.textContent = "Abra Validados ou Ignorados na galeria para consultar os itens já resolvidos.";
+      empty.append(strong, span);
+      inspector.appendChild(empty);
     }
 
     shell.append(list, inspector);
     return shell;
+  }
+
+  function buildImportServiceListEmpty(activeFilter) {
+    const empty = document.createElement("div");
+    empty.className = "import-service-list-empty";
+    const strong = document.createElement("strong");
+    strong.textContent = activeFilter === importReviewFilters().PENDING ? "Sem pendências" : "Nenhum item neste filtro";
+    const span = document.createElement("span");
+    span.textContent = "Use os filtros acima para trocar a visão da importação.";
+    empty.append(strong, span);
+    return empty;
+  }
+
+  function buildImportCollapsedStatusList(title, items, options = {}) {
+    const details = document.createElement("details");
+    details.className = "import-collapsed-list";
+    details.classList.add(`is-${options.tone || "neutral"}`);
+    details.open = !!options.open;
+
+    const summary = document.createElement("summary");
+    summary.className = "import-collapsed-list-head";
+    const copy = document.createElement("span");
+    copy.className = "import-collapsed-list-title";
+    const label = document.createElement("strong");
+    label.textContent = title;
+    const hint = document.createElement("span");
+    hint.textContent = `${items.length} serviço(s)`;
+    copy.append(label, hint);
+    const marker = document.createElement("span");
+    marker.className = "import-collapsed-list-marker";
+    marker.textContent = "Abrir";
+    summary.append(copy, marker);
+
+    const list = document.createElement("div");
+    list.className = "import-collapsed-items";
+    if (!items.length) {
+      const empty = document.createElement("p");
+      empty.className = "import-collapsed-empty";
+      empty.textContent = options.emptyText || "Nenhum serviço nesta lista.";
+      list.appendChild(empty);
+    } else {
+      items.forEach(({ program, trecho }) => list.appendChild(buildImportCollapsedStatusItem(program, trecho, options)));
+    }
+
+    details.append(summary, list);
+    return details;
+  }
+
+  function buildImportCollapsedStatusItem(program, trecho, options = {}) {
+    const row = document.createElement("div");
+    row.className = "import-collapsed-item";
+    row.classList.add(`is-${options.tone || "neutral"}`);
+    row.dataset.programacao = program.programacao;
+    row.dataset.trechoKey = trecho.key;
+
+    const main = document.createElement("div");
+    main.className = "import-collapsed-item-main";
+    const name = document.createElement("strong");
+    name.textContent = `${program.programacao} · ${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"}`;
+    const meta = document.createElement("span");
+    meta.textContent = [importPassengerCountLabel(trecho.passageiros?.length || 0), importedTrechoModeLabel(trecho)].filter(Boolean).join(" · ");
+    main.append(name, meta);
+
+    const badge = document.createElement("span");
+    const reviewMeta = importedTrechoReviewMeta(trecho, importedTrechoIssues(trecho));
+    badge.className = `import-badge ${reviewMeta.tone}`;
+    badge.textContent = reviewMeta.label;
+
+    row.append(main, badge);
+    return row;
   }
 
   function buildImportIgnoredList(items) {
@@ -6770,17 +6923,9 @@
     if (reviewStatus === importReviewStatuses().SAVED) {
       actions.append(buildImportAction("Salvo", "noop", true));
     } else if (isDuplicated) {
-      actions.append(
-        buildImportAction("Bloqueado", "noop", true),
-        buildImportAction("IGNORAR", "ignore-trecho")
-      );
+      actions.append(buildImportAction("Bloqueado", "noop", true));
     } else if (reviewStatus === importReviewStatuses().IGNORED) {
       actions.append(buildImportAction("Revisar novamente", "review-pending"));
-    } else {
-      actions.append(
-        buildImportAction("VALIDAR", "confirm-review"),
-        buildImportAction("IGNORAR", "ignore-trecho")
-      );
     }
 
     const blocks = [head];
@@ -6789,6 +6934,27 @@
     card.append(...blocks);
     setImportedTrechoControlsMode(card, isEditing);
     return card;
+  }
+
+  function buildImportInspectorReviewActions(programacao, trechoKey, trecho, reviewStatus, isDuplicated = false) {
+    const statuses = importReviewStatuses();
+    const attachContext = (button) => {
+      button.classList.add("import-inspector-review-action");
+      button.dataset.programacao = programacao;
+      button.dataset.trechoKey = trechoKey;
+      return button;
+    };
+    if (reviewStatus === statuses.SAVED) {
+      return [attachContext(buildImportAction("Salvo", "noop", true))];
+    }
+    if (reviewStatus === statuses.IGNORED) {
+      return [attachContext(buildImportAction("Revisar", "review-pending"))];
+    }
+    const validateButton = attachContext(buildImportAction("Validar", "confirm-review", !!isDuplicated));
+    validateButton.title = isDuplicated ? "Serviço já existe no sistema. Validação bloqueada." : "Validar este serviço importado.";
+    const ignoreButton = attachContext(buildImportAction("Ignorar", "ignore-trecho"));
+    ignoreButton.title = "Ignorar este serviço na importação.";
+    return [validateButton, ignoreButton];
   }
 
   function buildImportDecisionPanel(trecho, options = {}) {
@@ -6801,6 +6967,7 @@
     const modes = importOperationalModes();
     const isMultiPickup = trecho?.operationalMode === modes.MULTI_PICKUP;
     const isIndependentServices = trecho?.operationalMode === modes.INDEPENDENT_SERVICES;
+    const isSeparable = trecho?.operationalMode === modes.SEPARABLE;
     const currentDecision = trecho.operationalDecision || "";
     const splitDisabled = isLocked || isDraft || isMultiPickup || isIndependentServices || !hasReturn;
     const panel = document.createElement("section");
@@ -6816,7 +6983,9 @@
     const strong = document.createElement("strong");
     strong.textContent = importedTrechoModeLabel(trecho);
     const detail = document.createElement("p");
-    if (trecho.operationalReason) {
+    if (isSeparable) {
+      detail.textContent = "A PG tem ida e busca em horários distintos. Separe para revisar cada OS.";
+    } else if (trecho.operationalReason) {
       detail.textContent = formatOperationalText(trecho.operationalReason);
     } else if (isSplit) {
       detail.textContent = "Complete este rascunho como a busca separada.";
@@ -6829,7 +6998,7 @@
 
     const optionsWrap = document.createElement("div");
     optionsWrap.className = "import-decision-options";
-    const hasKeepAction = hasReturn && !isMultiPickup;
+    const hasKeepAction = hasReturn && !isMultiPickup && !isSeparable;
     const keepButton = hasKeepAction ? buildImportAction("Manter espera", "keep-waiting", isLocked || isDraft) : null;
     if (keepButton) {
       keepButton.classList.add("import-decision-button", "is-keep-action");
@@ -7206,6 +7375,13 @@
       target.classList.remove("is-copied");
       delete target.dataset.copyFeedback;
     }, 1100);
+  }
+
+  function handleImportReviewFilterAction(event) {
+    const button = event.target.closest("[data-import-filter]");
+    if (!button || !state.importReview) return;
+    state.importReviewFilter = normalizeImportReviewFilter(button.dataset.importFilter);
+    renderImportReviewPreservingGallery(0);
   }
 
   function handleImportReviewAction(event) {

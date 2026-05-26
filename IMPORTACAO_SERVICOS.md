@@ -500,15 +500,33 @@ Se a PG já virou apenas 1 OS, o sistema não mostra botão `Manter 1 OS`.
 
 O operador segue com:
 
-- `VALIDAR`;
-- `IGNORAR`;
-- `Manter espera`, quando houver retorno previsto;
-- `Separar ida/busca`, quando ainda não tiver sido separado;
+- `Validar`, no cabeçalho do inspector;
+- `Ignorar`, no cabeçalho do inspector;
+- `Manter espera`, apenas quando a PG já indicar espera;
+- `Separar ida/busca`, quando o serviço estiver com ida e busca separáveis;
 - `É o mesmo carro`, quando dois trechos separados devem virar uma OS.
+
+Serviços `Confirmados` e `Salvos` saem da fila principal e entram na lista fechada `Validados`.
+
+Serviços `Ignorados` saem da fila principal e entram na lista fechada `Ignorados`.
+
+As duas listas ficam minimizadas na galeria esquerda para manter foco nos serviços pendentes.
+
+O topo da revisão usa filtros clicáveis:
+
+- `Todos`;
+- `Validados`;
+- `Pendentes`;
+- `Ignorados`.
+
+Cada filtro mostra a contagem pequena ao lado do rótulo.
 
 ### `Manter espera`
 
 Use quando o motorista precisa ficar à disposição até o retorno.
+
+Não aparece quando o serviço está classificado como ida e busca separáveis.
+Nesse caso, a ação disponível é `Separar ida/busca`.
 
 Exemplo:
 
