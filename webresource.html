@@ -3954,6 +3954,11 @@ body.is-import-dragging .import-drop-overlay {
   pointer-events: none;
 }
 
+.import-history-button--clear .import-history-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .import-history-button:hover,
 .import-history-button:focus-visible {
   border-color: color-mix(in srgb, var(--accent) 28%, var(--line));
@@ -4017,8 +4022,62 @@ body.is-import-dragging .import-drop-overlay {
   background: var(--accent);
 }
 
+.import-filter[data-import-filter="validated"] {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 18%, var(--line));
+}
+
+.import-filter[data-import-filter="validated"] .import-filter-count {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success-soft) 68%, #ffffff);
+}
+
+.import-filter[data-import-filter="validated"].is-active {
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 34%, var(--line));
+  background: color-mix(in srgb, var(--success-soft) 72%, #ffffff);
+}
+
+.import-filter[data-import-filter="validated"].is-active .import-filter-count {
+  color: #ffffff;
+  background: var(--success);
+}
+
 .import-filter[data-import-filter="pending"].is-active {
-  color: var(--accent-strong);
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 34%, var(--line));
+  background: color-mix(in srgb, var(--warning-soft) 72%, #ffffff);
+}
+
+.import-filter[data-import-filter="pending"] .import-filter-count {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning-soft) 72%, #ffffff);
+}
+
+.import-filter[data-import-filter="pending"].is-active .import-filter-count {
+  color: #ffffff;
+  background: var(--warning);
+}
+
+.import-filter[data-import-filter="ignored"] {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 18%, var(--line));
+}
+
+.import-filter[data-import-filter="ignored"] .import-filter-count {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger-soft) 72%, #ffffff);
+}
+
+.import-filter[data-import-filter="ignored"].is-active {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 34%, var(--line));
+  background: color-mix(in srgb, var(--danger-soft) 72%, #ffffff);
+}
+
+.import-filter[data-import-filter="ignored"].is-active .import-filter-count {
+  color: #ffffff;
+  background: var(--danger);
 }
 
 /* Legacy class intentionally removed from runtime. */
@@ -4107,92 +4166,6 @@ body.is-import-dragging .import-drop-overlay {
   padding: 10px;
 }
 
-.import-collapsed-list {
-  display: grid;
-  gap: 6px;
-  min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: #ffffff;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.72);
-}
-
-.import-collapsed-list.is-success {
-  border-color: color-mix(in srgb, var(--success) 24%, var(--line));
-  background: color-mix(in srgb, var(--success-soft) 38%, #ffffff);
-}
-
-.import-collapsed-list.is-warning {
-  border-color: color-mix(in srgb, var(--warning) 26%, var(--line));
-  background: color-mix(in srgb, var(--warning-soft) 36%, #ffffff);
-}
-
-.import-collapsed-list-head {
-  min-height: 42px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 10px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.import-collapsed-list-head::-webkit-details-marker {
-  display: none;
-}
-
-.import-collapsed-list-title {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.import-collapsed-list-title strong {
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 880;
-}
-
-.import-collapsed-list-title span,
-.import-collapsed-list-marker {
-  color: var(--muted);
-  font-size: 11px;
-  font-weight: 820;
-}
-
-.import-collapsed-list-marker {
-  min-width: 52px;
-  text-align: right;
-}
-
-.import-collapsed-list[open] .import-collapsed-list-marker {
-  font-size: 0;
-}
-
-.import-collapsed-list[open] .import-collapsed-list-marker::after {
-  content: "Fechar";
-  font-size: 11px;
-}
-
-.import-collapsed-items {
-  display: grid;
-  gap: 6px;
-  padding: 0 8px 8px;
-}
-
-.import-collapsed-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 8px;
-  border: 1px solid color-mix(in srgb, var(--line) 86%, #ffffff);
-  border-radius: var(--radius-xs);
-  background: #ffffff;
-}
-
 .import-service-list-empty {
   display: grid;
   gap: 4px;
@@ -4214,94 +4187,6 @@ body.is-import-dragging .import-drop-overlay {
   color: var(--text-soft);
   font-size: 12px;
   line-height: 1.35;
-}
-
-.import-collapsed-item.is-success {
-  border-color: color-mix(in srgb, var(--success) 18%, var(--line));
-}
-
-.import-collapsed-item.is-warning {
-  border-color: color-mix(in srgb, var(--warning) 18%, var(--line));
-}
-
-.import-collapsed-item-main {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
-}
-
-.import-collapsed-item-main strong,
-.import-collapsed-item-main span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.import-collapsed-item-main strong {
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.import-collapsed-item-main span,
-.import-collapsed-empty {
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.3;
-}
-
-.import-collapsed-empty {
-  margin: 0;
-  padding: 7px 8px;
-}
-
-.import-ignored-list {
-  display: grid;
-  gap: 8px;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--surface-muted) 70%, #ffffff);
-}
-
-.import-ignored-list-head,
-.import-ignored-item {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
-}
-
-.import-ignored-list-head strong,
-.import-ignored-item strong {
-  color: var(--text);
-  font-size: 12px;
-  font-weight: 850;
-}
-
-.import-ignored-list-head span,
-.import-ignored-item span {
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.import-ignored-items {
-  display: grid;
-  gap: 6px;
-}
-
-.import-ignored-item {
-  min-width: 0;
-  padding: 9px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  background: #ffffff;
-}
-
-.import-ignored-item > div {
-  display: grid;
-  gap: 2px;
-  min-width: 0;
 }
 
 .import-service-group {
@@ -4433,8 +4318,12 @@ body.is-import-dragging .import-drop-overlay {
   background: color-mix(in srgb, var(--warning) 62%, var(--line));
 }
 
+.import-service-row.is-pending::before {
+  background: var(--warning);
+}
+
 .import-service-row.is-waiting::before {
-  background: var(--accent);
+  background: var(--warning);
 }
 
 .import-service-row.is-split::before {
@@ -4444,6 +4333,10 @@ body.is-import-dragging .import-drop-overlay {
 .import-service-row.is-confirmed::before,
 .import-service-row.is-saved::before {
   background: var(--success);
+}
+
+.import-service-row.is-ignored::before {
+  background: var(--danger);
 }
 
 .import-service-row.is-blocked::before,
@@ -4467,6 +4360,27 @@ body.is-import-dragging .import-drop-overlay {
 .import-service-row.is-duplicated {
   border-color: color-mix(in srgb, var(--danger) 58%, var(--line));
   background: color-mix(in srgb, var(--danger-soft) 62%, #ffffff);
+}
+
+.import-service-row.is-confirmed,
+.import-service-row.is-saved {
+  border-color: color-mix(in srgb, var(--success) 24%, var(--line));
+  background: color-mix(in srgb, var(--success-soft) 36%, #ffffff);
+}
+
+.import-service-row.is-ignored {
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--line));
+  background: color-mix(in srgb, var(--danger-soft) 42%, #ffffff);
+}
+
+.import-service-row.is-pending {
+  border-color: color-mix(in srgb, var(--warning) 28%, var(--line));
+  background: color-mix(in srgb, var(--warning-soft) 36%, #ffffff);
+}
+
+.import-service-row.is-blocked {
+  border-color: color-mix(in srgb, var(--danger) 34%, var(--line));
+  background: color-mix(in srgb, var(--danger-soft) 34%, #ffffff);
 }
 
 .import-service-row.is-duplicated.is-selected {
@@ -4518,6 +4432,25 @@ body.is-import-dragging .import-drop-overlay {
 .import-service-side {
   justify-items: end;
   gap: 5px;
+}
+
+.import-mode-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 21px;
+  max-width: 160px;
+  padding: 0 7px;
+  border: 1px solid color-mix(in srgb, var(--line) 80%, #ffffff);
+  border-radius: 999px;
+  color: var(--text-soft);
+  background: color-mix(in srgb, var(--surface-muted) 64%, #ffffff);
+  font-size: 10px;
+  font-weight: 820;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .import-inspector {
@@ -7733,7 +7666,6 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       uniqueDates
     });
     const retornoPrevistoLine = operational.mode === IMPORT_OPERATIONAL_MODES.MULTI_PICKUP ? null : retornoLine;
-    if (operational.requiresDecision) pendencias.push(OPERATIONAL_DECISION_ISSUE);
     if (uniqueDates.size > 1) pendencias.push("PG com datas diferentes.");
     if (!trecho.dataIso) pendencias.push("Data inválida.");
     if (!trecho.horario) pendencias.push("Horário vazio.");
@@ -7839,11 +7771,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }
     return {
       mode: IMPORT_OPERATIONAL_MODES.SEPARABLE,
-      decision: IMPORT_OPERATIONAL_DECISIONS.PENDING,
-      suggestion: "Ida + busca separaveis",
+      decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING,
+      suggestion: "Manter espera",
       confidence: distinctTimes.size === 2 ? "media" : "baixa",
-      reason: "A PG tem mais de um horario no mesmo dia e nao informa espera. Confirme se o motorista fica a disposicao.",
-      requiresDecision: true
+      reason: "A PG tem mais de um horario no mesmo dia. Padrao operacional: motorista fica a disposicao, salvo se o usuario separar ida/busca.",
+      requiresDecision: false
     };
   }
 
@@ -15203,7 +15135,6 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const trechoSelector = escapeAttributeSelectorValue(trechoKey);
     return el.importReviewPrograms.querySelector(
       `.import-service-row[data-programacao="${programSelector}"][data-trecho-key="${trechoSelector}"], ` +
-      `.import-collapsed-item[data-programacao="${programSelector}"][data-trecho-key="${trechoSelector}"], ` +
       `.import-inspector [data-programacao="${programSelector}"][data-trecho-key="${trechoSelector}"], ` +
       ".import-inspector, .import-service-list"
     );
@@ -15490,9 +15421,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const ignoredTrechos = getIgnoredImportTrechos(importedPrograms);
     const activeFilter = normalizeImportReviewFilter(state.importReviewFilter);
     state.importReviewFilter = activeFilter;
-    const visiblePrograms = activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().PENDING ? pendingPrograms : [];
-    const visibleValidatedTrechos = activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().VALIDATED ? validatedTrechos : [];
-    const visibleIgnoredTrechos = activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().IGNORED ? ignoredTrechos : [];
+    const visiblePrograms = getImportProgramsByReviewFilter(importedPrograms, activeFilter);
     const reviewState = summarizeCurrentImportTrechos(trechos);
     const duplicatedTrechos = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
     const hasImportedRows = Array.isArray(review?.rows) && review.rows.length > 0;
@@ -15540,16 +15469,25 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.importReviewPrograms.replaceChildren();
     if (hasImportData) {
       el.importReviewPrograms.appendChild(buildImportWorkbench(visiblePrograms, {
-        activeFilter,
-        validatedTrechos: visibleValidatedTrechos,
-        ignoredTrechos: visibleIgnoredTrechos,
-        showValidatedGroup: activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().VALIDATED,
-        showIgnoredGroup: activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().IGNORED,
-        openValidated: activeFilter === importReviewFilters().VALIDATED,
-        openIgnored: activeFilter === importReviewFilters().IGNORED
+        activeFilter
       }));
     }
     syncDateTimeFieldRowWidths();
+  }
+
+  function getImportProgramsByReviewFilter(programs, filter) {
+    const filters = importReviewFilters();
+    if (filter === filters.ALL) return programs || [];
+    if (filter === filters.PENDING) return getImportProgramsForReview(programs);
+    return (programs || []).map((program) => {
+      const trechos = (program.trechos || []).filter((trecho) => {
+        const status = normalizeImportedReviewStatus(trecho);
+        if (filter === filters.VALIDATED) return isValidatedImportedTrecho(trecho);
+        if (filter === filters.IGNORED) return status === importReviewStatuses().IGNORED;
+        return false;
+      });
+      return { ...program, trechos };
+    }).filter((program) => program.trechos.length > 0);
   }
 
   function getImportProgramsForReview(programs) {
@@ -15659,7 +15597,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       ? '<path d="M9 14 4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 0 12h-1"></path>'
       : action === "redo"
         ? '<path d="m15 14 5-5-5-5"></path><path d="M20 9H10a6 6 0 0 0 0 12h1"></path>'
-        : '<path d="M4.75 6.75h14.5"></path><path d="M9.25 6.75V5.5c0-.69.56-1.25 1.25-1.25h3c.69 0 1.25.56 1.25 1.25v1.25"></path><path d="M7.25 9.25 8 19.05c.06.96.87 1.7 1.83 1.7h4.34c.96 0 1.77-.74 1.83-1.7l.75-9.8"></path><path d="M10.25 11.25v6.25"></path><path d="M13.75 11.25v6.25"></path>';
+        : '<path d="M9 6a3 3 0 0 1 6 0"></path><path d="M4 8h16"></path><path d="M7 11v6a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3v-6"></path>';
     return `<svg class="import-history-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${path}</svg>`;
   }
 
@@ -15998,20 +15936,6 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       });
       list.appendChild(group);
     });
-    if (options.showValidatedGroup) {
-      list.appendChild(buildImportCollapsedStatusList("Validados", options.validatedTrechos || [], {
-        tone: "success",
-        open: !!options.openValidated,
-        emptyText: "Nenhum serviço validado ainda."
-      }));
-    }
-    if (options.showIgnoredGroup) {
-      list.appendChild(buildImportCollapsedStatusList("Ignorados", options.ignoredTrechos || [], {
-        tone: "warning",
-        open: !!options.openIgnored,
-        emptyText: "Nenhum serviço ignorado."
-      }));
-    }
     if (!list.children.length) {
       list.appendChild(buildImportServiceListEmpty(options.activeFilter));
     }
@@ -16028,7 +15952,23 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       inspectorHead.className = "import-inspector-head";
       const title = document.createElement("div");
       const eyebrow = document.createElement("span");
-      eyebrow.textContent = isDuplicated ? "Serviço bloqueado" : isSplit ? "Serviço Split" : isEditing ? "Edição habilitada" : "Conferência bloqueada";
+      const reviewStatus = normalizeImportedReviewStatus(selected.trecho);
+      const statusLabels = importReviewStatuses();
+      eyebrow.textContent = isDuplicated
+        ? "Serviço bloqueado"
+        : isSplit
+          ? "Serviço Split"
+          : isEditing
+            ? "Edição habilitada"
+            : reviewStatus === statusLabels.CONFIRMED
+              ? "Serviço validado"
+              : reviewStatus === statusLabels.SAVED
+                ? "Serviço salvo"
+                : reviewStatus === statusLabels.IGNORED
+                  ? "Serviço ignorado"
+                  : reviewStatus === statusLabels.BLOCKED
+                    ? "Serviço bloqueado"
+                    : "Conferência bloqueada";
       const strong = document.createElement("strong");
       strong.textContent = `${selected.program.programacao} · ${formatDateInputForDisplay(selected.trecho.dataIso)} ${selected.trecho.horario || "--:--"}`;
       title.append(eyebrow, strong);
@@ -16046,9 +15986,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       const empty = document.createElement("div");
       empty.className = "import-inspector-empty";
       const strong = document.createElement("strong");
-      strong.textContent = "Nenhum serviço pendente";
+      strong.textContent = "Nenhum serviço neste filtro";
       const span = document.createElement("span");
-      span.textContent = "Abra Validados ou Ignorados na galeria para consultar os itens já resolvidos.";
+      span.textContent = "Use Todos, Validados, Pendentes ou Ignorados para trocar a galeria.";
       empty.append(strong, span);
       inspector.appendChild(empty);
     }
@@ -16066,100 +16006,6 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     span.textContent = "Use os filtros acima para trocar a visão da importação.";
     empty.append(strong, span);
     return empty;
-  }
-
-  function buildImportCollapsedStatusList(title, items, options = {}) {
-    const details = document.createElement("details");
-    details.className = "import-collapsed-list";
-    details.classList.add(`is-${options.tone || "neutral"}`);
-    details.open = !!options.open;
-
-    const summary = document.createElement("summary");
-    summary.className = "import-collapsed-list-head";
-    const copy = document.createElement("span");
-    copy.className = "import-collapsed-list-title";
-    const label = document.createElement("strong");
-    label.textContent = title;
-    const hint = document.createElement("span");
-    hint.textContent = `${items.length} serviço(s)`;
-    copy.append(label, hint);
-    const marker = document.createElement("span");
-    marker.className = "import-collapsed-list-marker";
-    marker.textContent = "Abrir";
-    summary.append(copy, marker);
-
-    const list = document.createElement("div");
-    list.className = "import-collapsed-items";
-    if (!items.length) {
-      const empty = document.createElement("p");
-      empty.className = "import-collapsed-empty";
-      empty.textContent = options.emptyText || "Nenhum serviço nesta lista.";
-      list.appendChild(empty);
-    } else {
-      items.forEach(({ program, trecho }) => list.appendChild(buildImportCollapsedStatusItem(program, trecho, options)));
-    }
-
-    details.append(summary, list);
-    return details;
-  }
-
-  function buildImportCollapsedStatusItem(program, trecho, options = {}) {
-    const row = document.createElement("div");
-    row.className = "import-collapsed-item";
-    row.classList.add(`is-${options.tone || "neutral"}`);
-    row.dataset.programacao = program.programacao;
-    row.dataset.trechoKey = trecho.key;
-
-    const main = document.createElement("div");
-    main.className = "import-collapsed-item-main";
-    const name = document.createElement("strong");
-    name.textContent = `${program.programacao} · ${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"}`;
-    const meta = document.createElement("span");
-    meta.textContent = [importPassengerCountLabel(trecho.passageiros?.length || 0), importedTrechoModeLabel(trecho)].filter(Boolean).join(" · ");
-    main.append(name, meta);
-
-    const badge = document.createElement("span");
-    const reviewMeta = importedTrechoReviewMeta(trecho, importedTrechoIssues(trecho));
-    badge.className = `import-badge ${reviewMeta.tone}`;
-    badge.textContent = reviewMeta.label;
-
-    row.append(main, badge);
-    return row;
-  }
-
-  function buildImportIgnoredList(items) {
-    const section = document.createElement("section");
-    section.className = "import-ignored-list";
-    const head = document.createElement("div");
-    head.className = "import-ignored-list-head";
-    const title = document.createElement("strong");
-    title.textContent = "Ignorados";
-    const count = document.createElement("span");
-    count.textContent = `${items.length} serviço(s)`;
-    head.append(title, count);
-
-    const list = document.createElement("div");
-    list.className = "import-ignored-items";
-    items.forEach(({ program, trecho }) => {
-      const row = document.createElement("div");
-      row.className = "import-ignored-item";
-      const main = document.createElement("div");
-      const name = document.createElement("strong");
-      name.textContent = `${program.programacao} · ${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"}`;
-      const meta = document.createElement("span");
-      meta.textContent = [importPassengerCountLabel(trecho.passageiros?.length || 0), importedTrechoModeLabel(trecho)].filter(Boolean).join(" · ");
-      main.append(name, meta);
-      const action = buildImportAction("Revisar novamente", "review-pending");
-      action.dataset.programacao = program.programacao;
-      action.dataset.trechoKey = trecho.key;
-      row.dataset.programacao = program.programacao;
-      row.dataset.trechoKey = trecho.key;
-      row.append(main, action);
-      list.appendChild(row);
-    });
-
-    section.append(head, list);
-    return section;
   }
 
   function buildImportEditToggle(programacao, trechoKey, isEditing, disabled = false) {
@@ -16222,10 +16068,13 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     side.className = "import-service-side";
     const pax = document.createElement("span");
     pax.textContent = importPassengerCountLabel(trecho.passageiros.length);
+    const mode = document.createElement("span");
+    mode.className = "import-mode-chip";
+    mode.textContent = importedTrechoModeLabel(trecho);
     const badge = document.createElement("span");
-    badge.className = `import-badge ${isDuplicated ? "danger" : trecho.possibleDuplicateMatches?.length ? "warning" : isSplit ? "manual" : status.tone}`;
-    badge.textContent = isDuplicated ? "Não editar" : trecho.possibleDuplicateMatches?.length ? "Parecido" : isSplit ? "Busca separada" : importedTrechoModeLabel(trecho);
-    side.append(pax, badge);
+    badge.className = `import-badge ${isDuplicated ? "danger" : trecho.possibleDuplicateMatches?.length ? "warning" : status.tone}`;
+    badge.textContent = isDuplicated ? "Não editar" : trecho.possibleDuplicateMatches?.length ? "Parecido" : status.label;
+    side.append(pax, mode, badge);
     button.append(main, side);
     wrap.append(button);
     return wrap;
@@ -16410,7 +16259,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     strong.textContent = importedTrechoModeLabel(trecho);
     const detail = document.createElement("p");
     if (isSeparable) {
-      detail.textContent = "A PG tem ida e busca em horários distintos. Separe para revisar cada OS.";
+      detail.textContent = "Padrão: motorista à disposição. Separe apenas se quiser criar ida e busca em OS diferentes.";
     } else if (trecho.operationalReason) {
       detail.textContent = formatOperationalText(trecho.operationalReason);
     } else if (isSplit) {

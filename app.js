@@ -6377,7 +6377,6 @@
     const trechoSelector = escapeAttributeSelectorValue(trechoKey);
     return el.importReviewPrograms.querySelector(
       `.import-service-row[data-programacao="${programSelector}"][data-trecho-key="${trechoSelector}"], ` +
-      `.import-collapsed-item[data-programacao="${programSelector}"][data-trecho-key="${trechoSelector}"], ` +
       `.import-inspector [data-programacao="${programSelector}"][data-trecho-key="${trechoSelector}"], ` +
       ".import-inspector, .import-service-list"
     );
@@ -6664,9 +6663,7 @@
     const ignoredTrechos = getIgnoredImportTrechos(importedPrograms);
     const activeFilter = normalizeImportReviewFilter(state.importReviewFilter);
     state.importReviewFilter = activeFilter;
-    const visiblePrograms = activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().PENDING ? pendingPrograms : [];
-    const visibleValidatedTrechos = activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().VALIDATED ? validatedTrechos : [];
-    const visibleIgnoredTrechos = activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().IGNORED ? ignoredTrechos : [];
+    const visiblePrograms = getImportProgramsByReviewFilter(importedPrograms, activeFilter);
     const reviewState = summarizeCurrentImportTrechos(trechos);
     const duplicatedTrechos = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
     const hasImportedRows = Array.isArray(review?.rows) && review.rows.length > 0;
@@ -6714,16 +6711,25 @@
     el.importReviewPrograms.replaceChildren();
     if (hasImportData) {
       el.importReviewPrograms.appendChild(buildImportWorkbench(visiblePrograms, {
-        activeFilter,
-        validatedTrechos: visibleValidatedTrechos,
-        ignoredTrechos: visibleIgnoredTrechos,
-        showValidatedGroup: activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().VALIDATED,
-        showIgnoredGroup: activeFilter === importReviewFilters().ALL || activeFilter === importReviewFilters().IGNORED,
-        openValidated: activeFilter === importReviewFilters().VALIDATED,
-        openIgnored: activeFilter === importReviewFilters().IGNORED
+        activeFilter
       }));
     }
     syncDateTimeFieldRowWidths();
+  }
+
+  function getImportProgramsByReviewFilter(programs, filter) {
+    const filters = importReviewFilters();
+    if (filter === filters.ALL) return programs || [];
+    if (filter === filters.PENDING) return getImportProgramsForReview(programs);
+    return (programs || []).map((program) => {
+      const trechos = (program.trechos || []).filter((trecho) => {
+        const status = normalizeImportedReviewStatus(trecho);
+        if (filter === filters.VALIDATED) return isValidatedImportedTrecho(trecho);
+        if (filter === filters.IGNORED) return status === importReviewStatuses().IGNORED;
+        return false;
+      });
+      return { ...program, trechos };
+    }).filter((program) => program.trechos.length > 0);
   }
 
   function getImportProgramsForReview(programs) {
@@ -6833,7 +6839,7 @@
       ? '<path d="M9 14 4 9l5-5"></path><path d="M4 9h10a6 6 0 0 1 0 12h-1"></path>'
       : action === "redo"
         ? '<path d="m15 14 5-5-5-5"></path><path d="M20 9H10a6 6 0 0 0 0 12h1"></path>'
-        : '<path d="M4.75 6.75h14.5"></path><path d="M9.25 6.75V5.5c0-.69.56-1.25 1.25-1.25h3c.69 0 1.25.56 1.25 1.25v1.25"></path><path d="M7.25 9.25 8 19.05c.06.96.87 1.7 1.83 1.7h4.34c.96 0 1.77-.74 1.83-1.7l.75-9.8"></path><path d="M10.25 11.25v6.25"></path><path d="M13.75 11.25v6.25"></path>';
+        : '<path d="M9 6a3 3 0 0 1 6 0"></path><path d="M4 8h16"></path><path d="M7 11v6a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3v-6"></path>';
     return `<svg class="import-history-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">${path}</svg>`;
   }
 
@@ -7172,20 +7178,6 @@
       });
       list.appendChild(group);
     });
-    if (options.showValidatedGroup) {
-      list.appendChild(buildImportCollapsedStatusList("Validados", options.validatedTrechos || [], {
-        tone: "success",
-        open: !!options.openValidated,
-        emptyText: "Nenhum serviço validado ainda."
-      }));
-    }
-    if (options.showIgnoredGroup) {
-      list.appendChild(buildImportCollapsedStatusList("Ignorados", options.ignoredTrechos || [], {
-        tone: "warning",
-        open: !!options.openIgnored,
-        emptyText: "Nenhum serviço ignorado."
-      }));
-    }
     if (!list.children.length) {
       list.appendChild(buildImportServiceListEmpty(options.activeFilter));
     }
@@ -7202,7 +7194,23 @@
       inspectorHead.className = "import-inspector-head";
       const title = document.createElement("div");
       const eyebrow = document.createElement("span");
-      eyebrow.textContent = isDuplicated ? "Serviço bloqueado" : isSplit ? "Serviço Split" : isEditing ? "Edição habilitada" : "Conferência bloqueada";
+      const reviewStatus = normalizeImportedReviewStatus(selected.trecho);
+      const statusLabels = importReviewStatuses();
+      eyebrow.textContent = isDuplicated
+        ? "Serviço bloqueado"
+        : isSplit
+          ? "Serviço Split"
+          : isEditing
+            ? "Edição habilitada"
+            : reviewStatus === statusLabels.CONFIRMED
+              ? "Serviço validado"
+              : reviewStatus === statusLabels.SAVED
+                ? "Serviço salvo"
+                : reviewStatus === statusLabels.IGNORED
+                  ? "Serviço ignorado"
+                  : reviewStatus === statusLabels.BLOCKED
+                    ? "Serviço bloqueado"
+                    : "Conferência bloqueada";
       const strong = document.createElement("strong");
       strong.textContent = `${selected.program.programacao} · ${formatDateInputForDisplay(selected.trecho.dataIso)} ${selected.trecho.horario || "--:--"}`;
       title.append(eyebrow, strong);
@@ -7220,9 +7228,9 @@
       const empty = document.createElement("div");
       empty.className = "import-inspector-empty";
       const strong = document.createElement("strong");
-      strong.textContent = "Nenhum serviço pendente";
+      strong.textContent = "Nenhum serviço neste filtro";
       const span = document.createElement("span");
-      span.textContent = "Abra Validados ou Ignorados na galeria para consultar os itens já resolvidos.";
+      span.textContent = "Use Todos, Validados, Pendentes ou Ignorados para trocar a galeria.";
       empty.append(strong, span);
       inspector.appendChild(empty);
     }
@@ -7240,100 +7248,6 @@
     span.textContent = "Use os filtros acima para trocar a visão da importação.";
     empty.append(strong, span);
     return empty;
-  }
-
-  function buildImportCollapsedStatusList(title, items, options = {}) {
-    const details = document.createElement("details");
-    details.className = "import-collapsed-list";
-    details.classList.add(`is-${options.tone || "neutral"}`);
-    details.open = !!options.open;
-
-    const summary = document.createElement("summary");
-    summary.className = "import-collapsed-list-head";
-    const copy = document.createElement("span");
-    copy.className = "import-collapsed-list-title";
-    const label = document.createElement("strong");
-    label.textContent = title;
-    const hint = document.createElement("span");
-    hint.textContent = `${items.length} serviço(s)`;
-    copy.append(label, hint);
-    const marker = document.createElement("span");
-    marker.className = "import-collapsed-list-marker";
-    marker.textContent = "Abrir";
-    summary.append(copy, marker);
-
-    const list = document.createElement("div");
-    list.className = "import-collapsed-items";
-    if (!items.length) {
-      const empty = document.createElement("p");
-      empty.className = "import-collapsed-empty";
-      empty.textContent = options.emptyText || "Nenhum serviço nesta lista.";
-      list.appendChild(empty);
-    } else {
-      items.forEach(({ program, trecho }) => list.appendChild(buildImportCollapsedStatusItem(program, trecho, options)));
-    }
-
-    details.append(summary, list);
-    return details;
-  }
-
-  function buildImportCollapsedStatusItem(program, trecho, options = {}) {
-    const row = document.createElement("div");
-    row.className = "import-collapsed-item";
-    row.classList.add(`is-${options.tone || "neutral"}`);
-    row.dataset.programacao = program.programacao;
-    row.dataset.trechoKey = trecho.key;
-
-    const main = document.createElement("div");
-    main.className = "import-collapsed-item-main";
-    const name = document.createElement("strong");
-    name.textContent = `${program.programacao} · ${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"}`;
-    const meta = document.createElement("span");
-    meta.textContent = [importPassengerCountLabel(trecho.passageiros?.length || 0), importedTrechoModeLabel(trecho)].filter(Boolean).join(" · ");
-    main.append(name, meta);
-
-    const badge = document.createElement("span");
-    const reviewMeta = importedTrechoReviewMeta(trecho, importedTrechoIssues(trecho));
-    badge.className = `import-badge ${reviewMeta.tone}`;
-    badge.textContent = reviewMeta.label;
-
-    row.append(main, badge);
-    return row;
-  }
-
-  function buildImportIgnoredList(items) {
-    const section = document.createElement("section");
-    section.className = "import-ignored-list";
-    const head = document.createElement("div");
-    head.className = "import-ignored-list-head";
-    const title = document.createElement("strong");
-    title.textContent = "Ignorados";
-    const count = document.createElement("span");
-    count.textContent = `${items.length} serviço(s)`;
-    head.append(title, count);
-
-    const list = document.createElement("div");
-    list.className = "import-ignored-items";
-    items.forEach(({ program, trecho }) => {
-      const row = document.createElement("div");
-      row.className = "import-ignored-item";
-      const main = document.createElement("div");
-      const name = document.createElement("strong");
-      name.textContent = `${program.programacao} · ${formatDateInputForDisplay(trecho.dataIso)} ${trecho.horario || "--:--"}`;
-      const meta = document.createElement("span");
-      meta.textContent = [importPassengerCountLabel(trecho.passageiros?.length || 0), importedTrechoModeLabel(trecho)].filter(Boolean).join(" · ");
-      main.append(name, meta);
-      const action = buildImportAction("Revisar novamente", "review-pending");
-      action.dataset.programacao = program.programacao;
-      action.dataset.trechoKey = trecho.key;
-      row.dataset.programacao = program.programacao;
-      row.dataset.trechoKey = trecho.key;
-      row.append(main, action);
-      list.appendChild(row);
-    });
-
-    section.append(head, list);
-    return section;
   }
 
   function buildImportEditToggle(programacao, trechoKey, isEditing, disabled = false) {
@@ -7396,10 +7310,13 @@
     side.className = "import-service-side";
     const pax = document.createElement("span");
     pax.textContent = importPassengerCountLabel(trecho.passageiros.length);
+    const mode = document.createElement("span");
+    mode.className = "import-mode-chip";
+    mode.textContent = importedTrechoModeLabel(trecho);
     const badge = document.createElement("span");
-    badge.className = `import-badge ${isDuplicated ? "danger" : trecho.possibleDuplicateMatches?.length ? "warning" : isSplit ? "manual" : status.tone}`;
-    badge.textContent = isDuplicated ? "Não editar" : trecho.possibleDuplicateMatches?.length ? "Parecido" : isSplit ? "Busca separada" : importedTrechoModeLabel(trecho);
-    side.append(pax, badge);
+    badge.className = `import-badge ${isDuplicated ? "danger" : trecho.possibleDuplicateMatches?.length ? "warning" : status.tone}`;
+    badge.textContent = isDuplicated ? "Não editar" : trecho.possibleDuplicateMatches?.length ? "Parecido" : status.label;
+    side.append(pax, mode, badge);
     button.append(main, side);
     wrap.append(button);
     return wrap;
@@ -7584,7 +7501,7 @@
     strong.textContent = importedTrechoModeLabel(trecho);
     const detail = document.createElement("p");
     if (isSeparable) {
-      detail.textContent = "A PG tem ida e busca em horários distintos. Separe para revisar cada OS.";
+      detail.textContent = "Padrão: motorista à disposição. Separe apenas se quiser criar ida e busca em OS diferentes.";
     } else if (trecho.operationalReason) {
       detail.textContent = formatOperationalText(trecho.operationalReason);
     } else if (isSplit) {

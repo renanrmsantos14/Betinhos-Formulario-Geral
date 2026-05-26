@@ -286,7 +286,6 @@
       uniqueDates
     });
     const retornoPrevistoLine = operational.mode === IMPORT_OPERATIONAL_MODES.MULTI_PICKUP ? null : retornoLine;
-    if (operational.requiresDecision) pendencias.push(OPERATIONAL_DECISION_ISSUE);
     if (uniqueDates.size > 1) pendencias.push("PG com datas diferentes.");
     if (!trecho.dataIso) pendencias.push("Data inválida.");
     if (!trecho.horario) pendencias.push("Horário vazio.");
@@ -392,11 +391,11 @@
     }
     return {
       mode: IMPORT_OPERATIONAL_MODES.SEPARABLE,
-      decision: IMPORT_OPERATIONAL_DECISIONS.PENDING,
-      suggestion: "Ida + busca separaveis",
+      decision: IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING,
+      suggestion: "Manter espera",
       confidence: distinctTimes.size === 2 ? "media" : "baixa",
-      reason: "A PG tem mais de um horario no mesmo dia e nao informa espera. Confirme se o motorista fica a disposicao.",
-      requiresDecision: true
+      reason: "A PG tem mais de um horario no mesmo dia. Padrao operacional: motorista fica a disposicao, salvo se o usuario separar ida/busca.",
+      requiresDecision: false
     };
   }
 

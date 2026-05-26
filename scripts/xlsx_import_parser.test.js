@@ -335,9 +335,9 @@ assert.equal(waitTrecho.origem, "08:00 - ANA, BRUNO - Hotel A", "OS com retorno 
 assert.equal(waitTrecho.destino, "ANA - Escritorio A\nBRUNO - Escritorio B", "OS com retorno validado deve listar apenas destino da ida, sem horario");
 assert.equal(waitTrecho.trajetoCidades, "Sao Paulo / Campinas / Sao Paulo", "trajeto deve usar sequencia unica de cidades");
 assert.equal(waitTrecho.operationalMode, IMPORT_OPERATIONAL_MODES.SEPARABLE, "PG com dois horarios sem indicacao de espera deve sugerir ida/busca separaveis");
-assert.equal(waitTrecho.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.PENDING, "PG separavel deve exigir decisao operacional antes de confirmar");
-assert.equal(waitTrecho.operationalSuggestion, "Ida + busca separaveis", "sugestao deve falar a linguagem operacional");
-assert.ok(waitTrecho.pendencias.includes("Decidir se motorista fica a disposicao ou separar ida/busca."), "PG separavel deve ficar pendente ate decisao humana");
+assert.equal(waitTrecho.operationalDecision, IMPORT_OPERATIONAL_DECISIONS.KEEP_WAITING, "PG separavel deve assumir motorista a disposicao por padrao");
+assert.equal(waitTrecho.operationalSuggestion, "Manter espera", "sugestao deve refletir o padrao operacional");
+assert.ok(!waitTrecho.pendencias.includes("Decidir se motorista fica a disposicao ou separar ida/busca."), "PG separavel nao deve bloquear validacao quando nao houve split");
 
 const validatedReturnPrograms = buildImportPrograms([
   {
