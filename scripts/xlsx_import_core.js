@@ -33,9 +33,6 @@
     "Número Vôo",
     "Terminal",
     "Cia. Aérea",
-    "Valor Bruto da Viagem",
-    "Custo total da viagem",
-    "Outros/VALOR DA VIAGEM",
     "Empresa",
     "Nome motorista",
     "Viagem compartilhada",
@@ -115,12 +112,6 @@
       vooNumero: cell(row, "Número Vôo"),
       terminal: cell(row, "Terminal"),
       ciaAerea: cell(row, "Cia. Aérea"),
-      valor: parseMoney(firstFilled(row, [
-        "Outros/VALOR DA VIAGEM",
-        "Valor Bruto da Viagem",
-        "Custo total da viagem",
-        "Custo Passageiro"
-      ])),
       empresa: cell(row, "Empresa"),
       motoristaNome: cell(row, "Nome motorista"),
       motoristaTelefone: normalizePhone(cell(row, "Tel. Motor.")),
@@ -218,7 +209,6 @@
       solicitanteNome: row.solicitanteNome,
       tipoServicoSugerido: row.tipoServicoSugerido,
       tipoVeiculoSugerido: row.tipoVeiculoSugerido,
-      valor: row.valor,
       motoristaNome: row.motoristaNome,
       retornoPrevistoDataIso: "",
       retornoPrevistoHorario: "",
@@ -252,9 +242,6 @@
     if (!trecho.solicitanteNome && row.solicitanteNome) trecho.solicitanteNome = row.solicitanteNome;
     if (!trecho.tipoServicoSugerido) trecho.tipoServicoSugerido = row.tipoServicoSugerido;
     if (!trecho.tipoVeiculoSugerido) trecho.tipoVeiculoSugerido = row.tipoVeiculoSugerido;
-    if (Number.isFinite(row.valor) && (!Number.isFinite(trecho.valor) || row.valor > trecho.valor)) {
-      trecho.valor = row.valor;
-    }
     if (!trecho.motoristaNome && row.motoristaNome) trecho.motoristaNome = row.motoristaNome;
     trecho.passageiros.push({
       sourceRow: row.sourceRow,
@@ -553,7 +540,6 @@
       tipoVeiculoSugerido: firstFilledObjectValue(trechos, "tipoVeiculoSugerido"),
       tipoServicoValue: firstFilledObjectValue(trechos, "tipoServicoValue"),
       tipoVeiculoValue: firstFilledObjectValue(trechos, "tipoVeiculoValue"),
-      valor: maxFiniteValue(trechos.map((trecho) => trecho?.valor)),
       motoristaNome: firstFilledObjectValue(trechos, "motoristaNome"),
       retornoPrevistoDataIso: "",
       retornoPrevistoHorario: "",
@@ -611,7 +597,6 @@
       tipoVeiculoSugerido: source?.tipoVeiculoSugerido || "",
       tipoServicoValue: source?.tipoServicoValue || "",
       tipoVeiculoValue: source?.tipoVeiculoValue || "",
-      valor: Number.isFinite(source?.valor) ? source.valor : null,
       motoristaNome: "",
       retornoPrevistoDataIso: "",
       retornoPrevistoHorario: "",
@@ -826,11 +811,6 @@
     return (items || []).find((item) => String(item?.[field] || "").trim())?.[field] || "";
   }
 
-  function maxFiniteValue(values) {
-    const finite = (values || []).map(Number).filter(Number.isFinite);
-    return finite.length ? Math.max(...finite) : null;
-  }
-
   function summarizeImportReviewTrechos(trechos) {
     const counts = {
       pending: 0,
@@ -979,7 +959,6 @@
       vooNumero: row.vooNumero,
       terminal: row.terminal,
       ciaAerea: row.ciaAerea,
-      valor: row.valor,
       empresa: row.empresa,
       motoristaNome: row.motoristaNome,
       motoristaTelefone: row.motoristaTelefone,
@@ -1301,16 +1280,6 @@
     const day = String(Number(match[1])).padStart(2, "0");
     const month = String(Number(match[2])).padStart(2, "0");
     return `${match[3]}-${month}-${day}`;
-  }
-
-  function parseMoney(value) {
-    const raw = String(value || "").trim();
-    if (!raw) return null;
-    const normalized = raw.includes(",")
-      ? raw.replace(/\./g, "").replace(",", ".")
-      : raw;
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : null;
   }
 
   function normalizeYesNo(value) {

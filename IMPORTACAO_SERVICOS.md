@@ -68,7 +68,6 @@ Exemplos:
 - `Solicitante`
 - `Cidade Origem`
 - `Cidade Destino`
-- `Valor Bruto da Viagem`
 - `Nome motorista`
 - `Observação`
 - `Observação faturamento`
@@ -87,9 +86,10 @@ O sistema normaliza:
 - telefone só com números;
 - centro de custo em maiúsculas;
 - endereço e destino sem acentos, pontuação e ruídos para comparação;
-- valor monetário para número;
 - tipo de serviço sugerido;
 - tipo de veículo sugerido.
+
+Campos de valor do relatório, como `Valor Bruto da Viagem`, `Custo total da viagem`, `Outros/VALOR DA VIAGEM` e `Custo Passageiro`, são descartados.
 
 Exemplo:
 
@@ -635,7 +635,6 @@ O clone copia dados comuns:
 - solicitante;
 - tipo de serviço;
 - tipo de veículo;
-- cotação;
 - observações;
 - passageiros das linhas de retorno.
 
@@ -783,7 +782,6 @@ Quando um serviço confirmado é salvo, o payload da reserva recebe:
 | Observação interna | Texto informando origem da importação |
 | Trajeto | Campo `Trajeto` revisado |
 | Passageiros e telefones | Passageiros vinculados |
-| Cotação | Valor importado ou editado |
 | CR | Primeiro centro de custo encontrado nos passageiros |
 | Cliente | Cliente padrão da importação |
 | Solicitante | Solicitante importado ou primeiro passageiro |

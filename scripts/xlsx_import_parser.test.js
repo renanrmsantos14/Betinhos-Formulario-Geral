@@ -82,6 +82,10 @@ function columnIndex(cellRef) {
   return [...letters].reduce((total, char) => total * 26 + char.charCodeAt(0) - 64, 0) - 1;
 }
 
+function hasOwn(target, key) {
+  return Object.prototype.hasOwnProperty.call(target || {}, key);
+}
+
 function readPassengersSheet(filePath) {
   const entries = readZipEntries(filePath);
   const sharedStringsXml = entries.get("xl/sharedStrings.xml") || "";
@@ -153,6 +157,24 @@ const minimalColumnPrograms = buildImportPrograms(normalizeImportedRows([
 assert.equal(minimalColumnPrograms.length, 1, "planilha com apenas colunas essenciais deve importar a PG");
 assert.equal(minimalColumnPrograms[0].trechos.length, 1, "planilha com colunas opcionais ausentes deve criar OS");
 assert.equal(minimalColumnPrograms[0].trechos[0].passageiros[0].nome, "FULANO TESTE", "linha minima deve preservar passageiro");
+const valueColumnRows = normalizeImportedRows([
+  {
+    "Data da Viagem (inicial)": "20/05/2026",
+    "Número Programação": "PGVALOR/1",
+    "Horário Passageiro": "07:30",
+    "Nome Passageiro": "FULANO TESTE",
+    "Origem": "Casa Fulano",
+    "Destino": "Aeroporto de Congonhas",
+    "Outros/VALOR DA VIAGEM": "300,00",
+    "Valor Bruto da Viagem": "200,00",
+    "Custo total da viagem": "100,00",
+    "Custo Passageiro": "50,00"
+  }
+]);
+const valueColumnTrecho = buildImportPrograms(valueColumnRows)[0].trechos[0];
+assert.equal(hasOwn(valueColumnRows[0], "valor"), false, "colunas de valor do XLSX devem ser descartadas na normalizacao");
+assert.equal(hasOwn(valueColumnTrecho, "valor"), false, "trecho importado nao deve carregar cotacao");
+assert.equal(hasOwn(valueColumnTrecho.linhasImportadas[0], "valor"), false, "linha importada nao deve expor valor do relatorio");
 assert.equal(programs.length, 131, "deve agrupar 131 programacoes externas por PG");
 assert.ok(
   programs.some((program) => program.trechos.some((trecho) => trecho.solicitanteNome)),
@@ -185,8 +207,7 @@ const sharedPickupPrograms = buildImportPrograms([
     prefixoMotorista: "CAR-01",
     tipoTransporteExterno: "Carro executivo",
     tipoServicoSugerido: "Dentro de Sao Paulo",
-    tipoVeiculoSugerido: "Executivo",
-    valor: 100
+    tipoVeiculoSugerido: "Executivo"
   },
   {
     sourceRow: 3,
@@ -208,8 +229,7 @@ const sharedPickupPrograms = buildImportPrograms([
     prefixoMotorista: "CAR-01",
     tipoTransporteExterno: "Carro executivo",
     tipoServicoSugerido: "Dentro de Sao Paulo",
-    tipoVeiculoSugerido: "Executivo",
-    valor: 120
+    tipoVeiculoSugerido: "Executivo"
   }
 ]);
 const sharedPickupTrecho = sharedPickupPrograms[0].trechos[0];
@@ -239,7 +259,6 @@ const waitPrograms = buildImportPrograms([
     centroCusto: "CR1",
     tipoServicoSugerido: "Dentro de Sao Paulo",
     tipoVeiculoSugerido: "Executivo",
-    valor: 100,
     solicitanteNome: "SOLICITANTE TESTE",
     observacao: "Aguardar no local"
   },
@@ -261,7 +280,6 @@ const waitPrograms = buildImportPrograms([
     centroCusto: "CR2",
     tipoServicoSugerido: "Dentro de Sao Paulo",
     tipoVeiculoSugerido: "Executivo",
-    valor: 120,
     solicitanteNome: "SOLICITANTE TESTE"
   },
   {
@@ -282,7 +300,6 @@ const waitPrograms = buildImportPrograms([
     centroCusto: "CR1",
     tipoServicoSugerido: "Dentro de Sao Paulo",
     tipoVeiculoSugerido: "Executivo",
-    valor: 100,
     solicitanteNome: "SOLICITANTE TESTE"
   }
 ]);
@@ -318,8 +335,7 @@ const validatedReturnPrograms = buildImportPrograms([
     telefone: "11933330000",
     centroCusto: "CR1",
     tipoServicoSugerido: "Intermunicipal",
-    tipoVeiculoSugerido: "Executivo",
-    valor: 100
+    tipoVeiculoSugerido: "Executivo"
   },
   {
     sourceRow: 71,
@@ -338,8 +354,7 @@ const validatedReturnPrograms = buildImportPrograms([
     telefone: "11944440000",
     centroCusto: "CR2",
     tipoServicoSugerido: "Intermunicipal",
-    tipoVeiculoSugerido: "Executivo",
-    valor: 100
+    tipoVeiculoSugerido: "Executivo"
   },
   {
     sourceRow: 72,
@@ -358,8 +373,7 @@ const validatedReturnPrograms = buildImportPrograms([
     telefone: "11944440000",
     centroCusto: "CR2",
     tipoServicoSugerido: "Intermunicipal",
-    tipoVeiculoSugerido: "Executivo",
-    valor: 100
+    tipoVeiculoSugerido: "Executivo"
   },
   {
     sourceRow: 73,
@@ -378,8 +392,7 @@ const validatedReturnPrograms = buildImportPrograms([
     telefone: "11933330000",
     centroCusto: "CR1",
     tipoServicoSugerido: "Intermunicipal",
-    tipoVeiculoSugerido: "Executivo",
-    valor: 100
+    tipoVeiculoSugerido: "Executivo"
   }
 ]);
 const validatedReturnTrecho = validatedReturnPrograms[0].trechos[0];
@@ -430,7 +443,6 @@ const keepOnePrograms = buildImportPrograms([
     centroCusto: "CR1",
     tipoServicoSugerido: "Dentro de Sao Paulo",
     tipoVeiculoSugerido: "Executivo",
-    valor: 100,
     solicitanteNome: "SOLICITANTE TESTE"
   }
 ]);
@@ -458,7 +470,6 @@ const multiPickupPrograms = buildImportPrograms([
     centroCusto: "CR1",
     tipoServicoSugerido: "Dentro de Sao Paulo",
     tipoVeiculoSugerido: "Executivo",
-    valor: 100,
     solicitanteNome: "SOLICITANTE TESTE"
   },
   {
@@ -479,7 +490,6 @@ const multiPickupPrograms = buildImportPrograms([
     centroCusto: "CR2",
     tipoServicoSugerido: "Dentro de Sao Paulo",
     tipoVeiculoSugerido: "Executivo",
-    valor: 100,
     solicitanteNome: "SOLICITANTE TESTE"
   }
 ]);

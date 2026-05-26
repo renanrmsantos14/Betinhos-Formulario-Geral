@@ -708,6 +708,10 @@
     el.importReviewPrograms?.addEventListener("click", handleImportReviewAction);
     el.importReviewPrograms?.addEventListener("input", handleImportReviewInput);
     el.importReviewPrograms?.addEventListener("change", handleImportReviewInput);
+    el.importReviewPrograms?.addEventListener("pointerover", handlePassengerPreviewEnter);
+    el.importReviewPrograms?.addEventListener("pointerout", handlePassengerPreviewLeave);
+    el.importReviewPrograms?.addEventListener("focusin", handlePassengerPreviewFocusIn);
+    el.importReviewPrograms?.addEventListener("focusout", handlePassengerPreviewFocusOut);
     el.createPassenger?.addEventListener("click", createPassenger);
     el.passengerEditToggle?.addEventListener("click", togglePassengerEditMode);
     el.passengerEditClose?.addEventListener("click", closePassengerEditPopup);
@@ -3089,7 +3093,8 @@
   function renderLookupSelect(select, rows) {
     if (!select) return;
     const isSolicitante = select === el.solicitante;
-    if (isSolicitante) {
+    const isPersonClient = isSolicitante || select.dataset.selectVariant === "person-client";
+    if (isPersonClient) {
       select.dataset.selectVariant = "person-client";
     }
     const previous = select.value;
@@ -3098,14 +3103,15 @@
       const option = document.createElement("option");
       option.value = item.id;
       option.textContent = item.label;
-      if (isSolicitante && item.clienteLabel) option.dataset.subtitle = item.clienteLabel;
+      if (isPersonClient && item.clienteLabel) option.dataset.subtitle = item.clienteLabel;
+      if (item.disabled) option.disabled = true;
       option.dataset.search = [item.search, item.clienteLabel].filter(Boolean).join(" ");
       select.appendChild(option);
     });
     if (previous) select.value = previous;
     if (!select.hidden) {
       ensureCustomSelect(select);
-      if (isSolicitante) {
+      if (isPersonClient) {
         const custom = customSelectRoots.get(select);
         custom?.wrapper?.classList.add("custom-select--person-client");
         custom?.panel?.classList.add("custom-select-panel--person-client");
@@ -3954,7 +3960,7 @@
   function handlePassengerPreviewEnter(event) {
     if (isMobilePassengerPreviewDisabled()) return;
     const wrap = event.target.closest(".row-title-wrap");
-    if (!wrap || !el.passengerRows.contains(wrap)) return;
+    if (!isPassengerPreviewHost(wrap)) return;
     if (event.relatedTarget && wrap.contains(event.relatedTarget)) return;
     clearPassengerPreviewCloseTimer();
     openPassengerPreview(wrap);
@@ -3962,7 +3968,7 @@
 
   function handlePassengerPreviewLeave(event) {
     const wrap = event.target.closest(".row-title-wrap");
-    if (!wrap || !el.passengerRows.contains(wrap)) return;
+    if (!isPassengerPreviewHost(wrap)) return;
     if (event.relatedTarget && wrap.contains(event.relatedTarget)) return;
     if (activePassengerPreview?.portal.contains(event.relatedTarget)) return;
     schedulePassengerPreviewClose(wrap);
@@ -3971,18 +3977,25 @@
   function handlePassengerPreviewFocusIn(event) {
     if (isMobilePassengerPreviewDisabled()) return;
     const wrap = event.target.closest(".row-title-wrap");
-    if (!wrap || !el.passengerRows.contains(wrap)) return;
+    if (!isPassengerPreviewHost(wrap)) return;
     openPassengerPreview(wrap);
   }
 
   function handlePassengerPreviewFocusOut(event) {
     const wrap = event.target.closest(".row-title-wrap");
-    if (!wrap || !el.passengerRows.contains(wrap)) return;
+    if (!isPassengerPreviewHost(wrap)) return;
     window.setTimeout(() => {
       if (!wrap.contains(document.activeElement)) {
         closePassengerPreview(wrap);
       }
     }, 0);
+  }
+
+  function isPassengerPreviewHost(wrap) {
+    if (!wrap) return false;
+    const host = wrap.closest(".passenger-rows, .import-passengers");
+    if (!host) return false;
+    return host === el.passengerRows || !!el.importReviewPrograms?.contains(host);
   }
 
   function ensurePassengerPreviewPortal() {
@@ -4141,6 +4154,9 @@
       ["Cargo", previewValue(passenger.cargo, "bdCargo")],
       ["Dpto", passenger.departamento],
       ["CR", passenger.cr],
+      ["Origem", passenger.origem],
+      ["Destino", passenger.destino],
+      ["Status", passenger.importStatus],
       ["Preferências", passenger.preferencias],
       ["Tipo de veículo", passenger.tipoVeiculoLabel || previewValue(passenger.tipoVeiculo, "bdTipoVeiculo")],
       ["Endereço", passenger.endereco],
@@ -6435,7 +6451,6 @@
       tipoVeiculoSugerido: source?.tipoVeiculoSugerido || "",
       tipoServicoValue: source?.tipoServicoValue || "",
       tipoVeiculoValue: source?.tipoVeiculoValue || "",
-      valor: Number.isFinite(source?.valor) ? source.valor : null,
       motoristaNome: "",
       retornoPrevistoDataIso: "",
       retornoPrevistoHorario: "",
@@ -6859,15 +6874,13 @@
       isDuplicated,
       reviewStatus
     });
-    const timeline = buildImportTimeline(trecho);
 
     const agendaSection = buildImportEditorSection(
       "Agenda",
       buildImportInput("Data e hora", "dataHora", importedTrechoDateTimeLocal(trecho), "datetime-local"),
       buildImportInput("Horário previsto de retorno", "retornoPrevisto", importedTrechoReturnDateTimeLocal(trecho), "datetime-local"),
       buildImportSelect("Tipo de serviço", "tipoServicoValue", state.options.tipoServico, trecho.tipoServicoValue || findOptionValue("tipoServico", trecho.tipoServicoSugerido)),
-      buildImportSelect("Tipo de veículo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido)),
-      buildImportInput("Cotação", "valor", Number.isFinite(trecho.valor) ? String(trecho.valor) : "", "number"),
+      buildImportSelect("Tipo de veículo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido))
     );
     const routeSection = buildImportEditorSection(
       "Rota operacional",
@@ -6877,7 +6890,7 @@
     );
     const commonSection = buildImportEditorSection(
       "Dados comuns",
-      buildImportInput("Solicitante", "solicitanteNome", trecho.solicitanteNome, "text", true),
+      buildImportSolicitanteSelect(trecho),
       buildImportTextarea("Observação", "observacaoOperacional", trecho.observacaoOperacional)
     );
     const fieldStack = document.createElement("div");
@@ -6930,7 +6943,7 @@
 
     const blocks = [head];
     if (duplicateLock) blocks.push(duplicateLock);
-    blocks.push(decisionPanel, timeline, fieldStack, passengerList, issueList, actions);
+    blocks.push(decisionPanel, fieldStack, passengerList, issueList, actions);
     card.append(...blocks);
     setImportedTrechoControlsMode(card, isEditing);
     return card;
@@ -7026,38 +7039,6 @@
 
     panel.append(copy, optionsWrap);
     return panel;
-  }
-
-  function buildImportTimeline(trecho) {
-    const wrap = document.createElement("section");
-    wrap.className = "import-timeline";
-    const head = document.createElement("div");
-    head.className = "import-timeline-head";
-    const strong = document.createElement("strong");
-    strong.textContent = "Janela da PG";
-    const span = document.createElement("span");
-    span.textContent = importedTrechoWindowLabel(trecho);
-    head.append(strong, span);
-    const items = document.createElement("div");
-    items.className = "import-timeline-items";
-    items.append(
-      buildImportTimelineItem("Saída", formatImportedTrechoDateTimeLabel(trecho.dataIso, trecho.horario)),
-      buildImportTimelineItem("Retorno previsto", importedTrechoReturnLabel(trecho)),
-      buildImportTimelineItem("Passageiros", importPassengerCountLabel(trecho.passageiros.length))
-    );
-    wrap.append(head, items);
-    return wrap;
-  }
-
-  function buildImportTimelineItem(label, value) {
-    const item = document.createElement("div");
-    item.className = "import-timeline-item";
-    const span = document.createElement("span");
-    span.textContent = label;
-    const strong = document.createElement("strong");
-    strong.textContent = value || "pendente";
-    item.append(span, strong);
-    return item;
   }
 
   function buildImportEditorSection(title, ...controls) {
@@ -7186,7 +7167,9 @@
 
   function buildImportInput(label, field, value, type = "text", wide = false) {
     const wrap = document.createElement("label");
-    wrap.className = wide ? "field import-field span-2" : "field import-field";
+    const typeClass = String(type || "text").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    wrap.className = `field import-field is-${typeClass}${wide ? " span-2 is-wide" : ""}`;
+    wrap.dataset.importInputType = type;
     wrap.dataset.importCopy = "1";
     wrap.dataset.copyLabel = label;
     const span = document.createElement("span");
@@ -7203,7 +7186,8 @@
 
   function buildImportTextarea(label, field, value) {
     const wrap = document.createElement("label");
-    wrap.className = "field import-field span-2";
+    wrap.className = "field import-field span-2 is-wide is-textarea";
+    wrap.dataset.importInputType = "textarea";
     wrap.dataset.importCopy = "1";
     wrap.dataset.copyLabel = label;
     const span = document.createElement("span");
@@ -7218,7 +7202,8 @@
 
   function buildImportSelect(label, field, options, value) {
     const wrap = document.createElement("label");
-    wrap.className = "field import-field";
+    wrap.className = "field import-field is-select";
+    wrap.dataset.importInputType = "select";
     wrap.dataset.importCopy = "1";
     wrap.dataset.copyLabel = label;
     const span = document.createElement("span");
@@ -7237,46 +7222,124 @@
     return wrap;
   }
 
+  function buildImportSolicitanteSelect(trecho) {
+    const wrap = document.createElement("label");
+    wrap.className = "field import-field is-select span-2 is-wide";
+    wrap.dataset.importInputType = "select";
+    wrap.dataset.importCopy = "1";
+    wrap.dataset.copyLabel = "Solicitante";
+    const span = document.createElement("span");
+    span.textContent = "Solicitante";
+    const select = document.createElement("select");
+    select.dataset.importField = "solicitanteRecordId";
+    select.dataset.selectVariant = "person-client";
+    wrap.append(span, select);
+    const rows = importedSolicitanteLookupRows(trecho);
+    renderLookupSelect(select, rows);
+    const selectedValue = resolveImportedSolicitanteSelectValue(trecho, rows);
+    setSelectValue(select, selectedValue);
+    return wrap;
+  }
+
+  function importedSolicitanteLookupRows(trecho) {
+    const rows = sortByLabel(state.passageiros);
+    const importedName = String(trecho?.solicitanteNome || "").trim();
+    if (!importedName || resolvePassengerByName(importedName)) return rows;
+    return [
+      {
+        id: importedSolicitanteTempId(importedName),
+        label: importedName,
+        clienteLabel: "Importado da planilha",
+        search: importedName,
+        disabled: true
+      },
+      ...rows
+    ];
+  }
+
+  function resolveImportedSolicitanteSelectValue(trecho, rows) {
+    if (trecho?.solicitanteRecordId) return trecho.solicitanteRecordId;
+    const importedName = String(trecho?.solicitanteNome || "").trim();
+    if (!importedName) return "";
+    const existing = resolvePassengerByName(importedName);
+    if (existing) return existing.id;
+    return rows.find((row) => row.id === importedSolicitanteTempId(importedName))?.id || "";
+  }
+
+  function importedSolicitanteTempId(name) {
+    return `__imported_solicitante__:${normalize(name)}`;
+  }
+
+  function isImportedSolicitanteTempId(value) {
+    return String(value || "").startsWith("__imported_solicitante__:");
+  }
+
+  function resolvePassengerByName(name) {
+    const normalizedName = normalize(name);
+    if (!normalizedName) return null;
+    return state.passageiros.find((passenger) => normalize(passenger.label) === normalizedName) || null;
+  }
+
   function buildImportPassengerRow(passenger, index, options = {}) {
     const isEditable = !!options.editable;
+    const displayName = normalizePassengerDisplayName(passenger.nome || passenger.passageiroLabel) || "Passageiro";
     const row = document.createElement("div");
-    row.className = `import-passenger is-${passenger.matchStatus || "pending"}`;
+    row.className = `import-passenger import-passenger-row passenger-row is-${passenger.matchStatus || "pending"}`;
     row.classList.toggle("is-locked", !isEditable);
     row.dataset.passengerIndex = String(index);
-    const fields = document.createElement("div");
-    fields.className = "import-passenger-fields";
-    fields.append(
-      buildPassengerImportInput("Passageiro", "nome", passenger.nome),
-      buildPassengerImportInput("Telefone", "telefone", passenger.telefone),
-      buildPassengerImportInput("CR", "centroCusto", passenger.centroCusto),
-      buildPassengerImportInput("Origem", "origem", passenger.origem),
-      buildPassengerImportInput("Destino", "destino", passenger.destino)
-    );
+
+    const label = document.createElement("div");
+    label.className = "row-label";
+    const rowIndex = document.createElement("span");
+    rowIndex.className = "row-index";
+    rowIndex.textContent = String(index + 1).padStart(2, "0");
+    rowIndex.setAttribute("aria-hidden", "true");
+    const titleWrap = document.createElement("span");
+    titleWrap.className = "row-title-wrap";
+    const rowTitle = document.createElement("button");
+    rowTitle.type = "button";
+    rowTitle.className = "row-title passenger-name-button import-passenger-name-button";
+    rowTitle.textContent = displayName;
+    rowTitle.title = "Ver detalhes do passageiro";
+    rowTitle.setAttribute("aria-label", `${displayName}: detalhes`);
+    const statusDot = document.createElement("span");
+    statusDot.className = "import-passenger-status-dot";
+    statusDot.title = importedPassengerStatusLabel(passenger);
+    statusDot.setAttribute("aria-label", importedPassengerStatusLabel(passenger));
+    const rowPreview = document.createElement("div");
+    rowPreview.className = "passenger-preview";
+    rowPreview.setAttribute("role", "status");
+    rowPreview.setAttribute("aria-live", "polite");
+    rowPreview.setAttribute("aria-hidden", "true");
+    renderPassengerPreview(rowPreview, importedPassengerPreviewRecord(passenger));
+    titleWrap.append(rowTitle, statusDot, rowPreview);
+    label.append(rowIndex, titleWrap);
 
     const decision = document.createElement("div");
-    decision.className = "import-passenger-decision";
+    decision.className = "import-passenger-decision import-passenger-compact-actions";
     const status = document.createElement("strong");
     status.textContent = importedPassengerStatusLabel(passenger);
     decision.appendChild(status);
-    const removeButton = document.createElement("button");
-    removeButton.type = "button";
-    removeButton.className = "text-action danger import-passenger-remove";
-    removeButton.dataset.importAction = "remove-import-passenger";
-    removeButton.textContent = "Remover";
-    removeButton.disabled = !isEditable;
-    removeButton.title = isEditable ? "" : "Habilite edição para remover passageiro.";
-    decision.appendChild(removeButton);
+    if (isEditable) {
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "text-action danger import-passenger-remove";
+      removeButton.dataset.importAction = "remove-import-passenger";
+      removeButton.textContent = "Remover";
+      removeButton.title = `Remover ${displayName}`;
+      removeButton.setAttribute("aria-label", `Remover ${displayName}`);
+      decision.appendChild(removeButton);
+    }
 
-    if (passenger.matchCandidates?.length) {
+    if (isEditable && passenger.matchCandidates?.length) {
       passenger.matchCandidates.slice(0, 3).forEach((candidate) => {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "text-action import-candidate";
         button.dataset.importAction = "use-existing-passenger";
         button.dataset.passengerId = candidate.passenger.id;
-        button.textContent = `Usar ${candidate.passenger.label}`;
-        button.disabled = !isEditable;
-        button.title = isEditable ? "" : "Habilite edição para alterar passageiro.";
+        button.textContent = `Usar ${normalizePassengerDisplayName(candidate.passenger.label) || candidate.passenger.label}`;
+        button.title = "Usar cadastro existente";
         decision.appendChild(button);
       });
       const createButton = document.createElement("button");
@@ -7284,17 +7347,47 @@
       createButton.className = "text-action danger";
       createButton.dataset.importAction = "create-new-passenger";
       createButton.textContent = "Criar novo";
-      createButton.disabled = !isEditable;
-      createButton.title = isEditable ? "" : "Habilite edição para alterar passageiro.";
+      createButton.title = "Criar cadastro novo para este passageiro";
       decision.appendChild(createButton);
     }
 
-    row.append(fields, decision);
+    row.append(label);
+    if (decision.querySelector("button")) {
+      row.append(decision);
+    }
     return row;
+  }
+
+  function importedPassengerPreviewRecord(passenger) {
+    const existing = importedResolvedPassenger(passenger);
+    const importClient = getImportClient();
+    return {
+      ...(existing || {}),
+      id: existing?.id || passenger.passageiroId || "",
+      label: normalizePassengerDisplayName(existing?.label || passenger.passageiroLabel || passenger.nome) || "Passageiro",
+      telefone: existing?.telefone || passenger.telefone || "",
+      email: existing?.email || "",
+      clienteLabel: existing?.clienteLabel || importClient?.label || CONFIG.importDefaults.clienteLabel || "",
+      cargo: existing?.cargo || "",
+      departamento: existing?.departamento || "",
+      cr: existing?.cr || passenger.centroCusto || "",
+      preferencias: existing?.preferencias || "",
+      tipoVeiculoLabel: existing?.tipoVeiculoLabel || "",
+      endereco: existing?.endereco || "",
+      origem: passenger.origem || "",
+      destino: passenger.destino || "",
+      importStatus: importedPassengerStatusLabel(passenger),
+      idioma: existing?.idioma || "",
+      sexo: existing?.sexo || "",
+      classificacao: existing?.classificacao || ""
+    };
   }
 
   function buildPassengerImportInput(label, field, value) {
     const wrap = document.createElement("label");
+    const fieldClass = String(field || "").replace(/([a-z0-9])([A-Z])/g, "$1-$2").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    wrap.className = `import-passenger-field import-passenger-field--${fieldClass}`;
+    wrap.dataset.importPassengerInput = field;
     wrap.dataset.importCopy = "1";
     wrap.dataset.copyLabel = label;
     const span = document.createElement("span");
@@ -7613,8 +7706,15 @@
       }
       return;
     }
-    if (field === "valor") {
-      trecho.valor = value === "" ? null : Number(value);
+    if (field === "solicitanteRecordId") {
+      if (isImportedSolicitanteTempId(value)) return;
+      const selected = getPassengerById(value);
+      trecho.solicitanteRecordId = selected?.id || "";
+      trecho.solicitanteRecordLabel = selected?.label || "";
+      trecho.solicitanteNome = selected?.label || "";
+      if (event.type === "change") {
+        window.setTimeout(renderImportReview, 0);
+      }
       return;
     }
     trecho[field] = value;
@@ -7649,7 +7749,7 @@
       setSelectValue(el.statusFaturamento, el.statusFaturamento.value || findOptionValue("statusFaturamento", "Pendente"));
       setFieldValue(el.trajeto, context.trajeto);
       setFieldValue(el.destino, trecho.destino || "");
-      setFieldValue(el.cotacao, formatCurrencyDisplayValue(trecho.valor ?? ""));
+      setFieldValue(el.cotacao, "");
       setFieldValue(el.cr, firstImportedCr(trecho));
       state.obs.motorista = trecho.observacaoOperacional || "";
       state.obs.interna = `ID externo: ${trecho.programacao}`;
@@ -7917,7 +8017,6 @@
       [f.email]: "",
       [f.trajeto]: context.trajeto,
       [f.paxView]: context.passageirosTelefones,
-      [f.cotacao]: Number.isFinite(Number(trecho.valor)) ? Number(trecho.valor) : null,
       [f.receber]: false,
       [f.cr]: firstImportedCr(trecho)
     };
