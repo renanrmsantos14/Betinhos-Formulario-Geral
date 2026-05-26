@@ -157,6 +157,28 @@ const minimalColumnPrograms = buildImportPrograms(normalizeImportedRows([
 assert.equal(minimalColumnPrograms.length, 1, "planilha com apenas colunas essenciais deve importar a PG");
 assert.equal(minimalColumnPrograms[0].trechos.length, 1, "planilha com colunas opcionais ausentes deve criar OS");
 assert.equal(minimalColumnPrograms[0].trechos[0].passageiros[0].nome, "FULANO TESTE", "linha minima deve preservar passageiro");
+const normalizedEmailRows = normalizeImportedRows([
+  {
+    "Nome Passageiro": "FULANO EMAIL",
+    "Email Passageiro": "FULANO.EMAIL@EXEMPLO.COM "
+  }
+]);
+assert.equal(normalizedEmailRows[0].email, "fulano.email@exemplo.com", "email opcional do passageiro deve ser normalizado");
+const passengerEmailRows = [{
+  sourceRow: 2,
+  programacao: "PGEMAIL/1",
+  data: "20/05/2026",
+  dataIso: "2026-05-20",
+  horario: "07:30",
+  origem: "Casa Fulano",
+  origemKey: "casa fulano",
+  destino: "Aeroporto de Congonhas",
+  destinoKey: "aeroporto de congonhas",
+  nomePassageiro: "FULANO EMAIL",
+  email: normalizedEmailRows[0].email
+}];
+const passengerEmailTrecho = buildImportPrograms(passengerEmailRows)[0].trechos[0];
+assert.equal(passengerEmailTrecho.passageiros[0].email, "fulano.email@exemplo.com", "email importado deve chegar ao passageiro do trecho");
 const valueColumnRows = normalizeImportedRows([
   {
     "Data da Viagem (inicial)": "20/05/2026",

@@ -93,6 +93,7 @@
       tipoTransporteExterno: cell(row, "Tipo Transporte"),
       nomePassageiro: normalizePersonName(cell(row, "Nome Passageiro")),
       documento: firstFilled(row, ["CPF", "Passaporte", "RG", "CNH"]),
+      email: normalizeEmail(firstFilled(row, ["Email", "E-mail", "Email Passageiro", "E-mail Passageiro"])),
       telefone: normalizePhone(firstFilled(row, ["Tel Cel.", "Tel Res."])),
       telefoneResidencial: normalizePhone(cell(row, "Tel Res.")),
       telefoneCelular: normalizePhone(cell(row, "Tel Cel.")),
@@ -247,6 +248,7 @@
       sourceRow: row.sourceRow,
       nome: row.nomePassageiro,
       telefone: row.telefone,
+      email: row.email,
       documento: row.documento,
       centroCusto: row.centroCusto,
       solicitanteNome: row.solicitanteNome,
@@ -940,6 +942,7 @@
       tipoTransporteExterno: row.tipoTransporteExterno,
       nomePassageiro: row.nomePassageiro,
       documento: row.documento,
+      email: row.email,
       telefone: row.telefone,
       telefoneResidencial: row.telefoneResidencial,
       telefoneCelular: row.telefoneCelular,
@@ -1158,6 +1161,7 @@
       sourceRow: line?.sourceRow || "",
       nome: line?.nomePassageiro || source?.nome || "",
       telefone: line?.telefone || source?.telefone || "",
+      email: line?.email || source?.email || "",
       documento: line?.documento || source?.documento || "",
       centroCusto: line?.centroCusto || source?.centroCusto || "",
       solicitanteNome: line?.solicitanteNome || source?.solicitanteNome || "",
@@ -1175,12 +1179,14 @@
   function findSourcePassengerForImportedLine(line, sourcePassengers = []) {
     const name = normalizeText(line?.nomePassageiro);
     const phone = normalizePhone(line?.telefone);
+    const email = normalizeEmail(line?.email);
     const document = normalizeText(line?.documento);
     return (sourcePassengers || []).find((passenger) => {
       const sameName = name && normalizeText(passenger?.nome) === name;
       const samePhone = phone && normalizePhone(passenger?.telefone) === phone;
+      const sameEmail = email && normalizeEmail(passenger?.email) === email;
       const sameDocument = document && normalizeText(passenger?.documento) === document;
-      return (sameName && (samePhone || sameDocument || (!phone && !document))) || samePhone || sameDocument;
+      return (sameName && (samePhone || sameEmail || sameDocument || (!phone && !email && !document))) || samePhone || sameEmail || sameDocument;
     }) || null;
   }
 
@@ -1223,6 +1229,10 @@
 
   function normalizeCode(value) {
     return String(value || "").trim().toUpperCase();
+  }
+
+  function normalizeEmail(value) {
+    return String(value || "").trim().toLowerCase();
   }
 
   function normalizeText(value) {
