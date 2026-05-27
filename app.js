@@ -6905,8 +6905,16 @@
         activeFilter
       }));
     }
+    initializeImportReviewControls();
     syncDateTimeFieldRowWidths();
     syncImportedPassengerNameColumnWidths();
+  }
+
+  function initializeImportReviewControls() {
+    el.importReviewPrograms?.querySelectorAll("select").forEach((select) => {
+      ensureCustomSelect(select);
+      refreshCustomSelect(select);
+    });
   }
 
   function getImportProgramsByReviewFilter(programs, filter) {
@@ -7416,9 +7424,12 @@
       const actions = document.createElement("div");
       actions.className = "import-inspector-actions";
       if (isDuplicated) actions.classList.add("duplicado");
-      const editToggle = buildImportEditToggle(selected.program.programacao, selected.trecho.key, isEditing, isDuplicated);
+      const canEditSelectedTrecho = canEditImportedTrechoStatus(reviewStatus) && !isDuplicated;
+      const editToggle = canEditSelectedTrecho
+        ? buildImportEditToggle(selected.program.programacao, selected.trecho.key, isEditing, false)
+        : null;
       const reviewActions = buildImportInspectorReviewActions(selected.program.programacao, selected.trecho.key, selected.trecho, normalizeImportedReviewStatus(selected.trecho), isDuplicated);
-      actions.append(editToggle, ...reviewActions);
+      actions.append(...[editToggle, ...reviewActions].filter(Boolean));
       inspectorHead.append(title, actions);
       inspector.append(inspectorHead, buildImportTrechoCard(selected.program, selected.trecho, selected.program.trechos.indexOf(selected.trecho), {
         editable: isEditing
@@ -7436,6 +7447,13 @@
 
     shell.append(list, inspector);
     return shell;
+  }
+
+  function canEditImportedTrechoStatus(reviewStatus) {
+    const statuses = importReviewStatuses();
+    return reviewStatus !== statuses.CONFIRMED
+      && reviewStatus !== statuses.IGNORED
+      && reviewStatus !== statuses.SAVED;
   }
 
   function buildImportServiceListEmpty(activeFilter) {
@@ -7582,12 +7600,12 @@
     fieldStack.append(
       buildImportInput("Data e hora", "dataHora", importedTrechoDateTimeLocal(trecho), "datetime-local"),
       buildImportInput("Horário previsto de retorno", "retornoPrevisto", importedTrechoReturnDateTimeLocal(trecho), "datetime-local"),
-      buildImportSelect("Tipo de serviço", "tipoServicoValue", state.options.tipoServico, trecho.tipoServicoValue || findOptionValue("tipoServico", trecho.tipoServicoSugerido)),
-      buildImportSelect("Tipo de veículo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido)),
+      buildImportSelect("Tipo do serviço", "tipoServicoValue", sortByLabel(state.options.tipoServico), trecho.tipoServicoValue || findOptionValue("tipoServico", trecho.tipoServicoSugerido)),
+      buildImportSelect("Tipo do veículo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido)),
       buildImportTextarea("Endereço de saída", "origem", trecho.origem),
       buildImportTextarea("Destino", "destino", trecho.destino),
       buildImportTextarea("Trajeto", "trajetoCidades", trecho.trajetoCidades || composeImportTrajeto(trecho)),
-      buildImportTextarea("Observação", "observacaoOperacional", trecho.observacaoOperacional)
+      buildImportTextarea("Observação operacional", "observacaoOperacional", trecho.observacaoOperacional, { obs: true })
     );
 
     const passengerList = document.createElement("div");
@@ -7640,8 +7658,6 @@
       actions.append(buildImportAction("Salvo", "noop", true));
     } else if (isDuplicated) {
       actions.append(buildImportAction("Bloqueado", "noop", true));
-    } else if (reviewStatus === importReviewStatuses().IGNORED) {
-      actions.append(buildImportAction("Revisar novamente", "review-pending"));
     }
 
     const blocks = [head];
@@ -7663,7 +7679,7 @@
     if (reviewStatus === statuses.SAVED) {
       return [attachContext(buildImportAction("Salvo", "noop", true))];
     }
-    if (reviewStatus === statuses.IGNORED) {
+    if (reviewStatus === statuses.IGNORED || reviewStatus === statuses.CONFIRMED) {
       return [attachContext(buildImportAction("Revisar", "review-pending"))];
     }
     const validateButton = attachContext(buildImportAction("Validar", "confirm-review", !!isDuplicated));
@@ -7847,9 +7863,6 @@
     if (status === statuses.BLOCKED && trecho.reviewBlockReason) {
       output.unshift(`Bloqueado: ${trecho.reviewBlockReason}`);
     }
-    if (status === statuses.IGNORED) {
-      output.unshift("Ignorado: este trecho não será salvo.");
-    }
     return Array.from(new Set(output));
   }
 
@@ -7878,9 +7891,10 @@
     return wrap;
   }
 
-  function buildImportTextarea(label, field, value) {
+  function buildImportTextarea(label, field, value, options = {}) {
     const wrap = document.createElement("label");
     wrap.className = "field import-field span-2 is-wide is-textarea";
+    if (options.obs) wrap.classList.add("obs-field");
     wrap.dataset.importInputType = "textarea";
     wrap.dataset.importCopy = "1";
     wrap.dataset.copyLabel = label;
@@ -7888,6 +7902,10 @@
     span.textContent = label;
     const textarea = document.createElement("textarea");
     textarea.rows = 2;
+    if (options.obs) {
+      textarea.maxLength = 500;
+      textarea.placeholder = "Ex.: preferir veículo com água, sem paradas, rota direta.";
+    }
     textarea.value = value ?? "";
     textarea.dataset.importField = field;
     wrap.append(span, textarea);
@@ -7896,13 +7914,15 @@
 
   function buildImportSelect(label, field, options, value) {
     const wrap = document.createElement("label");
-    wrap.className = "field import-field is-select";
+    wrap.className = "field required import-field is-select";
     wrap.dataset.importInputType = "select";
     wrap.dataset.importCopy = "1";
     wrap.dataset.copyLabel = label;
     const span = document.createElement("span");
     span.textContent = label;
     const select = document.createElement("select");
+    select.required = true;
+    select.setAttribute("aria-required", "true");
     select.dataset.importField = field;
     select.innerHTML = '<option value=""></option>';
     (options || []).forEach((optionRow) => {
@@ -8621,10 +8641,11 @@
         trecho.reviewBlockReason = issues[0] || "";
       }
       if (issues.length) {
-        toast(`Bloqueado: ${issues[0]}`, "error", 8000);
+        toast(`Não validado: ${issues[0]}`, "error", 8000);
       } else {
-        toast("Trecho confirmado para agendamento.", "success", 4000);
+        toast("Serviço validado. Ele será incluído ao salvar a importação.", "success", 4500);
       }
+      setImportedTrechoEditMode(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey, false);
       renderImportReviewPreservingGallery();
       return;
     }
@@ -8635,7 +8656,9 @@
         trecho.reviewStatus = importReviewStatuses().IGNORED;
         trecho.reviewBlockReason = "";
       }
+      setImportedTrechoEditMode(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey, false);
       renderImportReviewPreservingGallery();
+      toast("Serviço ignorado. Ele não será salvo nesta importação.", "error", 4500);
       return;
     }
     if (action.dataset.importAction === "review-pending") {
@@ -8645,6 +8668,9 @@
         trecho.reviewStatus = importReviewStatuses().PENDING;
         trecho.reviewBlockReason = "";
       }
+      state.importReview.selectedProgramacao = trechoCard.dataset.programacao;
+      state.importReview.selectedTrechoKey = trechoCard.dataset.trechoKey;
+      setImportedTrechoEditMode(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey, false);
       renderImportReviewPreservingGallery();
       return;
     }
