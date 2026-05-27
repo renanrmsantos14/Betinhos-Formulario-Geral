@@ -333,7 +333,7 @@
       "source_file": "app.js",
       "source_location": "L705",
       "id": "tela_formul\u00e1rio_geral_app_hydratepassengerselectionrecencyfromrows",
-      "community": 15,
+      "community": 18,
       "norm_label": "hydratepassengerselectionrecencyfromrows()"
     },
     {
@@ -441,7 +441,7 @@
       "source_file": "app.js",
       "source_location": "L1012",
       "id": "tela_formul\u00e1rio_geral_app_addclassifpresent",
-      "community": 70,
+      "community": 24,
       "norm_label": "addclassifpresent()"
     },
     {
@@ -576,7 +576,7 @@
       "source_file": "app.js",
       "source_location": "L1431",
       "id": "tela_formul\u00e1rio_geral_app_closeallcustomselects",
-      "community": 20,
+      "community": 19,
       "norm_label": "closeallcustomselects()"
     },
     {
@@ -585,7 +585,7 @@
       "source_file": "app.js",
       "source_location": "L1437",
       "id": "tela_formul\u00e1rio_geral_app_handleglobalcustomselectclick",
-      "community": 20,
+      "community": 19,
       "norm_label": "handleglobalcustomselectclick()"
     },
     {
@@ -603,7 +603,7 @@
       "source_file": "app.js",
       "source_location": "L1448",
       "id": "tela_formul\u00e1rio_geral_app_handleglobalcustomselectkeydown",
-      "community": 20,
+      "community": 19,
       "norm_label": "handleglobalcustomselectkeydown()"
     },
     {
@@ -657,7 +657,7 @@
       "source_file": "app.js",
       "source_location": "L1575",
       "id": "tela_formul\u00e1rio_geral_app_searchpassengersserver",
-      "community": 5,
+      "community": 72,
       "norm_label": "searchpassengersserver()"
     },
     {
@@ -666,7 +666,7 @@
       "source_file": "app.js",
       "source_location": "L1615",
       "id": "tela_formul\u00e1rio_geral_app_searchpassengerslocal",
-      "community": 5,
+      "community": 72,
       "norm_label": "searchpassengerslocal()"
     },
     {
@@ -684,7 +684,7 @@
       "source_file": "app.js",
       "source_location": "L1654",
       "id": "tela_formul\u00e1rio_geral_app_mergepassengerrecords",
-      "community": 5,
+      "community": 70,
       "norm_label": "mergepassengerrecords()"
     },
     {
@@ -693,7 +693,7 @@
       "source_file": "app.js",
       "source_location": "L1671",
       "id": "tela_formul\u00e1rio_geral_app_escapeodatastring",
-      "community": 5,
+      "community": 72,
       "norm_label": "escapeodatastring()"
     },
     {
@@ -765,7 +765,7 @@
       "source_file": "app.js",
       "source_location": "L1775",
       "id": "tela_formul\u00e1rio_geral_app_normalizecodevalue",
-      "community": 5,
+      "community": 40,
       "norm_label": "normalizecodevalue()"
     },
     {
@@ -1143,7 +1143,7 @@
       "source_file": "app.js",
       "source_location": "L2855",
       "id": "tela_formul\u00e1rio_geral_app_hydratemockcurrentrecord",
-      "community": 15,
+      "community": 18,
       "norm_label": "hydratemockcurrentrecord()"
     },
     {
@@ -1161,7 +1161,7 @@
       "source_file": "app.js",
       "source_location": "L2925",
       "id": "tela_formul\u00e1rio_geral_app_retrieveall",
-      "community": 15,
+      "community": 18,
       "norm_label": "retrieveall()"
     },
     {
@@ -1170,7 +1170,7 @@
       "source_file": "app.js",
       "source_location": "L2937",
       "id": "tela_formul\u00e1rio_geral_app_loadcurrentrecord",
-      "community": 15,
+      "community": 18,
       "norm_label": "loadcurrentrecord()"
     },
     {
@@ -1206,7 +1206,7 @@
       "source_file": "app.js",
       "source_location": "L3108",
       "id": "tela_formul\u00e1rio_geral_app_renderchoiceselect",
-      "community": 24,
+      "community": 71,
       "norm_label": "renderchoiceselect()"
     },
     {
@@ -1215,7 +1215,7 @@
       "source_file": "app.js",
       "source_location": "L3125",
       "id": "tela_formul\u00e1rio_geral_app_renderlookupselect",
-      "community": 71,
+      "community": 77,
       "norm_label": "renderlookupselect()"
     },
     {
@@ -1233,7 +1233,7 @@
       "source_file": "app.js",
       "source_location": "L3159",
       "id": "tela_formul\u00e1rio_geral_app_getpassengereditfields",
-      "community": 75,
+      "community": 5,
       "norm_label": "getpassengereditfields()"
     },
     {
@@ -1242,7 +1242,7 @@
       "source_file": "app.js",
       "source_location": "L3179",
       "id": "tela_formul\u00e1rio_geral_app_getpassengereditfield",
-      "community": 75,
+      "community": 5,
       "norm_label": "getpassengereditfield()"
     },
     {
@@ -1251,7 +1251,7 @@
       "source_file": "app.js",
       "source_location": "L3183",
       "id": "tela_formul\u00e1rio_geral_app_getimportedpassengereditfields",
-      "community": 75,
+      "community": 5,
       "norm_label": "getimportedpassengereditfields()"
     },
     {
@@ -1260,7 +1260,7 @@
       "source_file": "app.js",
       "source_location": "L3192",
       "id": "tela_formul\u00e1rio_geral_app_getimportedpassengereditfield",
-      "community": 75,
+      "community": 5,
       "norm_label": "getimportedpassengereditfield()"
     },
     {
@@ -1269,7 +1269,7 @@
       "source_file": "app.js",
       "source_location": "L3196",
       "id": "tela_formul\u00e1rio_geral_app_getimportedsolicitanteeditfields",
-      "community": 75,
+      "community": 5,
       "norm_label": "getimportedsolicitanteeditfields()"
     },
     {
@@ -1278,7 +1278,7 @@
       "source_file": "app.js",
       "source_location": "L3202",
       "id": "tela_formul\u00e1rio_geral_app_getimportedsolicitanteeditfield",
-      "community": 75,
+      "community": 5,
       "norm_label": "getimportedsolicitanteeditfield()"
     },
     {
@@ -1323,7 +1323,7 @@
       "source_file": "app.js",
       "source_location": "L3327",
       "id": "tela_formul\u00e1rio_geral_app_renderpassengereditfields",
-      "community": 75,
+      "community": 5,
       "norm_label": "renderpassengereditfields()"
     },
     {
@@ -1332,7 +1332,7 @@
       "source_file": "app.js",
       "source_location": "L3331",
       "id": "tela_formul\u00e1rio_geral_app_renderimportedpassengereditfields",
-      "community": 75,
+      "community": 5,
       "norm_label": "renderimportedpassengereditfields()"
     },
     {
@@ -1350,7 +1350,7 @@
       "source_file": "app.js",
       "source_location": "L3339",
       "id": "tela_formul\u00e1rio_geral_app_renderpassengereditfieldswithschema",
-      "community": 75,
+      "community": 5,
       "norm_label": "renderpassengereditfieldswithschema()"
     },
     {
@@ -1359,7 +1359,7 @@
       "source_file": "app.js",
       "source_location": "L3370",
       "id": "tela_formul\u00e1rio_geral_app_resolvepassengereditlayout",
-      "community": 75,
+      "community": 5,
       "norm_label": "resolvepassengereditlayout()"
     },
     {
@@ -1530,7 +1530,7 @@
       "source_file": "app.js",
       "source_location": "L3764",
       "id": "tela_formul\u00e1rio_geral_app_closepassengereditpopup",
-      "community": 20,
+      "community": 15,
       "norm_label": "closepassengereditpopup()"
     },
     {
@@ -1539,7 +1539,7 @@
       "source_file": "app.js",
       "source_location": "L3779",
       "id": "tela_formul\u00e1rio_geral_app_renderscheduledrafts",
-      "community": 77,
+      "community": 15,
       "norm_label": "renderscheduledrafts()"
     },
     {
@@ -1926,7 +1926,7 @@
       "source_file": "app.js",
       "source_location": "L4625",
       "id": "tela_formul\u00e1rio_geral_app_rendersavelog",
-      "community": 18,
+      "community": 40,
       "norm_label": "rendersavelog()"
     },
     {
@@ -1935,7 +1935,7 @@
       "source_file": "app.js",
       "source_location": "L4628",
       "id": "tela_formul\u00e1rio_geral_app_clearsavelog",
-      "community": 18,
+      "community": 40,
       "norm_label": "clearsavelog()"
     },
     {
@@ -1944,7 +1944,7 @@
       "source_file": "app.js",
       "source_location": "L4633",
       "id": "tela_formul\u00e1rio_geral_app_addsavelog",
-      "community": 18,
+      "community": 40,
       "norm_label": "addsavelog()"
     },
     {
@@ -1998,7 +1998,7 @@
       "source_file": "app.js",
       "source_location": "L4711",
       "id": "tela_formul\u00e1rio_geral_app_savedraftsnapshot",
-      "community": 20,
+      "community": 15,
       "norm_label": "savedraftsnapshot()"
     },
     {
@@ -2034,7 +2034,7 @@
       "source_file": "app.js",
       "source_location": "L4747",
       "id": "tela_formul\u00e1rio_geral_app_globalhistorycantrack",
-      "community": 2,
+      "community": 79,
       "norm_label": "globalhistorycantrack()"
     },
     {
@@ -2043,7 +2043,7 @@
       "source_file": "app.js",
       "source_location": "L4751",
       "id": "tela_formul\u00e1rio_geral_app_shouldtrackglobalhistorytarget",
-      "community": 2,
+      "community": 79,
       "norm_label": "shouldtrackglobalhistorytarget()"
     },
     {
@@ -2061,7 +2061,7 @@
       "source_file": "app.js",
       "source_location": "L4770",
       "id": "tela_formul\u00e1rio_geral_app_handleglobalhistorybeforechange",
-      "community": 2,
+      "community": 79,
       "norm_label": "handleglobalhistorybeforechange()"
     },
     {
@@ -2070,7 +2070,7 @@
       "source_file": "app.js",
       "source_location": "L4783",
       "id": "tela_formul\u00e1rio_geral_app_isglobalhistorymutationkey",
-      "community": 2,
+      "community": 79,
       "norm_label": "isglobalhistorymutationkey()"
     },
     {
@@ -2079,7 +2079,7 @@
       "source_file": "app.js",
       "source_location": "L4790",
       "id": "tela_formul\u00e1rio_geral_app_globalhistorylabelfromtarget",
-      "community": 2,
+      "community": 79,
       "norm_label": "globalhistorylabelfromtarget()"
     },
     {
@@ -2097,7 +2097,7 @@
       "source_file": "app.js",
       "source_location": "L4821",
       "id": "tela_formul\u00e1rio_geral_app_restoreglobalhistorysnapshot",
-      "community": 20,
+      "community": 15,
       "norm_label": "restoreglobalhistorysnapshot()"
     },
     {
@@ -2124,7 +2124,7 @@
       "source_file": "app.js",
       "source_location": "L4876",
       "id": "tela_formul\u00e1rio_geral_app_createdraftsnapshot",
-      "community": 20,
+      "community": 75,
       "norm_label": "createdraftsnapshot()"
     },
     {
@@ -2259,7 +2259,7 @@
       "source_file": "app.js",
       "source_location": "L5239",
       "id": "tela_formul\u00e1rio_geral_app_emptypassenger",
-      "community": 77,
+      "community": 18,
       "norm_label": "emptypassenger()"
     },
     {
@@ -2268,7 +2268,7 @@
       "source_file": "app.js",
       "source_location": "L5250",
       "id": "tela_formul\u00e1rio_geral_app_nextpassengerrowkey",
-      "community": 77,
+      "community": 18,
       "norm_label": "nextpassengerrowkey()"
     },
     {
@@ -2331,7 +2331,7 @@
       "source_file": "app.js",
       "source_location": "L5338",
       "id": "tela_formul\u00e1rio_geral_app_getavailablepassengers",
-      "community": 74,
+      "community": 72,
       "norm_label": "getavailablepassengers()"
     },
     {
@@ -2340,7 +2340,7 @@
       "source_file": "app.js",
       "source_location": "L5342",
       "id": "tela_formul\u00e1rio_geral_app_getavailablepassengersfrom",
-      "community": 74,
+      "community": 72,
       "norm_label": "getavailablepassengersfrom()"
     },
     {
@@ -2349,7 +2349,7 @@
       "source_file": "app.js",
       "source_location": "L5360",
       "id": "tela_formul\u00e1rio_geral_app_openpassengerpicker",
-      "community": 74,
+      "community": 72,
       "norm_label": "openpassengerpicker()"
     },
     {
@@ -2358,7 +2358,7 @@
       "source_file": "app.js",
       "source_location": "L5374",
       "id": "tela_formul\u00e1rio_geral_app_closepassengerpicker",
-      "community": 77,
+      "community": 15,
       "norm_label": "closepassengerpicker()"
     },
     {
@@ -2376,7 +2376,7 @@
       "source_file": "app.js",
       "source_location": "L5393",
       "id": "tela_formul\u00e1rio_geral_app_renderpassengerpickerresults",
-      "community": 74,
+      "community": 72,
       "norm_label": "renderpassengerpickerresults()"
     },
     {
@@ -2385,7 +2385,7 @@
       "source_file": "app.js",
       "source_location": "L5446",
       "id": "tela_formul\u00e1rio_geral_app_renderpassengerpickerhint",
-      "community": 74,
+      "community": 72,
       "norm_label": "renderpassengerpickerhint()"
     },
     {
@@ -2421,7 +2421,7 @@
       "source_file": "app.js",
       "source_location": "L5561",
       "id": "tela_formul\u00e1rio_geral_app_addpassengerrow",
-      "community": 74,
+      "community": 72,
       "norm_label": "addpassengerrow()"
     },
     {
@@ -2493,7 +2493,7 @@
       "source_file": "app.js",
       "source_location": "L5654",
       "id": "tela_formul\u00e1rio_geral_app_syncrepeatdefaultdates",
-      "community": 22,
+      "community": 75,
       "norm_label": "syncrepeatdefaultdates()"
     },
     {
@@ -2511,7 +2511,7 @@
       "source_file": "app.js",
       "source_location": "L5675",
       "id": "tela_formul\u00e1rio_geral_app_createpassenger",
-      "community": 4,
+      "community": 40,
       "norm_label": "createpassenger()"
     },
     {
@@ -2520,7 +2520,7 @@
       "source_file": "app.js",
       "source_location": "L5767",
       "id": "tela_formul\u00e1rio_geral_app_clearpassengercreateform",
-      "community": 77,
+      "community": 15,
       "norm_label": "clearpassengercreateform()"
     },
     {
@@ -2529,7 +2529,7 @@
       "source_file": "app.js",
       "source_location": "L5787",
       "id": "tela_formul\u00e1rio_geral_app_passengerformstate",
-      "community": 4,
+      "community": 40,
       "norm_label": "passengerformstate()"
     },
     {
@@ -2538,7 +2538,7 @@
       "source_file": "app.js",
       "source_location": "L5807",
       "id": "tela_formul\u00e1rio_geral_app_getactivepassengerstatusvalue",
-      "community": 4,
+      "community": 40,
       "norm_label": "getactivepassengerstatusvalue()"
     },
     {
@@ -2547,7 +2547,7 @@
       "source_file": "app.js",
       "source_location": "L5813",
       "id": "tela_formul\u00e1rio_geral_app_readpassengercreatecandidate",
-      "community": 4,
+      "community": 40,
       "norm_label": "readpassengercreatecandidate()"
     },
     {
@@ -2556,7 +2556,7 @@
       "source_file": "app.js",
       "source_location": "L5820",
       "id": "tela_formul\u00e1rio_geral_app_findpassengerduplicatecandidates",
-      "community": 5,
+      "community": 70,
       "norm_label": "findpassengerduplicatecandidates()"
     },
     {
@@ -2817,7 +2817,7 @@
       "source_file": "app.js",
       "source_location": "L6381",
       "id": "tela_formul\u00e1rio_geral_app_closeimportedpassengerpopupwithoutsave",
-      "community": 20,
+      "community": 19,
       "norm_label": "closeimportedpassengerpopupwithoutsave()"
     },
     {
@@ -2907,7 +2907,7 @@
       "source_file": "app.js",
       "source_location": "L6499",
       "id": "tela_formul\u00e1rio_geral_app_istexteditingtarget",
-      "community": 2,
+      "community": 79,
       "norm_label": "istexteditingtarget()"
     },
     {
@@ -2916,7 +2916,7 @@
       "source_file": "app.js",
       "source_location": "L6507",
       "id": "tela_formul\u00e1rio_geral_app_shouldhandleimporthistoryshortcut",
-      "community": 2,
+      "community": 79,
       "norm_label": "shouldhandleimporthistoryshortcut()"
     },
     {
@@ -2943,7 +2943,7 @@
       "source_file": "app.js",
       "source_location": "L6540",
       "id": "tela_formul\u00e1rio_geral_app_importreviewfilters",
-      "community": 18,
+      "community": 70,
       "norm_label": "importreviewfilters()"
     },
     {
@@ -2970,7 +2970,7 @@
       "source_file": "app.js",
       "source_location": "L6560",
       "id": "tela_formul\u00e1rio_geral_app_markimportedreviewpending",
-      "community": 70,
+      "community": 5,
       "norm_label": "markimportedreviewpending()"
     },
     {
@@ -2988,7 +2988,7 @@
       "source_file": "app.js",
       "source_location": "L6593",
       "id": "tela_formul\u00e1rio_geral_app_resolveimportedpassengermatches",
-      "community": 5,
+      "community": 70,
       "norm_label": "resolveimportedpassengermatches()"
     },
     {
@@ -2997,7 +2997,7 @@
       "source_file": "app.js",
       "source_location": "L6633",
       "id": "tela_formul\u00e1rio_geral_app_importedpassengercandidate",
-      "community": 5,
+      "community": 70,
       "norm_label": "importedpassengercandidate()"
     },
     {
@@ -3006,7 +3006,7 @@
       "source_file": "app.js",
       "source_location": "L6645",
       "id": "tela_formul\u00e1rio_geral_app_getimportclient",
-      "community": 5,
+      "community": 70,
       "norm_label": "getimportclient()"
     },
     {
@@ -3015,7 +3015,7 @@
       "source_file": "app.js",
       "source_location": "L6661",
       "id": "tela_formul\u00e1rio_geral_app_requireimportclient",
-      "community": 5,
+      "community": 70,
       "norm_label": "requireimportclient()"
     },
     {
@@ -3024,7 +3024,7 @@
       "source_file": "app.js",
       "source_location": "L6669",
       "id": "tela_formul\u00e1rio_geral_app_selectimportedexistingmatch",
-      "community": 5,
+      "community": 70,
       "norm_label": "selectimportedexistingmatch()"
     },
     {
@@ -3060,7 +3060,7 @@
       "source_file": "app.js",
       "source_location": "L6764",
       "id": "tela_formul\u00e1rio_geral_app_renderimportreview",
-      "community": 18,
+      "community": 70,
       "norm_label": "renderimportreview()"
     },
     {
@@ -3069,7 +3069,7 @@
       "source_file": "app.js",
       "source_location": "L6829",
       "id": "tela_formul\u00e1rio_geral_app_getimportprogramsbyreviewfilter",
-      "community": 18,
+      "community": 70,
       "norm_label": "getimportprogramsbyreviewfilter()"
     },
     {
@@ -3078,7 +3078,7 @@
       "source_file": "app.js",
       "source_location": "L6844",
       "id": "tela_formul\u00e1rio_geral_app_getimportprogramsforreview",
-      "community": 18,
+      "community": 70,
       "norm_label": "getimportprogramsforreview()"
     },
     {
@@ -3096,7 +3096,7 @@
       "source_file": "app.js",
       "source_location": "L6866",
       "id": "tela_formul\u00e1rio_geral_app_getvalidatedimporttrechos",
-      "community": 2,
+      "community": 70,
       "norm_label": "getvalidatedimporttrechos()"
     },
     {
@@ -3114,7 +3114,7 @@
       "source_file": "app.js",
       "source_location": "L6883",
       "id": "tela_formul\u00e1rio_geral_app_hastext",
-      "community": 15,
+      "community": 75,
       "norm_label": "hastext()"
     },
     {
@@ -3123,7 +3123,7 @@
       "source_file": "app.js",
       "source_location": "L6889",
       "id": "tela_formul\u00e1rio_geral_app_hascommondraftcontent",
-      "community": 15,
+      "community": 75,
       "norm_label": "hascommondraftcontent()"
     },
     {
@@ -3132,7 +3132,7 @@
       "source_file": "app.js",
       "source_location": "L6900",
       "id": "tela_formul\u00e1rio_geral_app_renderimportreviewfilters",
-      "community": 2,
+      "community": 70,
       "norm_label": "renderimportreviewfilters()"
     },
     {
@@ -3150,7 +3150,7 @@
       "source_file": "app.js",
       "source_location": "L6933",
       "id": "tela_formul\u00e1rio_geral_app_buildimporthistorybutton",
-      "community": 2,
+      "community": 20,
       "norm_label": "buildimporthistorybutton()"
     },
     {
@@ -3159,7 +3159,7 @@
       "source_file": "app.js",
       "source_location": "L6946",
       "id": "tela_formul\u00e1rio_geral_app_importhistoryiconsvg",
-      "community": 2,
+      "community": 20,
       "norm_label": "importhistoryiconsvg()"
     },
     {
@@ -3168,7 +3168,7 @@
       "source_file": "app.js",
       "source_location": "L6955",
       "id": "tela_formul\u00e1rio_geral_app_clearallformscompletely",
-      "community": 77,
+      "community": 15,
       "norm_label": "clearallformscompletely()"
     },
     {
@@ -3204,7 +3204,7 @@
       "source_file": "app.js",
       "source_location": "L7038",
       "id": "tela_formul\u00e1rio_geral_app_buildimportreviewfilterbutton",
-      "community": 2,
+      "community": 70,
       "norm_label": "buildimportreviewfilterbutton()"
     },
     {
@@ -3213,7 +3213,7 @@
       "source_file": "app.js",
       "source_location": "L7055",
       "id": "tela_formul\u00e1rio_geral_app_renderimportglobalissues",
-      "community": 5,
+      "community": 70,
       "norm_label": "renderimportglobalissues()"
     },
     {
@@ -3418,7 +3418,7 @@
       "label": "buildImportInspectorReviewActions()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7575",
+      "source_location": "L7567",
       "id": "tela_formul\u00e1rio_geral_app_buildimportinspectorreviewactions",
       "community": 70,
       "norm_label": "buildimportinspectorreviewactions()"
@@ -3427,25 +3427,16 @@
       "label": "buildImportDecisionPanel()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7596",
+      "source_location": "L7588",
       "id": "tela_formul\u00e1rio_geral_app_buildimportdecisionpanel",
       "community": 70,
       "norm_label": "buildimportdecisionpanel()"
     },
     {
-      "label": "buildImportEditorSection()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L7667",
-      "id": "tela_formul\u00e1rio_geral_app_buildimporteditorsection",
-      "community": 70,
-      "norm_label": "buildimporteditorsection()"
-    },
-    {
       "label": "importedTrechoHasReturn()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7680",
+      "source_location": "L7659",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechohasreturn",
       "community": 70,
       "norm_label": "importedtrechohasreturn()"
@@ -3454,7 +3445,7 @@
       "label": "importedTrechoModeLabel()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7684",
+      "source_location": "L7663",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechomodelabel",
       "community": 70,
       "norm_label": "importedtrechomodelabel()"
@@ -3463,7 +3454,7 @@
       "label": "formatOperationalText()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7690",
+      "source_location": "L7669",
       "id": "tela_formul\u00e1rio_geral_app_formatoperationaltext",
       "community": 70,
       "norm_label": "formatoperationaltext()"
@@ -3472,7 +3463,7 @@
       "label": "importedTrechoWindowLabel()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7710",
+      "source_location": "L7689",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechowindowlabel",
       "community": 70,
       "norm_label": "importedtrechowindowlabel()"
@@ -3481,7 +3472,7 @@
       "label": "importedTrechoReturnLabel()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7717",
+      "source_location": "L7696",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechoreturnlabel",
       "community": 70,
       "norm_label": "importedtrechoreturnlabel()"
@@ -3490,7 +3481,7 @@
       "label": "formatImportedTrechoDateTimeLabel()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7722",
+      "source_location": "L7701",
       "id": "tela_formul\u00e1rio_geral_app_formatimportedtrechodatetimelabel",
       "community": 70,
       "norm_label": "formatimportedtrechodatetimelabel()"
@@ -3499,7 +3490,7 @@
       "label": "importPassengerCountLabel()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7726",
+      "source_location": "L7705",
       "id": "tela_formul\u00e1rio_geral_app_importpassengercountlabel",
       "community": 70,
       "norm_label": "importpassengercountlabel()"
@@ -3508,7 +3499,7 @@
       "label": "buildImportDuplicateLockNotice()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7731",
+      "source_location": "L7710",
       "id": "tela_formul\u00e1rio_geral_app_buildimportduplicatelocknotice",
       "community": 70,
       "norm_label": "buildimportduplicatelocknotice()"
@@ -3517,7 +3508,7 @@
       "label": "setImportedTrechoControlsMode()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7744",
+      "source_location": "L7723",
       "id": "tela_formul\u00e1rio_geral_app_setimportedtrechocontrolsmode",
       "community": 70,
       "norm_label": "setimportedtrechocontrolsmode()"
@@ -3526,7 +3517,7 @@
       "label": "importedTrechoReviewMeta()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7754",
+      "source_location": "L7733",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechoreviewmeta",
       "community": 70,
       "norm_label": "importedtrechoreviewmeta()"
@@ -3535,7 +3526,7 @@
       "label": "importedTrechoDisplayIssues()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7767",
+      "source_location": "L7746",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechodisplayissues",
       "community": 70,
       "norm_label": "importedtrechodisplayissues()"
@@ -3544,7 +3535,7 @@
       "label": "formatImportedDuplicateMatch()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7785",
+      "source_location": "L7764",
       "id": "tela_formul\u00e1rio_geral_app_formatimportedduplicatematch",
       "community": 70,
       "norm_label": "formatimportedduplicatematch()"
@@ -3553,7 +3544,7 @@
       "label": "buildImportInput()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7791",
+      "source_location": "L7770",
       "id": "tela_formul\u00e1rio_geral_app_buildimportinput",
       "community": 70,
       "norm_label": "buildimportinput()"
@@ -3562,7 +3553,7 @@
       "label": "buildImportTextarea()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7810",
+      "source_location": "L7789",
       "id": "tela_formul\u00e1rio_geral_app_buildimporttextarea",
       "community": 70,
       "norm_label": "buildimporttextarea()"
@@ -3571,7 +3562,7 @@
       "label": "buildImportSelect()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7826",
+      "source_location": "L7805",
       "id": "tela_formul\u00e1rio_geral_app_buildimportselect",
       "community": 70,
       "norm_label": "buildimportselect()"
@@ -3580,7 +3571,7 @@
       "label": "buildImportSolicitanteSection()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7848",
+      "source_location": "L7827",
       "id": "tela_formul\u00e1rio_geral_app_buildimportsolicitantesection",
       "community": 5,
       "norm_label": "buildimportsolicitantesection()"
@@ -3589,7 +3580,7 @@
       "label": "buildImportSolicitanteSelect()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7944",
+      "source_location": "L7923",
       "id": "tela_formul\u00e1rio_geral_app_buildimportsolicitanteselect",
       "community": 5,
       "norm_label": "buildimportsolicitanteselect()"
@@ -3598,7 +3589,7 @@
       "label": "buildImportPassengerAddSelect()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7964",
+      "source_location": "L7943",
       "id": "tela_formul\u00e1rio_geral_app_buildimportpassengeraddselect",
       "community": 71,
       "norm_label": "buildimportpassengeraddselect()"
@@ -3607,7 +3598,7 @@
       "label": "importedTrechoHasSolicitante()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7983",
+      "source_location": "L7962",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechohassolicitante",
       "community": 5,
       "norm_label": "importedtrechohassolicitante()"
@@ -3616,7 +3607,7 @@
       "label": "importedSolicitanteLookupRows()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7989",
+      "source_location": "L7968",
       "id": "tela_formul\u00e1rio_geral_app_importedsolicitantelookuprows",
       "community": 5,
       "norm_label": "importedsolicitantelookuprows()"
@@ -3625,7 +3616,7 @@
       "label": "importedSolicitanteCandidateRows()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L7997",
+      "source_location": "L7976",
       "id": "tela_formul\u00e1rio_geral_app_importedsolicitantecandidaterows",
       "community": 5,
       "norm_label": "importedsolicitantecandidaterows()"
@@ -3634,7 +3625,7 @@
       "label": "resolveImportedSolicitanteSelectValue()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8037",
+      "source_location": "L8016",
       "id": "tela_formul\u00e1rio_geral_app_resolveimportedsolicitanteselectvalue",
       "community": 5,
       "norm_label": "resolveimportedsolicitanteselectvalue()"
@@ -3643,7 +3634,7 @@
       "label": "importedSolicitanteTempId()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8046",
+      "source_location": "L8025",
       "id": "tela_formul\u00e1rio_geral_app_importedsolicitantetempid",
       "community": 5,
       "norm_label": "importedsolicitantetempid()"
@@ -3652,7 +3643,7 @@
       "label": "isImportedSolicitanteTempId()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8050",
+      "source_location": "L8029",
       "id": "tela_formul\u00e1rio_geral_app_isimportedsolicitantetempid",
       "community": 5,
       "norm_label": "isimportedsolicitantetempid()"
@@ -3661,7 +3652,7 @@
       "label": "importedSolicitantePersonFromValue()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8054",
+      "source_location": "L8033",
       "id": "tela_formul\u00e1rio_geral_app_importedsolicitantepersonfromvalue",
       "community": 5,
       "norm_label": "importedsolicitantepersonfromvalue()"
@@ -3670,7 +3661,7 @@
       "label": "importedPersonNameKey()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8076",
+      "source_location": "L8055",
       "id": "tela_formul\u00e1rio_geral_app_importedpersonnamekey",
       "community": 5,
       "norm_label": "importedpersonnamekey()"
@@ -3679,7 +3670,7 @@
       "label": "importedPassengerIdentityKey()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8082",
+      "source_location": "L8061",
       "id": "tela_formul\u00e1rio_geral_app_importedpassengeridentitykey",
       "community": 5,
       "norm_label": "importedpassengeridentitykey()"
@@ -3688,7 +3679,7 @@
       "label": "importedSolicitanteIdentityKey()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8089",
+      "source_location": "L8068",
       "id": "tela_formul\u00e1rio_geral_app_importedsolicitanteidentitykey",
       "community": 5,
       "norm_label": "importedsolicitanteidentitykey()"
@@ -3697,7 +3688,7 @@
       "label": "importedPassengerMatchesIdentity()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8105",
+      "source_location": "L8084",
       "id": "tela_formul\u00e1rio_geral_app_importedpassengermatchesidentity",
       "community": 5,
       "norm_label": "importedpassengermatchesidentity()"
@@ -3706,7 +3697,7 @@
       "label": "importedPassengerDraftRecord()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8111",
+      "source_location": "L8090",
       "id": "tela_formul\u00e1rio_geral_app_importedpassengerdraftrecord",
       "community": 5,
       "norm_label": "importedpassengerdraftrecord()"
@@ -3715,7 +3706,7 @@
       "label": "createImportPassengerFromSelectedPerson()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8122",
+      "source_location": "L8101",
       "id": "tela_formul\u00e1rio_geral_app_createimportpassengerfromselectedperson",
       "community": 5,
       "norm_label": "createimportpassengerfromselectedperson()"
@@ -3724,7 +3715,7 @@
       "label": "linkedImportedPassengerForSolicitante()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8147",
+      "source_location": "L8126",
       "id": "tela_formul\u00e1rio_geral_app_linkedimportedpassengerforsolicitante",
       "community": 5,
       "norm_label": "linkedimportedpassengerforsolicitante()"
@@ -3733,7 +3724,7 @@
       "label": "importedSolicitanteStatusLabel()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8153",
+      "source_location": "L8132",
       "id": "tela_formul\u00e1rio_geral_app_importedsolicitantestatuslabel",
       "community": 5,
       "norm_label": "importedsolicitantestatuslabel()"
@@ -3742,7 +3733,7 @@
       "label": "importedSolicitanteEditableRecord()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8161",
+      "source_location": "L8140",
       "id": "tela_formul\u00e1rio_geral_app_importedsolicitanteeditablerecord",
       "community": 5,
       "norm_label": "importedsolicitanteeditablerecord()"
@@ -3751,7 +3742,7 @@
       "label": "syncImportedSolicitanteDraft()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8182",
+      "source_location": "L8161",
       "id": "tela_formul\u00e1rio_geral_app_syncimportedsolicitantedraft",
       "community": 5,
       "norm_label": "syncimportedsolicitantedraft()"
@@ -3760,7 +3751,7 @@
       "label": "syncImportedSolicitanteFromPassenger()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8204",
+      "source_location": "L8183",
       "id": "tela_formul\u00e1rio_geral_app_syncimportedsolicitantefrompassenger",
       "community": 5,
       "norm_label": "syncimportedsolicitantefrompassenger()"
@@ -3769,7 +3760,7 @@
       "label": "syncImportedPassengerFromSolicitante()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8215",
+      "source_location": "L8194",
       "id": "tela_formul\u00e1rio_geral_app_syncimportedpassengerfromsolicitante",
       "community": 5,
       "norm_label": "syncimportedpassengerfromsolicitante()"
@@ -3778,7 +3769,7 @@
       "label": "resolvePassengerByName()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8236",
+      "source_location": "L8215",
       "id": "tela_formul\u00e1rio_geral_app_resolvepassengerbyname",
       "community": 5,
       "norm_label": "resolvepassengerbyname()"
@@ -3787,7 +3778,7 @@
       "label": "buildImportPassengerRow()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8242",
+      "source_location": "L8221",
       "id": "tela_formul\u00e1rio_geral_app_buildimportpassengerrow",
       "community": 5,
       "norm_label": "buildimportpassengerrow()"
@@ -3796,7 +3787,7 @@
       "label": "importedPassengerPreviewRecord()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8317",
+      "source_location": "L8296",
       "id": "tela_formul\u00e1rio_geral_app_importedpassengerpreviewrecord",
       "community": 5,
       "norm_label": "importedpassengerpreviewrecord()"
@@ -3805,7 +3796,7 @@
       "label": "buildImportAction()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8340",
+      "source_location": "L8319",
       "id": "tela_formul\u00e1rio_geral_app_buildimportaction",
       "community": 70,
       "norm_label": "buildimportaction()"
@@ -3814,7 +3805,7 @@
       "label": "importedSolicitantePreviewRecord()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8350",
+      "source_location": "L8329",
       "id": "tela_formul\u00e1rio_geral_app_importedsolicitantepreviewrecord",
       "community": 5,
       "norm_label": "importedsolicitantepreviewrecord()"
@@ -3823,7 +3814,7 @@
       "label": "buildImportRemoveButton()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8376",
+      "source_location": "L8355",
       "id": "tela_formul\u00e1rio_geral_app_buildimportremovebutton",
       "community": 5,
       "norm_label": "buildimportremovebutton()"
@@ -3832,7 +3823,7 @@
       "label": "importedPassengerStatusLabel()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8395",
+      "source_location": "L8374",
       "id": "tela_formul\u00e1rio_geral_app_importedpassengerstatuslabel",
       "community": 5,
       "norm_label": "importedpassengerstatuslabel()"
@@ -3841,7 +3832,7 @@
       "label": "importedTrechoIssues()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8403",
+      "source_location": "L8382",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechoissues",
       "community": 70,
       "norm_label": "importedtrechoissues()"
@@ -3850,7 +3841,7 @@
       "label": "handleImportFieldCopy()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8420",
+      "source_location": "L8399",
       "id": "tela_formul\u00e1rio_geral_app_handleimportfieldcopy",
       "community": 2,
       "norm_label": "handleimportfieldcopy()"
@@ -3859,7 +3850,7 @@
       "label": "importCopyControlValue()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8437",
+      "source_location": "L8416",
       "id": "tela_formul\u00e1rio_geral_app_importcopycontrolvalue",
       "community": 2,
       "norm_label": "importcopycontrolvalue()"
@@ -3868,7 +3859,7 @@
       "label": "showImportFieldCopyFeedback()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8445",
+      "source_location": "L8424",
       "id": "tela_formul\u00e1rio_geral_app_showimportfieldcopyfeedback",
       "community": 2,
       "norm_label": "showimportfieldcopyfeedback()"
@@ -3877,7 +3868,7 @@
       "label": "handleImportReviewFilterAction()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8455",
+      "source_location": "L8434",
       "id": "tela_formul\u00e1rio_geral_app_handleimportreviewfilteraction",
       "community": 20,
       "norm_label": "handleimportreviewfilteraction()"
@@ -3886,7 +3877,7 @@
       "label": "handleImportReviewAction()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8468",
+      "source_location": "L8447",
       "id": "tela_formul\u00e1rio_geral_app_handleimportreviewaction",
       "community": 70,
       "norm_label": "handleimportreviewaction()"
@@ -3895,7 +3886,7 @@
       "label": "handleImportReviewInput()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8674",
+      "source_location": "L8653",
       "id": "tela_formul\u00e1rio_geral_app_handleimportreviewinput",
       "community": 5,
       "norm_label": "handleimportreviewinput()"
@@ -3904,7 +3895,7 @@
       "label": "findImportedTrecho()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8789",
+      "source_location": "L8768",
       "id": "tela_formul\u00e1rio_geral_app_findimportedtrecho",
       "community": 5,
       "norm_label": "findimportedtrecho()"
@@ -3913,25 +3904,25 @@
       "label": "applyImportedTrechoToForm()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8794",
+      "source_location": "L8773",
       "id": "tela_formul\u00e1rio_geral_app_applyimportedtrechotoform",
-      "community": 71,
+      "community": 77,
       "norm_label": "applyimportedtrechotoform()"
     },
     {
       "label": "importedResolvedPassenger()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8855",
+      "source_location": "L8834",
       "id": "tela_formul\u00e1rio_geral_app_importedresolvedpassenger",
-      "community": 5,
+      "community": 70,
       "norm_label": "importedresolvedpassenger()"
     },
     {
       "label": "saveImportedTrecho()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8871",
+      "source_location": "L8850",
       "id": "tela_formul\u00e1rio_geral_app_saveimportedtrecho",
       "community": 70,
       "norm_label": "saveimportedtrecho()"
@@ -3940,7 +3931,7 @@
       "label": "buildImportedSaveContext()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8912",
+      "source_location": "L8891",
       "id": "tela_formul\u00e1rio_geral_app_buildimportedsavecontext",
       "community": 70,
       "norm_label": "buildimportedsavecontext()"
@@ -3949,25 +3940,25 @@
       "label": "ensureImportedPassengerRecord()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8946",
+      "source_location": "L8925",
       "id": "tela_formul\u00e1rio_geral_app_ensureimportedpassengerrecord",
-      "community": 5,
+      "community": 70,
       "norm_label": "ensureimportedpassengerrecord()"
     },
     {
       "label": "createImportedPassenger()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8975",
+      "source_location": "L8954",
       "id": "tela_formul\u00e1rio_geral_app_createimportedpassenger",
-      "community": 5,
+      "community": 70,
       "norm_label": "createimportedpassenger()"
     },
     {
       "label": "ensureImportedSolicitanteRecord()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L8983",
+      "source_location": "L8962",
       "id": "tela_formul\u00e1rio_geral_app_ensureimportedsolicitanterecord",
       "community": 5,
       "norm_label": "ensureimportedsolicitanterecord()"
@@ -3976,34 +3967,34 @@
       "label": "findImportedExistingPerson()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9021",
+      "source_location": "L9000",
       "id": "tela_formul\u00e1rio_geral_app_findimportedexistingperson",
-      "community": 5,
+      "community": 70,
       "norm_label": "findimportedexistingperson()"
     },
     {
       "label": "createImportedPersonRecord()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9030",
+      "source_location": "L9009",
       "id": "tela_formul\u00e1rio_geral_app_createimportedpersonrecord",
-      "community": 5,
+      "community": 70,
       "norm_label": "createimportedpersonrecord()"
     },
     {
       "label": "buildImportedReservaPayload()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9078",
+      "source_location": "L9057",
       "id": "tela_formul\u00e1rio_geral_app_buildimportedreservapayload",
-      "community": 4,
+      "community": 71,
       "norm_label": "buildimportedreservapayload()"
     },
     {
       "label": "resolveImportOption()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9110",
+      "source_location": "L9089",
       "id": "tela_formul\u00e1rio_geral_app_resolveimportoption",
       "community": 71,
       "norm_label": "resolveimportoption()"
@@ -4012,7 +4003,7 @@
       "label": "composeImportTrajeto()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9118",
+      "source_location": "L9097",
       "id": "tela_formul\u00e1rio_geral_app_composeimporttrajeto",
       "community": 70,
       "norm_label": "composeimporttrajeto()"
@@ -4021,7 +4012,7 @@
       "label": "importedTrechoCr()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9123",
+      "source_location": "L9102",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechocr",
       "community": 5,
       "norm_label": "importedtrechocr()"
@@ -4030,7 +4021,7 @@
       "label": "composeImportPassengerDestinations()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9136",
+      "source_location": "L9115",
       "id": "tela_formul\u00e1rio_geral_app_composeimportpassengerdestinations",
       "community": 5,
       "norm_label": "composeimportpassengerdestinations()"
@@ -4039,16 +4030,16 @@
       "label": "findMotoristaByName()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9154",
+      "source_location": "L9133",
       "id": "tela_formul\u00e1rio_geral_app_findmotoristabyname",
-      "community": 4,
+      "community": 72,
       "norm_label": "findmotoristabyname()"
     },
     {
       "label": "formatDateInputForDisplay()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9163",
+      "source_location": "L9142",
       "id": "tela_formul\u00e1rio_geral_app_formatdateinputfordisplay",
       "community": 70,
       "norm_label": "formatdateinputfordisplay()"
@@ -4057,7 +4048,7 @@
       "label": "resolvePassengerMatchReview()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9169",
+      "source_location": "L9148",
       "id": "tela_formul\u00e1rio_geral_app_resolvepassengermatchreview",
       "community": 2,
       "norm_label": "resolvepassengermatchreview()"
@@ -4066,7 +4057,7 @@
       "label": "saveForm()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9176",
+      "source_location": "L9155",
       "id": "tela_formul\u00e1rio_geral_app_saveform",
       "community": 78,
       "norm_label": "saveform()"
@@ -4075,7 +4066,7 @@
       "label": "isImportSaveMode()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9193",
+      "source_location": "L9172",
       "id": "tela_formul\u00e1rio_geral_app_isimportsavemode",
       "community": 71,
       "norm_label": "isimportsavemode()"
@@ -4084,16 +4075,16 @@
       "label": "collectImportedTrechos()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9197",
+      "source_location": "L9176",
       "id": "tela_formul\u00e1rio_geral_app_collectimportedtrechos",
-      "community": 2,
+      "community": 70,
       "norm_label": "collectimportedtrechos()"
     },
     {
       "label": "summarizeImportTrechoStatuses()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9201",
+      "source_location": "L9180",
       "id": "tela_formul\u00e1rio_geral_app_summarizeimporttrechostatuses",
       "community": 70,
       "norm_label": "summarizeimporttrechostatuses()"
@@ -4102,25 +4093,25 @@
       "label": "hasPrimaryDraftChanges()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9223",
+      "source_location": "L9202",
       "id": "tela_formul\u00e1rio_geral_app_hasprimarydraftchanges",
-      "community": 15,
+      "community": 75,
       "norm_label": "hasprimarydraftchanges()"
     },
     {
       "label": "performImportedServicesSave()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9235",
+      "source_location": "L9214",
       "id": "tela_formul\u00e1rio_geral_app_performimportedservicessave",
-      "community": 18,
+      "community": 70,
       "norm_label": "performimportedservicessave()"
     },
     {
       "label": "proceedSaveContext()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9309",
+      "source_location": "L9288",
       "id": "tela_formul\u00e1rio_geral_app_proceedsavecontext",
       "community": 78,
       "norm_label": "proceedsavecontext()"
@@ -4129,7 +4120,7 @@
       "label": "collectInactiveActivationDrafts()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9331",
+      "source_location": "L9310",
       "id": "tela_formul\u00e1rio_geral_app_collectinactiveactivationdrafts",
       "community": 78,
       "norm_label": "collectinactiveactivationdrafts()"
@@ -4138,7 +4129,7 @@
       "label": "openActivationGuard()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9352",
+      "source_location": "L9331",
       "id": "tela_formul\u00e1rio_geral_app_openactivationguard",
       "community": 78,
       "norm_label": "openactivationguard()"
@@ -4147,7 +4138,7 @@
       "label": "closeActivationGuard()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9380",
+      "source_location": "L9359",
       "id": "tela_formul\u00e1rio_geral_app_closeactivationguard",
       "community": 15,
       "norm_label": "closeactivationguard()"
@@ -4156,7 +4147,7 @@
       "label": "resolveActivationGuard()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9385",
+      "source_location": "L9364",
       "id": "tela_formul\u00e1rio_geral_app_resolveactivationguard",
       "community": 15,
       "norm_label": "resolveactivationguard()"
@@ -4165,25 +4156,25 @@
       "label": "performSave()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9410",
+      "source_location": "L9389",
       "id": "tela_formul\u00e1rio_geral_app_performsave",
-      "community": 18,
+      "community": 40,
       "norm_label": "performsave()"
     },
     {
       "label": "captureObsState()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9472",
+      "source_location": "L9451",
       "id": "tela_formul\u00e1rio_geral_app_captureobsstate",
-      "community": 20,
+      "community": 78,
       "norm_label": "captureobsstate()"
     },
     {
       "label": "buildSaveContext()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9479",
+      "source_location": "L9458",
       "id": "tela_formul\u00e1rio_geral_app_buildsavecontext",
       "community": 78,
       "norm_label": "buildsavecontext()"
@@ -4192,7 +4183,7 @@
       "label": "buildAdditionalScheduleContexts()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9507",
+      "source_location": "L9486",
       "id": "tela_formul\u00e1rio_geral_app_buildadditionalschedulecontexts",
       "community": 2,
       "norm_label": "buildadditionalschedulecontexts()"
@@ -4201,7 +4192,7 @@
       "label": "buildScheduleRetornoPrevisto()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9524",
+      "source_location": "L9503",
       "id": "tela_formul\u00e1rio_geral_app_buildscheduleretornoprevisto",
       "community": 44,
       "norm_label": "buildscheduleretornoprevisto()"
@@ -4210,7 +4201,7 @@
       "label": "validateContext()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9535",
+      "source_location": "L9514",
       "id": "tela_formul\u00e1rio_geral_app_validatecontext",
       "community": 78,
       "norm_label": "validatecontext()"
@@ -4219,7 +4210,7 @@
       "label": "validateFrequentServicePeriod()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9560",
+      "source_location": "L9539",
       "id": "tela_formul\u00e1rio_geral_app_validatefrequentserviceperiod",
       "community": 44,
       "norm_label": "validatefrequentserviceperiod()"
@@ -4228,7 +4219,7 @@
       "label": "dateRangeDays()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9574",
+      "source_location": "L9553",
       "id": "tela_formul\u00e1rio_geral_app_daterangedays",
       "community": 44,
       "norm_label": "daterangedays()"
@@ -4237,16 +4228,16 @@
       "label": "buildReservaPayload()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9581",
+      "source_location": "L9560",
       "id": "tela_formul\u00e1rio_geral_app_buildreservapayload",
-      "community": 4,
+      "community": 40,
       "norm_label": "buildreservapayload()"
     },
     {
       "label": "createFrequentServices()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9620",
+      "source_location": "L9599",
       "id": "tela_formul\u00e1rio_geral_app_createfrequentservices",
       "community": 44,
       "norm_label": "createfrequentservices()"
@@ -4255,7 +4246,7 @@
       "label": "saveReserva()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9665",
+      "source_location": "L9644",
       "id": "tela_formul\u00e1rio_geral_app_savereserva",
       "community": 35,
       "norm_label": "savereserva()"
@@ -4264,43 +4255,43 @@
       "label": "replacePassengerRelations()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9679",
+      "source_location": "L9658",
       "id": "tela_formul\u00e1rio_geral_app_replacepassengerrelations",
-      "community": 15,
+      "community": 40,
       "norm_label": "replacepassengerrelations()"
     },
     {
       "label": "setChoice()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9710",
+      "source_location": "L9689",
       "id": "tela_formul\u00e1rio_geral_app_setchoice",
-      "community": 4,
+      "community": 40,
       "norm_label": "setchoice()"
     },
     {
       "label": "bindLookup()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9716",
+      "source_location": "L9695",
       "id": "tela_formul\u00e1rio_geral_app_bindlookup",
-      "community": 4,
+      "community": 40,
       "norm_label": "bindlookup()"
     },
     {
       "label": "resetAfterSuccess()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9721",
+      "source_location": "L9700",
       "id": "tela_formul\u00e1rio_geral_app_resetaftersuccess",
-      "community": 77,
+      "community": 15,
       "norm_label": "resetaftersuccess()"
     },
     {
       "label": "buildRetornoPrevisto()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9779",
+      "source_location": "L9758",
       "id": "tela_formul\u00e1rio_geral_app_buildretornoprevisto",
       "community": 44,
       "norm_label": "buildretornoprevisto()"
@@ -4309,7 +4300,7 @@
       "label": "buildRecurringRetornoPrevisto()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9790",
+      "source_location": "L9769",
       "id": "tela_formul\u00e1rio_geral_app_buildrecurringretornoprevisto",
       "community": 44,
       "norm_label": "buildrecurringretornoprevisto()"
@@ -4318,7 +4309,7 @@
       "label": "combineDateTime()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9814",
+      "source_location": "L9793",
       "id": "tela_formul\u00e1rio_geral_app_combinedatetime",
       "community": 70,
       "norm_label": "combinedatetime()"
@@ -4327,25 +4318,25 @@
       "label": "setDateTimeFields()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9822",
+      "source_location": "L9801",
       "id": "tela_formul\u00e1rio_geral_app_setdatetimefields",
-      "community": 40,
+      "community": 2,
       "norm_label": "setdatetimefields()"
     },
     {
       "label": "setTimeFields()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9828",
+      "source_location": "L9807",
       "id": "tela_formul\u00e1rio_geral_app_settimefields",
-      "community": 40,
+      "community": 2,
       "norm_label": "settimefields()"
     },
     {
       "label": "timeFromParts()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9838",
+      "source_location": "L9817",
       "id": "tela_formul\u00e1rio_geral_app_timefromparts",
       "community": 44,
       "norm_label": "timefromparts()"
@@ -4354,7 +4345,7 @@
       "label": "withTime()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9844",
+      "source_location": "L9823",
       "id": "tela_formul\u00e1rio_geral_app_withtime",
       "community": 44,
       "norm_label": "withtime()"
@@ -4363,7 +4354,7 @@
       "label": "withClock()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9848",
+      "source_location": "L9827",
       "id": "tela_formul\u00e1rio_geral_app_withclock",
       "community": 44,
       "norm_label": "withclock()"
@@ -4372,7 +4363,7 @@
       "label": "generateFrequentDates()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9854",
+      "source_location": "L9833",
       "id": "tela_formul\u00e1rio_geral_app_generatefrequentdates",
       "community": 44,
       "norm_label": "generatefrequentdates()"
@@ -4381,7 +4372,7 @@
       "label": "composeEnderecoCompleto()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9865",
+      "source_location": "L9844",
       "id": "tela_formul\u00e1rio_geral_app_composeenderecocompleto",
       "community": 78,
       "norm_label": "composeenderecocompleto()"
@@ -4390,7 +4381,7 @@
       "label": "composeEnderecoCompletoInvertido()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9873",
+      "source_location": "L9852",
       "id": "tela_formul\u00e1rio_geral_app_composeenderecocompletoinvertido",
       "community": 78,
       "norm_label": "composeenderecocompletoinvertido()"
@@ -4399,7 +4390,7 @@
       "label": "composePassageirosTelefones()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9884",
+      "source_location": "L9863",
       "id": "tela_formul\u00e1rio_geral_app_composepassageirostelefones",
       "community": 78,
       "norm_label": "composepassageirostelefones()"
@@ -4408,7 +4399,7 @@
       "label": "composePreferencias()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9891",
+      "source_location": "L9870",
       "id": "tela_formul\u00e1rio_geral_app_composepreferencias",
       "community": 78,
       "norm_label": "composepreferencias()"
@@ -4417,7 +4408,7 @@
       "label": "firstPassengerValue()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9899",
+      "source_location": "L9878",
       "id": "tela_formul\u00e1rio_geral_app_firstpassengervalue",
       "community": 78,
       "norm_label": "firstpassengervalue()"
@@ -4426,7 +4417,7 @@
       "label": "getValidPassengerRows()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9904",
+      "source_location": "L9883",
       "id": "tela_formul\u00e1rio_geral_app_getvalidpassengerrows",
       "community": 78,
       "norm_label": "getvalidpassengerrows()"
@@ -4435,7 +4426,7 @@
       "label": "hasDuplicatePassengers()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9908",
+      "source_location": "L9887",
       "id": "tela_formul\u00e1rio_geral_app_hasduplicatepassengers",
       "community": 58,
       "norm_label": "hasduplicatepassengers()"
@@ -4444,16 +4435,16 @@
       "label": "invertTrajeto()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9913",
+      "source_location": "L9892",
       "id": "tela_formul\u00e1rio_geral_app_inverttrajeto",
-      "community": 4,
+      "community": 2,
       "norm_label": "inverttrajeto()"
     },
     {
       "label": "firstName()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9918",
+      "source_location": "L9897",
       "id": "tela_formul\u00e1rio_geral_app_firstname",
       "community": 5,
       "norm_label": "firstname()"
@@ -4462,7 +4453,7 @@
       "label": "setSelectValue()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9922",
+      "source_location": "L9901",
       "id": "tela_formul\u00e1rio_geral_app_setselectvalue",
       "community": 71,
       "norm_label": "setselectvalue()"
@@ -4471,25 +4462,25 @@
       "label": "focusInvalidField()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9938",
+      "source_location": "L9917",
       "id": "tela_formul\u00e1rio_geral_app_focusinvalidfield",
-      "community": 78,
+      "community": 72,
       "norm_label": "focusinvalidfield()"
     },
     {
       "label": "revealInvalidFieldByMessage()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L9998",
+      "source_location": "L9977",
       "id": "tela_formul\u00e1rio_geral_app_revealinvalidfieldbymessage",
-      "community": 78,
+      "community": 72,
       "norm_label": "revealinvalidfieldbymessage()"
     },
     {
       "label": "revealInvalidField()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10076",
+      "source_location": "L10055",
       "id": "tela_formul\u00e1rio_geral_app_revealinvalidfield",
       "community": 4,
       "norm_label": "revealinvalidfield()"
@@ -4498,7 +4489,7 @@
       "label": "markFieldInvalid()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10089",
+      "source_location": "L10068",
       "id": "tela_formul\u00e1rio_geral_app_markfieldinvalid",
       "community": 4,
       "norm_label": "markfieldinvalid()"
@@ -4507,7 +4498,7 @@
       "label": "clearFieldValidation()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10102",
+      "source_location": "L10081",
       "id": "tela_formul\u00e1rio_geral_app_clearfieldvalidation",
       "community": 4,
       "norm_label": "clearfieldvalidation()"
@@ -4516,16 +4507,16 @@
       "label": "clearValidationStates()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10113",
+      "source_location": "L10092",
       "id": "tela_formul\u00e1rio_geral_app_clearvalidationstates",
-      "community": 77,
+      "community": 15,
       "norm_label": "clearvalidationstates()"
     },
     {
       "label": "getValidationShell()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10121",
+      "source_location": "L10100",
       "id": "tela_formul\u00e1rio_geral_app_getvalidationshell",
       "community": 4,
       "norm_label": "getvalidationshell()"
@@ -4534,7 +4525,7 @@
       "label": "getValidationControl()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10126",
+      "source_location": "L10105",
       "id": "tela_formul\u00e1rio_geral_app_getvalidationcontrol",
       "community": 4,
       "norm_label": "getvalidationcontrol()"
@@ -4543,7 +4534,7 @@
       "label": "tabForElement()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10132",
+      "source_location": "L10111",
       "id": "tela_formul\u00e1rio_geral_app_tabforelement",
       "community": 4,
       "norm_label": "tabforelement()"
@@ -4552,16 +4543,16 @@
       "label": "focusField()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10136",
+      "source_location": "L10115",
       "id": "tela_formul\u00e1rio_geral_app_focusfield",
-      "community": 78,
+      "community": 72,
       "norm_label": "focusfield()"
     },
     {
       "label": "applyPassengerEditEmptySignals()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10151",
+      "source_location": "L10130",
       "id": "tela_formul\u00e1rio_geral_app_applypassengereditemptysignals",
       "community": 2,
       "norm_label": "applypassengereditemptysignals()"
@@ -4570,7 +4561,7 @@
       "label": "isPassengerEditControlEmpty()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10172",
+      "source_location": "L10151",
       "id": "tela_formul\u00e1rio_geral_app_ispassengereditcontrolempty",
       "community": 2,
       "norm_label": "ispassengereditcontrolempty()"
@@ -4579,7 +4570,7 @@
       "label": "findOptionValue()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10186",
+      "source_location": "L10165",
       "id": "tela_formul\u00e1rio_geral_app_findoptionvalue",
       "community": 71,
       "norm_label": "findoptionvalue()"
@@ -4588,7 +4579,7 @@
       "label": "optionLabel()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10191",
+      "source_location": "L10170",
       "id": "tela_formul\u00e1rio_geral_app_optionlabel",
       "community": 58,
       "norm_label": "optionlabel()"
@@ -4597,7 +4588,7 @@
       "label": "copyTextToClipboard()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10195",
+      "source_location": "L10174",
       "id": "tela_formul\u00e1rio_geral_app_copytexttoclipboard",
       "community": 2,
       "norm_label": "copytexttoclipboard()"
@@ -4606,7 +4597,7 @@
       "label": "clearCopyNotice()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10219",
+      "source_location": "L10198",
       "id": "tela_formul\u00e1rio_geral_app_clearcopynotice",
       "community": 19,
       "norm_label": "clearcopynotice()"
@@ -4615,7 +4606,7 @@
       "label": "showCopyNotice()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10223",
+      "source_location": "L10202",
       "id": "tela_formul\u00e1rio_geral_app_showcopynotice",
       "community": 19,
       "norm_label": "showcopynotice()"
@@ -4624,7 +4615,7 @@
       "label": "sameId()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10259",
+      "source_location": "L10238",
       "id": "tela_formul\u00e1rio_geral_app_sameid",
       "community": 72,
       "norm_label": "sameid()"
@@ -4633,16 +4624,16 @@
       "label": "syncAllDateTimeInputs()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10263",
+      "source_location": "L10242",
       "id": "tela_formul\u00e1rio_geral_app_syncalldatetimeinputs",
-      "community": 22,
+      "community": 75,
       "norm_label": "syncalldatetimeinputs()"
     },
     {
       "label": "syncDateTimeFieldRowWidths()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10269",
+      "source_location": "L10248",
       "id": "tela_formul\u00e1rio_geral_app_syncdatetimefieldrowwidths",
       "community": 18,
       "norm_label": "syncdatetimefieldrowwidths()"
@@ -4651,16 +4642,16 @@
       "label": "syncLegacyTimePartsFromDateTime()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10299",
+      "source_location": "L10278",
       "id": "tela_formul\u00e1rio_geral_app_synclegacytimepartsfromdatetime",
-      "community": 22,
+      "community": 75,
       "norm_label": "synclegacytimepartsfromdatetime()"
     },
     {
       "label": "parseDateTimeInputValue()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10310",
+      "source_location": "L10289",
       "id": "tela_formul\u00e1rio_geral_app_parsedatetimeinputvalue",
       "community": 44,
       "norm_label": "parsedatetimeinputvalue()"
@@ -4669,7 +4660,7 @@
       "label": "datePartFromInputValue()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10321",
+      "source_location": "L10300",
       "id": "tela_formul\u00e1rio_geral_app_datepartfrominputvalue",
       "community": 22,
       "norm_label": "datepartfrominputvalue()"
@@ -4678,7 +4669,7 @@
       "label": "timePartFromInputValue()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10326",
+      "source_location": "L10305",
       "id": "tela_formul\u00e1rio_geral_app_timepartfrominputvalue",
       "community": 22,
       "norm_label": "timepartfrominputvalue()"
@@ -4687,7 +4678,7 @@
       "label": "dateTimeLocalFromParts()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10332",
+      "source_location": "L10311",
       "id": "tela_formul\u00e1rio_geral_app_datetimelocalfromparts",
       "community": 22,
       "norm_label": "datetimelocalfromparts()"
@@ -4696,7 +4687,7 @@
       "label": "importedTrechoDateTimeLocal()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10338",
+      "source_location": "L10317",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechodatetimelocal",
       "community": 22,
       "norm_label": "importedtrechodatetimelocal()"
@@ -4705,7 +4696,7 @@
       "label": "importedTrechoReturnDateTimeLocal()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10342",
+      "source_location": "L10321",
       "id": "tela_formul\u00e1rio_geral_app_importedtrechoreturndatetimelocal",
       "community": 22,
       "norm_label": "importedtrechoreturndatetimelocal()"
@@ -4714,7 +4705,7 @@
       "label": "syncScheduleDateTimeFields()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10349",
+      "source_location": "L10328",
       "id": "tela_formul\u00e1rio_geral_app_syncscheduledatetimefields",
       "community": 22,
       "norm_label": "syncscheduledatetimefields()"
@@ -4723,7 +4714,7 @@
       "label": "isGuid()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10362",
+      "source_location": "L10341",
       "id": "tela_formul\u00e1rio_geral_app_isguid",
       "community": 35,
       "norm_label": "isguid()"
@@ -4732,25 +4723,25 @@
       "label": "normalize()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10366",
+      "source_location": "L10345",
       "id": "tela_formul\u00e1rio_geral_app_normalize",
-      "community": 5,
+      "community": 72,
       "norm_label": "normalize()"
     },
     {
       "label": "parseNumber()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10374",
+      "source_location": "L10353",
       "id": "tela_formul\u00e1rio_geral_app_parsenumber",
-      "community": 4,
+      "community": 40,
       "norm_label": "parsenumber()"
     },
     {
       "label": "sanitizeCurrencyInput()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10394",
+      "source_location": "L10373",
       "id": "tela_formul\u00e1rio_geral_app_sanitizecurrencyinput",
       "community": 2,
       "norm_label": "sanitizecurrencyinput()"
@@ -4759,16 +4750,16 @@
       "label": "formatCurrencyDisplayValue()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10402",
+      "source_location": "L10381",
       "id": "tela_formul\u00e1rio_geral_app_formatcurrencydisplayvalue",
-      "community": 71,
+      "community": 40,
       "norm_label": "formatcurrencydisplayvalue()"
     },
     {
       "label": "validateEmailControl()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10411",
+      "source_location": "L10390",
       "id": "tela_formul\u00e1rio_geral_app_validateemailcontrol",
       "community": 4,
       "norm_label": "validateemailcontrol()"
@@ -4777,7 +4768,7 @@
       "label": "validatePhoneControl()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10424",
+      "source_location": "L10403",
       "id": "tela_formul\u00e1rio_geral_app_validatephonecontrol",
       "community": 4,
       "norm_label": "validatephonecontrol()"
@@ -4786,7 +4777,7 @@
       "label": "updatePhoneCountryHint()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10449",
+      "source_location": "L10428",
       "id": "tela_formul\u00e1rio_geral_app_updatephonecountryhint",
       "community": 4,
       "norm_label": "updatephonecountryhint()"
@@ -4795,25 +4786,25 @@
       "label": "toDateInput()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10460",
+      "source_location": "L10439",
       "id": "tela_formul\u00e1rio_geral_app_todateinput",
-      "community": 40,
+      "community": 2,
       "norm_label": "todateinput()"
     },
     {
       "label": "toDateTimeLocalInput()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10468",
+      "source_location": "L10447",
       "id": "tela_formul\u00e1rio_geral_app_todatetimelocalinput",
-      "community": 40,
+      "community": 2,
       "norm_label": "todatetimelocalinput()"
     },
     {
       "label": "formatDateTime()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10475",
+      "source_location": "L10454",
       "id": "tela_formul\u00e1rio_geral_app_formatdatetime",
       "community": 58,
       "norm_label": "formatdatetime()"
@@ -4822,7 +4813,7 @@
       "label": "setLoading()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10485",
+      "source_location": "L10464",
       "id": "tela_formul\u00e1rio_geral_app_setloading",
       "community": 18,
       "norm_label": "setloading()"
@@ -4831,7 +4822,7 @@
       "label": "showSuccess()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10491",
+      "source_location": "L10470",
       "id": "tela_formul\u00e1rio_geral_app_showsuccess",
       "community": 2,
       "norm_label": "showsuccess()"
@@ -4840,7 +4831,7 @@
       "label": "toast()",
       "file_type": "code",
       "source_file": "app.js",
-      "source_location": "L10496",
+      "source_location": "L10475",
       "id": "tela_formul\u00e1rio_geral_app_toast",
       "community": 18,
       "norm_label": "toast()"
@@ -8257,37 +8248,10 @@
       "norm_label": "importtrechocardfunction"
     },
     {
-      "label": "importCommonSectionStart",
-      "file_type": "code",
-      "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L410",
-      "id": "scripts_formulario_operational_features_test_importcommonsectionstart",
-      "community": 12,
-      "norm_label": "importcommonsectionstart"
-    },
-    {
-      "label": "importFieldStackStart",
-      "file_type": "code",
-      "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L411",
-      "id": "scripts_formulario_operational_features_test_importfieldstackstart",
-      "community": 12,
-      "norm_label": "importfieldstackstart"
-    },
-    {
-      "label": "importCommonSectionBlock",
-      "file_type": "code",
-      "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L413",
-      "id": "scripts_formulario_operational_features_test_importcommonsectionblock",
-      "community": 12,
-      "norm_label": "importcommonsectionblock"
-    },
-    {
       "label": "passengerLoopEnd",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L441",
+      "source_location": "L439",
       "id": "scripts_formulario_operational_features_test_passengerloopend",
       "community": 12,
       "norm_label": "passengerloopend"
@@ -8296,7 +8260,7 @@
       "label": "importContentRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L444",
+      "source_location": "L442",
       "id": "scripts_formulario_operational_features_test_importcontentrule",
       "community": 12,
       "norm_label": "importcontentrule"
@@ -8305,7 +8269,7 @@
       "label": "importPanelRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L446",
+      "source_location": "L444",
       "id": "scripts_formulario_operational_features_test_importpanelrule",
       "community": 12,
       "norm_label": "importpanelrule"
@@ -8314,7 +8278,7 @@
       "label": "importProgramsRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L449",
+      "source_location": "L447",
       "id": "scripts_formulario_operational_features_test_importprogramsrule",
       "community": 12,
       "norm_label": "importprogramsrule"
@@ -8323,7 +8287,7 @@
       "label": "importWorkbenchRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L451",
+      "source_location": "L449",
       "id": "scripts_formulario_operational_features_test_importworkbenchrule",
       "community": 12,
       "norm_label": "importworkbenchrule"
@@ -8332,7 +8296,7 @@
       "label": "importServiceListRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L453",
+      "source_location": "L451",
       "id": "scripts_formulario_operational_features_test_importservicelistrule",
       "community": 12,
       "norm_label": "importservicelistrule"
@@ -8341,7 +8305,7 @@
       "label": "importInspectorRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L455",
+      "source_location": "L453",
       "id": "scripts_formulario_operational_features_test_importinspectorrule",
       "community": 12,
       "norm_label": "importinspectorrule"
@@ -8350,25 +8314,16 @@
       "label": "importEditorStackRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L457",
+      "source_location": "L455",
       "id": "scripts_formulario_operational_features_test_importeditorstackrule",
       "community": 12,
       "norm_label": "importeditorstackrule"
     },
     {
-      "label": "importEditorSectionRule",
-      "file_type": "code",
-      "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L460",
-      "id": "scripts_formulario_operational_features_test_importeditorsectionrule",
-      "community": 12,
-      "norm_label": "importeditorsectionrule"
-    },
-    {
       "label": "importFieldRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L462",
+      "source_location": "L459",
       "id": "scripts_formulario_operational_features_test_importfieldrule",
       "community": 12,
       "norm_label": "importfieldrule"
@@ -8377,7 +8332,7 @@
       "label": "importTrechoDesktopRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L465",
+      "source_location": "L462",
       "id": "scripts_formulario_operational_features_test_importtrechodesktoprule",
       "community": 12,
       "norm_label": "importtrechodesktoprule"
@@ -8386,7 +8341,7 @@
       "label": "importPassengersDesktopRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L467",
+      "source_location": "L464",
       "id": "scripts_formulario_operational_features_test_importpassengersdesktoprule",
       "community": 12,
       "norm_label": "importpassengersdesktoprule"
@@ -8395,7 +8350,7 @@
       "label": "importSolicitanteRowRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L470",
+      "source_location": "L467",
       "id": "scripts_formulario_operational_features_test_importsolicitanterowrule",
       "community": 12,
       "norm_label": "importsolicitanterowrule"
@@ -8404,7 +8359,7 @@
       "label": "importSolicitanteFieldRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L474",
+      "source_location": "L471",
       "id": "scripts_formulario_operational_features_test_importsolicitantefieldrule",
       "community": 12,
       "norm_label": "importsolicitantefieldrule"
@@ -8413,7 +8368,7 @@
       "label": "importPassengerAddFieldRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L476",
+      "source_location": "L473",
       "id": "scripts_formulario_operational_features_test_importpassengeraddfieldrule",
       "community": 12,
       "norm_label": "importpassengeraddfieldrule"
@@ -8422,7 +8377,7 @@
       "label": "importRowRemoveRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L488",
+      "source_location": "L485",
       "id": "scripts_formulario_operational_features_test_importrowremoverule",
       "community": 12,
       "norm_label": "importrowremoverule"
@@ -8431,7 +8386,7 @@
       "label": "importRowRemoveIconRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L492",
+      "source_location": "L489",
       "id": "scripts_formulario_operational_features_test_importrowremoveiconrule",
       "community": 12,
       "norm_label": "importrowremoveiconrule"
@@ -8440,7 +8395,7 @@
       "label": "importInspectorActionsRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L494",
+      "source_location": "L491",
       "id": "scripts_formulario_operational_features_test_importinspectoractionsrule",
       "community": 12,
       "norm_label": "importinspectoractionsrule"
@@ -8449,7 +8404,7 @@
       "label": "importInspectorActionButtonRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L497",
+      "source_location": "L494",
       "id": "scripts_formulario_operational_features_test_importinspectoractionbuttonrule",
       "community": 12,
       "norm_label": "importinspectoractionbuttonrule"
@@ -8458,7 +8413,7 @@
       "label": "importValidateActionRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L499",
+      "source_location": "L496",
       "id": "scripts_formulario_operational_features_test_importvalidateactionrule",
       "community": 12,
       "norm_label": "importvalidateactionrule"
@@ -8467,7 +8422,7 @@
       "label": "importValidatedFilterRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L518",
+      "source_location": "L515",
       "id": "scripts_formulario_operational_features_test_importvalidatedfilterrule",
       "community": 12,
       "norm_label": "importvalidatedfilterrule"
@@ -8476,7 +8431,7 @@
       "label": "importPendingFilterRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L520",
+      "source_location": "L517",
       "id": "scripts_formulario_operational_features_test_importpendingfilterrule",
       "community": 12,
       "norm_label": "importpendingfilterrule"
@@ -8485,7 +8440,7 @@
       "label": "importIgnoredFilterRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L522",
+      "source_location": "L519",
       "id": "scripts_formulario_operational_features_test_importignoredfilterrule",
       "community": 12,
       "norm_label": "importignoredfilterrule"
@@ -8494,7 +8449,7 @@
       "label": "importPendingRowRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L524",
+      "source_location": "L521",
       "id": "scripts_formulario_operational_features_test_importpendingrowrule",
       "community": 12,
       "norm_label": "importpendingrowrule"
@@ -8503,7 +8458,7 @@
       "label": "importIgnoredRowRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L526",
+      "source_location": "L523",
       "id": "scripts_formulario_operational_features_test_importignoredrowrule",
       "community": 12,
       "norm_label": "importignoredrowrule"
@@ -8512,7 +8467,7 @@
       "label": "importHotGridRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L536",
+      "source_location": "L533",
       "id": "scripts_formulario_operational_features_test_importhotgridrule",
       "community": 12,
       "norm_label": "importhotgridrule"
@@ -8521,7 +8476,7 @@
       "label": "importDateTimeFieldRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L540",
+      "source_location": "L537",
       "id": "scripts_formulario_operational_features_test_importdatetimefieldrule",
       "community": 12,
       "norm_label": "importdatetimefieldrule"
@@ -8530,7 +8485,7 @@
       "label": "importDateFieldRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L542",
+      "source_location": "L539",
       "id": "scripts_formulario_operational_features_test_importdatefieldrule",
       "community": 12,
       "norm_label": "importdatefieldrule"
@@ -8539,7 +8494,7 @@
       "label": "importPassengerExistingDotRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L544",
+      "source_location": "L541",
       "id": "scripts_formulario_operational_features_test_importpassengerexistingdotrule",
       "community": 12,
       "norm_label": "importpassengerexistingdotrule"
@@ -8548,7 +8503,7 @@
       "label": "importPassengerNewDotRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L546",
+      "source_location": "L543",
       "id": "scripts_formulario_operational_features_test_importpassengernewdotrule",
       "community": 12,
       "norm_label": "importpassengernewdotrule"
@@ -8557,7 +8512,7 @@
       "label": "importPassengerAmbiguousDotRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L548",
+      "source_location": "L545",
       "id": "scripts_formulario_operational_features_test_importpassengerambiguousdotrule",
       "community": 12,
       "norm_label": "importpassengerambiguousdotrule"
@@ -8566,7 +8521,7 @@
       "label": "importPassengerRowBeforeRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L550",
+      "source_location": "L547",
       "id": "scripts_formulario_operational_features_test_importpassengerrowbeforerule",
       "community": 12,
       "norm_label": "importpassengerrowbeforerule"
@@ -8575,7 +8530,7 @@
       "label": "addImportPassengerHandlerStart",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L555",
+      "source_location": "L552",
       "id": "scripts_formulario_operational_features_test_addimportpassengerhandlerstart",
       "community": 12,
       "norm_label": "addimportpassengerhandlerstart"
@@ -8584,7 +8539,7 @@
       "label": "addImportSolicitanteHandlerStart",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L556",
+      "source_location": "L553",
       "id": "scripts_formulario_operational_features_test_addimportsolicitantehandlerstart",
       "community": 12,
       "norm_label": "addimportsolicitantehandlerstart"
@@ -8593,7 +8548,7 @@
       "label": "addImportPassengerHandler",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L558",
+      "source_location": "L555",
       "id": "scripts_formulario_operational_features_test_addimportpassengerhandler",
       "community": 12,
       "norm_label": "addimportpassengerhandler"
@@ -8602,7 +8557,7 @@
       "label": "importedPassengerEditFields",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L563",
+      "source_location": "L560",
       "id": "scripts_formulario_operational_features_test_importedpassengereditfields",
       "community": 12,
       "norm_label": "importedpassengereditfields"
@@ -8611,7 +8566,7 @@
       "label": "importedPassengerPreviewFields",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L566",
+      "source_location": "L563",
       "id": "scripts_formulario_operational_features_test_importedpassengerpreviewfields",
       "community": 12,
       "norm_label": "importedpassengerpreviewfields"
@@ -8620,7 +8575,7 @@
       "label": "importedCrResolver",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L570",
+      "source_location": "L567",
       "id": "scripts_formulario_operational_features_test_importedcrresolver",
       "community": 12,
       "norm_label": "importedcrresolver"
@@ -8629,7 +8584,7 @@
       "label": "importPassengerDraftFields",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L574",
+      "source_location": "L571",
       "id": "scripts_formulario_operational_features_test_importpassengerdraftfields",
       "community": 12,
       "norm_label": "importpassengerdraftfields"
@@ -8638,7 +8593,7 @@
       "label": "passengerTextareaRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L601",
+      "source_location": "L598",
       "id": "scripts_formulario_operational_features_test_passengertextarearule",
       "community": 12,
       "norm_label": "passengertextarearule"
@@ -8647,7 +8602,7 @@
       "label": "importCopyPointerRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L606",
+      "source_location": "L603",
       "id": "scripts_formulario_operational_features_test_importcopypointerrule",
       "community": 12,
       "norm_label": "importcopypointerrule"
@@ -9079,7 +9034,7 @@
       "label": "addImportPassengerHandlerStart",
       "file_type": "code",
       "source_file": "scripts/webresource_bundle.test.js",
-      "source_location": "L150",
+      "source_location": "L153",
       "id": "scripts_webresource_bundle_test_addimportpassengerhandlerstart",
       "community": 42,
       "norm_label": "addimportpassengerhandlerstart"
@@ -9088,7 +9043,7 @@
       "label": "addImportSolicitanteHandlerStart",
       "file_type": "code",
       "source_file": "scripts/webresource_bundle.test.js",
-      "source_location": "L151",
+      "source_location": "L154",
       "id": "scripts_webresource_bundle_test_addimportsolicitantehandlerstart",
       "community": 42,
       "norm_label": "addimportsolicitantehandlerstart"
@@ -9097,7 +9052,7 @@
       "label": "addImportPassengerHandler",
       "file_type": "code",
       "source_file": "scripts/webresource_bundle.test.js",
-      "source_location": "L153",
+      "source_location": "L156",
       "id": "scripts_webresource_bundle_test_addimportpassengerhandler",
       "community": 42,
       "norm_label": "addimportpassengerhandler"
@@ -12352,6 +12307,51 @@
       "norm_label": "license"
     },
     {
+      "label": "buildImportEditorSection()",
+      "file_type": "code",
+      "source_file": "app.js",
+      "source_location": "L7667",
+      "community": 70,
+      "norm_label": "buildimporteditorsection()",
+      "id": "tela_formul\u00e1rio_geral_app_buildimporteditorsection"
+    },
+    {
+      "label": "importCommonSectionStart",
+      "file_type": "code",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L410",
+      "community": 12,
+      "norm_label": "importcommonsectionstart",
+      "id": "scripts_formulario_operational_features_test_importcommonsectionstart"
+    },
+    {
+      "label": "importFieldStackStart",
+      "file_type": "code",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L411",
+      "community": 12,
+      "norm_label": "importfieldstackstart",
+      "id": "scripts_formulario_operational_features_test_importfieldstackstart"
+    },
+    {
+      "label": "importCommonSectionBlock",
+      "file_type": "code",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L413",
+      "community": 12,
+      "norm_label": "importcommonsectionblock",
+      "id": "scripts_formulario_operational_features_test_importcommonsectionblock"
+    },
+    {
+      "label": "importEditorSectionRule",
+      "file_type": "code",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L460",
+      "community": 12,
+      "norm_label": "importeditorsectionrule",
+      "id": "scripts_formulario_operational_features_test_importeditorsectionrule"
+    },
+    {
       "label": "importSolicitanteLabelRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
@@ -12370,15 +12370,6 @@
       "id": "scripts_formulario_operational_features_test_importsolicitantemarkerrule"
     },
     {
-      "label": "buildImportSolicitanteRow()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L7730",
-      "community": 5,
-      "norm_label": "buildimportsolicitanterow()",
-      "id": "tela_formul\u00e1rio_geral_app_buildimportsolicitanterow"
-    },
-    {
       "label": "importSolicitanteSectionRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
@@ -12386,33 +12377,6 @@
       "community": 12,
       "norm_label": "importsolicitantesectionrule",
       "id": "scripts_formulario_operational_features_test_importsolicitantesectionrule"
-    },
-    {
-      "label": "buildImportCollapsedStatusList()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L7245",
-      "community": 70,
-      "norm_label": "buildimportcollapsedstatuslist()",
-      "id": "tela_formul\u00e1rio_geral_app_buildimportcollapsedstatuslist"
-    },
-    {
-      "label": "buildImportCollapsedStatusItem()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L7280",
-      "community": 70,
-      "norm_label": "buildimportcollapsedstatusitem()",
-      "id": "tela_formul\u00e1rio_geral_app_buildimportcollapsedstatusitem"
-    },
-    {
-      "label": "buildImportIgnoredList()",
-      "file_type": "code",
-      "source_file": "app.js",
-      "source_location": "L7304",
-      "community": 2,
-      "norm_label": "buildimportignoredlist()",
-      "id": "tela_formul\u00e1rio_geral_app_buildimportignoredlist"
     },
     {
       "label": "importPassengerFieldsRule",
@@ -16319,16 +16283,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app.js",
-      "source_location": "L6604",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "app_js",
-      "target": "tela_formul\u00e1rio_geral_app_buildimporteditorsection"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
       "source_location": "L6617",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -17889,41 +17843,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app.js",
-      "source_location": "L7730",
+      "source_location": "L6604",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "app_js",
-      "target": "tela_formul\u00e1rio_geral_app_buildimportsolicitanterow"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
-      "source_location": "L6553",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "app_js",
-      "target": "tela_formul\u00e1rio_geral_app_buildimportcollapsedstatuslist"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
-      "source_location": "L6587",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "app_js",
-      "target": "tela_formul\u00e1rio_geral_app_buildimportcollapsedstatusitem"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
-      "source_location": "L6230",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "app_js",
-      "target": "tela_formul\u00e1rio_geral_app_buildimportignoredlist"
+      "target": "tela_formul\u00e1rio_geral_app_buildimporteditorsection"
     },
     {
       "relation": "calls",
@@ -27203,17 +27127,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app.js",
-      "source_location": "L5791",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_renderimportreview",
-      "target": "tela_formul\u00e1rio_geral_app_buildimportignoredlist"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
       "source_location": "L6723",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -27819,17 +27732,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app.js",
-      "source_location": "L6504",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_buildimportworkbench",
-      "target": "tela_formul\u00e1rio_geral_app_buildimportcollapsedstatuslist"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
       "source_location": "L6306",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -27973,17 +27875,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app.js",
-      "source_location": "L6421",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_buildimporttrechocard",
-      "target": "tela_formul\u00e1rio_geral_app_buildimporteditorsection"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
       "source_location": "L6423",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -28105,22 +27996,22 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app.js",
-      "source_location": "L7519",
+      "source_location": "L6421",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_app_buildimporttrechocard",
-      "target": "tela_formul\u00e1rio_geral_app_importedtrechohassolicitante"
+      "target": "tela_formul\u00e1rio_geral_app_buildimporteditorsection"
     },
     {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app.js",
-      "source_location": "L7427",
+      "source_location": "L7519",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_app_buildimporttrechocard",
-      "target": "tela_formul\u00e1rio_geral_app_buildimportsolicitanterow"
+      "target": "tela_formul\u00e1rio_geral_app_importedtrechohassolicitante"
     },
     {
       "relation": "calls",
@@ -28237,17 +28128,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app.js",
-      "source_location": "L6599",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_buildimportcollapsedstatusitem",
-      "target": "tela_formul\u00e1rio_geral_app_importedtrechomodelabel"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
       "source_location": "L6656",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -28270,33 +28150,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app.js",
-      "source_location": "L6599",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_buildimportcollapsedstatusitem",
-      "target": "tela_formul\u00e1rio_geral_app_importpassengercountlabel"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
       "source_location": "L6676",
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_app_buildimportduplicatelocknotice",
       "target": "tela_formul\u00e1rio_geral_app_formatimportedduplicatematch"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
-      "source_location": "L6603",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_buildimportcollapsedstatusitem",
-      "target": "tela_formul\u00e1rio_geral_app_importedtrechoreviewmeta"
     },
     {
       "relation": "calls",
@@ -28429,17 +28287,6 @@
       "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_app_buildimportsolicitanteselect",
       "target": "tela_formul\u00e1rio_geral_app_setselectvalue"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
-      "source_location": "L7763",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_buildimportsolicitanterow",
-      "target": "tela_formul\u00e1rio_geral_app_buildimportsolicitanteselect"
     },
     {
       "relation": "calls",
@@ -28633,17 +28480,6 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "app.js",
-      "source_location": "L7731",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_buildimportsolicitanterow",
-      "target": "tela_formul\u00e1rio_geral_app_importedsolicitantelookuprows"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
       "source_location": "L7866",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -28703,17 +28539,6 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_app_handleimportreviewinput",
-      "target": "tela_formul\u00e1rio_geral_app_resolveimportedsolicitanteselectvalue"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
-      "source_location": "L7732",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_buildimportsolicitanterow",
       "target": "tela_formul\u00e1rio_geral_app_resolveimportedsolicitanteselectvalue"
     },
     {
@@ -28824,17 +28649,6 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_app_ensureimportedsolicitanterecord",
-      "target": "tela_formul\u00e1rio_geral_app_isimportedsolicitantetempid"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
-      "source_location": "L7733",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_buildimportsolicitanterow",
       "target": "tela_formul\u00e1rio_geral_app_isimportedsolicitantetempid"
     },
     {
@@ -29297,17 +29111,6 @@
       "weight": 1.0,
       "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_app_saveimportedtrecho",
-      "target": "tela_formul\u00e1rio_geral_app_importedtrechoissues"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
-      "source_location": "L6603",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_buildimportcollapsedstatusitem",
       "target": "tela_formul\u00e1rio_geral_app_importedtrechoissues"
     },
     {
@@ -29925,17 +29728,6 @@
       "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_app_formatdateinputfordisplay",
       "target": "tela_formul\u00e1rio_geral_app_datepartfrominputvalue"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "app.js",
-      "source_location": "L6597",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "tela_formul\u00e1rio_geral_app_buildimportcollapsedstatusitem",
-      "target": "tela_formul\u00e1rio_geral_app_formatdateinputfordisplay"
     },
     {
       "relation": "calls",
@@ -35165,36 +34957,6 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L410",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_formulario_operational_features_test_js",
-      "target": "scripts_formulario_operational_features_test_importcommonsectionstart"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L411",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_formulario_operational_features_test_js",
-      "target": "scripts_formulario_operational_features_test_importfieldstackstart"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L413",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_formulario_operational_features_test_js",
-      "target": "scripts_formulario_operational_features_test_importcommonsectionblock"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/formulario_operational_features.test.js",
       "source_location": "L417",
       "weight": 1.0,
       "confidence_score": 1.0,
@@ -35270,16 +35032,6 @@
       "confidence_score": 1.0,
       "source": "scripts_formulario_operational_features_test_js",
       "target": "scripts_formulario_operational_features_test_importeditorstackrule"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L423",
-      "weight": 1.0,
-      "confidence_score": 1.0,
-      "source": "scripts_formulario_operational_features_test_js",
-      "target": "scripts_formulario_operational_features_test_importeditorsectionrule"
     },
     {
       "relation": "contains",
@@ -35600,6 +35352,46 @@
       "confidence_score": 1.0,
       "source": "scripts_formulario_operational_features_test_js",
       "target": "scripts_formulario_operational_features_test_importcopypointerrule"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L410",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_formulario_operational_features_test_js",
+      "target": "scripts_formulario_operational_features_test_importcommonsectionstart"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L411",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_formulario_operational_features_test_js",
+      "target": "scripts_formulario_operational_features_test_importfieldstackstart"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L413",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_formulario_operational_features_test_js",
+      "target": "scripts_formulario_operational_features_test_importcommonsectionblock"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "scripts/formulario_operational_features.test.js",
+      "source_location": "L423",
+      "weight": 1.0,
+      "confidence_score": 1.0,
+      "source": "scripts_formulario_operational_features_test_js",
+      "target": "scripts_formulario_operational_features_test_importeditorsectionrule"
     },
     {
       "relation": "contains",
@@ -40918,5 +40710,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "01891a9791b7c1684111a7f5dfad4d927212dc36"
+  "built_at_commit": "f04b098c014e3a9c39e5bb234e7da8d003dd88ac"
 }

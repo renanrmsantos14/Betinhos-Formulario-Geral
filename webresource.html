@@ -4840,8 +4840,7 @@ body.is-import-dragging .import-drop-overlay {
   min-width: 0;
 }
 
-.import-decision-copy span,
-.import-editor-section-title {
+.import-decision-copy span {
   color: var(--muted);
   font-size: 11px;
   font-weight: 820;
@@ -4904,31 +4903,8 @@ body.is-import-dragging .import-drop-overlay {
   flex-wrap: wrap;
   align-items: stretch;
   align-content: flex-start;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
-}
-
-.import-editor-section {
-  display: flex;
-  flex: 1 1 min(100%, 320px);
-  flex-wrap: wrap;
-  align-items: stretch;
-  align-content: flex-start;
-  gap: 6px;
-  min-width: 0;
-  padding: 7px;
-  border: 1px solid color-mix(in srgb, var(--line) 78%, #ffffff);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--surface) 92%, var(--surface-soft));
-}
-
-.import-editor-section-title {
-  flex: 0 0 100%;
-  color: var(--text-soft);
-}
-
-.import-editor-section .import-hot-grid {
-  grid-area: auto;
 }
 
 .import-trecho:has(.import-badge.success) {
@@ -16385,26 +16361,18 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       reviewStatus
     });
 
-    const agendaSection = buildImportEditorSection(
-      "Agenda",
+    const fieldStack = document.createElement("div");
+    fieldStack.className = "import-hot-grid import-editor-stack";
+    fieldStack.append(
       buildImportInput("Data e hora", "dataHora", importedTrechoDateTimeLocal(trecho), "datetime-local"),
       buildImportInput("Horário previsto de retorno", "retornoPrevisto", importedTrechoReturnDateTimeLocal(trecho), "datetime-local"),
       buildImportSelect("Tipo de serviço", "tipoServicoValue", state.options.tipoServico, trecho.tipoServicoValue || findOptionValue("tipoServico", trecho.tipoServicoSugerido)),
-      buildImportSelect("Tipo de veículo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido))
-    );
-    const routeSection = buildImportEditorSection(
-      "Rota operacional",
+      buildImportSelect("Tipo de veículo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido)),
       buildImportTextarea("Endereço de saída", "origem", trecho.origem),
       buildImportTextarea("Destino", "destino", trecho.destino),
-      buildImportTextarea("Trajeto", "trajetoCidades", trecho.trajetoCidades || composeImportTrajeto(trecho))
-    );
-    const commonSection = buildImportEditorSection(
-      "Dados comuns",
+      buildImportTextarea("Trajeto", "trajetoCidades", trecho.trajetoCidades || composeImportTrajeto(trecho)),
       buildImportTextarea("Observação", "observacaoOperacional", trecho.observacaoOperacional)
     );
-    const fieldStack = document.createElement("div");
-    fieldStack.className = "import-editor-stack";
-    fieldStack.append(agendaSection, routeSection, commonSection);
 
     const passengerList = document.createElement("div");
     passengerList.className = "import-passengers";
@@ -16558,19 +16526,6 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
     panel.append(copy, optionsWrap);
     return panel;
-  }
-
-  function buildImportEditorSection(title, ...controls) {
-    const section = document.createElement("section");
-    section.className = "import-editor-section";
-    const heading = document.createElement("div");
-    heading.className = "import-editor-section-title";
-    heading.textContent = title;
-    const grid = document.createElement("div");
-    grid.className = "import-hot-grid";
-    grid.append(...controls.filter(Boolean));
-    section.append(heading, grid);
-    return section;
   }
 
   function importedTrechoHasReturn(trecho) {

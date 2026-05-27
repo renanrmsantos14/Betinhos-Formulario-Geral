@@ -4832,8 +4832,7 @@ body.is-import-dragging .import-drop-overlay {
   min-width: 0;
 }
 
-.import-decision-copy span,
-.import-editor-section-title {
+.import-decision-copy span {
   color: var(--muted);
   font-size: 11px;
   font-weight: 820;
@@ -4896,31 +4895,8 @@ body.is-import-dragging .import-drop-overlay {
   flex-wrap: wrap;
   align-items: stretch;
   align-content: flex-start;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
-}
-
-.import-editor-section {
-  display: flex;
-  flex: 1 1 min(100%, 320px);
-  flex-wrap: wrap;
-  align-items: stretch;
-  align-content: flex-start;
-  gap: 6px;
-  min-width: 0;
-  padding: 7px;
-  border: 1px solid color-mix(in srgb, var(--line) 78%, #ffffff);
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--surface) 92%, var(--surface-soft));
-}
-
-.import-editor-section-title {
-  flex: 0 0 100%;
-  color: var(--text-soft);
-}
-
-.import-editor-section .import-hot-grid {
-  grid-area: auto;
 }
 
 .import-trecho:has(.import-badge.success) {

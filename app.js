@@ -7489,26 +7489,18 @@
       reviewStatus
     });
 
-    const agendaSection = buildImportEditorSection(
-      "Agenda",
+    const fieldStack = document.createElement("div");
+    fieldStack.className = "import-hot-grid import-editor-stack";
+    fieldStack.append(
       buildImportInput("Data e hora", "dataHora", importedTrechoDateTimeLocal(trecho), "datetime-local"),
       buildImportInput("Horário previsto de retorno", "retornoPrevisto", importedTrechoReturnDateTimeLocal(trecho), "datetime-local"),
       buildImportSelect("Tipo de serviço", "tipoServicoValue", state.options.tipoServico, trecho.tipoServicoValue || findOptionValue("tipoServico", trecho.tipoServicoSugerido)),
-      buildImportSelect("Tipo de veículo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido))
-    );
-    const routeSection = buildImportEditorSection(
-      "Rota operacional",
+      buildImportSelect("Tipo de veículo", "tipoVeiculoValue", state.options.tipoVeiculo, trecho.tipoVeiculoValue || findOptionValue("tipoVeiculo", trecho.tipoVeiculoSugerido)),
       buildImportTextarea("Endereço de saída", "origem", trecho.origem),
       buildImportTextarea("Destino", "destino", trecho.destino),
-      buildImportTextarea("Trajeto", "trajetoCidades", trecho.trajetoCidades || composeImportTrajeto(trecho))
-    );
-    const commonSection = buildImportEditorSection(
-      "Dados comuns",
+      buildImportTextarea("Trajeto", "trajetoCidades", trecho.trajetoCidades || composeImportTrajeto(trecho)),
       buildImportTextarea("Observação", "observacaoOperacional", trecho.observacaoOperacional)
     );
-    const fieldStack = document.createElement("div");
-    fieldStack.className = "import-editor-stack";
-    fieldStack.append(agendaSection, routeSection, commonSection);
 
     const passengerList = document.createElement("div");
     passengerList.className = "import-passengers";
@@ -7662,19 +7654,6 @@
 
     panel.append(copy, optionsWrap);
     return panel;
-  }
-
-  function buildImportEditorSection(title, ...controls) {
-    const section = document.createElement("section");
-    section.className = "import-editor-section";
-    const heading = document.createElement("div");
-    heading.className = "import-editor-section-title";
-    heading.textContent = title;
-    const grid = document.createElement("div");
-    grid.className = "import-hot-grid";
-    grid.append(...controls.filter(Boolean));
-    section.append(heading, grid);
-    return section;
   }
 
   function importedTrechoHasReturn(trecho) {

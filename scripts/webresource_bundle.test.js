@@ -69,6 +69,9 @@ assert.ok(html.includes(".import-review-programs {\n  grid-area: programs;\n  di
 assert.ok(html.includes(".import-service-list {\n  display: grid;\n  gap: 8px;\n  align-content: start;\n  height: 100%;"), "bundle deve fazer lista importada ocupar altura util");
 assert.ok(html.includes(".import-inspector {\n  display: grid;\n  align-content: start;\n  gap: 8px;\n  height: 100%;"), "bundle deve conter inspector interno scrollavel");
 assert.ok(html.includes(".import-editor-stack {\n  display: flex;\n  flex-wrap: wrap;"), "bundle deve usar flex-wrap no formulario importado");
+assert.ok(html.includes("fieldStack.className = \"import-hot-grid import-editor-stack\";"), "bundle deve renderizar campos importados soltos no mesmo stack");
+assert.ok(!html.includes("function buildImportEditorSection"), "bundle nao deve gerar secoes internas no formulario importado");
+assert.ok(!html.includes(".import-editor-section"), "bundle nao deve carregar CSS de secoes internas no formulario importado");
 assert.ok(html.includes("--import-field-min: 220px;"), "bundle deve manter min-width base dos campos importados");
 assert.ok(html.includes("min-width: min(100%, var(--import-field-min));"), "bundle deve ajustar campos importados por min-width");
 assert.ok(html.includes("\"decision passengers\""), "bundle deve posicionar passageiros no topo direito do formulario importado");
