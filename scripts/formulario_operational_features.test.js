@@ -343,6 +343,11 @@ includes(app, "function getImportClient", "resolucao do cliente padrao Embraer")
 includes(app, "function ensureImportedSolicitanteRecord", "criacao/resolucao automatica do solicitante importado");
 includes(app, "function selectImportedExistingMatch", "match automatico seguro de cadastro existente");
 includes(app, "function createImportedPersonRecord", "criacao automatica de solicitante/passageiro importado");
+includes(app, "function uniquePassengerRelationItems", "vinculos servico-passageiro devem deduplicar passageiro antes do Dataverse");
+includes(app, "const relationPassengers = uniquePassengerRelationItems(passengers);", "salvamento deve usar lista deduplicada para evitar chave duplicada");
+includes(app, "Falha ao desfazer reserva importada incompleta", "falha em vinculo importado deve tentar desfazer reserva recem-criada");
+includes(app, "function showTemporaryStatusLogicReminder", "lembrete temporario de logica de status deve existir antes do salvamento");
+includes(app, "toast(\"LEMBRETE TEMPORARIO: nao esquecer de colocar a logica de conversao de status do XLSX no codigo.\", \"warning\", 12000)", "lembrete temporario de status deve ser informativo, nao bloqueante");
 const createImportedPersonRecordFn = extractFunction(app, "createImportedPersonRecord");
 includes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.email]: normalizeEmail(person.email || \"\")", "passageiro novo importado deve gravar email quando existir");
 includes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.telefone]: phoneStorageValue(person.telefone || \"\", \"55\")", "passageiro novo importado deve gravar telefone");

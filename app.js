@@ -2840,8 +2840,9 @@
 
   function replaceMockRelations(reservaId, passengers, includeAddress) {
     const db = getMockDb();
+    const relationPassengers = uniquePassengerRelationItems(passengers);
     db.relacoes = db.relacoes.filter((item) => !sameId(item.reservaId, reservaId));
-    for (const item of passengers) {
+    for (const item of relationPassengers) {
       db.relacoes.push({
         reservaId,
         ordem: Number(item.ordem),
@@ -9089,10 +9090,12 @@
     }
     const manageLoading = !options.skipLoading;
     if (manageLoading) setLoading(true);
+    let createdReservaId = "";
     try {
       const context = await buildImportedSaveContext(trecho);
       const payload = buildImportedReservaPayload(trecho, context);
       const saved = await saveReserva(payload);
+      createdReservaId = saved.id;
       await replacePassengerRelations(saved.id, context.colOrdemPassageiros, context, true);
       window.XlsxImportCore?.markImportedTrechoSaved?.(trecho, saved.id);
       if (!window.XlsxImportCore?.markImportedTrechoSaved) {
@@ -9108,6 +9111,13 @@
       return saved;
     } catch (error) {
       console.error(error);
+      if (createdReservaId && state.xrm && !state.mockMode) {
+        try {
+          await state.xrm.WebApi.deleteRecord(CONFIG.entities.reserva, createdReservaId);
+        } catch (cleanupError) {
+          console.warn("Falha ao desfazer reserva importada incompleta", cleanupError);
+        }
+      }
       toast(error.message || "Falha ao salvar trecho importado.", "error", 9000);
       return null;
     } finally {
@@ -9383,6 +9393,7 @@
 
   async function saveForm() {
     captureObsState();
+    showTemporaryStatusLogicReminder();
     if (isImportSaveMode()) {
       performImportedServicesSave();
       return;
@@ -9396,6 +9407,10 @@
     const context = buildSaveContext();
     clearValidationStates();
     proceedSaveContext(context);
+  }
+
+  function showTemporaryStatusLogicReminder() {
+    toast("LEMBRETE TEMPORARIO: nao esquecer de colocar a logica de conversao de status do XLSX no codigo.", "warning", 12000);
   }
 
   function isImportSaveMode() {
@@ -9910,10 +9925,36 @@
     return payload;
   }
 
+  function uniquePassengerRelationItems(passengers) {
+    const byPassengerId = new Map();
+    (passengers || []).forEach((item) => {
+      const passengerId = cleanGuid(item?.guid || item?.passageiro?.id || "");
+      if (!passengerId) return;
+      const existing = byPassengerId.get(passengerId);
+      if (!existing) {
+        byPassengerId.set(passengerId, {
+          ...item,
+          guid: passengerId
+        });
+        return;
+      }
+      const currentAddress = String(existing.enderecoSaidaBD || "").trim();
+      const nextAddress = String(item.enderecoSaidaBD || "").trim();
+      if (nextAddress && !currentAddress.includes(nextAddress)) {
+        existing.enderecoSaidaBD = [currentAddress, nextAddress].filter(Boolean).join(" / ");
+      }
+    });
+    return Array.from(byPassengerId.values()).map((item, index) => ({
+      ...item,
+      ordem: index + 1
+    }));
+  }
+
   async function replacePassengerRelations(reservaId, passengers, context, includeAddress, removeExisting) {
-    if (!passengers.length) return;
+    const relationPassengers = uniquePassengerRelationItems(passengers);
+    if (!relationPassengers.length) return;
     if (!state.xrm || state.mockMode) {
-      replaceMockRelations(reservaId, passengers, includeAddress);
+      replaceMockRelations(reservaId, relationPassengers, includeAddress);
       return;
     }
 
@@ -9933,7 +9974,7 @@
       });
 
       const usedRelationIds = new Set();
-      await Promise.all(passengers.map((item) => {
+      await Promise.all(relationPassengers.map((item) => {
         const passengerId = cleanGuid(item.guid);
         const bucket = passengerId ? existingByPassengerId.get(passengerId) : null;
         const current = bucket?.shift();
@@ -9961,7 +10002,7 @@
       return;
     }
 
-    await Promise.all(passengers.map((item) => (
+    await Promise.all(relationPassengers.map((item) => (
       state.xrm.WebApi.createRecord(
         CONFIG.entities.servicoPassageiro,
         buildPassengerRelationPayload(reservaId, item, context, includeAddress, true)
