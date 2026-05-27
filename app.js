@@ -4009,6 +4009,88 @@
     targets.forEach((target) => target.style.setProperty("--passenger-name-width", `${maxWidth}px`));
   }
 
+  function syncImportedPassengerNameColumnWidths() {
+    if (!el.importReviewPrograms) return;
+    const IMPORT_PASSENGER_BLOCK_MAX_WIDTH = 340;
+    const lists = [...el.importReviewPrograms.querySelectorAll(".import-passengers")];
+    lists.forEach((list) => {
+      list.style.removeProperty("--import-passenger-name-width");
+      list.style.removeProperty("--import-passenger-block-width");
+      const trechoCard = list.closest(".import-trecho");
+      trechoCard?.style.removeProperty("--import-passenger-block-width");
+      const labels = [...list.querySelectorAll(".import-passenger-row .row-label")];
+      if (!labels.length) return;
+
+      const measuredRows = labels
+        .map((label) => {
+          const title = label.querySelector(".row-title");
+          if (!title) return null;
+          const titleStyles = window.getComputedStyle(title);
+          return {
+            label,
+            textWidth: measureImportedPassengerTextWidth(title.textContent || "", titleStyles),
+            titleStyles
+          };
+        })
+        .filter(Boolean);
+      if (!measuredRows.length) return;
+
+      const widestRow = measuredRows.reduce((widest, current) => (
+        current.textWidth > widest.textWidth ? current : widest
+      ), measuredRows[0]);
+      const row = widestRow.label.closest(".import-passenger-row");
+      const titleWrap = widestRow.label.querySelector(".row-title-wrap");
+      const rowStyles = row ? window.getComputedStyle(row) : null;
+      const labelStyles = window.getComputedStyle(widestRow.label);
+      const titleWrapStyles = titleWrap ? window.getComputedStyle(titleWrap) : null;
+      const listStyles = window.getComputedStyle(list);
+      const measuredContentWidth = Math.ceil(
+        widestRow.textWidth
+        + horizontalBoxWidth(rowStyles)
+        + horizontalBoxWidth(labelStyles)
+        + horizontalBoxWidth(titleWrapStyles)
+        + horizontalBoxWidth(widestRow.titleStyles)
+        + horizontalBoxWidth(listStyles)
+      );
+      if (!Number.isFinite(measuredContentWidth) || measuredContentWidth <= 0) return;
+
+      const blockWidth = Math.min(measuredContentWidth, IMPORT_PASSENGER_BLOCK_MAX_WIDTH);
+      list.style.setProperty("--import-passenger-block-width", `${blockWidth}px`);
+      list.style.setProperty("--import-passenger-name-width", `${Math.max(0, blockWidth)}px`);
+      trechoCard?.style.setProperty("--import-passenger-block-width", `${blockWidth}px`);
+    });
+  }
+
+  function horizontalBoxWidth(styles) {
+    if (!styles) return 0;
+    return cssPixelValue(styles.paddingLeft)
+      + cssPixelValue(styles.paddingRight)
+      + cssPixelValue(styles.borderLeftWidth)
+      + cssPixelValue(styles.borderRightWidth);
+  }
+
+  function cssPixelValue(value) {
+    const parsed = parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function measureImportedPassengerTextWidth(text, styles) {
+    const probe = document.createElement("span");
+    probe.textContent = text || "";
+    probe.style.position = "absolute";
+    probe.style.visibility = "hidden";
+    probe.style.whiteSpace = "nowrap";
+    probe.style.pointerEvents = "none";
+    probe.style.fontFamily = styles?.fontFamily || "inherit";
+    probe.style.fontSize = styles?.fontSize || "13px";
+    probe.style.fontWeight = styles?.fontWeight || "670";
+    probe.style.letterSpacing = styles?.letterSpacing || "normal";
+    document.body.appendChild(probe);
+    const width = Math.ceil(probe.getBoundingClientRect().width);
+    probe.remove();
+    return width;
+  }
+
   function buildPassengerRow(item) {
     const row = document.createElement("div");
     row.className = "passenger-row";
@@ -6824,6 +6906,7 @@
       }));
     }
     syncDateTimeFieldRowWidths();
+    syncImportedPassengerNameColumnWidths();
   }
 
   function getImportProgramsByReviewFilter(programs, filter) {
@@ -7301,9 +7384,11 @@
       const isEditing = !isDuplicated && isImportedTrechoEditing(selected.program.programacao, selected.trecho.key);
       const inspectorHead = document.createElement("div");
       inspectorHead.className = "import-inspector-head";
+      const reviewStatus = normalizeImportedReviewStatus(selected.trecho);
+      const statusMeta = importedTrechoReviewMeta(selected.trecho, importedTrechoIssues(selected.trecho));
+      addClassIfPresent(inspector, `is-${reviewStatus || ""}`);
       const title = document.createElement("div");
       const eyebrow = document.createElement("span");
-      const reviewStatus = normalizeImportedReviewStatus(selected.trecho);
       const statusLabels = importReviewStatuses();
       eyebrow.textContent = isDuplicated
         ? "Serviço bloqueado"
@@ -7323,6 +7408,11 @@
       const strong = document.createElement("strong");
       strong.textContent = `${selected.program.programacao} · ${formatDateInputForDisplay(selected.trecho.dataIso)} ${selected.trecho.horario || "--:--"}`;
       title.append(eyebrow, strong);
+      const statusBadge = document.createElement("span");
+      statusBadge.className = `import-inspector-status import-badge ${isDuplicated ? "danger" : statusMeta.tone}`;
+      statusBadge.textContent = isDuplicated ? "Bloqueado" : statusMeta.label;
+      statusBadge.setAttribute("aria-label", `Status do serviço: ${statusBadge.textContent}`);
+      title.appendChild(statusBadge);
       const actions = document.createElement("div");
       actions.className = "import-inspector-actions";
       if (isDuplicated) actions.classList.add("duplicado");
@@ -7403,6 +7493,7 @@
     button.dataset.programacao = program.programacao;
     button.dataset.trechoKey = trecho.key;
     button.setAttribute("aria-current", isSelected ? "true" : "false");
+    button.setAttribute("aria-label", `${isSelected ? "Selecionado. " : ""}${importedTrechoServiceListTimeLabel(trecho)}. Status: ${isDuplicated ? "Não editar" : status.label}.`);
 
     const main = document.createElement("span");
     main.className = "import-service-main";

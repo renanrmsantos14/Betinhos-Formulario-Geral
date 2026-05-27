@@ -72,7 +72,8 @@ assert.ok(html.includes("function importedTrechoServiceListTimeLabel(trecho)"), 
 assert.ok(html.includes("return [date, window].filter(Boolean).join(\" · \");"), "bundle deve separar data e janela por ponto medio na galeria importada");
 assert.ok(html.includes("meta.textContent = composeImportTrajeto(trecho) || trecho.destino || \"rota pendente\";"), "bundle deve mostrar apenas trajeto abaixo do titulo da galeria importada");
 assert.ok(!html.includes("title.textContent = `${program.programacao} · Serviço ${index + 1}`;"), "bundle nao deve mostrar PG e numero do servico no titulo da galeria importada");
-assert.ok(html.includes(".import-inspector {\n  display: grid;\n  align-content: start;\n  gap: 8px;\n  height: 100%;"), "bundle deve conter inspector interno scrollavel");
+assert.ok(html.includes(".import-inspector {\n  --import-status-color: var(--warning);"), "bundle deve conter inspector com status visual");
+assert.ok(html.includes("display: grid;\n  align-content: start;\n  gap: 8px;\n  height: 100%;\n  min-height: 0;\n  overflow: auto;"), "bundle deve conter inspector interno scrollavel");
 assert.ok(html.includes(".import-editor-stack {\n  display: flex;\n  flex-wrap: wrap;"), "bundle deve usar flex-wrap no formulario importado");
 assert.ok(html.includes("fieldStack.className = \"import-hot-grid import-editor-stack\";"), "bundle deve renderizar campos importados soltos no mesmo stack");
 assert.ok(!html.includes("function buildImportEditorSection"), "bundle nao deve gerar secoes internas no formulario importado");
@@ -80,7 +81,9 @@ assert.ok(!html.includes(".import-editor-section"), "bundle nao deve carregar CS
 assert.ok(html.includes("--import-field-min: 220px;"), "bundle deve manter min-width base dos campos importados");
 assert.ok(html.includes("min-width: min(100%, var(--import-field-min));"), "bundle deve ajustar campos importados por min-width");
 assert.ok(html.includes("\"decision passengers\""), "bundle deve posicionar passageiros no topo direito do formulario importado");
-assert.ok(html.includes("position: sticky;\n    top: 0;"), "bundle deve manter lista de passageiros fixa no topo direito");
+assert.ok(html.includes("grid-template-columns: minmax(0, 1fr) var(--import-passenger-block-width, max-content);"), "bundle deve reservar coluna real para passageiros");
+assert.ok(html.includes("position: static;"), "bundle nao deve sobrepor passageiros sobre campos importados");
+assert.ok(!html.includes("position: absolute;\n    top: 10px;\n    right: 10px;"), "bundle nao deve usar position absolute nos passageiros importados");
 assert.ok(!html.includes("const commonSection = buildImportEditorSection(\n      \"Dados comuns\",\n      buildImportSolicitanteSelect(trecho),"), "bundle nao deve manter solicitante em Dados comuns");
 assert.ok(html.includes("const solicitanteSection = buildImportSolicitanteSection(trecho, {\n      editable: isEditing"), "bundle deve renderizar solicitante como secao propria com modo de edicao");
 assert.ok(html.includes("const isPassengerPickerOpen = !!trecho.passengerPickerOpen && isEditing;"), "bundle deve abrir seletor inline de passageiro quando editavel");
@@ -102,7 +105,7 @@ assert.ok(html.includes("svg.classList.add(\"import-row-remove-icon\")"), "bundl
 assert.ok(html.includes("path.setAttribute(\"d\", \"M7 7l10 10M17 7L7 17\")"), "bundle deve usar icone X/fechar no remover");
 assert.ok(html.includes("buildImportAction(\"+\", \"add-import-solicitante\")"), "bundle deve permitir adicionar solicitante quando vazio");
 assert.ok(html.includes(".import-passengers .import-solicitante-section"), "bundle deve estilizar solicitante dentro de passageiros");
-assert.ok(html.includes(".import-solicitante-row.passenger-row {\n  grid-template-columns: minmax(0, 1fr) auto;"), "bundle deve alinhar solicitante com a mesma grade do passageiro");
+assert.ok(html.includes(".import-solicitante-row.passenger-row {\n  grid-template-columns: minmax(0, 1fr);"), "bundle deve alinhar solicitante com a mesma grade do passageiro");
 assert.ok(!html.includes(".import-solicitante-record-title"), "bundle nao deve manter tipografia propria no registro do solicitante");
 assert.ok(!html.includes("rowTitle.textContent = \"Solicitante\";"), "bundle nao deve renderizar Solicitante dentro da row");
 assert.ok(html.includes("function importedPassengerIdentityKey"), "bundle deve ter identidade logica compartilhada entre pax e solicitante");

@@ -455,7 +455,7 @@ includes(app, "function importedTrechoServiceListTimeLabel(trecho)", "galeria im
 includes(app, "return [date, window].filter(Boolean).join(\" · \");", "label da galeria importada deve separar data e janela por ponto medio");
 includes(app, "meta.textContent = composeImportTrajeto(trecho) || trecho.destino || \"rota pendente\";", "galeria importada deve mostrar apenas trajeto abaixo do titulo");
 excludes(app, "title.textContent = `${program.programacao} · Serviço ${index + 1}`;", "galeria importada nao deve mostrar PG e numero do servico no titulo");
-const importInspectorRule = extractCssRule(css, ".import-inspector {\n  display: grid;");
+const importInspectorRule = extractCssRule(css, ".import-inspector {\n  --import-status-color");
 includes(importInspectorRule, "overflow: auto;", "inspector deve conter overflow sem puxar scroll da tela");
 const importEditorStackRule = extractCssRule(css, ".import-editor-stack {");
 includes(importEditorStackRule, "display: flex;", "formulario importado deve seguir logica flex do formulario comum");
@@ -466,11 +466,13 @@ includes(importFieldRule, "--import-field-min: 220px;", "campos importados devem
 includes(importFieldRule, "min-width: min(100%, var(--import-field-min));", "campos importados devem respeitar min-width responsivo");
 const importTrechoDesktopRule = extractCssRule(css, "@media (min-width: 980px) {\n  .import-trecho {");
 includes(importTrechoDesktopRule, "\"decision passengers\"", "passageiros devem iniciar no topo direito do formulario importado");
+includes(importTrechoDesktopRule, "grid-template-columns: minmax(0, 1fr) var(--import-passenger-block-width, max-content);", "formulario importado deve reservar coluna real para passageiros");
 const importPassengersDesktopRule = extractCssRule(css, "  .import-passengers {\n    grid-area: passengers;");
-includes(importPassengersDesktopRule, "position: sticky;", "lista de passageiros deve ficar fixa no topo direito ao rolar inspector");
-includes(importPassengersDesktopRule, "top: 0;", "lista de passageiros deve grudar no topo do inspector");
+includes(importPassengersDesktopRule, "position: static;", "lista de passageiros nao deve sobrepor campos com position absolute");
+includes(importPassengersDesktopRule, "justify-self: end;", "lista de passageiros deve alinhar no topo direito da coluna real");
+excludes(importPassengersDesktopRule, "position: absolute;", "lista de passageiros nao deve usar position absolute no desktop");
 const importSolicitanteRowRule = extractCssRule(css, ".import-solicitante-row.passenger-row {");
-includes(importSolicitanteRowRule, "grid-template-columns: minmax(0, 1fr) auto;", "solicitante deve usar a mesma estrutura de row do passageiro");
+includes(importSolicitanteRowRule, "grid-template-columns: minmax(0, 1fr);", "solicitante deve usar a mesma estrutura de row do passageiro");
 includes(importSolicitanteRowRule, "align-items: center;", "solicitante deve alinhar controle como row compacta");
 excludes(css, ".import-solicitante-record-title", "solicitante nao deve ter tipografia propria diferente do passageiro");
 const importSolicitanteFieldRule = extractCssRule(css, ".import-solicitante-picker .import-solicitante-field {");
