@@ -3031,10 +3031,13 @@
     const r = state.record || {};
     const f = CONFIG.fields.reserva;
     updateSaveButtonText();
+    document.documentElement.classList.toggle("is-editing-service", !state.isNew);
     el.tabImport.hidden = !state.isNew;
     el.tabBd.hidden = !state.isNew;
     el.tabReturn.hidden = !state.isNew;
     el.tabRepeat.hidden = !state.isNew;
+    if (el.importXlsxButton) el.importXlsxButton.hidden = !state.isNew;
+    if (el.xlsxImportInput) el.xlsxImportInput.disabled = !state.isNew;
     el.opWrap.hidden = state.isNew;
     el.recordIdBox.hidden = state.isNew;
     el.recordIdText.textContent = r[f.readableId] || "";
@@ -7002,7 +7005,7 @@
   function renderGlobalImportHistoryControls() {
     if (!el.globalImportHistoryActions) return;
     const history = state.globalHistory;
-    el.globalImportHistoryActions.replaceChildren(
+    const buttons = [
       buildImportHistoryButton(
         "Desfazer",
         "undo",
@@ -7016,9 +7019,12 @@
         !(history?.redo?.length),
         "Ctrl+Y / Ctrl+Shift+Z",
         history?.redo?.length ? "Refazer última alteração do app (Ctrl+Y ou Ctrl+Shift+Z)" : "Nada para refazer neste formulário"
-      ),
-      buildImportHistoryButton("Limpar", "clear", false, "", "Apagar todos os dados do formulário e recomeçar")
-    );
+      )
+    ];
+    if (state.isNew) {
+      buttons.push(buildImportHistoryButton("Limpar", "clear", false, "", "Apagar todos os dados do formulário e recomeçar"));
+    }
+    el.globalImportHistoryActions.replaceChildren(...buttons);
   }
 
   function buildImportHistoryButton(label, action, disabled, shortcut, tooltip) {
@@ -7044,10 +7050,13 @@
   }
 
   async function clearAllFormsCompletely() {
+    if (!state.isNew) {
+      renderGlobalImportHistoryControls();
+      toast("Limpar formulário só está disponível em novo serviço.", "warning", 5000);
+      return;
+    }
     const approved = await requestClearAllFormsConfirmation();
     if (!approved) return;
-    captureGlobalHistoryBeforeMutation("Limpar formulário");
-    const currentRecordId = state.recordId || "";
     setLoading(true);
     try {
       if (el.passengerPickerOverlay && !el.passengerPickerOverlay.hidden) {
@@ -7056,31 +7065,52 @@
       if (el.activationGuardOverlay && !el.activationGuardOverlay.hidden) {
         closeActivationGuard();
       }
+      closeImportedPassengerPopupWithoutSave();
+      closePassengerPreview();
+      if (el.passengerMatchOverlay && !el.passengerMatchOverlay.hidden) {
+        resolvePassengerMatchReview({ action: "cancel" });
+      }
       state.pendingSaveContext = null;
       state.importReview = null;
       state.importReviewFilter = importReviewFilters().ALL;
       state.importDraftEditState = { common: false, retorno: false };
       state.activationDraftEditState = { return: false, repeat: false };
+      state.activationGuardDrafts = [];
       state.scheduleDrafts = [];
       state.draftCommonEdited = false;
+      state.record = null;
+      state.relacoes = [];
+      state.enderecoPersonalizadoAtivo = false;
+      state.selectedPassengers = [emptyPassenger(1)];
+      state.enderecoRascunho = [{ ordem: 1, endereco: "" }];
+      state.obs = { motorista: "", interna: "", final: "", passageiro: "" };
+      state.obsRet = { motorista: "", interna: "", final: "", passageiro: "" };
+      state.obsAtual = "motorista";
+      state.retObsAtual = "motorista";
+      state.globalHistory = { undo: [], redo: [], pending: null };
+      passengerMatchCandidates = [];
+      if (el.xlsxImportInput) el.xlsxImportInput.value = "";
       clearSaveLog();
       clearDraftSnapshot(false);
-
-      if (currentRecordId) {
-        await loadCurrentRecord();
-      } else {
-        state.record = null;
-        state.relacoes = [];
-        state.enderecoPersonalizadoAtivo = false;
-        state.selectedPassengers = [emptyPassenger(1)];
-        state.enderecoRascunho = [{ ordem: 1, endereco: "" }];
-      }
 
       clearPassengerCreateForm();
       closePassengerPicker();
       closePassengerEditPopup();
       clearValidationStates();
       hydrateForm();
+      setFieldValue(el.agendarRetorno, false);
+      setFieldValue(el.repetirServico, false);
+      setFieldValue(el.retornoData, "");
+      setSelectValue(el.retornoHora, "");
+      setSelectValue(el.retornoMinuto, "");
+      setFieldValue(el.retornoEndereco, "");
+      setFieldValue(el.retornoDestino, "");
+      setFieldValue(el.retornoObservacao, "");
+      setFieldValue(el.frequenteInicio, "");
+      setFieldValue(el.frequenteFim, "");
+      setSelectValue(el.frequenteTipo, "");
+      setFieldValue(el.enderecoPersonalizado, "");
+      setFieldValue(el.contabilizarFds, true);
       renderImportReview();
       renderGlobalImportHistoryControls();
       renderScheduleDrafts();
@@ -7089,7 +7119,6 @@
       renderTabBadges();
       setTab("details");
       renderDraftStatus("Formulário limpo.");
-      commitGlobalHistoryChange("Limpar formulário");
       toast("Dados removidos. Formulário reaberto do zero.", "success", 4500);
     } catch (error) {
       console.error(error);
@@ -7293,6 +7322,8 @@
       })),
       observacoes: Array.from(new Set(source?.observacoes || [])),
       observacaoOperacional: source?.observacaoOperacional || "",
+      observacoesFormulario: source?.observacoesFormulario ? { ...source.observacoesFormulario } : null,
+      observacaoAtual: source?.observacaoAtual || "motorista",
       pendencias: [],
       reviewStatus: importReviewStatuses().PENDING,
       reviewBlockReason: "",
@@ -7523,15 +7554,10 @@
 
     const side = document.createElement("span");
     side.className = "import-service-side";
-    const pax = document.createElement("span");
-    pax.textContent = importPassengerCountLabel(trecho.passageiros.length);
-    const mode = document.createElement("span");
-    mode.className = "import-mode-chip";
-    mode.textContent = importedTrechoModeLabel(trecho);
     const badge = document.createElement("span");
     badge.className = `import-badge ${isDuplicated ? "danger" : trecho.possibleDuplicateMatches?.length ? "warning" : status.tone}`;
     badge.textContent = isDuplicated ? "Não editar" : trecho.possibleDuplicateMatches?.length ? "Parecido" : status.label;
-    side.append(pax, mode, badge);
+    side.append(badge);
     button.append(main, side);
     wrap.append(button);
     return wrap;
@@ -7590,11 +7616,6 @@
 
     const duplicateLock = buildImportDuplicateLockNotice(trecho);
 
-    const decisionPanel = buildImportDecisionPanel(trecho, {
-      isDuplicated,
-      reviewStatus
-    });
-
     const fieldStack = document.createElement("div");
     fieldStack.className = "import-hot-grid import-editor-stack";
     fieldStack.append(
@@ -7605,7 +7626,7 @@
       buildImportTextarea("Endereço de saída", "origem", trecho.origem),
       buildImportTextarea("Destino", "destino", trecho.destino),
       buildImportTextarea("Trajeto", "trajetoCidades", trecho.trajetoCidades || composeImportTrajeto(trecho)),
-      buildImportTextarea("Observação operacional", "observacaoOperacional", trecho.observacaoOperacional, { obs: true })
+      buildImportObservationField(trecho)
     );
 
     const passengerList = document.createElement("div");
@@ -7662,7 +7683,7 @@
 
     const blocks = [head];
     if (duplicateLock) blocks.push(duplicateLock);
-    blocks.push(decisionPanel, fieldStack, passengerList, issueList, actions);
+    blocks.push(fieldStack, passengerList, issueList, actions);
     card.append(...blocks);
     setImportedTrechoControlsMode(card, isEditing);
     return card;
@@ -7682,110 +7703,37 @@
     if (reviewStatus === statuses.IGNORED || reviewStatus === statuses.CONFIRMED) {
       return [attachContext(buildImportAction("Revisar", "review-pending"))];
     }
+    const splitButton = canShowImportedSplitAction(trecho, reviewStatus, isDuplicated)
+      ? attachContext(buildImportAction("Separar ida/busca", "split-trecho"))
+      : null;
+    if (splitButton) {
+      splitButton.classList.add("secondary-action");
+      splitButton.title = "Criar segunda OS rascunho na mesma PG.";
+    }
     const validateButton = attachContext(buildImportAction("Validar", "confirm-review", !!isDuplicated));
     validateButton.title = isDuplicated ? "Serviço já existe no sistema. Validação bloqueada." : "Validar este serviço importado.";
     const ignoreButton = attachContext(buildImportAction("Ignorar", "ignore-trecho"));
     ignoreButton.title = "Ignorar este serviço na importação.";
-    return [validateButton, ignoreButton];
+    return [splitButton, validateButton, ignoreButton].filter(Boolean);
   }
 
-  function buildImportDecisionPanel(trecho, options = {}) {
+  function canShowImportedSplitAction(trecho, reviewStatus = normalizeImportedReviewStatus(trecho), isDuplicated = false) {
     const statuses = importReviewStatuses();
-    const hasReturn = importedTrechoHasReturn(trecho);
-    const isDraft = isDraftImportedTrecho(trecho);
-    const isSplit = isSplitImportedTrecho(trecho);
-    const isLocked = !!options.isDuplicated || options.reviewStatus === statuses.SAVED || options.reviewStatus === statuses.IGNORED;
-    const decisions = importOperationalDecisions();
     const modes = importOperationalModes();
-    const isMultiPickup = trecho?.operationalMode === modes.MULTI_PICKUP;
-    const isIndependentServices = trecho?.operationalMode === modes.INDEPENDENT_SERVICES;
-    const isSeparable = trecho?.operationalMode === modes.SEPARABLE;
+    const decisions = importOperationalDecisions();
     const currentDecision = trecho.operationalDecision || "";
-    const splitDisabled = isLocked || isDraft || isMultiPickup || isIndependentServices || !hasReturn;
-    const panel = document.createElement("section");
-    panel.className = "import-decision-panel";
-    panel.classList.toggle("is-decision-pending", currentDecision === decisions.PENDING);
-    panel.classList.toggle("is-multi-pickup", isMultiPickup);
-    panel.classList.toggle("is-independent-services", isIndependentServices);
-
-    const copy = document.createElement("div");
-    copy.className = "import-decision-copy";
-    const strong = document.createElement("strong");
-    strong.textContent = importedTrechoModeLabel(trecho);
-    const detail = document.createElement("p");
-    if (isSeparable) {
-      detail.textContent = "Padrão: motorista à disposição. Separe apenas se quiser criar ida e busca em OS diferentes.";
-    } else if (trecho.operationalReason) {
-      detail.textContent = formatOperationalText(trecho.operationalReason);
-    } else if (isSplit) {
-      detail.textContent = "Complete este rascunho como a busca separada.";
-    } else if (hasReturn) {
-      detail.textContent = "Uma OS cobre saída e retorno previsto. Separe se o carro não precisa ficar à disposição.";
-    } else {
-      detail.textContent = "Uma OS sem retorno previsto. Use apenas se não houver busca planejada.";
-    }
-    copy.append(strong, detail);
-
-    const optionsWrap = document.createElement("div");
-    optionsWrap.className = "import-decision-options";
-    const hasKeepAction = hasReturn && !isMultiPickup && !isSeparable;
-    const keepButton = hasKeepAction ? buildImportAction("Manter espera", "keep-waiting", isLocked || isDraft) : null;
-    if (keepButton) {
-      keepButton.classList.add("import-decision-button", "is-keep-action");
-      keepButton.classList.toggle("is-current", currentDecision === decisions.KEEP_WAITING);
-      keepButton.setAttribute("aria-pressed", String(currentDecision === decisions.KEEP_WAITING));
-    }
-    const splitButton = buildImportAction("Separar ida/busca", "split-trecho", splitDisabled);
-    splitButton.classList.add("import-decision-button", "is-split-action");
-    splitButton.classList.toggle("is-current", currentDecision === decisions.SPLIT || currentDecision === decisions.SPLIT_DRAFT);
-    splitButton.setAttribute("aria-pressed", String(currentDecision === decisions.SPLIT || currentDecision === decisions.SPLIT_DRAFT));
-    splitButton.title = splitDisabled
-      ? isDraft
-        ? "Split disponível apenas no serviço importado original."
-        : isMultiPickup
-          ? "Multi-coleta já nasce como uma OS única."
-          : isIndependentServices
-            ? "A PG já foi separada por janela operacional."
-            : !hasReturn
-              ? "Sem retorno previsto para separar ida/busca."
-              : "Este serviço não pode ser separado neste estado."
-      : "Criar segunda OS rascunho na mesma PG.";
-    const hasSplitAction = !isDraft && currentDecision !== decisions.SPLIT && currentDecision !== decisions.SPLIT_DRAFT && !isIndependentServices && hasReturn;
-    if (keepButton) optionsWrap.appendChild(keepButton);
-    if (hasSplitAction) optionsWrap.appendChild(splitButton);
-
-    panel.append(copy, optionsWrap);
-    return panel;
+    return reviewStatus === statuses.PENDING
+      && !isDuplicated
+      && !isDraftImportedTrecho(trecho)
+      && currentDecision !== decisions.SPLIT
+      && currentDecision !== decisions.SPLIT_DRAFT
+      && trecho?.operationalMode !== modes.MULTI_PICKUP
+      && trecho?.operationalMode !== modes.INDEPENDENT_SERVICES
+      && importedTrechoHasReturn(trecho);
   }
 
   function importedTrechoHasReturn(trecho) {
     return !!(trecho?.retornoPrevistoHorario || trecho?.retornoPrevistoDataIso);
-  }
-
-  function importedTrechoModeLabel(trecho) {
-    if (trecho?.operationalSuggestion) return formatOperationalText(trecho.operationalSuggestion);
-    if (isSplitImportedTrecho(trecho)) return "Separar busca";
-    return importedTrechoHasReturn(trecho) ? "Manter espera" : "Sem espera";
-  }
-
-  function formatOperationalText(value) {
-    return String(value || "")
-      .replace(/Ida \+ busca separaveis/g, "Ida + busca separáveis")
-      .replace(/Ida\/busca separadas/g, "Ida/busca separadas")
-      .replace(/OS unica/g, "OS única")
-      .replace(/Servicos/g, "Serviços")
-      .replace(/servicos/g, "serviços")
-      .replace(/Servico/g, "Serviço")
-      .replace(/servico/g, "serviço")
-      .replace(/horario/g, "horário")
-      .replace(/sequencia/g, "sequência")
-      .replace(/disposicao/g, "disposição")
-      .replace(/Nao/g, "Não")
-      .replace(/nao/g, "não")
-      .replace(/e seguro/g, "é seguro")
-      .replace(/provaveis/g, "prováveis")
-      .replace(/Usuario/g, "Usuário")
-      .replace(/decisao/g, "decisão");
   }
 
   function importedTrechoWindowLabel(trecho) {
@@ -7829,8 +7777,8 @@
   }
 
   function setImportedTrechoControlsMode(card, isEditing) {
-    card.querySelectorAll("[data-import-field], [data-import-passenger-field]").forEach((control) => {
-      if (control.tagName === "SELECT") {
+    card.querySelectorAll("[data-import-field], [data-import-passenger-field], [data-import-observation-text], [data-import-obs-type]").forEach((control) => {
+      if (control.tagName === "SELECT" || control.tagName === "BUTTON") {
         control.disabled = !isEditing;
       } else {
         control.readOnly = !isEditing;
@@ -7910,6 +7858,96 @@
     textarea.dataset.importField = field;
     wrap.append(span, textarea);
     return wrap;
+  }
+
+  function buildImportObservationField(trecho) {
+    const obs = ensureImportedObservationState(trecho);
+    const current = obs.current || "motorista";
+    const wrap = document.createElement("div");
+    wrap.className = "field import-field span-2 is-wide is-textarea obs-field";
+    wrap.dataset.importInputType = "textarea";
+    wrap.dataset.importCopy = "1";
+    wrap.dataset.copyLabel = "Observação";
+    const span = document.createElement("span");
+    span.textContent = "Observação operacional";
+    const segmented = document.createElement("div");
+    segmented.className = "segmented";
+    segmented.setAttribute("role", "tablist");
+    segmented.setAttribute("aria-label", "Tipo de observação importada");
+    [
+      ["motorista", "Mot"],
+      ["interna", "Interna"],
+      ["final", "Final"],
+      ["passageiro", "Pref Pax"]
+    ].forEach(([key, label]) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `seg${current === key ? " is-active" : ""}`;
+      button.dataset.importAction = "switch-import-obs";
+      button.dataset.importObsType = key;
+      button.setAttribute("role", "tab");
+      button.setAttribute("aria-selected", String(current === key));
+      button.textContent = label;
+      segmented.appendChild(button);
+    });
+    const textarea = document.createElement("textarea");
+    textarea.rows = 2;
+    textarea.maxLength = 500;
+    textarea.placeholder = "Ex.: preferir veículo com água, sem paradas, rota direta.";
+    textarea.value = obs[current] || "";
+    textarea.dataset.importObservationText = "1";
+    wrap.append(span, segmented, textarea);
+    return wrap;
+  }
+
+  function ensureImportedObservationState(trecho) {
+    const current = ["motorista", "interna", "final", "passageiro"].includes(trecho?.observacaoAtual)
+      ? trecho.observacaoAtual
+      : "motorista";
+    const existing = trecho?.observacoesFormulario || {};
+    const obs = {
+      motorista: existing.motorista ?? trecho?.observacaoOperacional ?? "",
+      interna: existing.interna ?? trecho?.observacaoInterna ?? importedDefaultInternalObservation(trecho),
+      final: existing.final ?? trecho?.observacaoFinal ?? "",
+      passageiro: existing.passageiro ?? trecho?.observacaoPassageiro ?? composeImportedTrechoPreferencias(trecho),
+      current
+    };
+    if (!String(obs.passageiro || "").trim()) {
+      obs.passageiro = composeImportedTrechoPreferencias(trecho);
+    }
+    if (trecho) {
+      trecho.observacoesFormulario = obs;
+      trecho.observacaoAtual = current;
+      syncImportedObservationFields(trecho);
+    }
+    return obs;
+  }
+
+  function syncImportedObservationFields(trecho) {
+    const obs = trecho?.observacoesFormulario || {};
+    trecho.observacaoOperacional = obs.motorista || "";
+    trecho.observacaoInterna = obs.interna || "";
+    trecho.observacaoFinal = obs.final || "";
+    trecho.observacaoPassageiro = obs.passageiro || "";
+  }
+
+  function importedDefaultInternalObservation(trecho) {
+    if (!trecho?.programacao) return "";
+    if (isSplitImportedTrecho(trecho)) return `Serviço criado por Split na PG: ${trecho.programacao}.`;
+    return `Importado via XLSX. PG: ${trecho.programacao}. ST: ${(trecho.solicitacoes || []).join(", ") || "-"}.`;
+  }
+
+  function composeImportedTrechoPreferencias(trecho) {
+    return (trecho?.passageiros || [])
+      .map((passenger) => {
+        const record = importedResolvedPassenger(passenger);
+        const preferencias = String(record?.preferencias || passenger?.preferencias || "").trim();
+        if (!preferencias) return "";
+        const label = normalizePassengerDisplayName(record?.label || passenger?.passageiroLabel || passenger?.nome) || "Passageiro";
+        return `${firstName(label) || label} - ${preferencias}`;
+      })
+      .filter(Boolean)
+      .join(";\n");
   }
 
   function buildImportSelect(label, field, options, value) {
@@ -8513,7 +8551,7 @@
     if (!copyTarget || event.target.closest("[data-import-action]")) return;
     const trechoCard = copyTarget.closest(".import-trecho");
     if (!trechoCard || (!trechoCard.classList.contains("is-locked") && !trechoCard.classList.contains("is-duplicated"))) return;
-    const control = copyTarget.querySelector("[data-import-field], [data-import-passenger-field]");
+    const control = copyTarget.querySelector("[data-import-field], [data-import-passenger-field], [data-import-observation-text]");
     const value = importCopyControlValue(control);
     if (!value) return;
     try {
@@ -8564,6 +8602,29 @@
     const trecho = trechoCard ? findImportedTrecho(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey) : null;
     if (!trecho) return;
 
+    if (action.dataset.importAction === "switch-import-obs") {
+      if (!isImportedTrechoEditing(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey)) return;
+      const next = action.dataset.importObsType || "motorista";
+      const obs = ensureImportedObservationState(trecho);
+      const textarea = trechoCard.querySelector("[data-import-observation-text]");
+      obs[obs.current || "motorista"] = textarea?.value || "";
+      obs.current = next;
+      trecho.observacaoAtual = next;
+      syncImportedObservationFields(trecho);
+      trechoCard.querySelectorAll("[data-import-obs-type]").forEach((button) => {
+        const isActive = button.dataset.importObsType === next;
+        button.classList.toggle("is-active", isActive);
+        button.setAttribute("aria-selected", String(isActive));
+      });
+      if (textarea) {
+        textarea.value = obs[next] || "";
+        requestAnimationFrame(() => {
+          textarea.focus();
+          textarea.setSelectionRange?.(textarea.value.length, textarea.value.length);
+        });
+      }
+      return;
+    }
     if (action.dataset.importAction === "noop") {
       return;
     }
@@ -8587,20 +8648,20 @@
       renderImportReviewPreservingGallery();
       if (enable) {
         requestAnimationFrame(() => {
-          el.importReviewPrograms?.querySelector(".import-inspector [data-import-field], .import-inspector [data-import-passenger-field]")?.focus();
+          el.importReviewPrograms?.querySelector(".import-inspector [data-import-field], .import-inspector [data-import-passenger-field], .import-inspector [data-import-observation-text]")?.focus();
         });
       }
       return;
     }
-    if (action.dataset.importAction === "keep-waiting") {
-      if (trecho.duplicatedRecordIds?.length || isDraftImportedTrecho(trecho)) return;
-      captureImportReviewHistory("Manter espera");
-      applyImportedOperationalDecision(trecho, importOperationalDecisions().KEEP_WAITING);
-      renderImportReviewPreservingGallery();
-      toast("Decisão registrada: manter uma OS com espera.", "success", 4000);
-      return;
-    }
     if (action.dataset.importAction === "split-trecho") {
+      if (normalizeImportedReviewStatus(trecho) !== importReviewStatuses().PENDING) {
+        toast("Separar ida/busca só é permitido enquanto o serviço está pendente.", "warning", 5000);
+        return;
+      }
+      if (!canShowImportedSplitAction(trecho, normalizeImportedReviewStatus(trecho), !!trecho.duplicatedRecordIds?.length)) {
+        toast("Separar ida/busca indisponível para este serviço.", "warning", 5000);
+        return;
+      }
       if (trecho.duplicatedRecordIds?.length) {
         toast("Serviço já existe no sistema. Edite pelo sistema.", "warning", 6000);
         return;
@@ -8785,6 +8846,17 @@
       return;
     }
 
+    if (event.target.dataset.importObservationText) {
+      const obs = ensureImportedObservationState(trecho);
+      const current = obs.current || "motorista";
+      if (String(obs[current] ?? "") === String(event.target.value ?? "")) return;
+      captureImportReviewHistory("Editar observação do serviço");
+      markImportedReviewPending(trecho);
+      obs[current] = event.target.value;
+      syncImportedObservationFields(trecho);
+      return;
+    }
+
     if (passengerRow && passengerField) {
       const passenger = trecho.passageiros[Number(passengerRow.dataset.passengerIndex)];
       if (!passenger) return;
@@ -8886,67 +8958,6 @@
   function findImportedTrecho(programacao, trechoKey) {
     const program = state.importReview?.programs?.find((item) => item.programacao === programacao);
     return program?.trechos.find((trecho) => trecho.key === trechoKey) || null;
-  }
-
-  async function applyImportedTrechoToForm(trecho) {
-    if (trecho.duplicatedRecordIds?.length) {
-      toast("Serviço repetido não abre no formulário. Edite o registro original no Dataverse.", "warning", 7000);
-      return;
-    }
-    captureGlobalHistoryBeforeMutation("Aplicar importação no formulário");
-    setLoading(true);
-    try {
-      const context = await buildImportedSaveContext(trecho);
-      setSelectValue(el.cliente, context.importClient.id);
-      setFieldValue(el.saidaData, importedTrechoDateTimeLocal(trecho));
-      setFieldValue(el.retPrevDateTime, importedTrechoReturnDateTimeLocal(trecho));
-      syncLegacyTimePartsFromDateTime(el.retPrevDateTime, el.retPrevHora, el.retPrevMinuto);
-      const [hour, minute] = String(trecho.horario || "").split(":");
-      setSelectValue(el.saidaHora, hour || "");
-      setSelectValue(el.saidaMinuto, minute || "");
-      setSelectValue(el.tipoServico, resolveImportOption("tipoServico", trecho.tipoServicoValue, trecho.tipoServicoSugerido));
-      setSelectValue(el.tipoVeiculo, resolveImportOption("tipoVeiculo", trecho.tipoVeiculoValue, trecho.tipoVeiculoSugerido));
-      setSelectValue(el.statusOperacao, findOptionValue("statusOperacao", "Solicitado") || findOptionValue("statusOperacao", "Pre-reserva"));
-      setSelectValue(el.statusFaturamento, el.statusFaturamento.value || findOptionValue("statusFaturamento", "Pendente"));
-      setFieldValue(el.trajeto, context.trajeto);
-      setFieldValue(el.destino, trecho.destino || "");
-      setFieldValue(el.cotacao, "");
-      setFieldValue(el.cr, importedTrechoCr(trecho));
-      state.obs.motorista = trecho.observacaoOperacional || "";
-      state.obs.interna = `ID externo: ${trecho.programacao}`;
-      state.obs.final = "";
-      state.obsAtual = "motorista";
-      el.observacao.value = state.obs.motorista;
-
-      const resolved = context.colOrdemPassageiros.map((item, index) => ({
-        rowKey: nextPassengerRowKey(),
-        ordem: index + 1,
-        passageiro: item.passageiro,
-        guid: item.guid,
-        telefone: item.passageiro.telefone || trecho.passageiros[index]?.telefone || "",
-        enderecoEditado: trecho.passageiros[index]?.origem || item.enderecoSaidaBD || ""
-      }));
-      state.selectedPassengers = resolved;
-      state.enderecoRascunho = resolved.map((item, index) => ({
-        ordem: index + 1,
-        endereco: trecho.passageiros[index]?.origem || item.enderecoEditado || ""
-      }));
-      state.enderecoPersonalizadoAtivo = false;
-      renderLookupSelect(el.solicitante, state.passageiros);
-      setSelectValue(el.solicitante, context.solicitanteRecord?.id || resolved[0]?.guid || "");
-      renderPassengers();
-      renderRiskPanel();
-      markDraftDirty();
-      renderImportReview();
-      setTab("details");
-      commitGlobalHistoryChange("Aplicar importação no formulário");
-      toast(resolved.length ? "Trecho aplicado ao formulário." : "Trecho aplicado sem passageiros resolvidos.", resolved.length ? "success" : "warning", 5000);
-    } catch (error) {
-      console.error(error);
-      toast(error.message || "Falha ao aplicar trecho importado.", "error", 9000);
-    } finally {
-      setLoading(false);
-    }
   }
 
   function importedResolvedPassenger(passenger) {
@@ -9174,17 +9185,18 @@
 
   function buildImportedReservaPayload(trecho, context) {
     const f = CONFIG.fields.reserva;
+    const importObs = ensureImportedObservationState(trecho);
     const payload = {
       [f.idExterno]: trecho.programacao,
       [f.enderecoView]: context.enderecoCompleto,
       [f.destino]: trecho.destino || "",
       [f.dataSaida]: context.dataHoraPrincipal.toISOString(),
-      [f.obsOperacao]: trecho.observacaoOperacional || "",
-      [f.obsInterna]: isSplitImportedTrecho(trecho)
+      [f.obsOperacao]: importObs.motorista || "",
+      [f.obsInterna]: importObs.interna || (isSplitImportedTrecho(trecho)
         ? `Serviço criado por Split na PG: ${trecho.programacao}.`
-        : `Importado via XLSX. PG: ${trecho.programacao}. ST: ${(trecho.solicitacoes || []).join(", ") || "-"}.`,
-      [f.obsFinal]: "",
-      [f.perfilPassageiro]: "",
+        : importedDefaultInternalObservation(trecho)),
+      [f.obsFinal]: importObs.final || "",
+      [f.perfilPassageiro]: importObs.passageiro || "",
       [f.email]: "",
       [f.trajeto]: context.trajeto,
       [f.paxView]: context.passageirosTelefones,
