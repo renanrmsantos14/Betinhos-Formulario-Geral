@@ -7407,12 +7407,9 @@
     const main = document.createElement("span");
     main.className = "import-service-main";
     const title = document.createElement("strong");
-    title.textContent = `${program.programacao} · Serviço ${index + 1}`;
+    title.textContent = importedTrechoServiceListTimeLabel(trecho);
     const meta = document.createElement("span");
-    meta.textContent = [
-      importedTrechoWindowLabel(trecho),
-      composeImportTrajeto(trecho) || trecho.destino || "rota pendente"
-    ].filter(Boolean).join(" · ");
+    meta.textContent = composeImportTrajeto(trecho) || trecho.destino || "rota pendente";
     main.append(title, meta);
 
     const side = document.createElement("span");
@@ -7689,6 +7686,12 @@
     const retorno = trecho?.retornoPrevistoHorario || "";
     if (retorno && retorno !== saida) return `${saida} → ${retorno}`;
     return saida;
+  }
+
+  function importedTrechoServiceListTimeLabel(trecho) {
+    const date = formatDateInputForDisplay(trecho?.dataIso);
+    const window = importedTrechoWindowLabel(trecho);
+    return [date, window].filter(Boolean).join(" · ");
   }
 
   function importedTrechoReturnLabel(trecho) {

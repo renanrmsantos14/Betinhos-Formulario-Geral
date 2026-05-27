@@ -67,6 +67,11 @@ assert.ok(html.includes(".content:has(.import-review-panel.is-active)"), "bundle
 assert.ok(html.includes("grid-template-rows: auto auto minmax(0, 1fr);"), "bundle deve reservar linha flexivel para galeria importada");
 assert.ok(html.includes(".import-review-programs {\n  grid-area: programs;\n  display: grid;\n  gap: 12px;\n  min-height: 0;\n  overflow: hidden;"), "bundle deve conter overflow da galeria dentro do painel");
 assert.ok(html.includes(".import-service-list {\n  display: grid;\n  gap: 8px;\n  align-content: start;\n  height: 100%;"), "bundle deve fazer lista importada ocupar altura util");
+assert.ok(html.includes("title.textContent = importedTrechoServiceListTimeLabel(trecho);"), "bundle deve mostrar data, saida e retorno no titulo da galeria importada");
+assert.ok(html.includes("function importedTrechoServiceListTimeLabel(trecho)"), "bundle deve ter label de horario proprio para ida e retorno na galeria importada");
+assert.ok(html.includes("return [date, window].filter(Boolean).join(\" · \");"), "bundle deve separar data e janela por ponto medio na galeria importada");
+assert.ok(html.includes("meta.textContent = composeImportTrajeto(trecho) || trecho.destino || \"rota pendente\";"), "bundle deve mostrar apenas trajeto abaixo do titulo da galeria importada");
+assert.ok(!html.includes("title.textContent = `${program.programacao} · Serviço ${index + 1}`;"), "bundle nao deve mostrar PG e numero do servico no titulo da galeria importada");
 assert.ok(html.includes(".import-inspector {\n  display: grid;\n  align-content: start;\n  gap: 8px;\n  height: 100%;"), "bundle deve conter inspector interno scrollavel");
 assert.ok(html.includes(".import-editor-stack {\n  display: flex;\n  flex-wrap: wrap;"), "bundle deve usar flex-wrap no formulario importado");
 assert.ok(html.includes("fieldStack.className = \"import-hot-grid import-editor-stack\";"), "bundle deve renderizar campos importados soltos no mesmo stack");
