@@ -580,7 +580,7 @@ const exactDuplicateScore = scoreImportedTrechoDuplicate(sharedPickupTrecho, {
   destino: "1. ANA - Hotel A;\n2. BRUNO - Hotel B",
   paxView: "ANA TESTE - 11999990000; BRUNO TESTE - 11988880000"
 });
-assert.equal(exactDuplicateScore.level, "exact", "mesma PG so bloqueia quando o servico tambem bate por horario/trajeto/endereco/pax");
+assert.equal(exactDuplicateScore.level, "exact", "mesma PG existente deve bloquear duplicidade");
 assert.ok(exactDuplicateScore.reasons.includes("mesmo horario"), "duplicidade deve explicar horario");
 assert.ok(exactDuplicateScore.reasons.includes("mesmos passageiros"), "duplicidade deve explicar passageiros");
 
@@ -593,11 +593,12 @@ const samePgDifferentServiceScore = scoreImportedTrechoDuplicate(sharedPickupTre
   destino: "Aeroporto de Viracopos",
   paxView: "CARLA TESTE - 11977770000"
 });
-assert.notEqual(samePgDifferentServiceScore.level, "exact", "mesma PG com outro servico nao pode bloquear");
+assert.equal(samePgDifferentServiceScore.level, "exact", "mesma PG ja existente no Dataverse deve bloquear mesmo com outro horario/trajeto/pax");
+assert.ok(samePgDifferentServiceScore.reasons.includes("mesma PG"), "duplicidade deve explicar PG existente");
 
 const possibleDuplicateScore = scoreImportedTrechoDuplicate(sharedPickupTrecho, {
   recordId: "reserva-parecida",
-  programacao: "PGTEST/1",
+  programacao: "PGTEST/2",
   dataSaida: "2026-05-20T08:10:00",
   trajeto: "Sao Paulo > Sao Paulo",
   enderecoView: "Av Brigadeiro Faria Lima 1000",

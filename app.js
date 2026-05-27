@@ -4272,7 +4272,7 @@
         openPassengerPicker(ordem);
         return;
       }
-      openPassengerRecord(item.passageiro);
+      openPassengerEdit(item.passageiro);
       return;
     }
 
@@ -4544,32 +4544,6 @@
       list.appendChild(line);
     });
     container.appendChild(list);
-  }
-
-  function openPassengerRecord(passageiro) {
-    if (!passageiro) return;
-    const passengerId = cleanGuid(passageiro.guid || passageiro.id);
-    if (!passengerId) {
-      toast("Passageiro sem identificador para abrir registro.", "error");
-      return;
-    }
-    openPassengerEdit(passengerId);
-    return;
-    if (state.xrm && state.xrm.Navigation && typeof state.xrm.Navigation.openForm === "function") {
-      state.xrm.Navigation.openForm({
-        entityName: CONFIG.entities.passageiro,
-        entityId: passengerId
-      }).catch((error) => {
-        console.error(error);
-        toast("Não foi possível abrir o registro do passageiro.", "error", 7000);
-      });
-      return;
-    }
-    if (state.mockMode) {
-      toast(`Mock ativo: ${passageiro.label || "Passageiro"}`, "warning", 3000);
-      return;
-    }
-    toast("Abra este formulário dentro do Dataverse para editar o registro.", "warning", 7000);
   }
 
   function renderTabBadges() {
@@ -9908,6 +9882,21 @@
     return { id: cleanGuid(created.id) };
   }
 
+  function buildPassengerRelationPayload(reservaId, item, context, includeAddress, includeLookups) {
+    const payload = {
+      [CONFIG.fields.servicoPassageiro.ordem]: item.ordem
+    };
+    if (includeLookups) {
+      bindLookup(payload, CONFIG.nav.servicoGeral, CONFIG.entitySets.reserva, reservaId);
+      bindLookup(payload, CONFIG.nav.servicoBancoDados, CONFIG.entitySets.passageiro, item.guid);
+    }
+    if (includeAddress) {
+      const sharedAddress = context?.enderecoPersonalizadoAtivo ?? state.enderecoPersonalizadoAtivo;
+      payload[CONFIG.fields.servicoPassageiro.endereco] = sharedAddress ? "" : (item.enderecoSaidaBD || "");
+    }
+    return payload;
+  }
+
   async function replacePassengerRelations(reservaId, passengers, context, includeAddress, removeExisting) {
     if (!passengers.length) return;
     if (!state.xrm || state.mockMode) {
@@ -9918,25 +9907,53 @@
     if (removeExisting) {
       const existing = await retrieveAll(
         CONFIG.entities.servicoPassageiro,
-        `?$select=${CONFIG.fields.servicoPassageiro.id}&$filter=_cr40f_geral_value eq ${reservaId}`
+        `?$select=${CONFIG.fields.servicoPassageiro.id},_cr40f_bancodedados_value&$filter=_cr40f_geral_value eq ${reservaId}`
       );
-      await Promise.all(existing.map((row) => (
-        state.xrm.WebApi.deleteRecord(CONFIG.entities.servicoPassageiro, row[CONFIG.fields.servicoPassageiro.id])
-      )));
+      const existingByPassengerId = new Map();
+      existing.forEach((row) => {
+        const passengerId = cleanGuid(row._cr40f_bancodedados_value);
+        if (!passengerId) return;
+        if (!existingByPassengerId.has(passengerId)) {
+          existingByPassengerId.set(passengerId, []);
+        }
+        existingByPassengerId.get(passengerId).push(row);
+      });
+
+      const usedRelationIds = new Set();
+      await Promise.all(passengers.map((item) => {
+        const passengerId = cleanGuid(item.guid);
+        const bucket = passengerId ? existingByPassengerId.get(passengerId) : null;
+        const current = bucket?.shift();
+        if (!current) {
+          return state.xrm.WebApi.createRecord(
+            CONFIG.entities.servicoPassageiro,
+            buildPassengerRelationPayload(reservaId, item, context, includeAddress, true)
+          );
+        }
+        const relationId = cleanGuid(current[CONFIG.fields.servicoPassageiro.id]);
+        usedRelationIds.add(relationId);
+        return state.xrm.WebApi.updateRecord(
+          CONFIG.entities.servicoPassageiro,
+          relationId,
+          buildPassengerRelationPayload(reservaId, item, context, includeAddress, false)
+        );
+      }));
+
+      await Promise.all(existing
+        .filter((row) => !usedRelationIds.has(cleanGuid(row[CONFIG.fields.servicoPassageiro.id])))
+        .map((row) => state.xrm.WebApi.deleteRecord(
+          CONFIG.entities.servicoPassageiro,
+          row[CONFIG.fields.servicoPassageiro.id]
+        )));
+      return;
     }
 
-    await Promise.all(passengers.map((item) => {
-      const payload = {
-        [CONFIG.fields.servicoPassageiro.ordem]: item.ordem
-      };
-      bindLookup(payload, CONFIG.nav.servicoGeral, CONFIG.entitySets.reserva, reservaId);
-      bindLookup(payload, CONFIG.nav.servicoBancoDados, CONFIG.entitySets.passageiro, item.guid);
-      if (includeAddress) {
-        const sharedAddress = context?.enderecoPersonalizadoAtivo ?? state.enderecoPersonalizadoAtivo;
-        payload[CONFIG.fields.servicoPassageiro.endereco] = sharedAddress ? "" : (item.enderecoSaidaBD || "");
-      }
-      return state.xrm.WebApi.createRecord(CONFIG.entities.servicoPassageiro, payload);
-    }));
+    await Promise.all(passengers.map((item) => (
+      state.xrm.WebApi.createRecord(
+        CONFIG.entities.servicoPassageiro,
+        buildPassengerRelationPayload(reservaId, item, context, includeAddress, true)
+      )
+    )));
   }
 
   function setChoice(payload, field, value) {

@@ -630,8 +630,9 @@
     let score = 0;
     const programacao = normalizeText(trecho?.programacao);
     const existingProgramacao = normalizeText(existing.programacao || existing.idExterno || existing.cr40f_idexterno);
-    if (programacao && existingProgramacao && programacao === existingProgramacao) {
-      score += 10;
+    const sameProgramacao = !!(programacao && existingProgramacao && programacao === existingProgramacao);
+    if (sameProgramacao) {
+      score += 999;
       reasons.push("mesma PG");
     }
 
@@ -685,7 +686,7 @@
     }
 
     const hasExactOperationalIdentity = reasons.includes("mesmo horario") && reasons.includes("mesmos passageiros");
-    const level = score >= 78 && hasExactOperationalIdentity ? "exact" : score >= 48 ? "possible" : "";
+    const level = sameProgramacao || (score >= 78 && hasExactOperationalIdentity) ? "exact" : score >= 48 ? "possible" : "";
     return {
       recordId: existing.recordId || existing.id || existing.cr40f_reservadeveculosid || "",
       score,

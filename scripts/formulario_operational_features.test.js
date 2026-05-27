@@ -669,6 +669,7 @@ includes(app, "const storedPassengers = getMockDb().passageiros", "mock deve rec
 includes(app, "persistMockPassengerRecord(newPassenger)", "cadastro manual deve salvar passageiro no banco local");
 includes(app, "persistMockPassengerRecord(updatedPassenger)", "hot edit local deve salvar alteracoes do passageiro");
 includes(app, "persistMockPassengerRecord(record)", "importacao deve salvar solicitante/passageiro no banco local");
+excludes(app, "function openPassengerRecord", "passageiro deve abrir hot edit direto sem fallback morto para form nativo");
 
 const passengerTextareaRule = extractCssRule(css, ".passenger-edit-field textarea.passenger-edit-control {");
 includes(passengerTextareaRule, "resize: vertical;", "textarea de passageiro readonly deve permitir ajuste de tamanho");

@@ -136,7 +136,7 @@ O novo formulario sera publicado como web resource e usado dentro de um Model-dr
 - `Choices` de fallback em `app.js` foram alinhados ao metadata real auditado; valores mock inventados foram removidos.
 - Dados mock de passageiro tambem sao normalizados para os mesmos valores de Choice usados no Dataverse.
 - Dados mock de passageiro sao deduplicados por ID antes de renderizar selects e buscas locais.
-- Passageiros nao sao mais carregados em lote de 5000 no inicio. A busca agora e sob demanda via Dataverse, com carga pontual por IDs em edicao/rascunho.
+- Passageiros carregam ate 5000 registros no inicio para o solicitante e o Banco de Dados listarem sem exigir texto. A busca server-side continua disponivel para complementar por nome/telefone e para carga pontual por IDs em edicao/rascunho.
 - Cadastro de passageiro novo agora executa conferencia de duplicidade por telefone, email, nome parecido, cliente, CR e departamento.
 - Quando houver candidato provavel, a tela mostra o registro encontrado e pergunta: "Certeza que este nao e o passageiro desejado?".
 - Validacao de passageiro parecido busca tambem o pool do mesmo cliente e aceita nome com transposicao, ordem diferente, particulas ignoraveis, telefone com 1 digito divergente e email quase igual quando ha contexto suficiente.
@@ -257,7 +257,7 @@ Observacao critica: no Banco de Dados, `cr40f_tipodeveiculo` nao existe no metad
 | Ordem de selecao | `cr40f_ordemdeselecao` |
 | Endereco de saida por passageiro | `new_enderecodesaidacolunaservicosporpassageiro` |
 
-Na edicao, o Canvas remove todos os filhos `Servicos por Passageiro` da reserva e recria a lista.
+Na edicao, o app atualiza ou cria os filhos `Servicos por Passageiro` desejados primeiro e remove apenas os vinculos que sairam da lista depois das gravacoes novas concluirem.
 
 ## Navigation properties confirmadas para `@odata.bind`
 

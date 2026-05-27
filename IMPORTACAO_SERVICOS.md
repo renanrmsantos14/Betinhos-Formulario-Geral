@@ -727,15 +727,15 @@ Classificação:
 
 | Resultado | Regra prática |
 | --- | --- |
-| `exact` | Bloqueia. Só acontece quando a pontuação é alta e há mesmo horário + mesmos passageiros. |
+| `exact` | Bloqueia. Acontece quando a PG já existe no Dataverse ou quando a pontuação é alta e há mesmo horário + mesmos passageiros. |
 | `possible` | Avisa, mas permite revisão. |
 | vazio | Não considera duplicidade relevante. |
 
 Regra importante:
 
-> Mesma PG sozinha não bloqueia.
+> Mesma PG já existente no Dataverse bloqueia sozinha.
 
-Isso é necessário porque uma PG pode ter mais de uma OS legítima.
+Isso evita importar novamente uma PG já processada.
 
 Exemplo:
 
@@ -744,9 +744,9 @@ PG100 - 08:00 - ANA
 PG100 - 17:00 - ANA
 ```
 
-Pode ser ida e busca separadas.
+Pode ser ida e busca separadas antes do salvamento.
 
-Então o sistema só bloqueia se o serviço também bater por identidade operacional.
+Depois que a PG existe no Dataverse, a importação considera a PG já tratada e bloqueia novo salvamento automático.
 
 ## 21. Status da revisão
 

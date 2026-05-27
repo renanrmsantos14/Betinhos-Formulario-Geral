@@ -3,7 +3,7 @@
 ## Arquivos para subir
 
 1. Suba `webresource.html` como Web Resource HTML.
-   - Nome: `cr40f_formulario_geral.html`
+   - Nome: `new_formulario_geral.html`
    - Tipo: `Webpage (HTML)`
 
 2. Suba `model_driven_formulario_geral_command.js` como Web Resource JavaScript.
@@ -24,7 +24,7 @@ Na tabela `cr40f_reservadeveculos`:
 6. Parâmetro: `PrimaryControl`.
 7. Publique.
 
-Resultado: o botão abre `cr40f_formulario_geral.html` em modo criação.
+Resultado: o botão abre `new_formulario_geral.html` em modo criação.
 
 ## Clicar em um item para editar
 
@@ -34,7 +34,7 @@ Faça assim:
 
 1. Crie um formulário principal novo para `cr40f_reservadeveculos`.
 2. Nome do formulário: `Formulário Geral WebResource`.
-3. Adicione o Web Resource `cr40f_formulario_geral.html`.
+3. Adicione o Web Resource `new_formulario_geral.html`.
 4. Marque a opção de passar o identificador do registro, se aparecer no editor.
 5. Deixe o web resource ocupando a tela.
 6. Remova ou esconda os campos nativos desse formulário.
@@ -59,7 +59,7 @@ Use também se quiser um botão explícito de edição na lista.
 7. Regra de seleção: exatamente `1` linha selecionada.
 8. Publique.
 
-Resultado: o comando abre `cr40f_formulario_geral.html` em modo edição para a linha selecionada.
+Resultado: o comando abre `new_formulario_geral.html` em modo edição para a linha selecionada.
 
 ## Teste obrigatório
 
