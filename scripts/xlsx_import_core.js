@@ -198,6 +198,7 @@
       key: "",
       programacao: row.programacao,
       solicitacoes: new Set(),
+      statusExternos: new Set(),
       sourceRows: [],
       data: row.data,
       dataIso: row.dataIso,
@@ -234,6 +235,7 @@
     trecho.key = buildTrechoRuntimeKey(row);
     trecho.sourceRows.push(row.sourceRow);
     if (row.solicitacao) trecho.solicitacoes.add(row.solicitacao);
+    if (row.statusExterno) trecho.statusExternos.add(row.statusExterno);
     trecho.linhasImportadas.push(importedLineFromRow(row));
     if (row.destino && !trecho.destinos.some((item) => normalizeAddress(item) === row.destinoKey)) {
       trecho.destinos.push(row.destino);
@@ -307,6 +309,7 @@
       dataIso,
       horario,
       solicitacoes: [...trecho.solicitacoes],
+      statusExternos: [...trecho.statusExternos],
       sourceRows: trecho.sourceRows.sort((a, b) => a - b),
       solicitanteNome,
       origem,
@@ -522,11 +525,12 @@
     const programacao = String(options.programacao || program?.programacao || firstLine?.programacao || "").trim();
     const sourceRows = Array.from(new Set(trechos.flatMap((trecho) => trecho?.sourceRows || []))).filter(Boolean).sort((a, b) => a - b);
     const solicitacoes = new Set(trechos.flatMap((trecho) => trecho?.solicitacoes || []));
+    const statusExternos = new Set(trechos.flatMap((trecho) => trecho?.statusExternos || []));
     const base = {
       key: "",
       programacao,
       solicitacoes,
-      statusExternos: new Set(),
+      statusExternos,
       sourceRows,
       data: firstLine?.data || "",
       dataIso: firstLine?.dataIso || "",
@@ -584,6 +588,7 @@
       key,
       programacao,
       solicitacoes: uniqueSolicitacoesFromImportedLines(returnLines, source?.solicitacoes || []),
+      statusExternos: uniqueStatusExternosFromImportedLines(returnLines, source?.statusExternos || []),
       sourceRows: returnLines.map((line) => line.sourceRow).filter(Boolean),
       data: returnLine?.data || "",
       dataIso: returnLine?.dataIso || "",
@@ -1152,6 +1157,11 @@
 
   function uniqueSolicitacoesFromImportedLines(lines, fallback = []) {
     const values = sortImportedLines(lines).map((line) => line?.solicitacao).filter(Boolean);
+    return Array.from(new Set(values.length ? values : fallback));
+  }
+
+  function uniqueStatusExternosFromImportedLines(lines, fallback = []) {
+    const values = sortImportedLines(lines).map((line) => line?.statusExterno).filter(Boolean);
     return Array.from(new Set(values.length ? values : fallback));
   }
 

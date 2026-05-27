@@ -107,6 +107,17 @@
   const MAX_FREQUENT_SERVICE_RECORDS = 120;
   const IMPORT_SAVE_CONCURRENCY = 3;
   const INITIAL_PASSENGER_LOOKUP_LIMIT = 5000;
+  const IMPORT_XLSX_STATUS_OPERATION_MAP = Object.freeze({
+    "agendado": "Confirmado",
+    "aguardando faturamento": "Confirmado",
+    "em analise financeira": "Confirmado",
+    "em execucao": "Confirmado",
+    "lancamentos financeiros recusados": "Confirmado",
+    "recusado pela central": "Cancelado"
+  });
+  const IMPORT_XLSX_AUTO_IGNORE_STATUSES = Object.freeze(new Set([
+    "aguardando prestador"
+  ]));
 
   const FALLBACK = buildFallbackChoices();
 
@@ -6348,11 +6359,14 @@
       await ensureXlsxLibrary();
       const rows = await readXlsxPassengersRows(file);
       const review = await buildImportReview(rows, file.name);
+      applyImportedExternalStatusRules(review);
       state.importReview = review;
       state.importReviewFilter = importReviewFilters().ALL;
       renderImportReview();
       renderTabBadges();
       setTab("import");
+      notifyImportedAutoIgnoredExternalStatuses(review);
+      notifyUnknownImportedExternalStatuses(review);
       requestAnimationFrame(() => document.getElementById("tab-panel-import")?.scrollIntoView({ block: "start" }));
     } catch (error) {
       console.error(error);
@@ -6624,6 +6638,68 @@
     const statuses = importReviewStatuses();
     if (trecho?.savedRecordId && trecho.reviewStatus !== statuses.IGNORED) return statuses.SAVED;
     return Object.values(statuses).includes(trecho?.reviewStatus) ? trecho.reviewStatus : statuses.PENDING;
+  }
+
+  function importedTrechoExternalStatuses(trecho) {
+    const fromTrecho = Array.isArray(trecho?.statusExternos) ? trecho.statusExternos : [];
+    const fromLines = Array.isArray(trecho?.linhasImportadas)
+      ? trecho.linhasImportadas.map((line) => line?.statusExterno)
+      : [];
+    return Array.from(new Set([...fromTrecho, ...fromLines]
+      .map((status) => String(status || "").trim())
+      .filter(Boolean)));
+  }
+
+  function importedExternalStatusKey(status) {
+    return normalize(status).replace(/\s+/g, " ");
+  }
+
+  function applyImportedExternalStatusRules(review) {
+    const statuses = importReviewStatuses();
+    const unknown = new Set();
+    (review?.programs || []).forEach((program) => {
+      (program.trechos || []).forEach((trecho) => {
+        const externalStatuses = importedTrechoExternalStatuses(trecho);
+        trecho.unknownStatusExternos = [];
+        const shouldIgnore = externalStatuses.some((status) => IMPORT_XLSX_AUTO_IGNORE_STATUSES.has(importedExternalStatusKey(status)));
+        if (shouldIgnore && normalizeImportedReviewStatus(trecho) !== statuses.SAVED) {
+          trecho.reviewStatus = statuses.IGNORED;
+          trecho.reviewBlockReason = "Ignorado automaticamente: status XLSX Aguardando prestador.";
+          trecho.autoIgnoredByExternalStatus = true;
+        }
+        externalStatuses.forEach((status) => {
+          const key = importedExternalStatusKey(status);
+          if (!IMPORT_XLSX_STATUS_OPERATION_MAP[key] && !IMPORT_XLSX_AUTO_IGNORE_STATUSES.has(key)) {
+            unknown.add(status);
+            trecho.unknownStatusExternos.push(status);
+          }
+        });
+      });
+    });
+    review.unknownStatusExternos = Array.from(unknown).sort((a, b) => a.localeCompare(b, "pt-BR"));
+  }
+
+  function notifyImportedAutoIgnoredExternalStatuses(review) {
+    const count = (review?.programs || []).reduce((total, program) => (
+      total + (program.trechos || []).filter((trecho) => trecho.autoIgnoredByExternalStatus).length
+    ), 0);
+    if (!count) return;
+    toast(`${count} serviço(s) com status XLSX Aguardando prestador foram ignorados automaticamente.`, "warning", 14000);
+  }
+
+  function notifyUnknownImportedExternalStatuses(review) {
+    const unknown = review?.unknownStatusExternos || [];
+    if (!unknown.length) return;
+    toast(`Status XLSX desconhecido: ${unknown.join(", ")}. Fale com o Dev. Estes serviços serão assumidos como Confirmado.`, "warning", 14000);
+  }
+
+  function resolveImportedOperationStatusLabel(trecho) {
+    const externalStatuses = importedTrechoExternalStatuses(trecho);
+    for (const status of externalStatuses) {
+      const key = importedExternalStatusKey(status);
+      if (IMPORT_XLSX_STATUS_OPERATION_MAP[key]) return IMPORT_XLSX_STATUS_OPERATION_MAP[key];
+    }
+    return "Confirmado";
   }
 
   function markImportedReviewPending(trecho) {
@@ -9312,7 +9388,7 @@
       [f.receber]: false,
       [f.cr]: importedTrechoCr(trecho)
     };
-    setChoice(payload, f.status, findOptionValue("statusOperacao", "Solicitado") || findOptionValue("statusOperacao", "Pre-reserva"));
+    setChoice(payload, f.status, findOptionValue("statusOperacao", resolveImportedOperationStatusLabel(trecho)) || findOptionValue("statusOperacao", "Confirmado"));
     setChoice(payload, f.statusFaturamento, el.statusFaturamento.value || findOptionValue("statusFaturamento", "Pendente"));
     setChoice(payload, f.tipoServico, resolveImportOption("tipoServico", trecho.tipoServicoValue, trecho.tipoServicoSugerido));
     setChoice(payload, f.tipoVeiculo, resolveImportOption("tipoVeiculo", trecho.tipoVeiculoValue, trecho.tipoVeiculoSugerido));
@@ -9393,7 +9469,6 @@
 
   async function saveForm() {
     captureObsState();
-    showTemporaryStatusLogicReminder();
     if (isImportSaveMode()) {
       performImportedServicesSave();
       return;
@@ -9407,10 +9482,6 @@
     const context = buildSaveContext();
     clearValidationStates();
     proceedSaveContext(context);
-  }
-
-  function showTemporaryStatusLogicReminder() {
-    toast("LEMBRETE TEMPORARIO: nao esquecer de colocar a logica de conversao de status do XLSX no codigo.", "warning", 12000);
   }
 
   function isImportSaveMode() {

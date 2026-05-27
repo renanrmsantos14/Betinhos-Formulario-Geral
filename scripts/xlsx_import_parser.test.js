@@ -179,6 +179,16 @@ const passengerEmailRows = [{
 }];
 const passengerEmailTrecho = buildImportPrograms(passengerEmailRows)[0].trechos[0];
 assert.equal(passengerEmailTrecho.passageiros[0].email, "fulano.email@exemplo.com", "email importado deve chegar ao passageiro do trecho");
+const statusTrecho = buildImportPrograms(normalizeImportedRows([{
+  "Data da Viagem (inicial)": "20/05/2026",
+  "Número Programação": "PGSTATUS/1",
+  "Status": "Agendado",
+  "Horário Passageiro": "07:30",
+  "Nome Passageiro": "FULANO STATUS",
+  "Origem": "Casa Fulano",
+  "Destino": "Aeroporto de Congonhas"
+}]))[0].trechos[0];
+assert.deepEqual(statusTrecho.statusExternos, ["Agendado"], "status externo do XLSX deve chegar ao trecho");
 const valueColumnRows = normalizeImportedRows([
   {
     "Data da Viagem (inicial)": "20/05/2026",

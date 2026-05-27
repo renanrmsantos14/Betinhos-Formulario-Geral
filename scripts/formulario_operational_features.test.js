@@ -346,8 +346,16 @@ includes(app, "function createImportedPersonRecord", "criacao automatica de soli
 includes(app, "function uniquePassengerRelationItems", "vinculos servico-passageiro devem deduplicar passageiro antes do Dataverse");
 includes(app, "const relationPassengers = uniquePassengerRelationItems(passengers);", "salvamento deve usar lista deduplicada para evitar chave duplicada");
 includes(app, "Falha ao desfazer reserva importada incompleta", "falha em vinculo importado deve tentar desfazer reserva recem-criada");
-includes(app, "function showTemporaryStatusLogicReminder", "lembrete temporario de logica de status deve existir antes do salvamento");
-includes(app, "toast(\"LEMBRETE TEMPORARIO: nao esquecer de colocar a logica de conversao de status do XLSX no codigo.\", \"warning\", 12000)", "lembrete temporario de status deve ser informativo, nao bloqueante");
+includes(app, "\"aguardando prestador\"", "status XLSX Aguardando prestador deve existir para ignorar automaticamente");
+includes(app, "function applyImportedExternalStatusRules", "importacao deve aplicar regra de status externo antes da revisao");
+includes(app, "function notifyImportedAutoIgnoredExternalStatuses", "status Aguardando prestador deve avisar o usuario");
+includes(app, "serviço(s) com status XLSX Aguardando prestador foram ignorados automaticamente", "aviso de Aguardando prestador deve explicar ignorados automaticos");
+includes(app, "function notifyUnknownImportedExternalStatuses", "status XLSX desconhecido deve avisar o operador");
+includes(app, "Estes serviços serão assumidos como Confirmado", "status desconhecido deve assumir Confirmado com aviso");
+includes(app, "function resolveImportedOperationStatusLabel", "salvamento importado deve resolver status operacional pelo status XLSX");
+includes(app, "resolveImportedOperationStatusLabel(trecho)", "payload importado deve usar conversao de status do XLSX");
+excludes(app, "showTemporaryStatusLogicReminder", "lembrete temporario de status deve ser removido");
+excludes(app, "LEMBRETE TEMPORARIO", "toast temporario de status deve ser removido");
 const createImportedPersonRecordFn = extractFunction(app, "createImportedPersonRecord");
 includes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.email]: normalizeEmail(person.email || \"\")", "passageiro novo importado deve gravar email quando existir");
 includes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.telefone]: phoneStorageValue(person.telefone || \"\", \"55\")", "passageiro novo importado deve gravar telefone");
