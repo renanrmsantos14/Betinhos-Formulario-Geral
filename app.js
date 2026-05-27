@@ -42,6 +42,7 @@
         receber: "cr40f_receber",
         cr: "cr40f_cr",
         formaPagamento: "cr40f_formadepagamento",
+        idTenaris: "cr40f_idtenaris",
         idExterno: "cr40f_idexterno"
       },
       passageiro: {
@@ -6766,12 +6767,13 @@
     const ids = Array.from(new Set((programs || []).map((program) => program.programacao).filter(Boolean)));
     const candidateMap = new Map();
     if (!ids.length) return candidateMap;
+    const tenarisIdField = importedReservaTenarisIdField();
 
     if (!state.xrm || state.mockMode) {
       const db = getMockDb();
       ids.forEach((programacao) => {
         const rows = db.reservas
-          .filter((item) => String(item[CONFIG.fields.reserva.idExterno] || item.programacao || "") === programacao)
+          .filter((item) => String(item[tenarisIdField] || item[CONFIG.fields.reserva.idExterno] || item.programacao || "") === programacao)
           .map(importedDuplicateCandidateFromReserva);
         if (rows.length) candidateMap.set(programacao, rows);
       });
@@ -6779,12 +6781,12 @@
       const f = CONFIG.fields.reserva;
       for (let index = 0; index < ids.length; index += 15) {
         const batch = ids.slice(index, index + 15);
-        const filter = batch.map((id) => `${f.idExterno} eq '${escapeODataString(id)}'`).join(" or ");
+        const filter = batch.map((id) => `${tenarisIdField} eq '${escapeODataString(id)}'`).join(" or ");
         try {
-          const select = [f.id, f.idExterno, f.dataSaida, f.trajeto, f.enderecoView, f.destino, f.paxView].join(",");
+          const select = [f.id, tenarisIdField, f.idExterno, f.dataSaida, f.trajeto, f.enderecoView, f.destino, f.paxView].join(",");
           const rows = await retrieveAll(CONFIG.entities.reserva, `?$select=${select}&$filter=${filter}`);
           rows.forEach((row) => {
-            const key = row[f.idExterno];
+            const key = row[tenarisIdField] || row[f.idExterno];
             if (!candidateMap.has(key)) candidateMap.set(key, []);
             candidateMap.get(key).push(importedDuplicateCandidateFromReserva(row));
           });
@@ -6806,17 +6808,23 @@
           .sort((a, b) => b.score - a.score);
         const exactMatches = matches.filter((match) => match.level === "exact");
         const possibleMatches = matches.filter((match) => match.level === "possible");
-        trecho.duplicateMatches = exactMatches;
-        trecho.possibleDuplicateMatches = possibleMatches;
-        trecho.duplicatedRecordIds = exactMatches.map((match) => match.recordId).filter(Boolean);
+        const strongPossibleMatches = possibleMatches.filter(isStrongImportedPossibleDuplicateMatch);
+        const weakPossibleMatches = possibleMatches.filter((match) => !isStrongImportedPossibleDuplicateMatch(match));
+        const autoIgnoredMatches = [...exactMatches, ...strongPossibleMatches].sort((a, b) => b.score - a.score);
+        trecho.duplicateMatches = autoIgnoredMatches;
+        trecho.possibleDuplicateMatches = weakPossibleMatches;
+        trecho.duplicatedRecordIds = autoIgnoredMatches.map((match) => match.recordId).filter(Boolean);
         exactIds.push(...trecho.duplicatedRecordIds);
         if (trecho.duplicatedRecordIds.length) {
           const statuses = importReviewStatuses();
           const status = normalizeImportedReviewStatus(trecho);
           if (status !== statuses.IGNORED && status !== statuses.SAVED) {
-            trecho.reviewStatus = statuses.BLOCKED;
+            trecho.reviewStatus = statuses.IGNORED;
             trecho.reviewBlockReason = `Serviço repetido provável: ${formatImportedDuplicateMatch(exactMatches[0])}.`;
+            trecho.autoIgnoredByDuplicate = true;
           }
+        } else {
+          trecho.autoIgnoredByDuplicate = false;
         }
       });
       program.duplicatedRecordIds = Array.from(new Set(exactIds));
@@ -6826,9 +6834,10 @@
 
   function importedDuplicateCandidateFromReserva(row) {
     const f = CONFIG.fields.reserva;
+    const tenarisIdField = importedReservaTenarisIdField();
     return {
       recordId: cleanGuid(row?.[f.id] || row?.id || row?.recordId || ""),
-      programacao: row?.[f.idExterno] || row?.programacao || "",
+      programacao: row?.[tenarisIdField] || row?.[f.idExterno] || row?.programacao || "",
       dataSaida: row?.[f.dataSaida] || row?.dataSaida || "",
       trajeto: row?.[f.trajeto] || row?.trajeto || "",
       enderecoView: row?.[f.enderecoView] || row?.enderecoView || "",
@@ -6844,6 +6853,23 @@
       level: "",
       reasons: []
     };
+  }
+
+  function importedReservaTenarisIdField() {
+    return CONFIG.fields.reserva.idTenaris || CONFIG.fields.reserva.idExterno;
+  }
+
+  function isStrongImportedPossibleDuplicateMatch(match) {
+    if (!match || match.level !== "possible") return false;
+    const reasons = match.reasons || [];
+    const hasTimeSignal = reasons.includes("mesmo horario") || reasons.includes("horario proximo");
+    const hasPassengerSignal = reasons.includes("mesmos passageiros") || reasons.includes("passageiros parecidos");
+    const hasRouteSignal = reasons.includes("mesmo destino")
+      || reasons.includes("destino parecido")
+      || reasons.includes("trajeto parecido")
+      || reasons.includes("mesmo endereco de saida")
+      || reasons.includes("endereco de saida parecido");
+    return (match.score >= 62 && hasTimeSignal && hasPassengerSignal) || (hasTimeSignal && hasPassengerSignal && hasRouteSignal);
   }
 
   function renderImportReview() {
@@ -6922,9 +6948,9 @@
 
   function getImportProgramsByReviewFilter(programs, filter) {
     const filters = importReviewFilters();
-    if (filter === filters.ALL) return programs || [];
+    if (filter === filters.ALL) return sortImportProgramsByServiceDateTime(programs || []);
     if (filter === filters.PENDING) return getImportProgramsForReview(programs);
-    return (programs || []).map((program) => {
+    return sortImportProgramsByServiceDateTime((programs || []).map((program) => {
       const trechos = (program.trechos || []).filter((trecho) => {
         const status = normalizeImportedReviewStatus(trecho);
         if (filter === filters.VALIDATED) return isValidatedImportedTrecho(trecho);
@@ -6932,12 +6958,12 @@
         return false;
       });
       return { ...program, trechos };
-    }).filter((program) => program.trechos.length > 0);
+    }).filter((program) => program.trechos.length > 0));
   }
 
   function getImportProgramsForReview(programs) {
     const statuses = importReviewStatuses();
-    return (programs || []).map((program) => {
+    return sortImportProgramsByServiceDateTime((programs || []).map((program) => {
       const trechos = (program.trechos || []).filter(
         (trecho) => {
           const status = normalizeImportedReviewStatus(trecho);
@@ -6948,7 +6974,46 @@
         ...program,
         trechos
       };
-    }).filter((program) => program.trechos.length > 0);
+    }).filter((program) => program.trechos.length > 0));
+  }
+
+  function sortImportProgramsByServiceDateTime(programs) {
+    return [...(programs || [])]
+      .map((program) => ({
+        ...program,
+        trechos: sortImportedTrechosByServiceDateTime(program?.trechos || [])
+      }))
+      .sort((a, b) => compareImportProgramsByFirstServiceDateTime(a, b));
+  }
+
+  function sortImportedTrechosByServiceDateTime(trechos) {
+    return [...(trechos || [])].sort((a, b) => compareImportedTrechosByServiceDateTime(a, b));
+  }
+
+  function compareImportProgramsByFirstServiceDateTime(programA, programB) {
+    const firstA = importProgramFirstServiceTimestamp(programA);
+    const firstB = importProgramFirstServiceTimestamp(programB);
+    if (firstA !== firstB) return firstA - firstB;
+    return String(programA?.programacao || "").localeCompare(String(programB?.programacao || ""), "pt-BR");
+  }
+
+  function importProgramFirstServiceTimestamp(program) {
+    const firstTrecho = sortImportedTrechosByServiceDateTime(program?.trechos || [])[0];
+    return importedTrechoServiceTimestamp(firstTrecho);
+  }
+
+  function compareImportedTrechosByServiceDateTime(trechoA, trechoB) {
+    const stampA = importedTrechoServiceTimestamp(trechoA);
+    const stampB = importedTrechoServiceTimestamp(trechoB);
+    if (stampA !== stampB) return stampA - stampB;
+    return String(trechoA?.key || "").localeCompare(String(trechoB?.key || ""), "pt-BR");
+  }
+
+  function importedTrechoServiceTimestamp(trecho) {
+    const localDateTime = importedTrechoDateTimeLocal(trecho);
+    const parsed = parseDateTimeInputValue(localDateTime);
+    if (parsed) return parsed.getTime();
+    return Number.POSITIVE_INFINITY;
   }
 
   function isValidatedImportedTrecho(trecho) {
@@ -7429,8 +7494,11 @@
       const title = document.createElement("div");
       const eyebrow = document.createElement("span");
       const statusLabels = importReviewStatuses();
+      const isAutoIgnoredDuplicate = isImportedDuplicateAutoIgnored(selected.trecho);
       eyebrow.textContent = isDuplicated
-        ? "Serviço bloqueado"
+        ? isAutoIgnoredDuplicate
+          ? "Duplicata ignorada automaticamente"
+          : "Serviço bloqueado"
         : isSplit
           ? "Serviço Split"
           : isEditing
@@ -7449,7 +7517,7 @@
       title.append(eyebrow, strong);
       const statusBadge = document.createElement("span");
       statusBadge.className = `import-inspector-status import-badge ${isDuplicated ? "danger" : statusMeta.tone}`;
-      statusBadge.textContent = isDuplicated ? "Bloqueado" : statusMeta.label;
+      statusBadge.textContent = isAutoIgnoredDuplicate ? "Duplicata automática" : isDuplicated ? "Bloqueado" : statusMeta.label;
       statusBadge.setAttribute("aria-label", `Status do serviço: ${statusBadge.textContent}`);
       title.appendChild(statusBadge);
       const actions = document.createElement("div");
@@ -7525,6 +7593,7 @@
     const issues = importedTrechoIssues(trecho);
     const status = importedTrechoReviewMeta(trecho, issues);
     const isDuplicated = !!trecho.duplicatedRecordIds?.length;
+    const isAutoIgnoredDuplicate = isImportedDuplicateAutoIgnored(trecho);
     const isSplit = isSplitImportedTrecho(trecho);
     const wrap = document.createElement("div");
     wrap.className = "import-service-row-wrap";
@@ -7542,7 +7611,7 @@
     button.dataset.programacao = program.programacao;
     button.dataset.trechoKey = trecho.key;
     button.setAttribute("aria-current", isSelected ? "true" : "false");
-    button.setAttribute("aria-label", `${isSelected ? "Selecionado. " : ""}${importedTrechoServiceListTimeLabel(trecho)}. Status: ${isDuplicated ? "Não editar" : status.label}.`);
+    button.setAttribute("aria-label", `${isSelected ? "Selecionado. " : ""}${importedTrechoServiceListTimeLabel(trecho)}. Status: ${isAutoIgnoredDuplicate ? "Duplicata automática (ignorado automaticamente)" : isDuplicated ? "Não editar" : status.label}.`);
 
     const main = document.createElement("span");
     main.className = "import-service-main";
@@ -7556,7 +7625,13 @@
     side.className = "import-service-side";
     const badge = document.createElement("span");
     badge.className = `import-badge ${isDuplicated ? "danger" : trecho.possibleDuplicateMatches?.length ? "warning" : status.tone}`;
-    badge.textContent = isDuplicated ? "Não editar" : trecho.possibleDuplicateMatches?.length ? "Parecido" : status.label;
+    badge.textContent = isAutoIgnoredDuplicate
+      ? "Duplicata automática"
+      : isDuplicated
+        ? "Não editar"
+        : trecho.possibleDuplicateMatches?.length
+          ? "Parecido"
+          : status.label;
     side.append(badge);
     button.append(main, side);
     wrap.append(button);
@@ -7778,6 +7853,15 @@
 
   function setImportedTrechoControlsMode(card, isEditing) {
     card.querySelectorAll("[data-import-field], [data-import-passenger-field], [data-import-observation-text], [data-import-obs-type]").forEach((control) => {
+      if (control.hasAttribute("data-import-obs-type")) {
+        control.disabled = false;
+        return;
+      }
+      if (control.hasAttribute("data-import-observation-text")) {
+        const activeObsType = card.querySelector("[data-import-obs-type].is-active")?.dataset.importObsType || "motorista";
+        control.readOnly = !isEditing || activeObsType === "motorista";
+        return;
+      }
       if (control.tagName === "SELECT" || control.tagName === "BUTTON") {
         control.disabled = !isEditing;
       } else {
@@ -7789,6 +7873,7 @@
   function importedTrechoReviewMeta(trecho, issues = []) {
     const statuses = importReviewStatuses();
     const status = normalizeImportedReviewStatus(trecho);
+    if (isImportedDuplicateAutoIgnored(trecho)) return { label: "Duplicata automática", tone: "danger" };
     if (trecho.duplicatedRecordIds?.length) return { label: "Não editável", tone: "danger" };
     if (status === statuses.SAVED) return { label: "Salvo", tone: "success" };
     if (status === statuses.IGNORED) return { label: "Ignorado", tone: "danger" };
@@ -7812,6 +7897,12 @@
       output.unshift(`Bloqueado: ${trecho.reviewBlockReason}`);
     }
     return Array.from(new Set(output));
+  }
+
+  function isImportedDuplicateAutoIgnored(trecho) {
+    return !!(trecho?.duplicatedRecordIds?.length
+      && normalizeImportedReviewStatus(trecho) === importReviewStatuses().IGNORED
+      && trecho?.autoIgnoredByDuplicate);
   }
 
   function formatImportedDuplicateMatch(match) {
@@ -7906,7 +7997,7 @@
       : "motorista";
     const existing = trecho?.observacoesFormulario || {};
     const obs = {
-      motorista: existing.motorista ?? trecho?.observacaoOperacional ?? "",
+      motorista: importedMotoristaObservationFromXlsx(trecho),
       interna: existing.interna ?? trecho?.observacaoInterna ?? importedDefaultInternalObservation(trecho),
       final: existing.final ?? trecho?.observacaoFinal ?? "",
       passageiro: existing.passageiro ?? trecho?.observacaoPassageiro ?? composeImportedTrechoPreferencias(trecho),
@@ -7925,10 +8016,18 @@
 
   function syncImportedObservationFields(trecho) {
     const obs = trecho?.observacoesFormulario || {};
-    trecho.observacaoOperacional = obs.motorista || "";
+    trecho.observacaoOperacional = importedMotoristaObservationFromXlsx(trecho);
     trecho.observacaoInterna = obs.interna || "";
     trecho.observacaoFinal = obs.final || "";
     trecho.observacaoPassageiro = obs.passageiro || "";
+  }
+
+  function importedMotoristaObservationFromXlsx(trecho) {
+    if (!trecho) return "";
+    if (!Object.prototype.hasOwnProperty.call(trecho, "observacaoOperacionalXlsx")) {
+      trecho.observacaoOperacionalXlsx = trecho.observacaoOperacional || "";
+    }
+    return String(trecho.observacaoOperacionalXlsx || "");
   }
 
   function importedDefaultInternalObservation(trecho) {
@@ -8603,7 +8702,6 @@
     if (!trecho) return;
 
     if (action.dataset.importAction === "switch-import-obs") {
-      if (!isImportedTrechoEditing(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey)) return;
       const next = action.dataset.importObsType || "motorista";
       const obs = ensureImportedObservationState(trecho);
       const textarea = trechoCard.querySelector("[data-import-observation-text]");
@@ -8618,6 +8716,7 @@
       });
       if (textarea) {
         textarea.value = obs[next] || "";
+        textarea.readOnly = !isImportedTrechoEditing(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey) || next === "motorista";
         requestAnimationFrame(() => {
           textarea.focus();
           textarea.setSelectionRange?.(textarea.value.length, textarea.value.length);
@@ -8716,6 +8815,7 @@
       if (!window.XlsxImportCore?.ignoreImportedTrechoReview) {
         trecho.reviewStatus = importReviewStatuses().IGNORED;
         trecho.reviewBlockReason = "";
+        trecho.autoIgnoredByDuplicate = false;
       }
       setImportedTrechoEditMode(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey, false);
       renderImportReviewPreservingGallery();
@@ -8728,6 +8828,7 @@
       if (!window.XlsxImportCore?.markImportedTrechoPending) {
         trecho.reviewStatus = importReviewStatuses().PENDING;
         trecho.reviewBlockReason = "";
+        trecho.autoIgnoredByDuplicate = false;
       }
       state.importReview.selectedProgramacao = trechoCard.dataset.programacao;
       state.importReview.selectedTrechoKey = trechoCard.dataset.trechoKey;
@@ -8849,6 +8950,10 @@
     if (event.target.dataset.importObservationText) {
       const obs = ensureImportedObservationState(trecho);
       const current = obs.current || "motorista";
+      if (current === "motorista") {
+        event.target.value = importedMotoristaObservationFromXlsx(trecho);
+        return;
+      }
       if (String(obs[current] ?? "") === String(event.target.value ?? "")) return;
       captureImportReviewHistory("Editar observação do serviço");
       markImportedReviewPending(trecho);
@@ -9186,8 +9291,9 @@
   function buildImportedReservaPayload(trecho, context) {
     const f = CONFIG.fields.reserva;
     const importObs = ensureImportedObservationState(trecho);
+    const tenarisIdField = importedReservaTenarisIdField();
     const payload = {
-      [f.idExterno]: trecho.programacao,
+      [tenarisIdField]: trecho.programacao,
       [f.enderecoView]: context.enderecoCompleto,
       [f.destino]: trecho.destino || "",
       [f.dataSaida]: context.dataHoraPrincipal.toISOString(),

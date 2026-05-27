@@ -1,4 +1,4 @@
-(function attachXlsxImportCore(root, factory) {
+﻿(function attachXlsxImportCore(root, factory) {
   const core = factory();
   if (typeof module === "object" && module.exports) {
     module.exports = core;
@@ -1194,19 +1194,17 @@
   }
 
   function buildOperationalNotes(row) {
-    const notes = [
-      `Importado de ${row.programacao}${row.solicitacao ? ` / ${row.solicitacao}` : ""}.`,
-      row.statusExterno ? `Status externo: ${row.statusExterno}.` : "",
-      row.programador ? `Programador: ${row.programador}.` : "",
-      row.gestor ? `Gestor/Aprovador: ${row.gestor}.` : "",
-      row.solicitanteNome ? `Solicitante externo: ${row.solicitanteNome}.` : "",
-      row.vooNumero ? `Voo: ${row.vooNumero}${row.vooHorario ? ` às ${row.vooHorario}` : ""}.` : "",
-      row.terminal ? `Terminal: ${row.terminal}.` : "",
-      row.ciaAerea ? `Cia. aérea: ${row.ciaAerea}.` : "",
-      row.observacao ? `Observação externa: ${row.observacao}` : "",
-      row.observacaoFaturamento ? `Observação faturamento: ${row.observacaoFaturamento}` : ""
-    ];
-    return notes.filter(Boolean);
+    const externalObs = String(row?.observacao || "")
+      .replace(/^observa(?:ção|cao)\s*externa\s*:\s*/i, "")
+      .replace(/^\-\s*/, "")
+      .trim();
+    const flightParts = [];
+    if (row.vooNumero) {
+      flightParts.push(`Voo: ${row.vooNumero}${row.vooHorario ? ` às ${row.vooHorario}` : ""}.`);
+    }
+    if (row.terminal) flightParts.push(`Terminal: ${row.terminal}.`);
+    if (row.ciaAerea) flightParts.push(`Cia. aérea: ${row.ciaAerea}.`);
+    return [externalObs, flightParts.join(" ").trim()].filter(Boolean);
   }
 
   function validateImportHeaders(headers) {
