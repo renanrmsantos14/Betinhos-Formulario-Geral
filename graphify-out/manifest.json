@@ -200,13 +200,18 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\package.json": {
-    "mtime": 1779821382.1279995,
-    "ast_hash": "580788132d0e6644559e0bf4dc49d5db",
+    "mtime": 1779881358.4888542,
+    "ast_hash": "c06a35c54fb285967379f032c80436ef",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.vscode\\tasks.json": {
     "mtime": 1779821381.969443,
     "ast_hash": "3ed9be63899b76b74a0a00e74c063360",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\dev_server.js": {
+    "mtime": 1779881358.6111803,
+    "ast_hash": "e378ea90bf677939b17c18608c1355e7",
     "semantic_hash": ""
   }
 }
