@@ -4062,6 +4062,11 @@ body.is-import-dragging .import-drop-overlay {
   background: var(--success);
 }
 
+.import-filter[data-import-filter="pending"] {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 18%, var(--line));
+}
+
 .import-filter[data-import-filter="pending"].is-active {
   color: var(--warning);
   border-color: color-mix(in srgb, var(--warning) 34%, var(--line));

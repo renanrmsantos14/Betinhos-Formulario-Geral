@@ -4600,6 +4600,7 @@
   function handleOperationalInput(event) {
     if (state.draftRestoring) return;
     const target = event.target;
+    if (isImportReviewInteractionTarget(target)) return;
     if (target?.classList?.contains("custom-select-search")) return;
     if (target === el.passengerPickerSearch) return;
     if (target?.closest?.("#passengerEditOverlay")) return;
@@ -4613,6 +4614,11 @@
     if (event.type !== "input" || !isTextEditingTarget(target)) {
       commitGlobalHistoryChange(globalHistoryLabelFromTarget(target));
     }
+  }
+
+  function isImportReviewInteractionTarget(target) {
+    if (!target?.closest) return false;
+    return !!target.closest("#importReviewPrograms, #importReviewStats");
   }
 
   function markActivationDraftEdited(target) {
@@ -4837,6 +4843,7 @@
   function shouldTrackGlobalHistoryTarget(target) {
     if (!target) return false;
     if (target.closest?.("#loadingOverlay, #successOverlay, #passengerPickerOverlay, #activationGuardOverlay, #clearAllFormsOverlay")) return false;
+    if (isImportReviewInteractionTarget(target)) return false;
     if (target.closest?.(".custom-select-search")) return false;
     if (target === el.passengerPickerSearch) return false;
     if (target.closest?.("#passengerEditOverlay") && !activeImportedPassengerEditRef) return false;
@@ -6801,6 +6808,7 @@
     programs.forEach((program) => {
       const candidates = candidateMap.get(program.programacao) || [];
       const exactIds = [];
+      const hasAnyExistingServiceInPg = candidates.length > 0;
       program.trechos.forEach((trecho) => {
         const matches = candidates
           .map((candidate) => scoreImportedTrechoDuplicate(trecho, candidate))
@@ -6810,7 +6818,14 @@
         const possibleMatches = matches.filter((match) => match.level === "possible");
         const strongPossibleMatches = possibleMatches.filter(isStrongImportedPossibleDuplicateMatch);
         const weakPossibleMatches = possibleMatches.filter((match) => !isStrongImportedPossibleDuplicateMatch(match));
-        const autoIgnoredMatches = [...exactMatches, ...strongPossibleMatches].sort((a, b) => b.score - a.score);
+        const autoIgnoredMatches = hasAnyExistingServiceInPg
+          ? [...candidates].map((candidate) => ({
+            recordId: candidate.recordId || "",
+            score: 999,
+            level: "exact",
+            reasons: ["mesma PG (ID Tenaris já existe no Dataverse)"]
+          }))
+          : [...exactMatches, ...strongPossibleMatches].sort((a, b) => b.score - a.score);
         trecho.duplicateMatches = autoIgnoredMatches;
         trecho.possibleDuplicateMatches = weakPossibleMatches;
         trecho.duplicatedRecordIds = autoIgnoredMatches.map((match) => match.recordId).filter(Boolean);
@@ -6820,7 +6835,9 @@
           const status = normalizeImportedReviewStatus(trecho);
           if (status !== statuses.IGNORED && status !== statuses.SAVED) {
             trecho.reviewStatus = statuses.IGNORED;
-            trecho.reviewBlockReason = `Serviço repetido provável: ${formatImportedDuplicateMatch(exactMatches[0])}.`;
+            trecho.reviewBlockReason = hasAnyExistingServiceInPg
+              ? "Serviço ignorado automaticamente: já existe serviço com esta PG (ID Tenaris) no Dataverse."
+              : `Serviço repetido provável: ${formatImportedDuplicateMatch(exactMatches[0] || strongPossibleMatches[0])}.`;
             trecho.autoIgnoredByDuplicate = true;
           }
         } else {
