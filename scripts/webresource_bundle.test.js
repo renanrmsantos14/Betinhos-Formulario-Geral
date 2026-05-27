@@ -31,7 +31,7 @@ assert.ok(html.includes("cr40f_idexterno"), "bundle deve conter o campo externo 
 assert.ok(html.includes("split-trecho"), "bundle deve expor acao Split na revisao de importacao");
 assert.ok(html.includes("importedTrechoReturnDateTimeLocal"), "bundle deve editar horario previsto de retorno importado");
 assert.ok(html.includes("import-decision-panel"), "bundle deve conter painel de decisao operacional da PG");
-assert.ok(html.includes("Interpretação da PG"), "bundle deve apresentar interpretacao operacional generica");
+assert.ok(!html.includes("Interpretação da PG"), "bundle nao deve mostrar rotulo redundante de interpretacao da PG");
 assert.ok(html.includes("Multi-coleta"), "bundle deve reconhecer PG com coletas sequenciais");
 assert.ok(!html.includes("Manter 1 OS"), "bundle nao deve exibir botao de manter 1 OS");
 assert.ok(!html.includes("Ã‰ o mesmo carro"), "bundle nao deve expor botao de mesmo carro");

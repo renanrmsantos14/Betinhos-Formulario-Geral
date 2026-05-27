@@ -376,7 +376,7 @@ includes(app, "addClassIfPresent(button, `is-${normalizeImportedReviewStatus(tre
 excludes(app, "classList.add(isDuplicated ? \"duplicado\" : \"\")", "inspector nao pode quebrar com classList.add vazio");
 includes(app, "function buildImportDecisionPanel", "revisao importada deve expor decisao operacional da PG");
 includes(app, "import-decision-panel", "revisao importada deve destacar manter espera ou separar busca");
-includes(app, "Interpretação da PG", "revisao importada deve apresentar interpretacao operacional generica");
+excludes(app, "Interpretação da PG", "revisao importada nao deve mostrar rotulo redundante de interpretacao da PG");
 includes(app, "Multi-coleta", "revisao importada deve reconhecer PG com coletas sequenciais");
 excludes(app, "Manter 1 OS", "revisao importada nao deve exibir botao desnecessario quando a PG ja e uma OS");
 excludes(app, "É o mesmo carro", "revisao importada nao deve expor botao de mesmo carro");

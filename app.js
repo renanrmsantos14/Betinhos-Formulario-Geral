@@ -7606,8 +7606,6 @@
 
     const copy = document.createElement("div");
     copy.className = "import-decision-copy";
-    const label = document.createElement("span");
-    label.textContent = "Interpretação da PG";
     const strong = document.createElement("strong");
     strong.textContent = importedTrechoModeLabel(trecho);
     const detail = document.createElement("p");
@@ -7622,7 +7620,7 @@
     } else {
       detail.textContent = "Uma OS sem retorno previsto. Use apenas se não houver busca planejada.";
     }
-    copy.append(label, strong, detail);
+    copy.append(strong, detail);
 
     const optionsWrap = document.createElement("div");
     optionsWrap.className = "import-decision-options";
