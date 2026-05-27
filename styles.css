@@ -627,6 +627,10 @@ h3 {
   transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
 }
 
+.content:has(.import-review-panel.is-active) {
+  overflow: hidden;
+}
+
 /* ==========================================================================
    CONTAINER DE CONTEÚDO E SEÇÕES (PANEL)
    ========================================================================== */
@@ -3714,13 +3718,17 @@ body.is-import-dragging .import-drop-overlay {
 
 .import-review-panel.is-active {
   display: grid;
+  height: 100%;
+  min-height: 0;
   grid-template-columns: minmax(0, 1fr) minmax(286px, 340px);
+  grid-template-rows: auto auto minmax(0, 1fr);
   grid-template-areas:
     "head head"
     "stats issues"
     "programs programs";
   gap: 12px;
-  align-content: start;
+  align-content: stretch;
+  overflow: hidden;
 }
 
 .import-review-panel--compact .import-review-head {
@@ -4128,14 +4136,16 @@ body.is-import-dragging .import-drop-overlay {
   display: grid;
   gap: 12px;
   min-height: 0;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .import-workbench {
   display: grid;
-  grid-template-columns: minmax(330px, 0.52fr) minmax(640px, 1.48fr);
+  grid-template-columns: minmax(300px, 0.42fr) minmax(0, 1fr);
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
+  height: 100%;
+  min-height: 0;
   min-width: 0;
 }
 
@@ -4149,11 +4159,12 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .import-service-list {
-  position: sticky;
-  top: calc(var(--topbar-height) + 16px);
   display: grid;
   gap: 8px;
-  max-height: calc(100dvh - var(--topbar-height) - 96px);
+  align-content: start;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
   overflow: auto;
   padding: 10px;
 }
@@ -4447,8 +4458,12 @@ body.is-import-dragging .import-drop-overlay {
 
 .import-inspector {
   display: grid;
-  gap: 0px;
-  padding: 12px;
+  align-content: start;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  padding: 10px;
 }
 
 .import-inspector-empty {
@@ -4599,6 +4614,7 @@ body.is-import-dragging .import-drop-overlay {
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  min-height: 0;
 }
 
 .import-inspector .import-trecho-head {
@@ -4609,7 +4625,7 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .import-inspector .import-hot-grid {
-  gap: 7px;
+  gap: 6px;
   align-items: stretch;
 }
 
@@ -4662,10 +4678,10 @@ body.is-import-dragging .import-drop-overlay {
 @media (max-width: 1240px) {
   .import-workbench {
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(150px, 0.42fr) minmax(0, 0.58fr);
   }
 
   .import-service-list {
-    position: static;
     max-height: none;
   }
 }
@@ -4876,22 +4892,30 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .import-editor-stack {
-  display: grid;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  align-content: flex-start;
   gap: 8px;
   min-width: 0;
 }
 
 .import-editor-section {
-  display: grid;
-  gap: 7px;
+  display: flex;
+  flex: 1 1 min(100%, 320px);
+  flex-wrap: wrap;
+  align-items: stretch;
+  align-content: flex-start;
+  gap: 6px;
   min-width: 0;
-  padding: 8px;
+  padding: 7px;
   border: 1px solid color-mix(in srgb, var(--line) 78%, #ffffff);
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--surface) 92%, var(--surface-soft));
 }
 
 .import-editor-section-title {
+  flex: 0 0 100%;
   color: var(--text-soft);
 }
 
@@ -4953,34 +4977,39 @@ body.is-import-dragging .import-drop-overlay {
 
 .import-field {
   position: relative;
-  flex: 1 1 min(100%, 180px);
-  min-width: min(100%, 150px);
-  min-height: 60px;
-  padding: 7px;
+  --import-field-min: 220px;
+  flex: 1 1 var(--import-field-min);
+  min-width: min(100%, var(--import-field-min));
+  max-width: 100%;
+  min-height: 56px;
+  padding: 6px;
 }
 
 .import-field[data-import-input-type="datetime-local"] {
+  --import-field-min: min(100%, var(--datetime-field-width));
   flex: 0 0 min(100%, var(--datetime-field-width));
   width: min(100%, var(--datetime-field-width));
 }
 
 .import-field[data-import-input-type="date"] {
+  --import-field-min: min(100%, var(--date-field-width));
   flex: 0 0 min(100%, var(--date-field-width));
   width: min(100%, var(--date-field-width));
 }
 
 .import-field[data-import-input-type="number"] {
-  flex: 0 1 min(100%, 128px);
-  width: min(100%, 128px);
+  --import-field-min: 128px;
+  flex: 0 1 min(100%, var(--import-field-min));
+  width: min(100%, var(--import-field-min));
 }
 
 .import-field[data-import-input-type="select"] {
-  flex: 1 1 min(100%, 180px);
+  --import-field-min: 220px;
 }
 
 .import-field[data-import-input-type="textarea"] {
-  flex: 1 1 min(100%, 300px);
-  min-height: 78px;
+  --import-field-min: 320px;
+  min-height: 68px;
 }
 
 .import-field input,
@@ -4990,14 +5019,14 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .import-field textarea {
-  min-height: 50px;
+  min-height: 42px;
   line-height: 1.35;
   resize: vertical;
 }
 
 .import-field.is-wide {
   flex-grow: 1.5;
-  flex-basis: min(100%, 320px);
+  --import-field-min: 320px;
   min-width: 0;
 }
 
@@ -5038,8 +5067,8 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .import-field.span-2 {
-  grid-column: span 2;
-  flex-basis: min(100%, 320px);
+  --import-field-min: min(100%, 520px);
+  flex-basis: 100%;
 }
 
 .import-passengers {
@@ -5060,6 +5089,22 @@ body.is-import-dragging .import-drop-overlay {
   color: var(--text-soft);
   font-size: 11px;
   font-weight: 860;
+}
+
+.import-passengers .import-solicitante-section {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  margin-top: 8px;
+}
+
+.import-solicitante-head .import-add-solicitante-button {
+  width: 24px;
+  height: 24px;
+  min-height: 24px;
+  padding-inline: 0;
+  font-size: 15px;
+  font-weight: 800;
 }
 
 .import-add-passenger-button {
@@ -5166,6 +5211,81 @@ body.is-import-dragging .import-drop-overlay {
 .import-passenger-row.import-passenger::before {
   content: none !important;
   display: none !important;
+}
+
+.import-solicitante-row.passenger-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.import-solicitante-picker {
+  display: block;
+  min-width: 0;
+}
+
+.import-solicitante-picker .import-solicitante-field {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.import-passenger-add-picker {
+  display: block;
+  min-width: 0;
+}
+
+.import-passenger-add-picker .import-passenger-add-field {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+}
+
+.import-row-remove-button {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: color-mix(in srgb, var(--danger) 58%, var(--muted));
+  background: transparent;
+  font-size: 0;
+  font-weight: 0;
+  line-height: 1;
+  box-shadow: none;
+  opacity: 0.58;
+  cursor: pointer;
+  transition:
+    opacity 150ms var(--ease-out),
+    border-color 150ms var(--ease-out),
+    background-color 150ms var(--ease-out),
+    transform 150ms var(--ease-out);
+}
+
+.import-row-remove-icon {
+  width: 13px;
+  height: 13px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+}
+
+.import-row-remove-button:hover,
+.import-row-remove-button:focus-visible {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--danger) 18%, transparent);
+  background: color-mix(in srgb, var(--danger-soft) 44%, transparent);
+  transform: translateY(-1px);
+}
+
+.import-row-remove-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger-soft) 70%, transparent);
 }
 
 .import-passenger-status-dot {
@@ -5313,6 +5433,11 @@ body.is-import-dragging .import-drop-overlay {
     transform 150ms var(--ease-out);
 }
 
+.import-passenger-compact-actions:has(.import-row-remove-button) {
+  opacity: 0.72;
+  transform: translateX(0);
+}
+
 .import-passenger-row:hover .import-passenger-compact-actions,
 .import-passenger-row:focus-within .import-passenger-compact-actions,
 .import-passenger-row.is-ambiguous .import-passenger-compact-actions,
@@ -5378,11 +5503,11 @@ body.is-import-dragging .import-drop-overlay {
 
 @media (min-width: 980px) {
   .import-trecho {
-    grid-template-columns: minmax(0, 1fr) minmax(312px, 0.43fr);
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 0.36fr);
     grid-template-areas:
       "trecho-head trecho-head"
       "duplicate-lock duplicate-lock"
-      "decision decision"
+      "decision passengers"
       "fields passengers"
       "issues passengers"
       "actions passengers";
@@ -5412,6 +5537,11 @@ body.is-import-dragging .import-drop-overlay {
   .import-passengers {
     grid-area: passengers;
     align-self: start;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    max-height: 100%;
+    overflow: auto;
     padding: 10px;
     border: 1px solid color-mix(in srgb, var(--line) 78%, #ffffff);
     border-radius: var(--radius-sm);
@@ -5431,6 +5561,10 @@ body.is-import-dragging .import-drop-overlay {
   }
 
   .import-passengers .import-passenger-row.passenger-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .import-passengers .import-solicitante-row.passenger-row {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
@@ -5515,6 +5649,10 @@ body.is-import-dragging .import-drop-overlay {
   }
 
   .import-passenger-row.passenger-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .import-solicitante-row.passenger-row {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
