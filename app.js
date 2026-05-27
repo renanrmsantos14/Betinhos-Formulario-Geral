@@ -43,7 +43,7 @@
         cr: "cr40f_cr",
         formaPagamento: "cr40f_formadepagamento",
         idTenaris: "cr40f_idtenaris",
-        idExterno: "cr40f_idexterno"
+        idExterno: "new_idexterno"
       },
       passageiro: {
         id: "cr40f_bancodedadosid",
@@ -105,6 +105,7 @@
   const BRAND_LOGO_WEBRESOURCE = "cr40f_LogoBetinhosB";
   const MAX_FREQUENT_SERVICE_DAYS = 90;
   const MAX_FREQUENT_SERVICE_RECORDS = 120;
+  const IMPORT_SAVE_CONCURRENCY = 3;
   const INITIAL_PASSENGER_LOOKUP_LIMIT = 5000;
 
   const FALLBACK = buildFallbackChoices();
@@ -6847,7 +6848,7 @@
   }
 
   function importedReservaTenarisIdField() {
-    return CONFIG.fields.reserva.idTenaris || CONFIG.fields.reserva.idExterno;
+    return CONFIG.fields.reserva.idExterno;
   }
 
   function isStrongImportedPossibleDuplicateMatch(match) {
@@ -9086,7 +9087,8 @@
       toast("Serviço repetido provável. A importação não cria outro registro com horário, trajeto, endereço, destino e passageiros parecidos.", "error", 9000);
       return null;
     }
-    setLoading(true);
+    const manageLoading = !options.skipLoading;
+    if (manageLoading) setLoading(true);
     try {
       const context = await buildImportedSaveContext(trecho);
       const payload = buildImportedReservaPayload(trecho, context);
@@ -9109,7 +9111,7 @@
       toast(error.message || "Falha ao salvar trecho importado.", "error", 9000);
       return null;
     } finally {
-      setLoading(false);
+      if (manageLoading) setLoading(false);
     }
   }
 
@@ -9479,18 +9481,11 @@
     setLoading(true);
     state.pendingSaveContext = null;
     clearSaveLog();
-    let savedCount = 0;
-    let failedCount = 0;
 
     try {
-      for (const trecho of validatedTrechos) {
-        const saved = await saveImportedTrecho(trecho, { silentSuccess: true });
-        if (saved) {
-          savedCount += 1;
-        } else {
-          failedCount += 1;
-        }
-      }
+      const results = await runImportedSaveQueue(validatedTrechos);
+      const savedCount = results.filter(Boolean).length;
+      const failedCount = results.length - savedCount;
 
       if (!savedCount) {
         toast("Falha ao agendar serviços importados. Verifique os erros e tente novamente.", "error", 9000);
@@ -9510,6 +9505,24 @@
     } finally {
       setLoading(false);
     }
+  }
+
+  async function runImportedSaveQueue(trechos) {
+    const results = new Array(trechos.length).fill(null);
+    let nextIndex = 0;
+    const workerCount = Math.min(IMPORT_SAVE_CONCURRENCY, trechos.length);
+    const workers = Array.from({ length: workerCount }, async () => {
+      while (nextIndex < trechos.length) {
+        const index = nextIndex;
+        nextIndex += 1;
+        results[index] = await saveImportedTrecho(trechos[index], {
+          silentSuccess: true,
+          skipLoading: true
+        });
+      }
+    });
+    await Promise.all(workers);
+    return results;
   }
 
   function proceedSaveContext(context, options = {}) {

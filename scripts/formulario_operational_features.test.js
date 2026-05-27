@@ -333,7 +333,10 @@ includes(html, "scripts/xlsx_import_core.js", "core de import XLSX carregado ant
 excludes(html, "vendor/xlsx.full.min.js", "SheetJS nao deve carregar no boot");
 includes(app, "async function ensureXlsxLibrary", "SheetJS deve carregar sob demanda");
 includes(app, "script.src = \"vendor/xlsx.full.min.js\";", "SheetJS local deve continuar disponivel para importacao");
-includes(app, "idExterno: \"cr40f_idexterno\"", "campo externo PG no payload da reserva");
+includes(app, "idExterno: \"new_idexterno\"", "campo externo PG no payload da reserva");
+const importedReservaTenarisIdFieldFn = extractFunction(app, "importedReservaTenarisIdField");
+includes(importedReservaTenarisIdFieldFn, "return CONFIG.fields.reserva.idExterno;", "PG importada deve usar campo texto new_idexterno");
+excludes(importedReservaTenarisIdFieldFn, "idTenaris", "PG importada nao deve usar cr40f_idtenaris inteiro");
 includes(app, "importDefaults:", "configuracao padrao de importacao");
 includes(app, "clienteLabel: \"Embraer\"", "cliente padrao Embraer para importacao");
 includes(app, "function getImportClient", "resolucao do cliente padrao Embraer");

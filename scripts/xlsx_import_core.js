@@ -629,7 +629,7 @@
     const reasons = [];
     let score = 0;
     const programacao = normalizeText(trecho?.programacao);
-    const existingProgramacao = normalizeText(existing.programacao || existing.idExterno || existing.cr40f_idexterno);
+    const existingProgramacao = normalizeText(existing.programacao || existing.idExterno || existing.new_idexterno || existing.cr40f_idexterno);
     const sameProgramacao = !!(programacao && existingProgramacao && programacao === existingProgramacao);
     if (sameProgramacao) {
       score += 999;

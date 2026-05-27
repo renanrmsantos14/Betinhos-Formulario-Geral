@@ -27,7 +27,7 @@ assert.ok(html.includes("clienteLabel: \"Embraer\""), "bundle deve fixar Embraer
 assert.ok(html.includes("function persistMockPassengerRecord"), "bundle deve persistir passageiros no mock local");
 assert.ok(html.includes("async function ensureXlsxLibrary"), "bundle deve carregar SheetJS sob demanda");
 assert.ok(html.includes('id="xlsxLibrarySource" type="application/x-formulario-vendor"'), "bundle deve manter SheetJS inerte no boot");
-assert.ok(html.includes("cr40f_idexterno"), "bundle deve conter o campo externo PG");
+assert.ok(html.includes("new_idexterno"), "bundle deve conter o campo externo PG");
 assert.ok(html.includes("split-trecho"), "bundle deve expor acao Split na revisao de importacao");
 assert.ok(html.includes("importedTrechoReturnDateTimeLocal"), "bundle deve editar horario previsto de retorno importado");
 assert.ok(!html.includes("import-decision-panel"), "bundle nao deve conter painel de decisao operacional da PG");
