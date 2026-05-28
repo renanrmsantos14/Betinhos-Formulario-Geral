@@ -1035,16 +1035,21 @@
   function composeCityRoute(lines) {
     const sequence = [];
     const seenLegs = new Set();
-    sortImportedLines(lines).forEach((line) => {
+    const sortedLines = sortImportedLines(lines).filter((line) => {
       const legKey = [
         line?.dataIso || "",
         line?.horario || "",
         normalizeText(line?.cidadeOrigem),
         normalizeText(line?.cidadeDestino)
       ].join("|");
-      if (seenLegs.has(legKey)) return;
+      if (seenLegs.has(legKey)) return false;
       seenLegs.add(legKey);
+      return true;
+    });
+    sortedLines.forEach((line) => {
       appendCity(sequence, line?.cidadeOrigem);
+    });
+    sortedLines.forEach((line) => {
       appendCity(sequence, line?.cidadeDestino);
     });
     return sequence.join(" / ");

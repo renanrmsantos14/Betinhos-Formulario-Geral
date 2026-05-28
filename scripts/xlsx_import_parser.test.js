@@ -532,6 +532,13 @@ assert.equal(multiPickupTrecho.operationalSuggestion, "Multi-coleta", "sugestao 
 assert.equal(multiPickupTrecho.retornoPrevistoHorario, "", "multi-coleta nao deve virar retorno previsto");
 assert.deepEqual(multiPickupTrecho.passageiros.map((passenger) => passenger.nome), ["FULANO TESTE", "BELTRANO TESTE"], "multi-coleta deve manter pax unicos na mesma OS");
 
+const multiPickupThreePaxPrograms = buildImportPrograms([
+  { ...multiPickupPrograms[0].trechos[0].linhasImportadas[0], sourceRow: 32, programacao: "PGMULTI3/1", horario: "05:00", cidadeOrigem: "Jacarei", cidadeDestino: "Sao Paulo", nomePassageiro: "ANA TESTE" },
+  { ...multiPickupPrograms[0].trechos[0].linhasImportadas[1], sourceRow: 33, programacao: "PGMULTI3/1", horario: "05:15", cidadeOrigem: "Sao Jose dos Campos", cidadeDestino: "Sao Paulo", nomePassageiro: "BRUNO TESTE" },
+  { ...multiPickupPrograms[0].trechos[0].linhasImportadas[1], sourceRow: 34, programacao: "PGMULTI3/1", horario: "05:30", cidadeOrigem: "Cacapava", cidadeDestino: "Sao Paulo", nomePassageiro: "CARLA TESTE" }
+]);
+assert.equal(multiPickupThreePaxPrograms[0].trechos[0].trajetoCidades, "Jacarei / Sao Jose dos Campos / Cacapava / Sao Paulo", "multi-coleta deve listar primeiro as cidades de origem em ordem de saida e depois os destinos");
+
 const distantSameDestinationPrograms = buildImportPrograms([
   { ...multiPickupPrograms[0].trechos[0].linhasImportadas[0], sourceRow: 40, programacao: "PGDIST/1", horario: "05:00", nomePassageiro: "FULANO TESTE" },
   { ...multiPickupPrograms[0].trechos[0].linhasImportadas[1], sourceRow: 41, programacao: "PGDIST/1", horario: "06:45", nomePassageiro: "BELTRANO TESTE" }
