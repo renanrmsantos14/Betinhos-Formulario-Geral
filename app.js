@@ -4393,6 +4393,7 @@
     closeAllCustomSelects();
     document.body.appendChild(portal);
     portal.replaceChildren(...Array.from(source.childNodes).map((node) => node.cloneNode(true)));
+    portal.classList.toggle("is-comparison", !!portal.querySelector(".passenger-compare-grid"));
     portal.classList.add("is-open");
     portal.setAttribute("aria-hidden", "false");
     activePassengerPreview = { wrap, anchor, portal };
@@ -4475,7 +4476,8 @@
     const viewportRight = viewportLeft + viewportWidth;
     const gap = 8;
     const safeGap = 10;
-    const width = Math.min(360, Math.max(280, viewportWidth - safeGap * 2));
+    const preferredWidth = portal.classList.contains("is-comparison") ? 560 : 360;
+    const width = Math.min(preferredWidth, Math.max(280, viewportWidth - safeGap * 2));
     const height = Math.min(portal.scrollHeight || 120, viewportHeight - safeGap * 2);
     const spaceBelow = viewportBottom - rect.bottom;
     const spaceAbove = rect.top - viewportTop;
@@ -4557,6 +4559,89 @@
       list.appendChild(line);
     });
     container.appendChild(list);
+  }
+
+  function renderImportedPassengerComparisonPreview(container, passenger, existing) {
+    if (!container) return;
+    container.replaceChildren();
+    const importClient = getImportClient();
+    const imported = {
+      label: normalizePassengerDisplayName(passenger.nome || passenger.passageiroLabel) || "",
+      telefone: formatPhoneNumber(passenger.telefone || ""),
+      email: passenger.email || "",
+      clienteLabel: importClient?.label || CONFIG.importDefaults.clienteLabel || "",
+      cr: passenger.centroCusto || "",
+      status: importedPassengerStatusLabel(passenger)
+    };
+    const registered = {
+      label: normalizePassengerDisplayName(existing?.label) || "",
+      telefone: formatPhoneNumber(existing?.telefone || ""),
+      email: existing?.email || "",
+      clienteLabel: existing?.clienteLabel || "",
+      cr: existing?.cr || "",
+      status: "Registro do Banco de Dados"
+    };
+    const normalizeCompareValue = (value) => normalize((value || "").toString());
+    const rows = [
+      ["Nome", imported.label, registered.label],
+      ["Telefone", imported.telefone, registered.telefone],
+      ["Email", imported.email, registered.email],
+      ["Cliente", imported.clienteLabel, registered.clienteLabel],
+      ["CR", imported.cr, registered.cr],
+      ["Decisão", imported.status, registered.status]
+    ].filter((row) => row.slice(1).some((value) => (value || "").toString().trim()));
+
+    const header = document.createElement("div");
+    header.className = "passenger-compare-head";
+    const title = document.createElement("strong");
+    title.textContent = "Comparar passageiro";
+    const hint = document.createElement("span");
+    hint.textContent = passenger.matchStatus === "ambiguous" ? "Candidato mais próximo" : "Cadastro selecionado";
+    header.append(title, hint);
+
+    const grid = document.createElement("div");
+    grid.className = "passenger-compare-grid";
+    const headField = document.createElement("span");
+    headField.className = "passenger-compare-column-head";
+    headField.textContent = "Campo";
+    const headImport = document.createElement("span");
+    headImport.className = "passenger-compare-column-head";
+    headImport.textContent = "XLSX";
+    const headExisting = document.createElement("span");
+    headExisting.className = "passenger-compare-column-head";
+    headExisting.textContent = "Cadastro";
+    grid.append(headField, headImport, headExisting);
+
+    rows.forEach(([label, importedValue, registeredValue]) => {
+      const sameValue = normalizeCompareValue(importedValue) === normalizeCompareValue(registeredValue);
+      const field = document.createElement("span");
+      field.className = "passenger-compare-field";
+      field.textContent = label;
+      const importedCell = buildPassengerCompareValue(importedValue || "Vazio", sameValue);
+      const registeredCell = buildPassengerCompareValue(registeredValue || "Vazio", sameValue);
+      grid.append(field, importedCell, registeredCell);
+    });
+
+    container.append(header, grid);
+  }
+
+  function buildPassengerCompareValue(value, sameValue) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `passenger-preview-value passenger-compare-value ${sameValue ? "is-same" : "is-different"}`;
+    button.textContent = value;
+    button.dataset.copyValue = value;
+    button.title = "Copiar valor";
+    button.setAttribute("aria-label", "Copiar valor");
+    button.addEventListener("click", async (event) => {
+      try {
+        await copyTextToClipboard(value);
+        showCopyNotice(event.currentTarget, "Copiado!");
+      } catch (error) {
+        showCopyNotice(event.currentTarget, "Falha ao copiar.", true);
+      }
+    });
+    return button;
   }
 
   function renderTabBadges() {
@@ -8576,7 +8661,12 @@
     rowPreview.setAttribute("role", "status");
     rowPreview.setAttribute("aria-live", "polite");
     rowPreview.setAttribute("aria-hidden", "true");
-    renderPassengerPreview(rowPreview, importedPassengerPreviewRecord(passenger));
+    const compareRecord = importedPassengerExistingCompareRecord(passenger);
+    if (compareRecord) {
+      renderImportedPassengerComparisonPreview(rowPreview, passenger, compareRecord);
+    } else {
+      renderPassengerPreview(rowPreview, importedPassengerPreviewRecord(passenger));
+    }
     titleWrap.append(rowTitle, statusDot, rowPreview);
     label.append(rowIndex, titleWrap);
 
@@ -8675,6 +8765,13 @@
       sexo: existing?.sexo || "",
       classificacao: existing?.classificacao || ""
     };
+  }
+
+  function importedPassengerExistingCompareRecord(passenger) {
+    const existing = importedResolvedPassenger(passenger);
+    if (existing) return existing;
+    const candidate = passenger.matchStatus === "ambiguous" ? passenger.matchCandidates?.[0]?.passenger : null;
+    return candidate || null;
   }
 
   function buildImportRemoveButton(action, label) {

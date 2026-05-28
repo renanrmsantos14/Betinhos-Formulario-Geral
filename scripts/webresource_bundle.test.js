@@ -7,7 +7,7 @@ const outputPath = path.join(root, "webresource.html");
 
 assert.ok(fs.existsSync(outputPath), "webresource.html deve ser gerado");
 
-const html = fs.readFileSync(outputPath, "utf8");
+const html = fs.readFileSync(outputPath, "utf8").replace(/\r\n/g, "\n");
 assert.ok(html.includes("<style>"), "CSS deve estar inline");
 assert.ok(html.includes("window.XlsxImportCore"), "core XLSX deve estar inline");
 assert.ok(html.includes("function openXlsxImportPicker"), "app.js deve estar inline");
@@ -220,6 +220,10 @@ assert.ok(!html.includes('destino: passenger.destino || ""'), "bundle nao deve m
 assert.ok(html.includes("renderImportedPassengerEditFields(passenger)"), "bundle deve renderizar passageiro importado no popup passenger-edit");
 assert.ok(!html.includes("function buildImportPassengerDraftEditor"), "bundle nao deve manter editor inline de passageiro importado");
 assert.ok(!html.includes(".import-passenger-draft-editor"), "bundle nao deve conter CSS do editor inline de passageiro importado");
+assert.ok(html.includes("function renderImportedPassengerComparisonPreview"), "bundle deve comparar XLSX com cadastro existente no hover do passageiro");
+assert.ok(html.includes("function importedPassengerExistingCompareRecord"), "bundle deve escolher registro existente ou candidato para comparacao");
+assert.ok(html.includes(".passenger-compare-grid"), "bundle deve estilizar comparacao de passageiro importado");
+assert.ok(html.includes("portal.classList.toggle(\"is-comparison\""), "bundle deve abrir hover comparativo com largura propria");
 assert.ok(html.includes("function getRecordIdFromHostContext"), "bundle deve ler id do formulario pai no Model-driven App");
 assert.ok(html.includes("selectedItemReferences"), "bundle deve aceitar data de comando com selecao da grid");
 assert.ok(html.includes("clearDraftSnapshot(false);"), "bundle deve iniciar sem rascunho local anterior");

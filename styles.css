@@ -2498,6 +2498,74 @@ h3 {
   text-decoration: underline;
 }
 
+.passenger-compare-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+}
+
+.passenger-compare-head strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1.2;
+}
+
+.passenger-compare-head span {
+  color: var(--text-soft);
+  font-size: 10px;
+  font-weight: 760;
+  line-height: 1.2;
+}
+
+.passenger-compare-grid {
+  display: grid;
+  grid-template-columns: minmax(64px, 0.72fr) minmax(118px, 1fr) minmax(118px, 1fr);
+  gap: 6px 8px;
+  align-items: start;
+}
+
+.passenger-compare-column-head,
+.passenger-compare-field {
+  color: var(--text-soft);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.passenger-compare-column-head {
+  text-transform: uppercase;
+}
+
+.passenger-compare-field {
+  padding-top: 4px;
+}
+
+.passenger-compare-value {
+  width: 100%;
+  min-height: 24px;
+  padding: 4px 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.passenger-compare-value.is-same {
+  color: color-mix(in srgb, var(--success) 72%, var(--text));
+  background: color-mix(in srgb, var(--success-soft) 58%, #ffffff);
+}
+
+.passenger-compare-value.is-different {
+  border-color: color-mix(in srgb, var(--warning) 24%, var(--line));
+  color: color-mix(in srgb, var(--warning) 70%, var(--text));
+  background: color-mix(in srgb, var(--warning-soft) 52%, #ffffff);
+}
+
 .copy-notice {
   position: fixed;
   z-index: 2147483647;
