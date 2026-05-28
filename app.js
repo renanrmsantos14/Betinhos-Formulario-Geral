@@ -735,6 +735,7 @@
     el.importReviewStats?.addEventListener("click", handleImportReviewFilterAction);
     el.importReviewPrograms?.addEventListener("click", handleImportFieldCopy);
     el.importReviewPrograms?.addEventListener("click", handleImportReviewAction);
+    el.importReviewPrograms?.addEventListener("keydown", handleImportReviewKeyboardNavigation);
     el.importReviewPrograms?.addEventListener("input", handleImportReviewInput);
     el.importReviewPrograms?.addEventListener("change", handleImportReviewInput);
     el.importReviewPrograms?.addEventListener("pointerover", handlePassengerPreviewEnter);
@@ -6851,10 +6852,8 @@
           passenger.matchMessage = "Nome vazio.";
         } else if (selected) {
           mergePassengerRecords([selected.passenger]);
-          passenger.matchStatus = "use-existing";
           passenger.matchMessage = "Cadastro existente selecionado automaticamente.";
-          passenger.passageiroId = selected.passenger.id;
-          passenger.passageiroLabel = selected.passenger.label;
+          applyExistingPassengerToImportedPassenger(passenger, selected.passenger, passenger.matchMessage);
         } else if (candidates.length) {
           passenger.matchStatus = "ambiguous";
           passenger.matchMessage = "Cadastro parecido encontrado.";
@@ -8508,6 +8507,21 @@
     };
   }
 
+  function applyExistingPassengerToImportedPassenger(passenger, existing, message = "") {
+    if (!passenger || !existing) return passenger;
+    const label = normalizePassengerDisplayName(existing.label || passenger.passageiroLabel || passenger.nome);
+    passenger.matchStatus = "use-existing";
+    passenger.matchMessage = message || "Cadastro existente vinculado. Banco de Dados não será atualizado.";
+    passenger.passageiroId = existing.id || passenger.passageiroId || "";
+    passenger.passageiroLabel = label;
+    passenger.nome = label;
+    passenger.telefone = existing.telefone || "";
+    passenger.email = existing.email || "";
+    passenger.centroCusto = existing.cr || passenger.centroCusto || "";
+    passenger.preferencias = existing.preferencias || "";
+    return passenger;
+  }
+
   function createImportPassengerFromSelectedPerson(trecho, value, rows = null) {
     const lookupRows = rows || importedSolicitanteLookupRows(trecho);
     const selected = importedSolicitantePersonFromValue(value, lookupRows, trecho);
@@ -8521,9 +8535,17 @@
     passenger.matchCandidates = [];
     if (!isImportedSolicitanteTempId(value)) {
       passenger.matchStatus = "use-existing";
-      passenger.passageiroId = selected.id || value;
-      passenger.passageiroLabel = selected.label || name;
-      passenger.matchMessage = "Cadastro existente vinculado. Banco de Dados não será atualizado.";
+      applyExistingPassengerToImportedPassenger(
+        passenger,
+        getPassengerById(selected.id || value) || {
+          id: selected.id || value,
+          label: selected.label || name,
+          telefone: selected.telefone || "",
+          email: selected.email || "",
+          cr: selected.centroCusto || importedTrechoCr(trecho) || ""
+        },
+        "Cadastro existente vinculado. Banco de Dados não será atualizado."
+      );
       return passenger;
     }
     passenger.matchStatus = "create-new";
@@ -8768,10 +8790,8 @@
   }
 
   function importedPassengerExistingCompareRecord(passenger) {
-    const existing = importedResolvedPassenger(passenger);
-    if (existing) return existing;
-    const candidate = passenger.matchStatus === "ambiguous" ? passenger.matchCandidates?.[0]?.passenger : null;
-    return candidate || null;
+    if (passenger.matchStatus !== "ambiguous") return null;
+    return passenger.matchCandidates?.[0]?.passenger || null;
   }
 
   function buildImportRemoveButton(action, label) {
@@ -8864,6 +8884,69 @@
     if (!button || !state.importReview) return;
     state.importReviewFilter = normalizeImportReviewFilter(button.dataset.importFilter);
     renderImportReviewPreservingGallery(0);
+  }
+
+  function handleImportReviewKeyboardNavigation(event) {
+    if (!shouldHandleImportReviewKeyboardNavigation(event)) return;
+    const direction = event.key === "ArrowDown" ? 1 : -1;
+    const rows = visibleImportServiceRows();
+    if (!rows.length) return;
+    const currentIndex = currentImportServiceRowIndex(rows, event.target);
+    const nextIndex = Math.max(0, Math.min(rows.length - 1, currentIndex + direction));
+    if (nextIndex === currentIndex) return;
+    const nextRow = rows[nextIndex];
+    event.preventDefault();
+    selectImportedTrechoFromKeyboard(nextRow);
+  }
+
+  function shouldHandleImportReviewKeyboardNavigation(event) {
+    if (!state.importReview) return false;
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return false;
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return false;
+    if (isTextEditingTarget(event.target)) return false;
+    return !!event.target.closest("#importReviewPrograms");
+  }
+
+  function visibleImportServiceRows() {
+    return [...(el.importReviewPrograms?.querySelectorAll(".import-service-row[data-programacao][data-trecho-key]") || [])];
+  }
+
+  function currentImportServiceRowIndex(rows, target) {
+    const focusedRow = target?.closest?.(".import-service-row[data-programacao][data-trecho-key]");
+    if (focusedRow) {
+      const focusedIndex = rows.indexOf(focusedRow);
+      if (focusedIndex >= 0) return focusedIndex;
+    }
+    const currentProgramacao = state.importReview?.selectedProgramacao || "";
+    const currentTrechoKey = state.importReview?.selectedTrechoKey || "";
+    const selectedIndex = rows.findIndex((row) => (
+      row.dataset.programacao === currentProgramacao && row.dataset.trechoKey === currentTrechoKey
+    ));
+    return selectedIndex >= 0 ? selectedIndex : 0;
+  }
+
+  function selectImportedTrechoFromKeyboard(row) {
+    if (!row || !state.importReview) return;
+    const programacao = row.dataset.programacao || "";
+    const trechoKey = row.dataset.trechoKey || "";
+    const listScrollTop = row.closest(".import-service-list")?.scrollTop ?? 0;
+    state.importReview.selectedProgramacao = programacao;
+    state.importReview.selectedTrechoKey = trechoKey;
+    renderImportReviewPreservingGallery(listScrollTop);
+    requestAnimationFrame(() => {
+      focusImportedServiceRow(programacao, trechoKey);
+    });
+  }
+
+  function focusImportedServiceRow(programacao, trechoKey) {
+    const programSelector = escapeAttributeSelectorValue(programacao);
+    const trechoSelector = escapeAttributeSelectorValue(trechoKey);
+    const row = el.importReviewPrograms?.querySelector(
+      `.import-service-row[data-programacao="${programSelector}"][data-trecho-key="${trechoSelector}"]`
+    );
+    if (!row) return;
+    row.focus({ preventScroll: true });
+    row.scrollIntoView({ block: "nearest", inline: "nearest" });
   }
 
   function handleImportReviewAction(event) {
@@ -9068,10 +9151,11 @@
         captureImportReviewHistory("Vincular passageiro existente");
         markImportedReviewPending(trecho);
         mergePassengerRecords([candidate.passenger]);
-        passenger.matchStatus = "use-existing";
-        passenger.passageiroId = candidate.passenger.id;
-        passenger.passageiroLabel = candidate.passenger.label;
-        passenger.matchMessage = "Cadastro existente vinculado. Banco de Dados não será atualizado.";
+        applyExistingPassengerToImportedPassenger(
+          passenger,
+          candidate.passenger,
+          "Cadastro existente vinculado. Banco de Dados não será atualizado."
+        );
         syncImportedSolicitanteFromPassenger(trecho, passenger, previousIdentity);
         renderImportReviewPreservingGallery();
         return;
@@ -9351,18 +9435,14 @@
       const selected = selectImportedExistingMatch(passenger.matchCandidates, getImportClient());
       if (selected) {
         mergePassengerRecords([selected.passenger]);
-        passenger.matchStatus = "use-existing";
-        passenger.passageiroId = selected.passenger.id;
-        passenger.passageiroLabel = selected.passenger.label;
+        applyExistingPassengerToImportedPassenger(passenger, selected.passenger, "Cadastro existente vinculado. Banco de Dados não será atualizado.");
         return selected.passenger;
       }
       throw new Error(`Decida o passageiro ${passenger.nome} antes de salvar.`);
     }
     const existing = await findImportedExistingPerson(passenger);
     if (existing) {
-      passenger.matchStatus = "use-existing";
-      passenger.passageiroId = existing.id;
-      passenger.passageiroLabel = existing.label;
+      applyExistingPassengerToImportedPassenger(passenger, existing, "Cadastro existente vinculado. Banco de Dados não será atualizado.");
       return existing;
     }
     return createImportedPassenger(passenger);

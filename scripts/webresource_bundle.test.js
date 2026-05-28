@@ -58,6 +58,9 @@ assert.ok(html.includes("buildImportReviewFilterButton(\"Validados\""), "bundle 
 assert.ok(html.includes("buildImportReviewFilterButton(\"Pendentes\""), "bundle deve conter filtro Pendentes");
 assert.ok(html.includes("buildImportReviewFilterButton(\"Ignorados\""), "bundle deve conter filtro Ignorados");
 assert.ok(html.includes("import-filter-count"), "bundle deve exibir contador pequeno nos filtros");
+assert.ok(html.includes("handleImportReviewKeyboardNavigation"), "bundle deve navegar na galeria importada pelo teclado");
+assert.ok(html.includes("event.key !== \"ArrowDown\" && event.key !== \"ArrowUp\""), "bundle deve restringir navegacao da galeria as setas verticais");
+assert.ok(html.includes("focusImportedServiceRow(programacao, trechoKey)"), "bundle deve focar o item selecionado por teclado");
 assert.ok(!html.includes("function importStat"), "bundle nao deve renderizar cards passivos antigos no importReviewStats");
 assert.ok(!html.includes("importStat(\"Linhas\""), "bundle nao deve manter cards Linhas/PGs/Trechos no header");
 assert.ok(html.includes("function buildImportInspectorReviewActions"), "bundle deve expor Validar/Ignorar no inspector");
@@ -221,7 +224,11 @@ assert.ok(html.includes("renderImportedPassengerEditFields(passenger)"), "bundle
 assert.ok(!html.includes("function buildImportPassengerDraftEditor"), "bundle nao deve manter editor inline de passageiro importado");
 assert.ok(!html.includes(".import-passenger-draft-editor"), "bundle nao deve conter CSS do editor inline de passageiro importado");
 assert.ok(html.includes("function renderImportedPassengerComparisonPreview"), "bundle deve comparar XLSX com cadastro existente no hover do passageiro");
-assert.ok(html.includes("function importedPassengerExistingCompareRecord"), "bundle deve escolher registro existente ou candidato para comparacao");
+assert.ok(html.includes("function importedPassengerExistingCompareRecord"), "bundle deve escolher candidato para comparacao");
+assert.ok(html.includes("if (passenger.matchStatus !== \"ambiguous\") return null;"), "bundle nao deve mostrar comparacao depois de vincular cadastro existente");
+assert.ok(html.includes("function applyExistingPassengerToImportedPassenger"), "bundle deve substituir visualmente o passageiro importado pelo cadastro existente");
+assert.ok(html.includes("passenger.nome = label;"), "bundle deve trocar o nome exibido do XLSX pelo nome do cadastro existente");
+assert.ok(html.includes("passenger.telefone = existing.telefone || \"\";"), "bundle deve trocar telefone exibido pelo cadastro existente");
 assert.ok(html.includes(".passenger-compare-grid"), "bundle deve estilizar comparacao de passageiro importado");
 assert.ok(html.includes("portal.classList.toggle(\"is-comparison\""), "bundle deve abrir hover comparativo com largura propria");
 assert.ok(html.includes("function getRecordIdFromHostContext"), "bundle deve ler id do formulario pai no Model-driven App");
