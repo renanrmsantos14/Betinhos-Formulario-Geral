@@ -62,6 +62,15 @@ return { scorePassengerCandidate, nameSimilarity };`;
   return Function(body)();
 }
 
+function buildImportedMatchSelector() {
+  const body = `${extractFunction(app, "cleanGuid")}
+${extractFunction(app, "sameId")}
+${extractFunction(app, "normalize")}
+${extractFunction(app, "selectImportedExistingMatch")}
+return { selectImportedExistingMatch };`;
+  return Function(body)();
+}
+
 function buildPhoneParser() {
   const start = app.indexOf("function countryFlagFromIso");
   const end = app.indexOf("function formatCpf");
@@ -170,6 +179,7 @@ includes(app, "Nome muito parecido", "validacao por nome parecido");
 includes(app, "Mesmo cliente", "validacao por cliente");
 
 const matcher = buildPassengerMatcher();
+const importedMatchSelector = buildImportedMatchSelector();
 const phone = buildPhoneParser();
 assert.ok(
   matcher.scorePassengerCandidate(
@@ -191,6 +201,50 @@ assert.ok(
     { id: "pax-3", label: "Silva Carlos Eduardo", clienteId: "cliente-a", telefone: "", email: "" }
   ),
   "deve capturar nome em ordem diferente com mesmo cliente"
+);
+assert.equal(
+  importedMatchSelector.selectImportedExistingMatch([
+    {
+      passenger: { id: "pax-4", label: "Pedro Vega", clienteId: "cliente-a" },
+      score: 105,
+      reasons: ["Telefone igual", "Mesmo cliente"]
+    }
+  ], { id: "cliente-a", label: "Embraer" }),
+  null,
+  "importacao nao deve auto-vincular telefone igual quando o nome e muito diferente"
+);
+assert.ok(
+  importedMatchSelector.selectImportedExistingMatch([
+    {
+      passenger: { id: "pax-5", label: "Porter", clienteId: "cliente-a" },
+      score: 135,
+      reasons: ["Telefone igual", "Nome quase igual", "Mesmo cliente"]
+    }
+  ], { id: "cliente-a", label: "Embraer" }),
+  "importacao deve auto-vincular telefone igual quando o nome tambem confere"
+);
+assert.ok(
+  importedMatchSelector.selectImportedExistingMatch([
+    {
+      passenger: { id: "pax-6", label: "Porter", clienteId: "cliente-a" },
+      score: 65,
+      reasons: ["Nome igual", "Nome quase igual", "Mesmo cliente"],
+      candidateMissingContact: true
+    }
+  ], { id: "cliente-a", label: "Embraer" }),
+  "importacao deve auto-vincular nome identico e mesmo cliente quando o importado nao tem telefone/email"
+);
+assert.equal(
+  importedMatchSelector.selectImportedExistingMatch([
+    {
+      passenger: { id: "pax-7", label: "Porter", clienteId: "cliente-a" },
+      score: 65,
+      reasons: ["Nome igual", "Nome quase igual", "Mesmo cliente"],
+      candidateMissingContact: false
+    }
+  ], { id: "cliente-a", label: "Embraer" }),
+  null,
+  "importacao nao deve auto-vincular nome identico quando o importado tem contato sem bater"
 );
 
 assert.equal(

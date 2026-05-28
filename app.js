@@ -5980,6 +5980,7 @@
     const passengerPhone = onlyDigits(passenger.telefone);
     const candidateEmail = normalize(candidate.email);
     const passengerEmail = normalize(passenger.email);
+    const candidateMissingContact = !candidatePhone && !candidateEmail;
     const sameClient = candidate.clienteId && passenger.clienteId && sameId(candidate.clienteId, passenger.clienteId);
     const similarity = nameSimilarity(candidate.label, passenger.label);
 
@@ -5998,7 +5999,11 @@
       reasons.push("Email parecido");
     }
 
-    if (similarity >= 0.92) {
+    if (normalizeName(candidate.label) && normalizeName(candidate.label) === normalizeName(passenger.label)) {
+      score += 50;
+      reasons.push("Nome igual");
+      reasons.push("Nome quase igual");
+    } else if (similarity >= 0.92) {
       score += 50;
       reasons.push("Nome quase igual");
     } else if (similarity >= 0.84) {
@@ -6026,7 +6031,8 @@
     return {
       passenger,
       score,
-      reasons: Array.from(new Set(reasons))
+      reasons: Array.from(new Set(reasons)),
+      candidateMissingContact
     };
   }
 
@@ -6818,7 +6824,8 @@
       if (importClient?.id && !sameClient) return false;
       const exactContact = reasons.includes("telefone igual") || reasons.includes("email igual");
       const exactName = reasons.includes("nome quase igual");
-      return sameClient && (exactName || exactContact);
+      const identicalNameWithoutImportedContact = candidate.candidateMissingContact && reasons.includes("nome igual");
+      return sameClient && ((exactName && exactContact) || identicalNameWithoutImportedContact);
     }) || null;
   }
 
