@@ -7,20 +7,26 @@ const html = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const app = fs.readFileSync(path.join(root, "app.js"), "utf8");
 const css = fs.readFileSync(path.join(root, "styles.css"), "utf8");
 
+function normalizeLineEndings(value) {
+  return String(value).replace(/\r\n/g, "\n");
+}
+
 function includes(source, value, label = value) {
-  assert.ok(source.includes(value), `Esperado: ${label}`);
+  assert.ok(normalizeLineEndings(source).includes(normalizeLineEndings(value)), `Esperado: ${label}`);
 }
 
 function excludes(source, value, label = value) {
-  assert.ok(!source.includes(value), `Nao esperado: ${label}`);
+  assert.ok(!normalizeLineEndings(source).includes(normalizeLineEndings(value)), `Nao esperado: ${label}`);
 }
 
 function extractCssRule(source, selector) {
-  const start = source.indexOf(selector);
+  const normalizedSource = normalizeLineEndings(source);
+  const normalizedSelector = normalizeLineEndings(selector);
+  const start = normalizedSource.indexOf(normalizedSelector);
   assert.ok(start >= 0, `Regra CSS nao encontrada: ${selector}`);
-  const end = source.indexOf("}", start);
+  const end = normalizedSource.indexOf("}", start);
   assert.ok(end > start, `Regra CSS incompleta: ${selector}`);
-  return source.slice(start, end + 1);
+  return normalizedSource.slice(start, end + 1);
 }
 
 function extractFunction(source, name) {
@@ -134,6 +140,13 @@ return function parse(search, hostId = "") {
 ].forEach((id) => {
   excludes(app, `$("` + id + `")`, `binding fantasma #${id}`);
 });
+
+const htmlIds = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]));
+[...app.matchAll(/\$\("([^"]+)"\)/g)]
+  .map((match) => match[1])
+  .forEach((id) => {
+    assert.ok(htmlIds.has(id), `Binding JS sem elemento no HTML: #${id}`);
+  });
 
 includes(app, "{ value: 202410005, label: \"Pendente\" }", "fallback real de Status de Faturamento");
 includes(app, "{ value: 202410000, label: \"Cartao de credito\" }", "fallback real de Forma de Pagamento");
@@ -328,6 +341,12 @@ excludes(app, "Agendar Retorno' ao mesmo tempo", "Retorno e Repetir podem ser us
 includes(app, "collectInactiveActivationDrafts", "save deve interceptar abas preenchidas sem ativar");
 includes(app, "hasInactiveReturnDraft", "retorno preenchido sem ativar deve ter estado pendente");
 includes(app, "hasInactiveRepeatDraft", "repetir preenchido sem ativar deve ter estado pendente");
+{
+  const saveFormFunction = extractFunction(app, "saveForm");
+  excludes(saveFormFunction, "if (state.isNew && !hasPrimaryDraftChanges())", "salvar formulario vazio deve focar o primeiro campo obrigatorio");
+  includes(saveFormFunction, "const context = buildSaveContext();", "save deve montar contexto antes de validar");
+  includes(saveFormFunction, "proceedSaveContext(context);", "save deve entrar no fluxo de validacao");
+}
 {
   const proceedStart = app.indexOf("function proceedSaveContext");
   assert.ok(proceedStart >= 0, "Funcao proceedSaveContext deve existir");
@@ -534,7 +553,7 @@ includes(app, "syncImportedPassengerFromSolicitante(trecho, next, previousIdenti
 includes(app, "const solicitanteRecord = await ensureImportedSolicitanteRecord(trecho, colOrdemPassageiros)", "salvar deve resolver passageiros antes do solicitante para reaproveitar mesmo registro");
 includes(app, "const linkedPassengerRecord = linkedPassengerIndex >= 0 ? colOrdemPassageiros[linkedPassengerIndex]?.passageiro : null", "solicitante igual ao pax deve reaproveitar record ja criado do passageiro");
 excludes(app, "rowTitle.textContent = \"Solicitante\";", "solicitante nao deve aparecer dentro da row");
-const passengerLoopEnd = importTrechoCardFunction.indexOf("    });\n    const solicitanteSection = buildImportSolicitanteSection(trecho, {");
+const passengerLoopEnd = normalizeLineEndings(importTrechoCardFunction).indexOf("    });\n    const solicitanteSection = buildImportSolicitanteSection(trecho, {");
 assert.ok(passengerLoopEnd > 0, "Bloco de solicitante deve vir depois da lista de passageiros");
 includes(css, ".import-inspector-head > div:not(.import-inspector-actions)", "regra do titulo nao deve empilhar botoes do inspector");
 const importContentRule = extractCssRule(css, ".content:has(.import-review-panel.is-active)");

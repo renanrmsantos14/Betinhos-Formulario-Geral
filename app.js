@@ -286,7 +286,6 @@
     customAddressWrap: $("customAddressWrap"),
     enderecoPersonalizado: $("enderecoPersonalizado"),
     destino: $("destino"),
-    bdStatus: $("bdStatus"),
     bdNome: $("bdNome"),
     bdTelefonePais: $("bdTelefonePais"),
     bdTelefone: $("bdTelefone"),
@@ -9683,11 +9682,6 @@
     captureObsState();
     if (isImportSaveMode()) {
       performImportedServicesSave();
-      return;
-    }
-
-    if (state.isNew && !hasPrimaryDraftChanges()) {
-      toast("Preencha e valide o formulário antes de agendar. Nada alterado para salvar.", "warning", 7000);
       return;
     }
 

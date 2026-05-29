@@ -937,7 +937,7 @@ h3 {
 }
 
 #tab-panel-details #toggleEnderecoPersonalizado::after {
-  content: "Endereco";
+  content: "Único";
   min-height: 1em;
   display: inline-flex;
   align-items: center;

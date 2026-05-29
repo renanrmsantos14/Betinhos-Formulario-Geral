@@ -945,7 +945,7 @@ h3 {
 }
 
 #tab-panel-details #toggleEnderecoPersonalizado::after {
-  content: "Endereco";
+  content: "Único";
   min-height: 1em;
   display: inline-flex;
   align-items: center;
@@ -9771,7 +9771,6 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     customAddressWrap: $("customAddressWrap"),
     enderecoPersonalizado: $("enderecoPersonalizado"),
     destino: $("destino"),
-    bdStatus: $("bdStatus"),
     bdNome: $("bdNome"),
     bdTelefonePais: $("bdTelefonePais"),
     bdTelefone: $("bdTelefone"),
@@ -19168,11 +19167,6 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     captureObsState();
     if (isImportSaveMode()) {
       performImportedServicesSave();
-      return;
-    }
-
-    if (state.isNew && !hasPrimaryDraftChanges()) {
-      toast("Preencha e valide o formulário antes de agendar. Nada alterado para salvar.", "warning", 7000);
       return;
     }
 
