@@ -419,6 +419,7 @@
   let passengerPickerTargetOrder = null;
   let passengerPickerSearchTimer = null;
   let passengerPickerSearchSeq = 0;
+  let suppressPassengerPickerOpenOnFocus = false;
   let activePassengerEditId = "";
   let activeImportedPassengerEditRef = null;
   let passengerEditEnabled = false;
@@ -898,12 +899,23 @@
     el.passengerPickerSearch?.addEventListener("input", schedulePassengerPickerSearch);
     el.passengerPickerSearch?.addEventListener("keydown", handlePassengerPickerKeydown);
     el.passengerPickerResults?.addEventListener("click", handlePassengerPickerAction);
+    el.passengerPickerResults?.addEventListener("keydown", handlePassengerPickerKeydown);
+    el.addPassenger?.addEventListener("focus", () => {
+      if (suppressPassengerPickerOpenOnFocus || el.addPassenger.disabled) return;
+      addPassengerRow();
+    });
     el.toggleEnderecoPersonalizado?.addEventListener("click", toggleEnderecoPersonalizado);
     el.cliente?.addEventListener("change", () => {
       applyStatusFaturamentoDefault();
       renderStatusFaturamento();
     });
     el.destino?.addEventListener("input", syncReturnDefaults);
+    el.retornoEndereco?.addEventListener("input", () => {
+      el.retornoEndereco.dataset.auto = "0";
+    });
+    el.retornoDestino?.addEventListener("input", () => {
+      el.retornoDestino.dataset.auto = "0";
+    });
     el.enderecoPersonalizado?.addEventListener("input", () => {
       state.customAddressText = el.enderecoPersonalizado.value;
     });
@@ -930,6 +942,7 @@
       button?.addEventListener("click", () => switchObs(button.dataset.retObs, true));
     });
     document?.addEventListener("click", handleGlobalCustomSelectClick);
+    document?.addEventListener("focusin", handleGlobalCustomSelectFocusIn);
     document?.addEventListener("keydown", handleGlobalCustomSelectKeydown);
     document?.addEventListener("scroll", handleGlobalCustomSelectScroll, { capture: true });
     document?.addEventListener("scroll", repositionPassengerPreview, { capture: true });
@@ -1209,7 +1222,7 @@
     trigger?.addEventListener("focus", () => {
       if (state.suppressOpenOnFocus) return;
       if (select.disabled || shouldKeepCustomSelectClosedOnFocus(select)) return;
-      openCustomSelect(select, { focusSearch: false, focusTrigger: false });
+      openCustomSelect(select, { focusSearch: true, focusTrigger: false });
     });
 
     trigger?.addEventListener("keydown", (event) => {
@@ -1268,12 +1281,21 @@
       }
       if (event.key === "Tab") {
         event.preventDefault();
+        closeCustomSelect(select);
         focusAdjacentFormControl(state.trigger, event.shiftKey ? -1 : 1);
       }
-      if (event.key === "ArrowDown" && state.searchInput.value === "") {
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
-        const first = state.optionsContainer.querySelector(".custom-select-option");
-        if (first) first.focus();
+        focusCustomSelectOption(select, event.key === "ArrowDown" ? "next" : "previous");
+        return;
+      }
+      if (event.key === "Enter") {
+        const active = state.optionsContainer.querySelector(".custom-select-option.is-active")
+          || state.optionsContainer.querySelector(".custom-select-option");
+        if (active) {
+          event.preventDefault();
+          active.click();
+        }
       }
     });
 
@@ -1468,6 +1490,7 @@
     return Array.from(document.querySelectorAll(
       "#tab-panel-details input:not([type='hidden']), " +
       "#tab-panel-details textarea, " +
+      "#tab-panel-details #addPassenger, " +
       "#tab-panel-details #passengerEmpty, " +
       "#tab-panel-details .custom-select-trigger"
     )).filter((control) => {
@@ -1580,7 +1603,7 @@
     if (state.searchInput) {
       state.searchInput.value = "";
       renderCustomSelectOptions(select, "");
-      if (options.focusSearch !== false && shouldAutofocusSearchInputs()) {
+      if (options.focusSearch === true || (options.focusSearch !== false && shouldAutofocusSearchInputs())) {
         window.setTimeout(() => state.searchInput.focus(), 10);
       }
     }
@@ -1650,6 +1673,12 @@
   }
 
   function handleGlobalCustomSelectClick(event) {
+    if (event.target.closest(".custom-select")) return;
+    if (event.target.closest(".custom-select-panel")) return;
+    closeAllCustomSelects();
+  }
+
+  function handleGlobalCustomSelectFocusIn(event) {
     if (event.target.closest(".custom-select")) return;
     if (event.target.closest(".custom-select-panel")) return;
     closeAllCustomSelects();
@@ -5370,7 +5399,9 @@
       setSelectValue(el.retornoHora, fields.retornoHora || "");
       setSelectValue(el.retornoMinuto, fields.retornoMinuto || "");
       setFieldValue(el.retornoEndereco, fields.retornoEndereco);
+      el.retornoEndereco.dataset.auto = fields.retornoEndereco ? "0" : "";
       setFieldValue(el.retornoDestino, fields.retornoDestino);
+      el.retornoDestino.dataset.auto = fields.retornoDestino ? "0" : "";
       setFieldValue(el.repetirServico, fields.repetirServico);
       setFieldValue(el.frequenteInicio, fields.frequenteInicio);
       setFieldValue(el.frequenteFim, fields.frequenteFim);
@@ -5442,7 +5473,9 @@
     setSelectValue(el.retornoHora, fields.retornoHora || "");
     setSelectValue(el.retornoMinuto, fields.retornoMinuto || "");
     setFieldValue(el.retornoEndereco, fields.retornoEndereco);
+    el.retornoEndereco.dataset.auto = fields.retornoEndereco ? "0" : "";
     setFieldValue(el.retornoDestino, fields.retornoDestino);
+    el.retornoDestino.dataset.auto = fields.retornoDestino ? "0" : "";
     setFieldValue(el.retornoObservacao, fields.retornoObservacao);
     setFieldValue(el.repetirServico, fields.repetirServico);
     setFieldValue(el.frequenteInicio, fields.frequenteInicio);
@@ -5755,11 +5788,9 @@
     el.passengerPickerSearch.value = "";
     renderPassengerPickerResults();
     el.passengerPickerOverlay.hidden = false;
-    if (shouldAutofocusSearchInputs()) {
-      requestAnimationFrame(() => {
-        if (el.passengerPickerSearch) el.passengerPickerSearch.focus();
-      });
-    }
+    requestAnimationFrame(() => {
+      if (el.passengerPickerSearch) el.passengerPickerSearch.focus();
+    });
   }
 
   function closePassengerPicker() {
@@ -5808,7 +5839,7 @@
       item.dataset.passengerId = pax.id;
       item.setAttribute("role", "option");
       item.setAttribute("aria-selected", "false");
-      item.setAttribute("tabindex", "0");
+      item.tabIndex = -1;
 
       const head = document.createElement("strong");
       head.className = "passenger-picker-name";
@@ -5946,6 +5977,13 @@
     renderRiskPanel();
     markDraftDirty();
     commitGlobalHistoryChange("Adicionar passageiro");
+    suppressPassengerPickerOpenOnFocus = true;
+    requestAnimationFrame(() => {
+      el.addPassenger?.focus({ preventScroll: true });
+      window.setTimeout(() => {
+        suppressPassengerPickerOpenOnFocus = false;
+      }, 0);
+    });
     toast(`${selected.label || "Passageiro"} adicionado.`, "success", 2200);
   }
 
@@ -6055,7 +6093,10 @@
   }
 
   function syncReturnDefaults() {
-    if (!el.retornoEndereco.value) el.retornoEndereco.value = el.destino.value || "";
+    if (!el.retornoEndereco.value || el.retornoEndereco.dataset.auto === "1") {
+      el.retornoEndereco.value = el.destino.value || "";
+      el.retornoEndereco.dataset.auto = "1";
+    }
     const inverted = composeEnderecoCompletoInvertido();
     if (!el.retornoDestino.value || el.retornoDestino.dataset.auto === "1") {
       el.retornoDestino.value = inverted;
@@ -7664,7 +7705,9 @@
       setSelectValue(el.retornoHora, "");
       setSelectValue(el.retornoMinuto, "");
       setFieldValue(el.retornoEndereco, "");
+      el.retornoEndereco.dataset.auto = "";
       setFieldValue(el.retornoDestino, "");
+      el.retornoDestino.dataset.auto = "";
       setFieldValue(el.retornoObservacao, "");
       setFieldValue(el.frequenteInicio, "");
       setFieldValue(el.frequenteFim, "");

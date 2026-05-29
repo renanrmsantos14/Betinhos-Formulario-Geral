@@ -122,14 +122,17 @@ p {
 }
 
 .code-version {
-  position: absolute;
-  right: max(14px, var(--safe-right));
-  bottom: max(8px, var(--safe-bottom));
-  z-index: 2;
+  position: sticky;
+  bottom: 8px;
+  z-index: 3;
+  height: 0;
+  margin: 0 6px;
+  padding: 0;
+  text-align: right;
   font-size: 10px;
-  line-height: 1.1;
-  font-weight: 500;
-  color: rgb(71 85 105 / 0.72);
+  line-height: 1;
+  font-weight: 650;
+  color: rgb(71 85 105 / 0.82);
   user-select: none;
   pointer-events: none;
 }
