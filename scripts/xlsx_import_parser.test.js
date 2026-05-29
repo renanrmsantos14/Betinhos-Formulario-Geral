@@ -207,6 +207,35 @@ const valueColumnTrecho = buildImportPrograms(valueColumnRows)[0].trechos[0];
 assert.equal(hasOwn(valueColumnRows[0], "valor"), false, "colunas de valor do XLSX devem ser descartadas na normalizacao");
 assert.equal(hasOwn(valueColumnTrecho, "valor"), false, "trecho importado nao deve carregar cotacao");
 assert.equal(hasOwn(valueColumnTrecho.linhasImportadas[0], "valor"), false, "linha importada nao deve expor valor do relatorio");
+const stopColumnPrograms = buildImportPrograms(normalizeImportedRows([
+  {
+    "Data da Viagem (inicial)": "20/05/2026",
+    "Número Programação": "PGPARADA/1",
+    "Horário Passageiro": "05:55",
+    "Nome Passageiro": "AZORRA",
+    "Origem": "Rodovia Helio Smidt, Guarulhos, SP",
+    "Cidade Origem": "Guarulhos",
+    "Horário Parada 1": "06:30",
+    "Parada 1": "Avenida Sao Joao, 2200 - Sao Jose dos Campos, SP",
+    "Horário Parada 2": "07:00",
+    "Parada 2": "Avenida Doutor Nelson D'Avila, 2200 - Sao Jose dos Campos, SP",
+    "Horário Parada 4": "07:40",
+    "Parada 4": "Rua Teste, 400 - Sao Jose dos Campos, SP",
+    "Destino": "Avenida Brigadeiro Faria Lima, 2170 - Sao Jose dos Campos, SP"
+  }
+]));
+const stopColumnTrecho = stopColumnPrograms[0].trechos[0];
+assert.equal(stopColumnTrecho.linhasImportadas[0].paradas.length, 3, "paradas devem ser lidas dinamicamente mesmo com numeracao pulada");
+assert.equal(
+  stopColumnTrecho.origem,
+  "05:55 - AZORRA - Rodovia Helio Smidt, Guarulhos, SP\nParada 1 - 06:30 - AZORRA - Avenida Sao Joao, 2200 - Sao Jose dos Campos, SP\nParada 2 - 07:00 - AZORRA - Avenida Doutor Nelson D'Avila, 2200 - Sao Jose dos Campos, SP\nParada 4 - 07:40 - AZORRA - Rua Teste, 400 - Sao Jose dos Campos, SP",
+  "endereco de saida deve incluir origem e todas as paradas em ordem, com horario, pax e endereco"
+);
+assert.equal(
+  stopColumnTrecho.destino,
+  "AZORRA - Avenida Brigadeiro Faria Lima, 2170 - Sao Jose dos Campos, SP",
+  "destino deve manter apenas o destino final"
+);
 assert.equal(programs.length, 131, "deve agrupar 131 programacoes externas por PG");
 assert.ok(
   programs.some((program) => program.trechos.some((trecho) => trecho.solicitanteNome)),

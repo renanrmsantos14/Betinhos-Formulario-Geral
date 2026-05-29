@@ -429,6 +429,34 @@ Passageiro(s) - Destino
 
 O destino não mostra horário.
 
+Paradas intermediárias não entram no `Destino`.
+
+Elas entram no campo `Endereço de saída`.
+
+Quando o XLSX tem colunas `Parada N`, o sistema lê dinamicamente todas as paradas preenchidas.
+
+As colunas podem aparecer como:
+
+```text
+Horário Parada 1
+Parada 1
+Horário Parada 2
+Parada 2
+...
+Horário Parada N
+Parada N
+```
+
+Se o relatório não trouxer uma coluna de parada porque ela está vazia, a importação continua.
+
+Com paradas, o campo `Endereço de saída` inclui a origem e as paradas em ordem:
+
+```text
+05:55 - AZORRA - Rodovia Hélio Smidt, s/nº - Aeroporto, Guarulhos, SP
+Parada 1 - 06:30 - AZORRA - Avenida São João, 2200
+Parada 2 - 07:00 - AZORRA - Avenida Doutor Nélson D'Ávila, 2200
+```
+
 Exemplo:
 
 ```text

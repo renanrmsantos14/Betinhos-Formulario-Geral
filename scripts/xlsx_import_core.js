@@ -80,6 +80,7 @@
     const horario = normalizeTime(cell(row, "Horário Passageiro"));
     const origem = cell(row, "Origem");
     const destino = cell(row, "Destino");
+    const paradas = collectImportedStops(row);
     return {
       sourceRow,
       data,
@@ -106,6 +107,7 @@
       origem,
       origemKey: normalizeAddress(origem),
       cidadeOrigem: cell(row, "Cidade Origem"),
+      paradas,
       destino,
       destinoKey: normalizeAddress(destino),
       cidadeDestino: cell(row, "Cidade Destino"),
@@ -256,6 +258,7 @@
       solicitanteNome: row.solicitanteNome,
       origem: row.origem,
       destino: row.destino,
+      paradas: row.paradas || [],
       horario: row.horario,
       passageiroId: "",
       passageiroLabel: "",
@@ -960,6 +963,7 @@
       origem: row.origem,
       origemKey: row.origemKey || normalizeAddress(row.origem),
       cidadeOrigem: row.cidadeOrigem,
+      paradas: row.paradas || [],
       destino: row.destino,
       destinoKey: row.destinoKey || normalizeAddress(row.destino),
       cidadeDestino: row.cidadeDestino,
@@ -1003,6 +1007,9 @@
   }
 
   function composeGroupedLineSummary(lines, field) {
+    if (field === "origem" && importedLinesHaveStops(lines)) {
+      return composeOriginSummaryWithStops(lines);
+    }
     const includeTime = field !== "destino";
     const groups = [];
     const groupByKey = new Map();
@@ -1030,6 +1037,60 @@
       const value = group.value || (field === "origem" ? "endereço não informado" : "destino não informado");
       return includeTime ? `${horario} - ${names} - ${value}` : `${names} - ${value}`;
     }).join("\n");
+  }
+
+  function importedLinesHaveStops(lines) {
+    return (lines || []).some((line) => Array.isArray(line?.paradas) && line.paradas.length);
+  }
+
+  function composeOriginSummaryWithStops(lines) {
+    const groups = [];
+    const groupByKey = new Map();
+    sortImportedLines(lines).forEach((line) => {
+      const names = firstName(line?.nomePassageiro);
+      appendLineStopSummaryGroup(groups, groupByKey, {
+        label: "",
+        horario: line?.horario || "",
+        value: line?.origem || "",
+        name: names
+      });
+      sortImportedStops(line?.paradas).forEach((stop) => {
+        appendLineStopSummaryGroup(groups, groupByKey, {
+          label: `Parada ${stop.index}`,
+          horario: stop.horario || "",
+          value: stop.endereco || "",
+          name: names
+        });
+      });
+    });
+    return groups.map((group) => {
+      const names = group.names.length ? group.names.join(", ") : "Passageiro";
+      const value = group.value || "endereço não informado";
+      const prefix = group.label ? `${group.label} - ` : "";
+      return `${prefix}${group.horario || "--:--"} - ${names} - ${value}`;
+    }).join("\n");
+  }
+
+  function appendLineStopSummaryGroup(groups, groupByKey, item) {
+    const key = [
+      item.label,
+      item.horario || "",
+      normalizeAddress(item.value)
+    ].join("|");
+    if (!groupByKey.has(key)) {
+      const group = {
+        label: item.label,
+        horario: item.horario || "",
+        value: item.value || "",
+        names: []
+      };
+      groupByKey.set(key, group);
+      groups.push(group);
+    }
+    const group = groupByKey.get(key);
+    if (item.name && !group.names.some((name) => normalizeText(name) === normalizeText(item.name))) {
+      group.names.push(item.name);
+    }
   }
 
   function composeCityRoute(lines) {
@@ -1238,6 +1299,34 @@
       if (value) return value;
     }
     return "";
+  }
+
+  function collectImportedStops(row) {
+    const stopIndexes = new Set();
+    Object.keys(row || {}).forEach((header) => {
+      const normalized = normalizeText(header);
+      const stopMatch = /^parada (\d+)$/.exec(normalized);
+      const timeMatch = /^horario parada (\d+)$/.exec(normalized);
+      const index = Number(stopMatch?.[1] || timeMatch?.[1] || 0);
+      if (index > 0) stopIndexes.add(index);
+    });
+    return [...stopIndexes]
+      .sort((a, b) => a - b)
+      .map((index) => {
+        const endereco = firstFilled(row, [`Parada ${index}`, `Parada${index}`]);
+        if (!endereco) return null;
+        return {
+          index,
+          horario: normalizeTime(firstFilled(row, [`Horário Parada ${index}`, `Horario Parada ${index}`, `Horário Parada${index}`, `Horario Parada${index}`])),
+          endereco,
+          enderecoKey: normalizeAddress(endereco)
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function sortImportedStops(stops) {
+    return [...(stops || [])].sort((a, b) => Number(a?.index || 0) - Number(b?.index || 0));
   }
 
   function normalizeCode(value) {
