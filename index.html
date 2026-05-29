@@ -362,6 +362,10 @@
 
         <section class="form-section">
           <div class="form-grid">
+            <label class="toggle-field">
+              <input id="receberRetorno" type="checkbox">
+              <span>Receber retorno?</span>
+            </label>
             <label class="field span-2 datetime-field">
               <span>Data e horário de retorno</span>
               <div class="inline-time">
@@ -547,6 +551,23 @@
           <button id="activationGuardReview" type="button" class="secondary-action">Revisar abas</button>
           <button id="activationGuardSkip" type="button" class="secondary-action warning">Salvar sem ativar</button>
           <button id="activationGuardActivate" type="button" class="primary-action">Ativar e agendar</button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="returnReceiveScopeOverlay" class="overlay" hidden>
+      <div class="dialog activation-guard-dialog" role="dialog" aria-labelledby="returnReceiveScopeTitle" aria-modal="true" tabindex="-1">
+        <header class="activation-guard-head">
+          <div>
+            <p class="passenger-picker-eyebrow">Receber retorno</p>
+            <h3 id="returnReceiveScopeTitle">Aplicar em quais retornos?</h3>
+            <p>Você marcou Receber retorno e repetiu Ida e retorno.</p>
+          </div>
+        </header>
+        <footer class="activation-guard-actions">
+          <button id="returnReceiveScopeReview" type="button" class="secondary-action">Revisar</button>
+          <button id="returnReceiveScopeLast" type="button" class="secondary-action warning">Apenas último</button>
+          <button id="returnReceiveScopeAll" type="button" class="primary-action">Todos os retornos</button>
         </footer>
       </div>
     </div>

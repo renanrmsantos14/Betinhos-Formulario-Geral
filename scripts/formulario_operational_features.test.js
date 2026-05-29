@@ -346,6 +346,11 @@ includes(app, "hasInactiveRepeatDraft", "repetir preenchido sem ativar deve ter 
 }
 includes(html, "id=\"activationGuardOverlay\"", "popup de confirmacao para abas preenchidas sem ativar");
 includes(html, "id=\"activationGuardActivate\"", "popup deve permitir ativar e agendar");
+includes(html, "id=\"receberRetorno\"", "aba retorno deve ter receber separado da ida");
+includes(html, "id=\"returnReceiveScopeOverlay\"", "repetir ida e retorno deve perguntar escopo do receber retorno");
+includes(app, "resolveReceberPayloadValue", "payload deve separar receber da ida e do retorno");
+includes(app, "shouldAskReturnReceiveScope", "salvar deve perguntar se receber retorno vale para todos ou ultimo");
+includes(app, "receberRetornoUltimoTimestamp", "escopo apenas ultimo deve marcar somente o ultimo retorno");
 includes(css, ".tab.is-pending::after", "aba pendente deve ter bolinha amarela propria");
 includes(html, "section-head inline activation-head", "cabecalho de ativacao deve ter layout proprio");
 includes(css, ".activation-head .activation-switch", "switch de ativacao deve ter estilo compacto proprio");

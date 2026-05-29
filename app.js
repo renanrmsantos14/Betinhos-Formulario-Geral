@@ -318,11 +318,16 @@
     activationGuardReview: $("activationGuardReview"),
     activationGuardSkip: $("activationGuardSkip"),
     activationGuardActivate: $("activationGuardActivate"),
+    returnReceiveScopeOverlay: $("returnReceiveScopeOverlay"),
+    returnReceiveScopeReview: $("returnReceiveScopeReview"),
+    returnReceiveScopeLast: $("returnReceiveScopeLast"),
+    returnReceiveScopeAll: $("returnReceiveScopeAll"),
     clearAllFormsOverlay: $("clearAllFormsOverlay"),
     clearAllFormsCancel: $("clearAllFormsCancel"),
     clearAllFormsConfirm: $("clearAllFormsConfirm"),
     createPassenger: $("createPassenger"),
     agendarRetorno: $("agendarRetorno"),
+    receberRetorno: $("receberRetorno"),
     retornoData: $("retornoData"),
     retornoHora: $("retornoHora"),
     retornoMinuto: $("retornoMinuto"),
@@ -765,11 +770,19 @@
     el.activationGuardReview?.addEventListener("click", () => resolveActivationGuard("review"));
     el.activationGuardSkip?.addEventListener("click", () => resolveActivationGuard("skip"));
     el.activationGuardActivate?.addEventListener("click", () => resolveActivationGuard("activate"));
+    el.returnReceiveScopeReview?.addEventListener("click", () => resolveReturnReceiveScope("review"));
+    el.returnReceiveScopeLast?.addEventListener("click", () => resolveReturnReceiveScope("last"));
+    el.returnReceiveScopeAll?.addEventListener("click", () => resolveReturnReceiveScope("all"));
     el.clearAllFormsCancel?.addEventListener("click", () => resolveClearAllFormsConfirmation(false));
     el.clearAllFormsConfirm?.addEventListener("click", () => resolveClearAllFormsConfirmation(true));
     el.activationGuardOverlay?.addEventListener("click", (event) => {
       if (event.target === el.activationGuardOverlay) {
         resolveActivationGuard("review");
+      }
+    });
+    el.returnReceiveScopeOverlay?.addEventListener("click", (event) => {
+      if (event.target === el.returnReceiveScopeOverlay) {
+        resolveReturnReceiveScope("review");
       }
     });
     el.clearAllFormsOverlay?.addEventListener("click", (event) => {
@@ -780,6 +793,10 @@
     el.activationGuardOverlay?.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || el.activationGuardOverlay.hidden) return;
       resolveActivationGuard("review");
+    });
+    el.returnReceiveScopeOverlay?.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || el.returnReceiveScopeOverlay.hidden) return;
+      resolveReturnReceiveScope("review");
     });
     el.clearAllFormsOverlay?.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || el.clearAllFormsOverlay.hidden) return;
@@ -3077,6 +3094,7 @@
     el.cotacao.value = formatCurrencyDisplayValue(r[f.cotacao] ?? "");
     el.cr.value = normalizeCodeValue(r[f.cr] || "");
     el.receber.checked = !!r[f.receber];
+    setFieldValue(el.receberRetorno, false);
     state.obs.motorista = r[f.obsOperacao] || "";
     state.obs.interna = r[f.obsInterna] || "";
     state.obs.final = r[f.obsFinal] || "";
@@ -5074,6 +5092,7 @@
         enderecoPersonalizado: el.enderecoPersonalizado.value,
         destino: el.destino.value,
         agendarRetorno: el.agendarRetorno.checked,
+        receberRetorno: !!el.receberRetorno?.checked,
         retornoData: el.retornoData.value,
         retornoHora: el.retornoHora.value,
         retornoMinuto: el.retornoMinuto.value,
@@ -5142,6 +5161,7 @@
       setFieldValue(el.enderecoPersonalizado, fields.enderecoPersonalizado);
       setFieldValue(el.destino, fields.destino);
       setFieldValue(el.agendarRetorno, fields.agendarRetorno);
+      setFieldValue(el.receberRetorno, fields.receberRetorno);
       setFieldValue(el.retornoData, dateTimeLocalFromParts(fields.retornoData, fields.retornoHora, fields.retornoMinuto) || fields.retornoData);
       setSelectValue(el.retornoHora, fields.retornoHora || "");
       setSelectValue(el.retornoMinuto, fields.retornoMinuto || "");
@@ -5213,6 +5233,7 @@
     setFieldValue(el.enderecoPersonalizado, fields.enderecoPersonalizado);
     setFieldValue(el.destino, fields.destino);
     setFieldValue(el.agendarRetorno, fields.agendarRetorno);
+    setFieldValue(el.receberRetorno, fields.receberRetorno);
     setFieldValue(el.retornoData, dateTimeLocalFromParts(fields.retornoData, fields.retornoHora, fields.retornoMinuto) || fields.retornoData);
     setSelectValue(el.retornoHora, fields.retornoHora || "");
     setSelectValue(el.retornoMinuto, fields.retornoMinuto || "");
@@ -9813,6 +9834,12 @@
       }
     }
 
+    if (!options.skipReturnReceiveScope && shouldAskReturnReceiveScope(context)) {
+      state.pendingSaveContext = context;
+      openReturnReceiveScope();
+      return;
+    }
+
     state.pendingSaveContext = context;
     openReviewBeforeSave(context);
   }
@@ -9869,6 +9896,73 @@
   function closeActivationGuard() {
     if (el.activationGuardOverlay) el.activationGuardOverlay.hidden = true;
     state.activationGuardDrafts = [];
+  }
+
+  function shouldAskReturnReceiveScope(context) {
+    if (!state.isNew || !el.receberRetorno?.checked || !el.repetirServico.checked) return false;
+    if (el.frequenteTipo.value !== "Ida e retorno") return false;
+    if (context.receberRetornoScope) return false;
+    return collectReturnReceiveTimestamps(context).length > 0;
+  }
+
+  function openReturnReceiveScope() {
+    if (!el.returnReceiveScopeOverlay) {
+      resolveReturnReceiveScope("all");
+      return;
+    }
+    el.returnReceiveScopeOverlay.hidden = false;
+    requestAnimationFrame(() => {
+      el.returnReceiveScopeAll?.focus();
+    });
+  }
+
+  function closeReturnReceiveScope() {
+    if (el.returnReceiveScopeOverlay) el.returnReceiveScopeOverlay.hidden = true;
+  }
+
+  function resolveReturnReceiveScope(action) {
+    const context = state.pendingSaveContext || buildSaveContext();
+    closeReturnReceiveScope();
+
+    if (action === "review") {
+      state.pendingSaveContext = null;
+      setTab("return");
+      return;
+    }
+
+    context.receberRetornoScope = action === "last" ? "last" : "all";
+    context.receberRetornoUltimoTimestamp = resolveLastReturnReceiveTimestamp(context);
+    proceedSaveContext(context, { skipReturnReceiveScope: true });
+  }
+
+  function resolveLastReturnReceiveTimestamp(context) {
+    const timestamps = collectReturnReceiveTimestamps(context);
+    return timestamps.length ? timestamps[timestamps.length - 1] : null;
+  }
+
+  function collectReturnReceiveTimestamps(context) {
+    const timestamps = [];
+    const pushDate = (date) => {
+      if (!date || Number.isNaN(date.getTime())) return;
+      timestamps.push(date.getTime());
+    };
+
+    if (el.agendarRetorno.checked) pushDate(context.dataHoraRetorno);
+
+    if (el.repetirServico.checked && (el.frequenteTipo.value === "Retorno" || el.frequenteTipo.value === "Ida e retorno")) {
+      const dates = generateFrequentDates(el.frequenteInicio.value, el.frequenteFim.value, el.contabilizarFds.checked);
+      const retornoTime = el.retornoHora.value && el.retornoMinuto.value
+        ? timeFromParts(el.retornoHora.value, el.retornoMinuto.value)
+        : { hours: 18, minutes: 0 };
+      const originalRetorno = context.dataHoraRetorno?.getTime();
+      dates.forEach((date) => {
+        const dataRetorno = withClock(date, retornoTime.hours, retornoTime.minutes);
+        if (originalRetorno && dataRetorno.getTime() === originalRetorno) return;
+        pushDate(dataRetorno);
+      });
+    }
+
+    return Array.from(new Set(timestamps)).sort((a, b) => a - b);
   }
 
   function resolveActivationGuard(action) {
@@ -10085,7 +10179,7 @@
       [f.trajeto]: isReturn ? invertTrajeto(context.trajeto) : trajeto,
       [f.paxView]: context.passageirosTelefones,
       [f.cotacao]: parseNumber(el.cotacao.value),
-      [f.receber]: !!el.receber.checked,
+      [f.receber]: resolveReceberPayloadValue(context, kind, dataHora),
       [f.cr]: normalizeCodeValue(el.cr.value)
     };
 
@@ -10104,6 +10198,15 @@
     bindLookup(payload, CONFIG.nav.motorista, CONFIG.entitySets.funcionario, scheduleOverride ? scheduleOverride.motorista : el.motorista.value);
     bindLookup(payload, CONFIG.nav.financeiro, CONFIG.entitySets.financeiro, el.op.value);
     return payload;
+  }
+
+  function resolveReceberPayloadValue(context, kind, dataHora) {
+    const isReturn = kind === "retorno" || kind === "frequenteRetorno";
+    if (!isReturn) return !!el.receber.checked;
+    if (!el.receberRetorno?.checked) return false;
+    if (context.receberRetornoScope !== "last") return true;
+    const timestamp = dataHora?.getTime?.();
+    return timestamp === context.receberRetornoUltimoTimestamp;
   }
 
   async function createFrequentServices(context) {
@@ -10318,7 +10421,7 @@
     ].forEach((select) => {
       setSelectValue(select, "");
     });
-    [el.agendarRetorno, el.repetirServico, el.receber].forEach((input) => {
+    [el.agendarRetorno, el.repetirServico, el.receber, el.receberRetorno].forEach((input) => {
       setFieldValue(input, false);
     });
     setFieldValue(el.contabilizarFds, true);
