@@ -726,10 +726,49 @@
     });
   }
 
+  function handleTextareaResizePointerDown(event) {
+    const target = event.target?.closest?.("textarea, .passenger-address");
+    if (!target || target.disabled || target.readOnly) return;
+    if (event.pointerType === "mouse") return;
+    if (window.matchMedia && !window.matchMedia("(pointer: coarse)").matches) return;
+
+    const rect = target.getBoundingClientRect();
+    const resizeZone = 22;
+    if ((rect.bottom - event.clientY) > resizeZone) return;
+
+    event.preventDefault();
+    const computed = window.getComputedStyle(target);
+    const minHeight = parseFloat(computed.minHeight) || 48;
+    const maxHeight = Math.max(minHeight, Math.floor(window.innerHeight * 0.72));
+    const startY = event.clientY;
+    const startHeight = rect.height;
+    target.classList.add("is-touch-resizing");
+    target.style.height = `${Math.round(startHeight)}px`;
+
+    const move = (moveEvent) => {
+      if (moveEvent.pointerId !== event.pointerId) return;
+      moveEvent.preventDefault();
+      const nextHeight = Math.min(maxHeight, Math.max(minHeight, startHeight + moveEvent.clientY - startY));
+      target.style.height = `${Math.round(nextHeight)}px`;
+    };
+    const stop = (upEvent) => {
+      if (upEvent.pointerId !== event.pointerId) return;
+      target.classList.remove("is-touch-resizing");
+      document.removeEventListener("pointermove", move, { capture: true });
+      document.removeEventListener("pointerup", stop, { capture: true });
+      document.removeEventListener("pointercancel", stop, { capture: true });
+    };
+
+    document.addEventListener("pointermove", move, { capture: true, passive: false });
+    document.addEventListener("pointerup", stop, { capture: true });
+    document.addEventListener("pointercancel", stop, { capture: true });
+  }
+
   function bindStaticEvents() {
     el.tabs.forEach((button) => {
       button?.addEventListener("click", () => setTab(button.dataset.tab));
     });
+    document.addEventListener("pointerdown", handleTextareaResizePointerDown, { capture: true, passive: false });
     el.closeSuccess?.addEventListener("click", closeWebResourceToGeral);
     el.closeRwButton?.addEventListener("click", closeWebResourceToGeral);
     el.saveButton?.addEventListener("click", saveForm);

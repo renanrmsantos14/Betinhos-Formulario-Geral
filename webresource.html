@@ -825,8 +825,7 @@ h3 {
   gap: 8px;
 }
 
-#tab-panel-details .form-section,
-#tab-panel-details .passenger-block {
+#tab-panel-details .form-section {
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -841,6 +840,13 @@ h3 {
 #tab-panel-details .passenger-block {
   gap: 8px;
   position: relative;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-soft);
+  box-shadow: var(--shadow-control);
+  --passenger-toolbar-width: 146px;
+  --passenger-control-height: 40px;
 }
 
 #tab-panel-details .form-section + .form-section,
@@ -864,8 +870,8 @@ h3 {
 
 #tab-panel-details .block-title {
   position: absolute;
-  top: -2px;
-  right: 2px;
+  top: 10px;
+  right: 10px;
   z-index: 6;
   display: block;
   padding: 0;
@@ -884,17 +890,26 @@ h3 {
   white-space: nowrap;
 }
 
+#tab-panel-details .passenger-toolbar-shell {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+}
+
 #tab-panel-details .passenger-toolbar {
   width: auto;
   display: flex;
-  gap: 6px;
+  gap: 8px;
   pointer-events: auto;
 }
 
 #tab-panel-details .passenger-toolbar .icon-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -903,9 +918,10 @@ h3 {
 }
 
 #tab-panel-details .passenger-toolbar-action {
-  min-width: 38px;
-  width: 38px;
-  min-height: 34px;
+  min-width: var(--passenger-control-height);
+  width: var(--passenger-control-height);
+  min-height: var(--passenger-control-height);
+  height: var(--passenger-control-height);
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -938,7 +954,7 @@ h3 {
 }
 
 #tab-panel-details #toggleEnderecoPersonalizado {
-  width: 78px;
+  width: 82px;
   color: var(--accent);
   border-color: var(--line);
   background: #ffffff;
@@ -976,8 +992,8 @@ h3 {
 }
 
 #tab-panel-details #addPassenger {
-  width: 38px;
-  min-width: 38px;
+  width: var(--passenger-control-height);
+  min-width: var(--passenger-control-height);
   border-color: color-mix(in srgb, #0f766e 40%, var(--line));
   background: color-mix(in srgb, #0f766e 12%, #ffffff 88%);
   color: #0f766e;
@@ -993,8 +1009,16 @@ h3 {
 }
 
 #tab-panel-details .passenger-stack {
-  min-height: 40px;
-  padding-right: 126px;
+  min-height: var(--passenger-control-height);
+  padding-right: calc(var(--passenger-toolbar-width) + 8px);
+}
+
+#tab-panel-details .passenger-block.is-shared-address .passenger-stack {
+  padding-right: 0;
+}
+
+#tab-panel-details .passenger-block.is-shared-address .custom-address {
+  padding-right: calc(var(--passenger-toolbar-width) + 8px);
 }
 
 #tab-panel-return {
@@ -1675,6 +1699,12 @@ h3 {
   min-height: var(--field-control-height);
   resize: vertical;
   line-height: 1.42;
+}
+
+textarea.is-touch-resizing,
+.passenger-address.is-touch-resizing {
+  user-select: none;
+  touch-action: none;
 }
 
 .field input:hover,
@@ -2365,27 +2395,41 @@ h3 {
 
 .passenger-stack {
   display: grid;
-  gap: 10px;
+  gap: 6px;
   min-width: 0;
 }
 
+.passenger-field-label {
+  display: block;
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 780;
+  line-height: 1.25;
+}
+
+.passenger-field-label + .passenger-rows,
+.passenger-field-label + .passenger-empty {
+  margin-top: 4px;
+}
+
 .passenger-block.is-shared-address .passenger-address-grid {
-  grid-template-columns: minmax(210px, max-content) minmax(360px, 1fr);
+  grid-template-columns: minmax(260px, max-content) minmax(360px, 1fr);
   grid-template-areas: "passengers shared-address";
   align-items: stretch;
-  column-gap: 12px;
+  column-gap: 16px;
 }
 
 .passenger-block.is-shared-address .passenger-stack {
   grid-area: passengers;
-  min-width: min(280px, 100%);
+  min-width: min(320px, 100%);
   align-content: start;
 }
 
 .passenger-block.is-shared-address .custom-address {
   grid-area: shared-address;
-  align-self: start;
-  align-content: start;
+  align-self: stretch;
+  align-content: stretch;
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .secondary-action,
@@ -2456,10 +2500,10 @@ h3 {
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  border: 1px solid color-mix(in srgb, var(--warning) 40%, var(--line));
+  border: 1px solid color-mix(in srgb, var(--warning) 34%, var(--line));
   border-radius: var(--radius-sm);
   color: #7a4f00;
-  background: color-mix(in srgb, var(--warning-soft) 88%, #ffffff);
+  background: color-mix(in srgb, var(--warning-soft) 72%, #ffffff);
   font-size: 12px;
   font-weight: 850;
   letter-spacing: 0;
@@ -2616,21 +2660,19 @@ h3 {
 }
 
 .passenger-row.is-shared-address {
-  min-height: 46px;
+  min-height: 42px;
   grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  padding: 6px 44px 6px 6px;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
+  padding: 7px 46px 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  box-shadow: var(--shadow-control);
 }
 
 .passenger-row.is-shared-address:hover {
-  border-color: var(--line);
-  box-shadow: none;
-  transform: none;
+  border-color: color-mix(in srgb, var(--accent) 22%, var(--line));
+  box-shadow: 0 10px 24px rgb(15 23 37 / 0.06);
 }
 
 .passenger-row.is-incomplete {
@@ -2959,7 +3001,7 @@ h3 {
 
 .custom-address {
   display: grid;
-  gap: 8px;
+  gap: 7px;
   position: relative;
   margin: 0;
   min-height: 0;
@@ -2972,42 +3014,40 @@ h3 {
 
 
 .custom-address textarea {
-  min-height: 118px;
+  height: 100%;
+  min-height: 112px;
   resize: vertical;
   line-height: 1.45;
   padding: 10px 12px;
   background: #ffffff;
 }
 
-.custom-address small {
-  color: var(--text-soft);
-  font-size: 12px;
-  line-height: 1.35;
-  font-weight: 600;
-}
-
 .passenger-block.is-shared-address .passenger-rows {
-  gap: 6px;
+  gap: 8px;
 }
 
 .passenger-block.is-shared-address .passenger-row .row-label {
-  width: var(--passenger-name-width, max-content);
-  max-width: none;
+  width: 100%;
+  max-width: 100%;
   min-height: 34px;
-  padding: 6px 8px 6px 32px;
+  padding: 0 0 0 30px;
   border: 0;
   background: transparent;
   box-shadow: none;
 }
 
 .passenger-block.is-shared-address .passenger-row .row-title-wrap {
+  width: 100%;
   min-width: 0;
 }
 
 .passenger-block.is-shared-address .passenger-row .row-title {
-  max-width: none;
-  overflow: visible;
-  text-overflow: clip;
+  width: 100%;
+  max-width: 100%;
+  min-height: 34px;
+  padding: 7px 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -6963,29 +7003,56 @@ body.is-import-dragging .import-drop-overlay {
     justify-content: flex-end;
   }
 
-  #tab-panel-details .block-title {
-    top: 0;
-    right: 0;
-  }
-
   #tab-panel-details .passenger-toolbar .icon-actions {
     width: auto;
     justify-content: flex-end;
   }
 
+  #tab-panel-details .block-title {
+    position: static;
+    display: flex;
+    width: 100%;
+    justify-content: flex-end;
+    margin: 0 0 8px;
+    padding: 0 0 8px;
+    border-bottom: 1px solid var(--line);
+    pointer-events: auto;
+  }
+
+  #tab-panel-details .passenger-toolbar-shell {
+    width: 100%;
+    margin-left: auto;
+  }
+
+  #tab-panel-details .passenger-toolbar {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
   #tab-panel-details .passenger-stack {
     padding-right: 0;
-    padding-top: 44px;
+    padding-top: 0;
+  }
+
+  #tab-panel-details .passenger-block.is-shared-address .passenger-stack {
+    padding-right: 0;
+    padding-top: 0;
+  }
+
+  #tab-panel-details .passenger-block.is-shared-address .custom-address {
+    padding-right: 0;
+    padding-top: 0;
   }
 
   #tab-panel-details #toggleEnderecoPersonalizado {
-    width: 78px;
+    width: 82px;
   }
 
   #tab-panel-details #addPassenger {
-    width: 38px;
-    min-width: 38px;
-    min-height: 34px;
+    width: var(--passenger-control-height);
+    min-width: var(--passenger-control-height);
+    min-height: var(--passenger-control-height);
+    height: var(--passenger-control-height);
   }
 
   .form-grid {
@@ -7154,6 +7221,7 @@ body.is-import-dragging .import-drop-overlay {
     grid-template-areas:
       "passengers"
       "shared-address";
+    gap: 8px;
   }
 
   .field,
@@ -7171,7 +7239,7 @@ body.is-import-dragging .import-drop-overlay {
   .passenger-row {
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
-    padding: 10px 44px 10px 10px;
+    padding: 10px;
     gap: 8px;
   }
 
@@ -7193,6 +7261,10 @@ body.is-import-dragging .import-drop-overlay {
     box-shadow: none;
   }
 
+  .passenger-row:has(.remove-row:not([hidden])) .row-label {
+    padding-right: 44px;
+  }
+
   .passenger-row .row-title-wrap {
     width: 100%;
     max-width: 100%;
@@ -7203,13 +7275,16 @@ body.is-import-dragging .import-drop-overlay {
     max-width: 100%;
     font-size: 15px;
     line-height: 1.25;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    word-break: break-word;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    word-break: normal;
   }
 
   .passenger-block.is-shared-address .passenger-row .row-title {
-    white-space: normal;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .passenger-row .address-cell {
@@ -7645,15 +7720,18 @@ textarea,
               <div>
                 <h3 id="passageirosTitle">Passageiros selecionados</h3>
               </div>
-              <div class="passenger-toolbar">
-                <div class="icon-actions">
-                  <button id="toggleEnderecoPersonalizado" type="button" class="secondary-action passenger-toolbar-action" title="Alternar endereço compartilhado por passageiros">Endereço único</button>
-                  <button id="addPassenger" type="button" class="secondary-action passenger-toolbar-action success" title="Adicionar passageiro" aria-label="Adicionar passageiro">+</button>
+              <div class="passenger-toolbar-shell">
+                <div class="passenger-toolbar">
+                  <div class="icon-actions">
+                    <button id="toggleEnderecoPersonalizado" type="button" class="secondary-action passenger-toolbar-action" title="Alternar endereço compartilhado por passageiros">Endereço único</button>
+                    <button id="addPassenger" type="button" class="secondary-action passenger-toolbar-action success" title="Adicionar passageiro" aria-label="Adicionar passageiro">+</button>
+                  </div>
                 </div>
               </div>
             </div>
             <div class="passenger-address-grid">
               <div class="passenger-stack">
+                <span class="passenger-field-label">Passageiros</span>
                 <div id="passengerRows" class="passenger-rows"></div>
                 <button id="passengerEmpty" class="passenger-empty" type="button" hidden>Selecionar Passageiro</button>
               </div>
@@ -7661,7 +7739,6 @@ textarea,
               <label id="customAddressWrap" class="field custom-address" hidden>
                 <span>Endereço único de saída</span>
                 <textarea id="enderecoPersonalizado" rows="5" placeholder="Informe o endereço que será aplicado a todos os passageiros selecionados."></textarea>
-                <small>Será aplicado a todos os passageiros selecionados.</small>
               </label>
             </div>
           </section>
@@ -10211,10 +10288,49 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     });
   }
 
+  function handleTextareaResizePointerDown(event) {
+    const target = event.target?.closest?.("textarea, .passenger-address");
+    if (!target || target.disabled || target.readOnly) return;
+    if (event.pointerType === "mouse") return;
+    if (window.matchMedia && !window.matchMedia("(pointer: coarse)").matches) return;
+
+    const rect = target.getBoundingClientRect();
+    const resizeZone = 22;
+    if ((rect.bottom - event.clientY) > resizeZone) return;
+
+    event.preventDefault();
+    const computed = window.getComputedStyle(target);
+    const minHeight = parseFloat(computed.minHeight) || 48;
+    const maxHeight = Math.max(minHeight, Math.floor(window.innerHeight * 0.72));
+    const startY = event.clientY;
+    const startHeight = rect.height;
+    target.classList.add("is-touch-resizing");
+    target.style.height = `${Math.round(startHeight)}px`;
+
+    const move = (moveEvent) => {
+      if (moveEvent.pointerId !== event.pointerId) return;
+      moveEvent.preventDefault();
+      const nextHeight = Math.min(maxHeight, Math.max(minHeight, startHeight + moveEvent.clientY - startY));
+      target.style.height = `${Math.round(nextHeight)}px`;
+    };
+    const stop = (upEvent) => {
+      if (upEvent.pointerId !== event.pointerId) return;
+      target.classList.remove("is-touch-resizing");
+      document.removeEventListener("pointermove", move, { capture: true });
+      document.removeEventListener("pointerup", stop, { capture: true });
+      document.removeEventListener("pointercancel", stop, { capture: true });
+    };
+
+    document.addEventListener("pointermove", move, { capture: true, passive: false });
+    document.addEventListener("pointerup", stop, { capture: true });
+    document.addEventListener("pointercancel", stop, { capture: true });
+  }
+
   function bindStaticEvents() {
     el.tabs.forEach((button) => {
       button?.addEventListener("click", () => setTab(button.dataset.tab));
     });
+    document.addEventListener("pointerdown", handleTextareaResizePointerDown, { capture: true, passive: false });
     el.closeSuccess?.addEventListener("click", closeWebResourceToGeral);
     el.closeRwButton?.addEventListener("click", closeWebResourceToGeral);
     el.saveButton?.addEventListener("click", saveForm);

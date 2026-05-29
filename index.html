@@ -173,15 +173,18 @@
               <div>
                 <h3 id="passageirosTitle">Passageiros selecionados</h3>
               </div>
-              <div class="passenger-toolbar">
-                <div class="icon-actions">
-                  <button id="toggleEnderecoPersonalizado" type="button" class="secondary-action passenger-toolbar-action" title="Alternar endereço compartilhado por passageiros">Endereço único</button>
-                  <button id="addPassenger" type="button" class="secondary-action passenger-toolbar-action success" title="Adicionar passageiro" aria-label="Adicionar passageiro">+</button>
+              <div class="passenger-toolbar-shell">
+                <div class="passenger-toolbar">
+                  <div class="icon-actions">
+                    <button id="toggleEnderecoPersonalizado" type="button" class="secondary-action passenger-toolbar-action" title="Alternar endereço compartilhado por passageiros">Endereço único</button>
+                    <button id="addPassenger" type="button" class="secondary-action passenger-toolbar-action success" title="Adicionar passageiro" aria-label="Adicionar passageiro">+</button>
+                  </div>
                 </div>
               </div>
             </div>
             <div class="passenger-address-grid">
               <div class="passenger-stack">
+                <span class="passenger-field-label">Passageiros</span>
                 <div id="passengerRows" class="passenger-rows"></div>
                 <button id="passengerEmpty" class="passenger-empty" type="button" hidden>Selecionar Passageiro</button>
               </div>
@@ -189,7 +192,6 @@
               <label id="customAddressWrap" class="field custom-address" hidden>
                 <span>Endereço único de saída</span>
                 <textarea id="enderecoPersonalizado" rows="5" placeholder="Informe o endereço que será aplicado a todos os passageiros selecionados."></textarea>
-                <small>Será aplicado a todos os passageiros selecionados.</small>
               </label>
             </div>
           </section>
