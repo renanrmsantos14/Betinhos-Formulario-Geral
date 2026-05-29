@@ -1212,6 +1212,13 @@
     const onNativeChange = () => refreshCustomSelect(select);
     select?.addEventListener("change", onNativeChange);
 
+    trigger?.addEventListener("pointerdown", () => {
+      state.suppressOpenOnFocus = true;
+      window.setTimeout(() => {
+        state.suppressOpenOnFocus = false;
+      }, 0);
+    });
+
     trigger?.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -1454,7 +1461,7 @@
   }
 
   function focusAdjacentFormControl(anchor, direction = 1) {
-    const controls = getTabOrderedFormControls();
+    const controls = getTabOrderedFormControls(anchor);
     if (!controls.length) return;
     const currentIndex = controls.indexOf(anchor);
     const nextIndex = currentIndex >= 0
@@ -1466,9 +1473,10 @@
 
   function handleCommonFormTabNavigation(event) {
     if (event.key !== "Tab" || event.defaultPrevented) return;
-    if (!event.target?.closest?.("#tab-panel-details")) return;
+    const panel = getKeyboardFormPanel(event.target);
+    if (!panel) return;
     if (event.target.closest(".custom-select-panel")) return;
-    const controls = getTabOrderedFormControls();
+    const controls = getTabOrderedFormControls(panel);
     const current = resolveTabOrderedControl(event.target);
     const currentIndex = controls.indexOf(current);
     if (currentIndex < 0) return;
@@ -1486,13 +1494,22 @@
     return target;
   }
 
-  function getTabOrderedFormControls() {
-    return Array.from(document.querySelectorAll(
-      "#tab-panel-details input:not([type='hidden']), " +
-      "#tab-panel-details textarea, " +
-      "#tab-panel-details #addPassenger, " +
-      "#tab-panel-details #passengerEmpty, " +
-      "#tab-panel-details .custom-select-trigger"
+  function getKeyboardFormPanel(anchor = null) {
+    const panel = anchor?.closest?.("#tab-panel-details, #tab-panel-bd, #tab-panel-return, #tab-panel-repeat");
+    if (panel?.classList?.contains("is-active")) return panel;
+    return document.querySelector("#tab-panel-details.is-active, #tab-panel-bd.is-active, #tab-panel-return.is-active, #tab-panel-repeat.is-active");
+  }
+
+  function getTabOrderedFormControls(anchor = null) {
+    const panel = getKeyboardFormPanel(anchor);
+    if (!panel) return [];
+    return Array.from(panel.querySelectorAll(
+      "input:not([type='hidden']), " +
+      "textarea, " +
+      ".custom-select-trigger, " +
+      "#addPassenger, " +
+      "#passengerEmpty, " +
+      "#createPassenger"
     )).filter((control) => {
       if (!(control instanceof HTMLElement)) return false;
       if (control.disabled || control.hidden || control.tabIndex < 0) return false;
