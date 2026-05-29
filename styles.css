@@ -8,7 +8,7 @@
   --topbar-menu-gap: 35px;
   --date-field-width: 150px;
   --datetime-field-width: 194px;
-  --bg: #ff0000;
+  --bg: #f0f0f0;
   --bg-2: #fafafa;
   --shell: #0f1725;
   --shell-2: #111a2a;
@@ -107,11 +107,12 @@ p {
   min-height: var(--app-viewport-height);
   display: grid;
   grid-template-columns: 58px minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas:
     "topbar topbar"
     "required required"
-    "tabs content";
+    "tabs content"
+    "version version";
   gap: 8px;
   margin: 0;
   padding: var(--shell-padding-top) max(10px, var(--safe-right)) max(10px, var(--safe-bottom)) max(10px, var(--safe-left));
@@ -119,6 +120,18 @@ p {
   overflow: hidden;
   background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
   isolation: isolate;
+}
+
+.code-version {
+  grid-area: version;
+  justify-self: center;
+  align-self: end;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 500;
+  color: rgb(100 116 139 / 0.34);
+  user-select: none;
+  pointer-events: none;
 }
 
 .app-shell::before {
@@ -6451,12 +6464,13 @@ body.is-import-dragging .import-drop-overlay {
 @media (max-width: 1240px) {
   .app-shell {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       "topbar"
       "required"
       "tabs"
-      "content";
+      "content"
+      "version";
   }
 
   .tabs {
@@ -6563,7 +6577,7 @@ body.is-import-dragging .import-drop-overlay {
 @media (min-width: 761px) and (max-width: 1120px) {
   .app-shell {
     --topbar-height: auto;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   }
 
   .topbar {
@@ -6710,11 +6724,12 @@ body.is-import-dragging .import-drop-overlay {
     --shell-padding-top: 8px;
     padding: var(--shell-padding-top) max(8px, var(--safe-right)) max(8px, var(--safe-bottom)) max(8px, var(--safe-left));
     gap: 8px;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       "topbar"
       "required"
-      "content";
+      "content"
+      "version";
   }
 
   .brand{

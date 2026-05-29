@@ -456,6 +456,7 @@
     initializeCustomSelects();
     syncDateTimeFieldRowWidths();
     setLoading(false);
+    focusInitialCommonFormField();
     if (state.mockMode) {
       toast("Modo local ativo: dados mock gerados para teste completo da experiência.", "warning", 7000);
       return;
@@ -502,6 +503,14 @@
     } catch (_) {
       toast("Não foi possível fechar automaticamente.", "warning", 5000);
     }
+  }
+
+  function focusInitialCommonFormField() {
+    if (state.currentTab !== "details" || !el.saidaData || el.saidaData.disabled) return;
+    window.setTimeout(() => {
+      if (document.activeElement && document.activeElement !== document.body) return;
+      el.saidaData.focus({ preventScroll: true });
+    }, 0);
   }
 
   function getRecordIdFromUrl() {
@@ -936,6 +945,7 @@
     const appRoot = $("app");
     appRoot?.addEventListener("focusin", handleGlobalHistoryBeforeChange, true);
     appRoot?.addEventListener("pointerdown", handleGlobalHistoryBeforeChange, true);
+    appRoot?.addEventListener("keydown", handleCommonFormTabNavigation, true);
     appRoot?.addEventListener("keydown", handleGlobalHistoryBeforeChange, true);
     appRoot?.addEventListener("input", handleOperationalInput);
     appRoot?.addEventListener("change", handleOperationalInput);
@@ -1122,7 +1132,7 @@
 
     const clearButton = document.createElement("span");
     clearButton.role = "button";
-    clearButton.tabIndex = 0;
+    clearButton.tabIndex = -1;
     clearButton.className = "custom-select-clear";
     clearButton.setAttribute("aria-label", "Limpar seleção");
     clearButton.hidden = true;
@@ -1147,6 +1157,7 @@
     searchInput.placeholder = select.dataset.selectVariant === "phone-country" ? "Buscar país" : "Pesquisar";
     searchInput.autocomplete = "off";
     searchInput.spellcheck = false;
+    searchInput.tabIndex = -1;
     searchInput.setAttribute("aria-label", "Pesquisar opção");
 
     const optionsContainer = document.createElement("div");
@@ -1167,6 +1178,7 @@
 
     select.classList.add("custom-select-native");
     select.dataset.customSelectReady = "1";
+    select.tabIndex = -1;
     parent.insertBefore(wrapper, select);
     wrapper.append(select, trigger, panel);
 
@@ -1179,7 +1191,8 @@
       panel,
       searchInput,
       optionsContainer,
-      noResults
+      noResults,
+      suppressOpenOnFocus: false
     };
     customSelectRoots.set(select, state);
 
@@ -1193,12 +1206,31 @@
       toggleCustomSelect(select);
     });
 
+    trigger?.addEventListener("focus", () => {
+      if (state.suppressOpenOnFocus) return;
+      if (select.disabled || shouldKeepCustomSelectClosedOnFocus(select)) return;
+      openCustomSelect(select, { focusSearch: false, focusTrigger: false });
+    });
+
     trigger?.addEventListener("keydown", (event) => {
+      if (event.key === "Tab") {
+        closeCustomSelect(select);
+        return;
+      }
       if (event.key === " " || event.key === "Enter" || event.key === "ArrowDown") {
         event.preventDefault();
         event.stopPropagation();
         if (!select.disabled) {
-          openCustomSelect(select);
+          openCustomSelect(select, { focusSearch: false });
+          if (event.key === "ArrowDown") focusCustomSelectOption(select, "next");
+        }
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!select.disabled) {
+          openCustomSelect(select, { focusSearch: false });
+          focusCustomSelectOption(select, "previous");
         }
       }
       if (event.key === "Escape") {
@@ -1234,7 +1266,12 @@
         event.preventDefault();
         closeCustomSelect(select);
       }
+      if (event.key === "Tab") {
+        event.preventDefault();
+        focusAdjacentFormControl(state.trigger, event.shiftKey ? -1 : 1);
+      }
       if (event.key === "ArrowDown" && state.searchInput.value === "") {
+        event.preventDefault();
         const first = state.optionsContainer.querySelector(".custom-select-option");
         if (first) first.focus();
       }
@@ -1316,6 +1353,7 @@
 
       const button = document.createElement("button");
       button.type = "button";
+      button.tabIndex = -1;
       button.role = "option";
       button.className = "custom-select-option";
       addClassIfPresent(button, `custom-select-option--${nativeSelect.dataset.selectVariant || ""}`);
@@ -1339,9 +1377,105 @@
         nativeSelect.dispatchEvent(eventInput);
         closeCustomSelect(nativeSelect);
         setCustomSelectTriggerDisplay(triggerText, option, nativeSelect);
+        state.suppressOpenOnFocus = true;
+        state.trigger?.focus();
+        window.setTimeout(() => {
+          state.suppressOpenOnFocus = false;
+        }, 0);
+      });
+
+      button?.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+          event.preventDefault();
+          focusCustomSelectOption(nativeSelect, event.key === "ArrowDown" ? "next" : "previous");
+          return;
+        }
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          button.click();
+          return;
+        }
+        if (event.key === "Tab") {
+          event.preventDefault();
+          closeCustomSelect(nativeSelect);
+          focusAdjacentFormControl(state.trigger, event.shiftKey ? -1 : 1);
+          return;
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeCustomSelect(nativeSelect);
+          state.trigger?.focus();
+        }
       });
 
       optionsContainer.appendChild(button);
+    });
+  }
+
+  function shouldKeepCustomSelectClosedOnFocus(select) {
+    return Boolean(select?.closest?.(".topbar, .import-review-panel, .passenger-edit-overlay"));
+  }
+
+  function focusCustomSelectOption(select, direction = "next") {
+    const state = customSelectRoots.get(select);
+    if (!state) return;
+    const options = Array.from(state.optionsContainer.querySelectorAll(".custom-select-option"));
+    if (!options.length) return;
+    const currentIndex = options.indexOf(document.activeElement);
+    const activeIndex = options.findIndex((item) => item.classList.contains("is-active"));
+    const fallbackIndex = direction === "previous" ? options.length - 1 : 0;
+    const baseIndex = currentIndex >= 0 ? currentIndex : activeIndex;
+    const nextIndex = baseIndex >= 0
+      ? (baseIndex + (direction === "previous" ? -1 : 1) + options.length) % options.length
+      : fallbackIndex;
+    options[nextIndex]?.focus();
+  }
+
+  function focusAdjacentFormControl(anchor, direction = 1) {
+    const controls = getTabOrderedFormControls();
+    if (!controls.length) return;
+    const currentIndex = controls.indexOf(anchor);
+    const nextIndex = currentIndex >= 0
+      ? currentIndex + direction
+      : (direction > 0 ? 0 : controls.length - 1);
+    const next = controls[Math.max(0, Math.min(controls.length - 1, nextIndex))];
+    if (next && next !== anchor) next.focus();
+  }
+
+  function handleCommonFormTabNavigation(event) {
+    if (event.key !== "Tab" || event.defaultPrevented) return;
+    if (!event.target?.closest?.("#tab-panel-details")) return;
+    if (event.target.closest(".custom-select-panel")) return;
+    const controls = getTabOrderedFormControls();
+    const current = resolveTabOrderedControl(event.target);
+    const currentIndex = controls.indexOf(current);
+    if (currentIndex < 0) return;
+    event.preventDefault();
+    closeAllCustomSelects();
+    const nextIndex = event.shiftKey ? currentIndex - 1 : currentIndex + 1;
+    const next = controls[Math.max(0, Math.min(controls.length - 1, nextIndex))];
+    if (next && next !== current) next.focus();
+  }
+
+  function resolveTabOrderedControl(target) {
+    if (!target) return null;
+    const custom = target.closest?.(".custom-select");
+    if (custom) return custom.querySelector(".custom-select-trigger");
+    return target;
+  }
+
+  function getTabOrderedFormControls() {
+    return Array.from(document.querySelectorAll(
+      "#tab-panel-details input:not([type='hidden']), " +
+      "#tab-panel-details textarea, " +
+      "#tab-panel-details #passengerEmpty, " +
+      "#tab-panel-details .custom-select-trigger"
+    )).filter((control) => {
+      if (!(control instanceof HTMLElement)) return false;
+      if (control.disabled || control.hidden || control.tabIndex < 0) return false;
+      if (control.closest("[hidden], .custom-select-panel, .custom-select-clear")) return false;
+      if (control.offsetParent === null) return false;
+      return true;
     });
   }
 
@@ -1431,7 +1565,7 @@
     }
   }
 
-  function openCustomSelect(select) {
+  function openCustomSelect(select, options = {}) {
     const state = customSelectRoots.get(select);
     if (!state || select.disabled) return;
 
@@ -1446,14 +1580,14 @@
     if (state.searchInput) {
       state.searchInput.value = "";
       renderCustomSelectOptions(select, "");
-      if (shouldAutofocusSearchInputs()) {
+      if (options.focusSearch !== false && shouldAutofocusSearchInputs()) {
         window.setTimeout(() => state.searchInput.focus(), 10);
       }
     }
     updateCustomSelectPanelPosition(state);
     activeCustomSelect = state.wrapper;
     state.trigger.setAttribute("aria-expanded", "true");
-    state.trigger.focus();
+    if (options.focusTrigger !== false) state.trigger.focus();
   }
 
   function updateCustomSelectPanelPosition(state) {

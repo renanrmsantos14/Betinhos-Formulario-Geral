@@ -115,11 +115,12 @@ p {
   min-height: var(--app-viewport-height);
   display: grid;
   grid-template-columns: 58px minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas:
     "topbar topbar"
     "required required"
-    "tabs content";
+    "tabs content"
+    "version version";
   gap: 8px;
   margin: 0;
   padding: var(--shell-padding-top) max(10px, var(--safe-right)) max(10px, var(--safe-bottom)) max(10px, var(--safe-left));
@@ -127,6 +128,18 @@ p {
   overflow: hidden;
   background: linear-gradient(180deg, var(--bg-2) 0%, var(--bg) 100%);
   isolation: isolate;
+}
+
+.code-version {
+  grid-area: version;
+  justify-self: center;
+  align-self: end;
+  font-size: 9px;
+  line-height: 1;
+  font-weight: 500;
+  color: rgb(100 116 139 / 0.34);
+  user-select: none;
+  pointer-events: none;
 }
 
 .app-shell::before {
@@ -6459,12 +6472,13 @@ body.is-import-dragging .import-drop-overlay {
 @media (max-width: 1240px) {
   .app-shell {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       "topbar"
       "required"
       "tabs"
-      "content";
+      "content"
+      "version";
   }
 
   .tabs {
@@ -6571,7 +6585,7 @@ body.is-import-dragging .import-drop-overlay {
 @media (min-width: 761px) and (max-width: 1120px) {
   .app-shell {
     --topbar-height: auto;
-    grid-template-rows: auto auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   }
 
   .topbar {
@@ -6718,11 +6732,12 @@ body.is-import-dragging .import-drop-overlay {
     --shell-padding-top: 8px;
     padding: var(--shell-padding-top) max(8px, var(--safe-right)) max(8px, var(--safe-bottom)) max(8px, var(--safe-left));
     gap: 8px;
-    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       "topbar"
       "required"
-      "content";
+      "content"
+      "version";
   }
 
   .brand{
@@ -8071,6 +8086,10 @@ textarea,
         </section>
       </section>
     </main>
+
+    <footer class="code-version" aria-label="Versão do código">
+      <span>v</span><span id="codeVersionText">1.0.0.0</span>
+    </footer>
 
     <aside id="toastStack" class="toast-stack" aria-live="polite"></aside>
 
@@ -10105,6 +10124,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     initializeCustomSelects();
     syncDateTimeFieldRowWidths();
     setLoading(false);
+    focusInitialCommonFormField();
     if (state.mockMode) {
       toast("Modo local ativo: dados mock gerados para teste completo da experiência.", "warning", 7000);
       return;
@@ -10151,6 +10171,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     } catch (_) {
       toast("Não foi possível fechar automaticamente.", "warning", 5000);
     }
+  }
+
+  function focusInitialCommonFormField() {
+    if (state.currentTab !== "details" || !el.saidaData || el.saidaData.disabled) return;
+    window.setTimeout(() => {
+      if (document.activeElement && document.activeElement !== document.body) return;
+      el.saidaData.focus({ preventScroll: true });
+    }, 0);
   }
 
   function getRecordIdFromUrl() {
@@ -10585,6 +10613,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const appRoot = $("app");
     appRoot?.addEventListener("focusin", handleGlobalHistoryBeforeChange, true);
     appRoot?.addEventListener("pointerdown", handleGlobalHistoryBeforeChange, true);
+    appRoot?.addEventListener("keydown", handleCommonFormTabNavigation, true);
     appRoot?.addEventListener("keydown", handleGlobalHistoryBeforeChange, true);
     appRoot?.addEventListener("input", handleOperationalInput);
     appRoot?.addEventListener("change", handleOperationalInput);
@@ -10771,7 +10800,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
     const clearButton = document.createElement("span");
     clearButton.role = "button";
-    clearButton.tabIndex = 0;
+    clearButton.tabIndex = -1;
     clearButton.className = "custom-select-clear";
     clearButton.setAttribute("aria-label", "Limpar seleção");
     clearButton.hidden = true;
@@ -10796,6 +10825,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     searchInput.placeholder = select.dataset.selectVariant === "phone-country" ? "Buscar país" : "Pesquisar";
     searchInput.autocomplete = "off";
     searchInput.spellcheck = false;
+    searchInput.tabIndex = -1;
     searchInput.setAttribute("aria-label", "Pesquisar opção");
 
     const optionsContainer = document.createElement("div");
@@ -10816,6 +10846,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
     select.classList.add("custom-select-native");
     select.dataset.customSelectReady = "1";
+    select.tabIndex = -1;
     parent.insertBefore(wrapper, select);
     wrapper.append(select, trigger, panel);
 
@@ -10828,7 +10859,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       panel,
       searchInput,
       optionsContainer,
-      noResults
+      noResults,
+      suppressOpenOnFocus: false
     };
     customSelectRoots.set(select, state);
 
@@ -10842,12 +10874,31 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       toggleCustomSelect(select);
     });
 
+    trigger?.addEventListener("focus", () => {
+      if (state.suppressOpenOnFocus) return;
+      if (select.disabled || shouldKeepCustomSelectClosedOnFocus(select)) return;
+      openCustomSelect(select, { focusSearch: false, focusTrigger: false });
+    });
+
     trigger?.addEventListener("keydown", (event) => {
+      if (event.key === "Tab") {
+        closeCustomSelect(select);
+        return;
+      }
       if (event.key === " " || event.key === "Enter" || event.key === "ArrowDown") {
         event.preventDefault();
         event.stopPropagation();
         if (!select.disabled) {
-          openCustomSelect(select);
+          openCustomSelect(select, { focusSearch: false });
+          if (event.key === "ArrowDown") focusCustomSelectOption(select, "next");
+        }
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        event.stopPropagation();
+        if (!select.disabled) {
+          openCustomSelect(select, { focusSearch: false });
+          focusCustomSelectOption(select, "previous");
         }
       }
       if (event.key === "Escape") {
@@ -10883,7 +10934,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         event.preventDefault();
         closeCustomSelect(select);
       }
+      if (event.key === "Tab") {
+        event.preventDefault();
+        focusAdjacentFormControl(state.trigger, event.shiftKey ? -1 : 1);
+      }
       if (event.key === "ArrowDown" && state.searchInput.value === "") {
+        event.preventDefault();
         const first = state.optionsContainer.querySelector(".custom-select-option");
         if (first) first.focus();
       }
@@ -10965,6 +11021,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
       const button = document.createElement("button");
       button.type = "button";
+      button.tabIndex = -1;
       button.role = "option";
       button.className = "custom-select-option";
       addClassIfPresent(button, `custom-select-option--${nativeSelect.dataset.selectVariant || ""}`);
@@ -10988,9 +11045,105 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         nativeSelect.dispatchEvent(eventInput);
         closeCustomSelect(nativeSelect);
         setCustomSelectTriggerDisplay(triggerText, option, nativeSelect);
+        state.suppressOpenOnFocus = true;
+        state.trigger?.focus();
+        window.setTimeout(() => {
+          state.suppressOpenOnFocus = false;
+        }, 0);
+      });
+
+      button?.addEventListener("keydown", (event) => {
+        if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+          event.preventDefault();
+          focusCustomSelectOption(nativeSelect, event.key === "ArrowDown" ? "next" : "previous");
+          return;
+        }
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          button.click();
+          return;
+        }
+        if (event.key === "Tab") {
+          event.preventDefault();
+          closeCustomSelect(nativeSelect);
+          focusAdjacentFormControl(state.trigger, event.shiftKey ? -1 : 1);
+          return;
+        }
+        if (event.key === "Escape") {
+          event.preventDefault();
+          closeCustomSelect(nativeSelect);
+          state.trigger?.focus();
+        }
       });
 
       optionsContainer.appendChild(button);
+    });
+  }
+
+  function shouldKeepCustomSelectClosedOnFocus(select) {
+    return Boolean(select?.closest?.(".topbar, .import-review-panel, .passenger-edit-overlay"));
+  }
+
+  function focusCustomSelectOption(select, direction = "next") {
+    const state = customSelectRoots.get(select);
+    if (!state) return;
+    const options = Array.from(state.optionsContainer.querySelectorAll(".custom-select-option"));
+    if (!options.length) return;
+    const currentIndex = options.indexOf(document.activeElement);
+    const activeIndex = options.findIndex((item) => item.classList.contains("is-active"));
+    const fallbackIndex = direction === "previous" ? options.length - 1 : 0;
+    const baseIndex = currentIndex >= 0 ? currentIndex : activeIndex;
+    const nextIndex = baseIndex >= 0
+      ? (baseIndex + (direction === "previous" ? -1 : 1) + options.length) % options.length
+      : fallbackIndex;
+    options[nextIndex]?.focus();
+  }
+
+  function focusAdjacentFormControl(anchor, direction = 1) {
+    const controls = getTabOrderedFormControls();
+    if (!controls.length) return;
+    const currentIndex = controls.indexOf(anchor);
+    const nextIndex = currentIndex >= 0
+      ? currentIndex + direction
+      : (direction > 0 ? 0 : controls.length - 1);
+    const next = controls[Math.max(0, Math.min(controls.length - 1, nextIndex))];
+    if (next && next !== anchor) next.focus();
+  }
+
+  function handleCommonFormTabNavigation(event) {
+    if (event.key !== "Tab" || event.defaultPrevented) return;
+    if (!event.target?.closest?.("#tab-panel-details")) return;
+    if (event.target.closest(".custom-select-panel")) return;
+    const controls = getTabOrderedFormControls();
+    const current = resolveTabOrderedControl(event.target);
+    const currentIndex = controls.indexOf(current);
+    if (currentIndex < 0) return;
+    event.preventDefault();
+    closeAllCustomSelects();
+    const nextIndex = event.shiftKey ? currentIndex - 1 : currentIndex + 1;
+    const next = controls[Math.max(0, Math.min(controls.length - 1, nextIndex))];
+    if (next && next !== current) next.focus();
+  }
+
+  function resolveTabOrderedControl(target) {
+    if (!target) return null;
+    const custom = target.closest?.(".custom-select");
+    if (custom) return custom.querySelector(".custom-select-trigger");
+    return target;
+  }
+
+  function getTabOrderedFormControls() {
+    return Array.from(document.querySelectorAll(
+      "#tab-panel-details input:not([type='hidden']), " +
+      "#tab-panel-details textarea, " +
+      "#tab-panel-details #passengerEmpty, " +
+      "#tab-panel-details .custom-select-trigger"
+    )).filter((control) => {
+      if (!(control instanceof HTMLElement)) return false;
+      if (control.disabled || control.hidden || control.tabIndex < 0) return false;
+      if (control.closest("[hidden], .custom-select-panel, .custom-select-clear")) return false;
+      if (control.offsetParent === null) return false;
+      return true;
     });
   }
 
@@ -11080,7 +11233,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }
   }
 
-  function openCustomSelect(select) {
+  function openCustomSelect(select, options = {}) {
     const state = customSelectRoots.get(select);
     if (!state || select.disabled) return;
 
@@ -11095,14 +11248,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (state.searchInput) {
       state.searchInput.value = "";
       renderCustomSelectOptions(select, "");
-      if (shouldAutofocusSearchInputs()) {
+      if (options.focusSearch !== false && shouldAutofocusSearchInputs()) {
         window.setTimeout(() => state.searchInput.focus(), 10);
       }
     }
     updateCustomSelectPanelPosition(state);
     activeCustomSelect = state.wrapper;
     state.trigger.setAttribute("aria-expanded", "true");
-    state.trigger.focus();
+    if (options.focusTrigger !== false) state.trigger.focus();
   }
 
   function updateCustomSelectPanelPosition(state) {

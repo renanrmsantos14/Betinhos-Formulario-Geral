@@ -11,7 +11,16 @@ function inlineScript(source) {
   return String(source).replace(/<\/script/gi, "<\\/script");
 }
 
+function readCodeVersion() {
+  const version = JSON.parse(read("version.json")).version;
+  return String(version || "1.0.0.0");
+}
+
 let html = read("index.html");
+html = html.replace(
+  /(<span id="codeVersionText">)([^<]*)(<\/span>)/u,
+  `$1${readCodeVersion()}$3`
+);
 const css = read("styles.css");
 const sheetjs = read("vendor/xlsx.full.min.js");
 const core = read("scripts/xlsx_import_core.js");
