@@ -41,10 +41,16 @@ function extractMedia(query, requiredText) {
 }
 
 const tabletCss = extractMedia("@media (max-width: 1240px)", ".tabs");
+const tabletTopbarCss = extractMedia("@media (min-width: 761px) and (max-width: 1120px)", ".topbar");
+const narrowTabletCss = extractMedia("@media (min-width: 761px) and (max-width: 860px)", ".top-actions");
 const tabletTabs = extractRule(".tabs", tabletCss);
 const tabletTab = extractRule(".tab", tabletCss);
 const tabletActiveTab = extractRule(".tab.is-active", tabletCss);
 const tabletHoverTab = extractRule(".tab:hover", tabletCss);
+const tabletTopbar = extractRule(".topbar", tabletTopbarCss);
+const tabletTopActions = extractRule(".top-actions", tabletTopbarCss);
+const narrowTabletTopActions = extractRule(".top-actions", narrowTabletCss);
+const narrowTabletSave = extractRule("#saveButton", narrowTabletCss);
 
 assert.match(
   tabletTabs,
@@ -107,6 +113,37 @@ assert.doesNotMatch(
   tabletActiveTab,
   /linear-gradient/,
   "aba ativa de tablet nao deve usar card com gradiente"
+);
+
+assert.match(
+  tabletTopbar,
+  /display:\s*grid;/,
+  "topbar tablet deve quebrar em grid para nao sobrepor marca e acoes"
+);
+assert.match(
+  tabletTopbar,
+  /grid-template-rows:\s*34px\s+auto;/,
+  "topbar tablet deve reservar linha propria para as acoes"
+);
+assert.match(
+  tabletTopActions,
+  /grid-column:\s*1\s*\/\s*-1;/,
+  "acoes tablet devem ocupar a linha inteira do topbar"
+);
+assert.match(
+  tabletTopActions,
+  /grid-template-columns:\s*auto\s+minmax\(150px,\s*1fr\)\s+minmax\(118px,\s*0\.72fr\)\s+auto\s+auto;/,
+  "acoes tablet devem distribuir historico, status, id, importar e salvar sem atropelo"
+);
+assert.match(
+  narrowTabletTopActions,
+  /grid-template-columns:\s*auto\s+minmax\(146px,\s*1fr\)\s+auto\s+auto;/,
+  "tablet estreito deve remover a coluna de ID do topbar"
+);
+assert.match(
+  narrowTabletSave,
+  /width:\s*44px;/,
+  "tablet estreito deve compactar salvar para nao quebrar a linha"
 );
 
 console.log("tablet_tabs_layout: ok");

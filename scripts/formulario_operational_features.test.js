@@ -354,6 +354,10 @@ includes(app, "receberRetornoUltimoTimestamp", "escopo apenas ultimo deve marcar
 includes(css, ".tab.is-pending::after", "aba pendente deve ter bolinha amarela propria");
 includes(html, "section-head inline activation-head", "cabecalho de ativacao deve ter layout proprio");
 includes(css, ".activation-head .activation-switch", "switch de ativacao deve ter estilo compacto proprio");
+includes(html, "return-address-field", "aba retorno deve permitir endereco em coluna compacta");
+includes(html, "return-destination-field", "aba retorno deve permitir destino em coluna compacta");
+includes(css, "#tab-panel-return .return-address-field", "aba retorno deve ter layout compacto proprio");
+includes(css, "#tab-panel-return .return-observation-field textarea", "observacao do retorno deve ficar menos alta");
 includes(css, ".switch", "switch deve ter regra CSS propria");
 includes(css, "cursor: pointer;", "controles clicaveis devem exibir cursor de clique");
 includes(css, "input[type=\"datetime-local\"]:not(:disabled)", "seletor de data/hora deve ter cursor clicavel");
@@ -365,6 +369,11 @@ includes(css, "::-webkit-calendar-picker-indicator", "icone nativo de calendario
   assert.ok(
     returnHead.indexOf("<h2>Agendar retorno</h2>") < returnHead.indexOf("class=\"switch activation-switch\""),
     "switch de retorno deve ficar a direita do titulo"
+  );
+  const returnPanel = html.slice(returnPanelStart, html.indexOf("id=\"tab-panel-repeat\"", returnPanelStart));
+  assert.ok(
+    returnPanel.indexOf("id=\"retornoObservacao\"") < returnPanel.indexOf("id=\"receberRetorno\""),
+    "receber retorno deve ser o ultimo campo da aba retorno"
   );
 
   const repeatPanelStart = html.indexOf("id=\"tab-panel-repeat\"");
@@ -562,7 +571,7 @@ includes(importEditorStackRule, "display: flex;", "formulario importado deve seg
 includes(importEditorStackRule, "flex-wrap: wrap;", "formulario importado deve quebrar por min-width");
 excludes(css, ".import-editor-section", "formulario importado nao deve ter CSS de secoes internas");
 const importFieldRule = extractCssRule(css, "\n.import-field {");
-includes(importFieldRule, "--import-field-min: 220px;", "campos importados devem ter min-width base");
+includes(importFieldRule, "--import-field-min: 200px;", "campos importados devem ter min-width base compactado");
 includes(importFieldRule, "min-width: min(100%, var(--import-field-min));", "campos importados devem respeitar min-width responsivo");
 includes(importFieldRule, "min-height: 66px;", "campos importados devem usar altura do field comum");
 includes(importFieldRule, "padding: 8px;", "campos importados devem usar padding do field comum");

@@ -183,7 +183,7 @@
             <div class="passenger-address-grid">
               <div class="passenger-stack">
                 <div id="passengerRows" class="passenger-rows"></div>
-                <p id="passengerEmpty" class="passenger-empty" hidden>Adicione ao menos um passageiro para seguir com o agendamento.</p>
+                <button id="passengerEmpty" class="passenger-empty" type="button" hidden>Selecionar Passageiro</button>
               </div>
 
               <label id="customAddressWrap" class="field custom-address" hidden>
@@ -362,10 +362,6 @@
 
         <section class="form-section">
           <div class="form-grid">
-            <label class="toggle-field">
-              <input id="receberRetorno" type="checkbox">
-              <span>Receber retorno?</span>
-            </label>
             <label class="field span-2 datetime-field">
               <span>Data e horário de retorno</span>
               <div class="inline-time">
@@ -374,15 +370,15 @@
                 <input id="retornoMinuto" type="hidden">
               </div>
             </label>
-            <label class="field span-2">
+            <label class="field span-2 return-address-field">
               <span>Endereço de saída</span>
-              <textarea id="retornoEndereco" rows="3"></textarea>
+              <textarea id="retornoEndereco" rows="2"></textarea>
             </label>
-            <label class="field span-2">
+            <label class="field span-2 return-destination-field">
               <span>Destino</span>
-              <textarea id="retornoDestino" rows="3"></textarea>
+              <textarea id="retornoDestino" rows="2"></textarea>
             </label>
-            <div class="field span-2 obs-field">
+            <div class="field span-2 obs-field return-observation-field">
               <span>Observação de retorno</span>
               <div class="segmented" role="tablist" aria-label="Tipo de observação retorno">
                 <button type="button" class="seg is-active" data-ret-obs="motorista" role="tab" aria-selected="true">Mot</button>
@@ -392,6 +388,10 @@
               </div>
               <textarea id="retornoObservacao" rows="2" maxlength="500" placeholder="Ex.: retorno com horário flexível, sem paradas, etc."></textarea>
             </div>
+            <label class="toggle-field return-receive-field">
+              <input id="receberRetorno" type="checkbox">
+              <span>Receber retorno?</span>
+            </label>
           </div>
         </section>
       </section>

@@ -46,6 +46,16 @@ assert.ok(html.includes("function renderGlobalImportHistoryControls"), "bundle d
 assert.ok(html.includes("function handleGlobalImportHistoryAction"), "bundle deve acionar historico global");
 assert.ok(html.includes("function focusImportHistoryTarget"), "bundle deve focar item restaurado");
 assert.ok(html.includes("Foco: ${focusLabel}"), "bundle deve informar foco no toast de historico");
+assert.ok(html.includes(".custom-select-value {\n  flex: 1 1 auto;"), "bundle deve estilizar valor selecionado do dropdown");
+assert.ok(html.includes("font-weight: 400;\n  line-height: 1.25;\n  color: #000000;"), "valor selecionado do dropdown deve usar peso de campo, nao label");
+assert.ok(html.includes(".field .custom-select-value {\n  color: var(--text);"), "valor selecionado deve vencer regra generica de span do field");
+assert.ok(html.includes("input,\nselect,\ntextarea,\n.passenger-address,"), "bundle deve conter regra final para fontes dos inputs");
+assert.ok(html.includes(".passenger-picker-field input {\n  font-size: 14px;\n}"), "fontes dos inputs devem ser 2px menores");
+assert.ok(html.includes(".database-passenger-grid .field {\n  flex: 1 1 210px;"), "campos de cadastrar passageiro devem ter largura base compacta");
+assert.ok(html.includes(".database-passenger-grid .field.span-2 {\n  flex: 2 1 420px;"), "campos largos de cadastrar passageiro devem ter largura compacta");
+assert.ok(html.includes(".database-passenger-grid .field:has(.phone-field) {\n  flex: 1 1 260px;"), "campo telefone do cadastro deve ter largura minima maior");
+assert.ok(html.includes(".panel:not(.import-review-panel) .form-section {\n  padding: 0;\n  border: 0;"), "abas comuns nao devem mostrar divisao visual de secoes");
+assert.ok(html.includes(".panel:not(.import-review-panel) .form-section-title {\n  position: absolute;"), "titulos internos de secoes comuns devem ficar ocultos");
 assert.ok(html.includes("function importHistoryIconSvg"), "bundle deve renderizar icones nos botoes de historico");
 assert.ok(html.includes("function notifyImportHistoryToast"), "bundle deve exibir toast ao usar undo/redo");
 assert.ok(html.includes(".import-history-button"), "bundle deve estilizar botoes Voltar/Para frente");
@@ -89,7 +99,7 @@ assert.ok(html.includes(".import-editor-stack {\n  display: flex;\n  flex-wrap: 
 assert.ok(html.includes("fieldStack.className = \"import-hot-grid import-editor-stack\";"), "bundle deve renderizar campos importados soltos no mesmo stack");
 assert.ok(!html.includes("function buildImportEditorSection"), "bundle nao deve gerar secoes internas no formulario importado");
 assert.ok(!html.includes(".import-editor-section"), "bundle nao deve carregar CSS de secoes internas no formulario importado");
-assert.ok(html.includes("--import-field-min: 220px;"), "bundle deve manter min-width base dos campos importados");
+assert.ok(html.includes("--import-field-min: 200px;"), "bundle deve manter min-width base compactado dos campos importados");
 assert.ok(html.includes("min-width: min(100%, var(--import-field-min));"), "bundle deve ajustar campos importados por min-width");
 assert.ok(html.includes("min-height: 66px;\n  padding: 8px;"), "bundle deve usar dimensoes do field comum nos campos importados");
 assert.ok(html.includes("buildImportSelect(\"Tipo do serviço\", \"tipoServicoValue\", sortByLabel(state.options.tipoServico)"), "bundle deve usar label e ordenacao comum em Tipo do servico importado");

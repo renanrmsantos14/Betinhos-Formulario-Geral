@@ -14,8 +14,8 @@
   --shell-padding-top: max(5px, var(--safe-top));
   --topbar-height: 46px;
   --topbar-menu-gap: 35px;
-  --date-field-width: 160px;
-  --datetime-field-width: 210px;
+  --date-field-width: 150px;
+  --datetime-field-width: 194px;
   --bg: #f0f0f0;
   --bg-2: #fafafa;
   --shell: #0f1725;
@@ -781,6 +781,38 @@ h3 {
   margin-top: 8px;
 }
 
+.panel:not(.import-review-panel) > .section-head {
+  margin-bottom: 8px;
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.panel:not(.import-review-panel) .form-section {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.panel:not(.import-review-panel) .form-section + .form-section,
+.panel:not(.import-review-panel) .compact-section {
+  margin-top: 0;
+}
+
+.panel:not(.import-review-panel) .form-section-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 #tab-panel-details {
   padding-top: 10px;
 }
@@ -832,12 +864,13 @@ h3 {
 
 #tab-panel-details .block-title {
   position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2;
+  top: -2px;
+  right: 2px;
+  z-index: 6;
   display: block;
   padding: 0;
   border-bottom: 0;
+  pointer-events: none;
 }
 
 #tab-panel-details .block-title > div:first-child {
@@ -854,48 +887,197 @@ h3 {
 #tab-panel-details .passenger-toolbar {
   width: auto;
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  pointer-events: auto;
 }
 
 #tab-panel-details .passenger-toolbar .icon-actions {
   display: flex;
-  gap: 4px;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 #tab-panel-details .passenger-toolbar-action {
-  min-width: 34px;
-  width: 34px;
+  min-width: 38px;
+  width: 38px;
   min-height: 34px;
   padding: 0;
-  display: inline-grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
   font-size: 0;
   line-height: 1;
+  box-shadow: var(--shadow-control);
+  transition:
+    transform 150ms var(--ease-out),
+    border-color 150ms var(--ease-out),
+    background-color 150ms var(--ease-out),
+    color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out);
+}
+
+#tab-panel-details .passenger-toolbar-action:active {
+  transform: scale(0.98);
+}
+
+#tab-panel-details .passenger-toolbar-action:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus);
+}
+
+#tab-panel-details .passenger-toolbar-action:disabled {
+  opacity: 0.48;
+  transform: none;
+  box-shadow: none;
 }
 
 #tab-panel-details #toggleEnderecoPersonalizado {
-  width: 42px;
+  width: 78px;
+  color: var(--accent);
+  border-color: var(--line);
+  background: #ffffff;
 }
 
 #tab-panel-details #toggleEnderecoPersonalizado::after {
-  content: "End.";
+  content: "Endereco";
+  min-height: 1em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 11px;
-  font-weight: 840;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0;
 }
 
 #tab-panel-details #toggleEnderecoPersonalizado[aria-pressed="true"]::after {
-  content: "Pax";
+  content: "Por pax";
+}
+
+#tab-panel-details #toggleEnderecoPersonalizado:hover {
+  border-color: var(--line-strong);
+  background: var(--surface-muted);
+  color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-control);
+}
+
+#tab-panel-details #toggleEnderecoPersonalizado[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  box-shadow: var(--shadow-focus), var(--shadow-control);
 }
 
 #tab-panel-details #addPassenger {
+  width: 38px;
+  min-width: 38px;
+  border-color: color-mix(in srgb, #0f766e 40%, var(--line));
+  background: color-mix(in srgb, #0f766e 12%, #ffffff 88%);
   color: #0f766e;
-  font-size: 21px;
-  font-weight: 850;
+  font-size: 22px;
+  font-weight: 820;
+}
+
+#tab-panel-details #addPassenger:hover {
+  border-color: color-mix(in srgb, #0f766e 54%, var(--line));
+  background: color-mix(in srgb, #0f766e 16%, #ffffff 84%);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-control);
 }
 
 #tab-panel-details .passenger-stack {
-  min-height: 34px;
-  padding-right: 84px;
+  min-height: 40px;
+  padding-right: 126px;
+}
+
+#tab-panel-return {
+  padding-top: 10px;
+}
+
+#tab-panel-return .section-head.inline.activation-head {
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 7px;
+}
+
+#tab-panel-return .activation-title {
+  gap: 1px;
+}
+
+#tab-panel-return .activation-title p {
+  display: none;
+}
+
+#tab-panel-return .activation-head .activation-switch {
+  min-height: 36px;
+  padding: 6px 9px;
+}
+
+#tab-panel-return .form-section {
+  padding: 8px;
+}
+
+#tab-panel-return .form-grid {
+  gap: 8px;
+}
+
+#tab-panel-return .field,
+#tab-panel-return .toggle-field {
+  min-height: 56px;
+  padding: 7px 8px;
+}
+
+#tab-panel-return .toggle-field {
+  flex: 0 1 164px;
+  min-width: min(100%, 154px);
+}
+
+#tab-panel-return .return-receive-field {
+  order: 10;
+  flex: 0 1 164px;
+  min-height: 44px;
+  margin-left: auto;
+}
+
+#tab-panel-return .field.datetime-field,
+#tab-panel-return .field.datetime-field.span-2 {
+  flex: 0 0 min(100%, var(--datetime-field-width));
+  width: min(100%, var(--datetime-field-width));
+}
+
+#tab-panel-return .return-address-field,
+#tab-panel-return .return-destination-field {
+  --form-field-min: 280px;
+  flex: 1 1 280px;
+  min-width: min(100%, 280px);
+}
+
+#tab-panel-return .return-address-field textarea,
+#tab-panel-return .return-destination-field textarea {
+  min-height: 48px;
+  max-height: 64px;
+}
+
+#tab-panel-return .return-observation-field {
+  --form-field-min: 100%;
+  flex: 1 1 100%;
+  min-height: 0;
+}
+
+#tab-panel-return .return-observation-field .segmented {
+  max-width: 650px;
+}
+
+#tab-panel-return .return-observation-field textarea {
+  min-height: 52px;
+  max-height: 70px;
 }
 
 .form-section-title {
@@ -950,13 +1132,13 @@ h3 {
 .form-grid .field,
 .form-grid .toggle-field,
 .form-grid .switch {
-  flex: 1 1 var(--form-field-min, 220px);
-  min-width: min(100%, var(--form-field-min, 220px));
+  flex: 1 1 var(--form-field-min, 200px);
+  min-width: min(100%, var(--form-field-min, 200px));
   max-width: 100%;
 }
 
 .form-grid .field.span-2 {
-  --form-field-min: min(100%, 520px);
+  --form-field-min: min(100%, 480px);
   flex-basis: 100%;
 }
 
@@ -988,17 +1170,24 @@ h3 {
 }
 
 .database-passenger-grid .field {
-  flex: 1 1 260px;
+  flex: 1 1 210px;
+  min-width: min(100%, 180px);
 }
 
 .database-passenger-grid .field.span-2 {
-  flex: 2 1 520px;
+  flex: 2 1 420px;
+  min-width: min(100%, 300px);
+}
+
+.database-passenger-grid .field:has(.phone-field) {
+  flex: 1 1 260px;
+  min-width: min(100%, 240px);
 }
 
 .field,
 .toggle-field,
 .switch {
-  min-width: min(100%, 220px);
+  min-width: min(100%, 200px);
   max-width: 100%;
 }
 
@@ -1210,7 +1399,19 @@ h3 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.25;
   color: #000000;
+}
+
+.field .custom-select-value {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.25;
+  letter-spacing: 0;
 }
 
 .custom-select-value--phone-country {
@@ -1775,7 +1976,7 @@ h3 {
 
 .field.compact-time {
   /* Largura mínima para o campo completo de data + horários, sem crescer demais em desktop. */
-  --form-field-min: 273px;
+  --form-field-min: 252px;
   --compact-time-control-height: var(--field-control-height);
   min-width: min(100%, var(--form-field-min));
   max-width: 100%;
@@ -1956,14 +2157,14 @@ h3 {
 
 .form-grid .field.obs-field,
 .form-grid .field.obs-field.span-2 {
-  --form-field-min: min(100%, 380px);
+  --form-field-min: min(100%, 350px);
   flex-basis: 100%;
 }
 
 .form-grid .field.trajeto-field,
 .form-grid .field.trajeto-field.span-2 {
-  --form-field-min: min(100%, 320px);
-  flex-basis: min(100%, 320px);
+  --form-field-min: min(100%, 300px);
+  flex-basis: min(100%, 300px);
 }
 
 .obs-field .segmented {
@@ -2248,13 +2449,37 @@ h3 {
 }
 
 .passenger-empty {
-  margin: 8px 0 0;
-  padding: 10px 12px;
-  border: 1px dashed var(--line-strong);
+  width: 100%;
+  min-height: 40px;
+  margin: 0;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  border: 1px solid color-mix(in srgb, var(--warning) 40%, var(--line));
   border-radius: var(--radius-sm);
-  color: var(--muted);
-  background: var(--surface);
-  font-size: 13px;
+  color: #7a4f00;
+  background: color-mix(in srgb, var(--warning-soft) 88%, #ffffff);
+  font-size: 12px;
+  font-weight: 850;
+  letter-spacing: 0;
+  box-shadow: var(--shadow-control);
+  transition:
+    transform 150ms var(--ease-out),
+    border-color 150ms var(--ease-out),
+    background-color 150ms var(--ease-out),
+    box-shadow 150ms var(--ease-out);
+}
+
+.passenger-empty:hover {
+  border-color: color-mix(in srgb, var(--warning) 58%, var(--line));
+  background: color-mix(in srgb, var(--warning-soft) 76%, #ffffff);
+  transform: translateY(-1px);
+}
+
+.passenger-empty:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus), var(--shadow-control);
 }
 
 .icon-actions {
@@ -5105,7 +5330,7 @@ body.is-import-dragging .import-drop-overlay {
 
 .import-field {
   position: relative;
-  --import-field-min: 220px;
+  --import-field-min: 200px;
   flex: 1 1 var(--import-field-min);
   min-width: min(100%, var(--import-field-min));
   max-width: 100%;
@@ -5132,11 +5357,11 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .import-field[data-import-input-type="select"] {
-  --import-field-min: 220px;
+  --import-field-min: 200px;
 }
 
 .import-field[data-import-input-type="textarea"] {
-  --import-field-min: 320px;
+  --import-field-min: 300px;
   min-height: 66px;
 }
 
@@ -5154,7 +5379,7 @@ body.is-import-dragging .import-drop-overlay {
 
 .import-field.is-wide {
   flex-grow: 1.5;
-  --import-field-min: 320px;
+  --import-field-min: 300px;
   min-width: 0;
 }
 
@@ -5195,12 +5420,12 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .import-field.span-2 {
-  --import-field-min: min(100%, 520px);
+  --import-field-min: min(100%, 480px);
   flex-basis: 100%;
 }
 
 .import-field.obs-field {
-  --import-field-min: min(100%, 380px);
+  --import-field-min: min(100%, 350px);
   flex-basis: 100%;
 }
 
@@ -6245,6 +6470,151 @@ body.is-import-dragging .import-drop-overlay {
   }
 }
 
+@media (min-width: 761px) and (max-width: 1120px) {
+  .app-shell {
+    --topbar-height: auto;
+    grid-template-rows: auto auto auto minmax(0, 1fr);
+  }
+
+  .topbar {
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    grid-template-rows: 34px auto;
+    align-items: center;
+    gap: 6px 8px;
+    padding: 6px;
+  }
+
+  .close-rw-action {
+    grid-column: 1;
+    grid-row: 1;
+    width: 34px;
+    min-width: 34px;
+    min-height: 34px;
+  }
+
+  .brand {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+  }
+
+  .brand-mark {
+    width: 28px;
+    height: 28px;
+  }
+
+  .eyebrow {
+    font-size: 9.5px;
+  }
+
+  h1 {
+    font-size: 15px;
+  }
+
+  .top-actions {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto minmax(150px, 1fr) minmax(118px, 0.72fr) auto auto;
+    align-items: end;
+    gap: 6px;
+    margin-left: 0;
+  }
+
+  .global-history-actions {
+    min-width: 0;
+  }
+
+  .global-history-actions .import-history-button {
+    min-width: 34px;
+    min-height: 34px;
+    padding-inline: 9px;
+  }
+
+  .global-history-actions .import-history-shortcut {
+    display: none;
+  }
+
+  .status-select,
+  .record-id {
+    width: 100%;
+    min-width: 0;
+    max-width: none;
+  }
+
+  .record-id[hidden] {
+    display: none;
+  }
+
+  #saveButton {
+    min-width: 146px;
+    min-height: 34px;
+  }
+
+  .top-import-action {
+    min-height: 34px;
+    padding-inline: 10px;
+    white-space: nowrap;
+  }
+}
+
+@media (min-width: 761px) and (max-width: 860px) {
+  .brand .eyebrow {
+    display: none;
+  }
+
+  .top-actions {
+    grid-template-columns: auto minmax(146px, 1fr) auto auto;
+  }
+
+  .record-id {
+    display: none;
+  }
+
+  .top-import-action {
+    width: 38px;
+    min-width: 38px;
+    padding-inline: 0;
+    font-size: 0;
+  }
+
+  .top-import-action .import-btn-icon {
+    margin: 0;
+  }
+
+  #saveButton {
+    width: 44px;
+    min-width: 44px;
+    padding-inline: 0;
+    font-size: 0;
+  }
+
+  #saveButton::before {
+    content: "✓";
+    font-size: 18px;
+    font-weight: 850;
+  }
+
+  #saveButtonText {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .tab {
+    padding-inline: 6px;
+  }
+
+  .tab-label {
+    font-size: 11px;
+  }
+}
+
 @media (max-width: 760px) {
   .app-shell {
     --shell-padding-top: 8px;
@@ -6591,6 +6961,31 @@ body.is-import-dragging .import-drop-overlay {
   .passenger-toolbar .icon-actions {
     width: 100%;
     justify-content: flex-end;
+  }
+
+  #tab-panel-details .block-title {
+    top: 0;
+    right: 0;
+  }
+
+  #tab-panel-details .passenger-toolbar .icon-actions {
+    width: auto;
+    justify-content: flex-end;
+  }
+
+  #tab-panel-details .passenger-stack {
+    padding-right: 0;
+    padding-top: 44px;
+  }
+
+  #tab-panel-details #toggleEnderecoPersonalizado {
+    width: 78px;
+  }
+
+  #tab-panel-details #addPassenger {
+    width: 38px;
+    min-width: 38px;
+    min-height: 34px;
   }
 
   .form-grid {
@@ -7066,6 +7461,22 @@ body.is-import-dragging .import-drop-overlay {
   }
 }
 
+input,
+select,
+textarea,
+.passenger-address,
+.custom-select-trigger,
+.custom-select-value,
+.field .custom-select-value,
+.import-field input,
+.import-field select,
+.import-field textarea,
+.passenger-edit-control,
+.passenger-edit-field .custom-select-trigger,
+.passenger-picker-field input {
+  font-size: 14px;
+}
+
 </style>
 </head>
 <body>
@@ -7244,7 +7655,7 @@ body.is-import-dragging .import-drop-overlay {
             <div class="passenger-address-grid">
               <div class="passenger-stack">
                 <div id="passengerRows" class="passenger-rows"></div>
-                <p id="passengerEmpty" class="passenger-empty" hidden>Adicione ao menos um passageiro para seguir com o agendamento.</p>
+                <button id="passengerEmpty" class="passenger-empty" type="button" hidden>Selecionar Passageiro</button>
               </div>
 
               <label id="customAddressWrap" class="field custom-address" hidden>
@@ -7423,10 +7834,6 @@ body.is-import-dragging .import-drop-overlay {
 
         <section class="form-section">
           <div class="form-grid">
-            <label class="toggle-field">
-              <input id="receberRetorno" type="checkbox">
-              <span>Receber retorno?</span>
-            </label>
             <label class="field span-2 datetime-field">
               <span>Data e horário de retorno</span>
               <div class="inline-time">
@@ -7435,15 +7842,15 @@ body.is-import-dragging .import-drop-overlay {
                 <input id="retornoMinuto" type="hidden">
               </div>
             </label>
-            <label class="field span-2">
+            <label class="field span-2 return-address-field">
               <span>Endereço de saída</span>
-              <textarea id="retornoEndereco" rows="3"></textarea>
+              <textarea id="retornoEndereco" rows="2"></textarea>
             </label>
-            <label class="field span-2">
+            <label class="field span-2 return-destination-field">
               <span>Destino</span>
-              <textarea id="retornoDestino" rows="3"></textarea>
+              <textarea id="retornoDestino" rows="2"></textarea>
             </label>
-            <div class="field span-2 obs-field">
+            <div class="field span-2 obs-field return-observation-field">
               <span>Observação de retorno</span>
               <div class="segmented" role="tablist" aria-label="Tipo de observação retorno">
                 <button type="button" class="seg is-active" data-ret-obs="motorista" role="tab" aria-selected="true">Mot</button>
@@ -7453,6 +7860,10 @@ body.is-import-dragging .import-drop-overlay {
               </div>
               <textarea id="retornoObservacao" rows="2" maxlength="500" placeholder="Ex.: retorno com horário flexível, sem paradas, etc."></textarea>
             </div>
+            <label class="toggle-field return-receive-field">
+              <input id="receberRetorno" type="checkbox">
+              <span>Receber retorno?</span>
+            </label>
           </div>
         </section>
       </section>
@@ -9896,6 +10307,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     passengerEditFieldsObserver.observe(el.passengerEditFields, { childList: true, subtree: true });
     markPassengerEditEmptySignals();
     el.addPassenger?.addEventListener("click", addPassengerRow);
+    el.passengerEmpty?.addEventListener("click", addPassengerRow);
     el.passengerRows?.addEventListener("pointerdown", handlePassengerRowPointerDown);
     el.passengerRows?.addEventListener("click", handlePassengerRowAction);
     el.passengerRows?.addEventListener("input", handlePassengerRowInput);
@@ -13057,9 +13469,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (el.addPassenger) {
       el.addPassenger.textContent = "+";
       el.addPassenger.setAttribute("aria-label", "Adicionar passageiro");
-      el.addPassenger.disabled = !hasCandidates || hasUnfilledPassenger;
+      el.addPassenger.disabled = !hasCandidates;
       el.addPassenger.title = hasUnfilledPassenger
-        ? "Conclua o passageiro pendente antes de adicionar outro."
+        ? "Selecionar passageiro pendente."
         : (hasCandidates
           ? "Adicionar novo passageiro"
           : "Sem passageiros disponíveis para adicionar.");
@@ -14826,9 +15238,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function addPassengerRow() {
-    const hasUnfilledPassenger = state.selectedPassengers.some((item) => !item.passageiro || !item.guid);
-    if (hasUnfilledPassenger) {
-      toast("Preencha o passageiro pendente antes de adicionar outro.", "error");
+    const pendingPassenger = state.selectedPassengers.find((item) => !item.passageiro || !item.guid);
+    if (pendingPassenger) {
+      openPassengerPicker(pendingPassenger.ordem);
       return;
     }
     openPassengerPicker();

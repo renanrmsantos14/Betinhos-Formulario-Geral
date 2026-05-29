@@ -822,6 +822,7 @@
     passengerEditFieldsObserver.observe(el.passengerEditFields, { childList: true, subtree: true });
     markPassengerEditEmptySignals();
     el.addPassenger?.addEventListener("click", addPassengerRow);
+    el.passengerEmpty?.addEventListener("click", addPassengerRow);
     el.passengerRows?.addEventListener("pointerdown", handlePassengerRowPointerDown);
     el.passengerRows?.addEventListener("click", handlePassengerRowAction);
     el.passengerRows?.addEventListener("input", handlePassengerRowInput);
@@ -3983,9 +3984,9 @@
     if (el.addPassenger) {
       el.addPassenger.textContent = "+";
       el.addPassenger.setAttribute("aria-label", "Adicionar passageiro");
-      el.addPassenger.disabled = !hasCandidates || hasUnfilledPassenger;
+      el.addPassenger.disabled = !hasCandidates;
       el.addPassenger.title = hasUnfilledPassenger
-        ? "Conclua o passageiro pendente antes de adicionar outro."
+        ? "Selecionar passageiro pendente."
         : (hasCandidates
           ? "Adicionar novo passageiro"
           : "Sem passageiros disponíveis para adicionar.");
@@ -5752,9 +5753,9 @@
   }
 
   function addPassengerRow() {
-    const hasUnfilledPassenger = state.selectedPassengers.some((item) => !item.passageiro || !item.guid);
-    if (hasUnfilledPassenger) {
-      toast("Preencha o passageiro pendente antes de adicionar outro.", "error");
+    const pendingPassenger = state.selectedPassengers.find((item) => !item.passageiro || !item.guid);
+    if (pendingPassenger) {
+      openPassengerPicker(pendingPassenger.ordem);
       return;
     }
     openPassengerPicker();
