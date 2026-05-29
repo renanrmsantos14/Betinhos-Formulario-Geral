@@ -3349,9 +3349,10 @@
     if (isPersonClient) {
       select.dataset.selectVariant = "person-client";
     }
+    const lookupRows = isSolicitante ? sortByLabel(rows) : rows;
     const previous = select.value;
     select.innerHTML = '<option value=""></option>';
-    rows.forEach((item) => {
+    lookupRows.forEach((item) => {
       const option = document.createElement("option");
       option.value = item.id;
       option.textContent = item.label;
