@@ -773,6 +773,123 @@ h3 {
   margin-top: 8px;
 }
 
+#tab-panel-details {
+  padding-top: 10px;
+}
+
+#tab-panel-details > .section-head {
+  display: none;
+}
+
+#tab-panel-details .panel-stack {
+  gap: 8px;
+}
+
+#tab-panel-details .form-section,
+#tab-panel-details .passenger-block {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+#tab-panel-details .form-section {
+  gap: 0;
+}
+
+#tab-panel-details .passenger-block {
+  gap: 8px;
+  position: relative;
+}
+
+#tab-panel-details .form-section + .form-section,
+#tab-panel-details .compact-section,
+#tab-panel-details .passenger-block {
+  margin-top: 0;
+}
+
+#tab-panel-details .form-section-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#tab-panel-details .block-title {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  display: block;
+  padding: 0;
+  border-bottom: 0;
+}
+
+#tab-panel-details .block-title > div:first-child {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#tab-panel-details .passenger-toolbar {
+  width: auto;
+  display: flex;
+  gap: 4px;
+}
+
+#tab-panel-details .passenger-toolbar .icon-actions {
+  display: flex;
+  gap: 4px;
+}
+
+#tab-panel-details .passenger-toolbar-action {
+  min-width: 34px;
+  width: 34px;
+  min-height: 34px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  font-size: 0;
+  line-height: 1;
+}
+
+#tab-panel-details #toggleEnderecoPersonalizado {
+  width: 42px;
+}
+
+#tab-panel-details #toggleEnderecoPersonalizado::after {
+  content: "End.";
+  font-size: 11px;
+  font-weight: 840;
+}
+
+#tab-panel-details #toggleEnderecoPersonalizado[aria-pressed="true"]::after {
+  content: "Pax";
+}
+
+#tab-panel-details #addPassenger {
+  color: #0f766e;
+  font-size: 21px;
+  font-weight: 850;
+}
+
+#tab-panel-details .passenger-stack {
+  min-height: 34px;
+  padding-right: 84px;
+}
+
 .form-section-title {
   display: flex;
   align-items: center;

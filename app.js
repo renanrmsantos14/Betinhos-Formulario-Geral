@@ -3974,9 +3974,15 @@
     if (el.toggleEnderecoPersonalizado) {
       el.toggleEnderecoPersonalizado.textContent = state.enderecoPersonalizadoAtivo ? "Endereço por passageiro" : "Endereço único";
       el.toggleEnderecoPersonalizado.title = state.enderecoPersonalizadoAtivo ? "Usar endereço por passageiro" : "Usar endereço único para todos";
+      el.toggleEnderecoPersonalizado.setAttribute(
+        "aria-label",
+        state.enderecoPersonalizadoAtivo ? "Usar endereço por passageiro" : "Usar endereço único para todos"
+      );
       el.toggleEnderecoPersonalizado.setAttribute("aria-pressed", String(state.enderecoPersonalizadoAtivo));
     }
     if (el.addPassenger) {
+      el.addPassenger.textContent = "+";
+      el.addPassenger.setAttribute("aria-label", "Adicionar passageiro");
       el.addPassenger.disabled = !hasCandidates || hasUnfilledPassenger;
       el.addPassenger.title = hasUnfilledPassenger
         ? "Conclua o passageiro pendente antes de adicionar outro."

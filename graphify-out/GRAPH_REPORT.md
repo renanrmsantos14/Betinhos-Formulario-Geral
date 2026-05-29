@@ -1,7 +1,7 @@
 # Graph Report - Tela Formulário Geral  (2026-05-29)
 
 ## Corpus Check
-- 36 files · ~251,635 words
+- 36 files · ~251,892 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6da603a9`
+- Built from commit: `d50e091c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
