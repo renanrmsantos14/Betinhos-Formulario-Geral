@@ -153,7 +153,7 @@
       "source_file": "app.js",
       "source_location": "L444",
       "id": "tela_formul\u00e1rio_geral_app_init",
-      "community": 15,
+      "community": 83,
       "norm_label": "init()"
     },
     {
@@ -1971,7 +1971,7 @@
       "source_file": "app.js",
       "source_location": "L4903",
       "id": "tela_formul\u00e1rio_geral_app_rendertabbadges",
-      "community": 83,
+      "community": 15,
       "norm_label": "rendertabbadges()"
     },
     {
@@ -2061,7 +2061,7 @@
       "source_file": "app.js",
       "source_location": "L5002",
       "id": "tela_formul\u00e1rio_geral_app_hasinactivereturndraft",
-      "community": 32,
+      "community": 15,
       "norm_label": "hasinactivereturndraft()"
     },
     {
@@ -2070,7 +2070,7 @@
       "source_file": "app.js",
       "source_location": "L5006",
       "id": "tela_formul\u00e1rio_geral_app_hasinactiverepeatdraft",
-      "community": 32,
+      "community": 15,
       "norm_label": "hasinactiverepeatdraft()"
     },
     {
@@ -2079,7 +2079,7 @@
       "source_file": "app.js",
       "source_location": "L5010",
       "id": "tela_formul\u00e1rio_geral_app_hasreturndraftcontent",
-      "community": 32,
+      "community": 15,
       "norm_label": "hasreturndraftcontent()"
     },
     {
@@ -2088,7 +2088,7 @@
       "source_file": "app.js",
       "source_location": "L5020",
       "id": "tela_formul\u00e1rio_geral_app_hasrepeatdraftcontent",
-      "community": 32,
+      "community": 15,
       "norm_label": "hasrepeatdraftcontent()"
     },
     {
@@ -2349,7 +2349,7 @@
       "source_file": "app.js",
       "source_location": "L5549",
       "id": "tela_formul\u00e1rio_geral_app_cleardraftsnapshot",
-      "community": 15,
+      "community": 83,
       "norm_label": "cleardraftsnapshot()"
     },
     {
@@ -2691,7 +2691,7 @@
       "source_file": "app.js",
       "source_location": "L6112",
       "id": "tela_formul\u00e1rio_geral_app_syncreturndefaults",
-      "community": 40,
+      "community": 32,
       "norm_label": "syncreturndefaults()"
     },
     {
@@ -4734,7 +4734,7 @@
       "source_file": "app.js",
       "source_location": "L10312",
       "id": "tela_formul\u00e1rio_geral_app_closeactivationguard",
-      "community": 83,
+      "community": 32,
       "norm_label": "closeactivationguard()"
     },
     {
@@ -4797,7 +4797,7 @@
       "source_file": "app.js",
       "source_location": "L10384",
       "id": "tela_formul\u00e1rio_geral_app_resolveactivationguard",
-      "community": 83,
+      "community": 32,
       "norm_label": "resolveactivationguard()"
     },
     {
@@ -9088,7 +9088,7 @@
       "label": "importTrechoCardStart",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L560",
+      "source_location": "L563",
       "id": "scripts_formulario_operational_features_test_importtrechocardstart",
       "community": 12,
       "norm_label": "importtrechocardstart"
@@ -9097,7 +9097,7 @@
       "label": "importReviewActionsStart",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L561",
+      "source_location": "L564",
       "id": "scripts_formulario_operational_features_test_importreviewactionsstart",
       "community": 12,
       "norm_label": "importreviewactionsstart"
@@ -9106,7 +9106,7 @@
       "label": "importTrechoCardFunction",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L563",
+      "source_location": "L566",
       "id": "scripts_formulario_operational_features_test_importtrechocardfunction",
       "community": 12,
       "norm_label": "importtrechocardfunction"
@@ -9115,7 +9115,7 @@
       "label": "passengerLoopEnd",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L602",
+      "source_location": "L605",
       "id": "scripts_formulario_operational_features_test_passengerloopend",
       "community": 12,
       "norm_label": "passengerloopend"
@@ -9124,7 +9124,7 @@
       "label": "importContentRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L605",
+      "source_location": "L608",
       "id": "scripts_formulario_operational_features_test_importcontentrule",
       "community": 12,
       "norm_label": "importcontentrule"
@@ -9133,7 +9133,7 @@
       "label": "importPanelRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L607",
+      "source_location": "L610",
       "id": "scripts_formulario_operational_features_test_importpanelrule",
       "community": 12,
       "norm_label": "importpanelrule"
@@ -9142,7 +9142,7 @@
       "label": "importProgramsRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L610",
+      "source_location": "L613",
       "id": "scripts_formulario_operational_features_test_importprogramsrule",
       "community": 12,
       "norm_label": "importprogramsrule"
@@ -9151,7 +9151,7 @@
       "label": "importWorkbenchRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L612",
+      "source_location": "L615",
       "id": "scripts_formulario_operational_features_test_importworkbenchrule",
       "community": 12,
       "norm_label": "importworkbenchrule"
@@ -9160,7 +9160,7 @@
       "label": "importServiceListRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L614",
+      "source_location": "L617",
       "id": "scripts_formulario_operational_features_test_importservicelistrule",
       "community": 12,
       "norm_label": "importservicelistrule"
@@ -9169,7 +9169,7 @@
       "label": "importServiceRowRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L616",
+      "source_location": "L619",
       "id": "scripts_formulario_operational_features_test_importservicerowrule",
       "community": 12,
       "norm_label": "importservicerowrule"
@@ -9178,7 +9178,7 @@
       "label": "importServiceMainRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L629",
+      "source_location": "L632",
       "id": "scripts_formulario_operational_features_test_importservicemainrule",
       "community": 12,
       "norm_label": "importservicemainrule"
@@ -9187,7 +9187,7 @@
       "label": "importInspectorRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L632",
+      "source_location": "L635",
       "id": "scripts_formulario_operational_features_test_importinspectorrule",
       "community": 12,
       "norm_label": "importinspectorrule"
@@ -9196,7 +9196,7 @@
       "label": "importEditorStackRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L634",
+      "source_location": "L637",
       "id": "scripts_formulario_operational_features_test_importeditorstackrule",
       "community": 12,
       "norm_label": "importeditorstackrule"
@@ -9205,7 +9205,7 @@
       "label": "importFieldRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L638",
+      "source_location": "L641",
       "id": "scripts_formulario_operational_features_test_importfieldrule",
       "community": 12,
       "norm_label": "importfieldrule"
@@ -9214,7 +9214,7 @@
       "label": "importTrechoDesktopRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L643",
+      "source_location": "L646",
       "id": "scripts_formulario_operational_features_test_importtrechodesktoprule",
       "community": 12,
       "norm_label": "importtrechodesktoprule"
@@ -9223,7 +9223,7 @@
       "label": "importPassengersDesktopRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L646",
+      "source_location": "L649",
       "id": "scripts_formulario_operational_features_test_importpassengersdesktoprule",
       "community": 12,
       "norm_label": "importpassengersdesktoprule"
@@ -9232,7 +9232,7 @@
       "label": "importSolicitanteRowRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L650",
+      "source_location": "L653",
       "id": "scripts_formulario_operational_features_test_importsolicitanterowrule",
       "community": 12,
       "norm_label": "importsolicitanterowrule"
@@ -9241,7 +9241,7 @@
       "label": "importSolicitanteFieldRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L654",
+      "source_location": "L657",
       "id": "scripts_formulario_operational_features_test_importsolicitantefieldrule",
       "community": 12,
       "norm_label": "importsolicitantefieldrule"
@@ -9250,7 +9250,7 @@
       "label": "importPassengerAddFieldRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L656",
+      "source_location": "L659",
       "id": "scripts_formulario_operational_features_test_importpassengeraddfieldrule",
       "community": 12,
       "norm_label": "importpassengeraddfieldrule"
@@ -9259,7 +9259,7 @@
       "label": "importRowRemoveRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L671",
+      "source_location": "L674",
       "id": "scripts_formulario_operational_features_test_importrowremoverule",
       "community": 12,
       "norm_label": "importrowremoverule"
@@ -9268,7 +9268,7 @@
       "label": "importRowRemoveIconRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L675",
+      "source_location": "L678",
       "id": "scripts_formulario_operational_features_test_importrowremoveiconrule",
       "community": 12,
       "norm_label": "importrowremoveiconrule"
@@ -9277,7 +9277,7 @@
       "label": "importInspectorActionsRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L677",
+      "source_location": "L680",
       "id": "scripts_formulario_operational_features_test_importinspectoractionsrule",
       "community": 12,
       "norm_label": "importinspectoractionsrule"
@@ -9286,7 +9286,7 @@
       "label": "importInspectorActionButtonRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L680",
+      "source_location": "L683",
       "id": "scripts_formulario_operational_features_test_importinspectoractionbuttonrule",
       "community": 12,
       "norm_label": "importinspectoractionbuttonrule"
@@ -9295,7 +9295,7 @@
       "label": "importValidateActionRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L682",
+      "source_location": "L685",
       "id": "scripts_formulario_operational_features_test_importvalidateactionrule",
       "community": 12,
       "norm_label": "importvalidateactionrule"
@@ -9304,7 +9304,7 @@
       "label": "importValidatedFilterRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L715",
+      "source_location": "L718",
       "id": "scripts_formulario_operational_features_test_importvalidatedfilterrule",
       "community": 12,
       "norm_label": "importvalidatedfilterrule"
@@ -9313,7 +9313,7 @@
       "label": "importPendingFilterRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L717",
+      "source_location": "L720",
       "id": "scripts_formulario_operational_features_test_importpendingfilterrule",
       "community": 12,
       "norm_label": "importpendingfilterrule"
@@ -9322,7 +9322,7 @@
       "label": "importIgnoredFilterRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L719",
+      "source_location": "L722",
       "id": "scripts_formulario_operational_features_test_importignoredfilterrule",
       "community": 12,
       "norm_label": "importignoredfilterrule"
@@ -9331,7 +9331,7 @@
       "label": "importPendingRowRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L721",
+      "source_location": "L724",
       "id": "scripts_formulario_operational_features_test_importpendingrowrule",
       "community": 12,
       "norm_label": "importpendingrowrule"
@@ -9340,7 +9340,7 @@
       "label": "importIgnoredRowRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L723",
+      "source_location": "L726",
       "id": "scripts_formulario_operational_features_test_importignoredrowrule",
       "community": 12,
       "norm_label": "importignoredrowrule"
@@ -9349,7 +9349,7 @@
       "label": "importIgnoredReasonStripRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L725",
+      "source_location": "L728",
       "id": "scripts_formulario_operational_features_test_importignoredreasonstriprule",
       "community": 12,
       "norm_label": "importignoredreasonstriprule"
@@ -9358,7 +9358,7 @@
       "label": "importIgnoredReasonNoticeRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L728",
+      "source_location": "L731",
       "id": "scripts_formulario_operational_features_test_importignoredreasonnoticerule",
       "community": 12,
       "norm_label": "importignoredreasonnoticerule"
@@ -9367,7 +9367,7 @@
       "label": "importSelectedRowRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L731",
+      "source_location": "L734",
       "id": "scripts_formulario_operational_features_test_importselectedrowrule",
       "community": 12,
       "norm_label": "importselectedrowrule"
@@ -9376,7 +9376,7 @@
       "label": "importTrechoDangerRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L737",
+      "source_location": "L740",
       "id": "scripts_formulario_operational_features_test_importtrechodangerrule",
       "community": 12,
       "norm_label": "importtrechodangerrule"
@@ -9385,7 +9385,7 @@
       "label": "importHotGridRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L756",
+      "source_location": "L759",
       "id": "scripts_formulario_operational_features_test_importhotgridrule",
       "community": 12,
       "norm_label": "importhotgridrule"
@@ -9394,7 +9394,7 @@
       "label": "importDateTimeFieldRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L760",
+      "source_location": "L763",
       "id": "scripts_formulario_operational_features_test_importdatetimefieldrule",
       "community": 12,
       "norm_label": "importdatetimefieldrule"
@@ -9403,7 +9403,7 @@
       "label": "importDateFieldRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L764",
+      "source_location": "L767",
       "id": "scripts_formulario_operational_features_test_importdatefieldrule",
       "community": 12,
       "norm_label": "importdatefieldrule"
@@ -9412,7 +9412,7 @@
       "label": "importPassengerExistingDotRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L767",
+      "source_location": "L770",
       "id": "scripts_formulario_operational_features_test_importpassengerexistingdotrule",
       "community": 12,
       "norm_label": "importpassengerexistingdotrule"
@@ -9421,7 +9421,7 @@
       "label": "importPassengerRowRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L769",
+      "source_location": "L772",
       "id": "scripts_formulario_operational_features_test_importpassengerrowrule",
       "community": 12,
       "norm_label": "importpassengerrowrule"
@@ -9430,7 +9430,7 @@
       "label": "importPassengerLabelRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L772",
+      "source_location": "L775",
       "id": "scripts_formulario_operational_features_test_importpassengerlabelrule",
       "community": 12,
       "norm_label": "importpassengerlabelrule"
@@ -9439,7 +9439,7 @@
       "label": "importPassengerDecisionRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L774",
+      "source_location": "L777",
       "id": "scripts_formulario_operational_features_test_importpassengerdecisionrule",
       "community": 12,
       "norm_label": "importpassengerdecisionrule"
@@ -9448,7 +9448,7 @@
       "label": "importPassengerStatusDotRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L778",
+      "source_location": "L781",
       "id": "scripts_formulario_operational_features_test_importpassengerstatusdotrule",
       "community": 12,
       "norm_label": "importpassengerstatusdotrule"
@@ -9457,7 +9457,7 @@
       "label": "importPassengerNewDotRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L780",
+      "source_location": "L783",
       "id": "scripts_formulario_operational_features_test_importpassengernewdotrule",
       "community": 12,
       "norm_label": "importpassengernewdotrule"
@@ -9466,7 +9466,7 @@
       "label": "importPassengerAmbiguousDotRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L782",
+      "source_location": "L785",
       "id": "scripts_formulario_operational_features_test_importpassengerambiguousdotrule",
       "community": 12,
       "norm_label": "importpassengerambiguousdotrule"
@@ -9475,7 +9475,7 @@
       "label": "importPassengerRowBeforeRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L784",
+      "source_location": "L787",
       "id": "scripts_formulario_operational_features_test_importpassengerrowbeforerule",
       "community": 12,
       "norm_label": "importpassengerrowbeforerule"
@@ -9484,7 +9484,7 @@
       "label": "addImportPassengerHandlerStart",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L789",
+      "source_location": "L792",
       "id": "scripts_formulario_operational_features_test_addimportpassengerhandlerstart",
       "community": 12,
       "norm_label": "addimportpassengerhandlerstart"
@@ -9493,7 +9493,7 @@
       "label": "addImportSolicitanteHandlerStart",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L790",
+      "source_location": "L793",
       "id": "scripts_formulario_operational_features_test_addimportsolicitantehandlerstart",
       "community": 12,
       "norm_label": "addimportsolicitantehandlerstart"
@@ -9502,7 +9502,7 @@
       "label": "addImportPassengerHandler",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L792",
+      "source_location": "L795",
       "id": "scripts_formulario_operational_features_test_addimportpassengerhandler",
       "community": 12,
       "norm_label": "addimportpassengerhandler"
@@ -9511,7 +9511,7 @@
       "label": "createNewPassengerHandlerStart",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L795",
+      "source_location": "L798",
       "id": "scripts_formulario_operational_features_test_createnewpassengerhandlerstart",
       "community": 12,
       "norm_label": "createnewpassengerhandlerstart"
@@ -9520,7 +9520,7 @@
       "label": "editGuardAfterCreateNewStart",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L796",
+      "source_location": "L799",
       "id": "scripts_formulario_operational_features_test_editguardaftercreatenewstart",
       "community": 12,
       "norm_label": "editguardaftercreatenewstart"
@@ -9529,7 +9529,7 @@
       "label": "createNewPassengerHandler",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L798",
+      "source_location": "L801",
       "id": "scripts_formulario_operational_features_test_createnewpassengerhandler",
       "community": 12,
       "norm_label": "createnewpassengerhandler"
@@ -9538,7 +9538,7 @@
       "label": "importedPassengerEditFields",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L802",
+      "source_location": "L805",
       "id": "scripts_formulario_operational_features_test_importedpassengereditfields",
       "community": 12,
       "norm_label": "importedpassengereditfields"
@@ -9547,7 +9547,7 @@
       "label": "importedPassengerPreviewFields",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L805",
+      "source_location": "L808",
       "id": "scripts_formulario_operational_features_test_importedpassengerpreviewfields",
       "community": 12,
       "norm_label": "importedpassengerpreviewfields"
@@ -9556,7 +9556,7 @@
       "label": "importedCrResolver",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L809",
+      "source_location": "L812",
       "id": "scripts_formulario_operational_features_test_importedcrresolver",
       "community": 12,
       "norm_label": "importedcrresolver"
@@ -9565,7 +9565,7 @@
       "label": "importPassengerDraftFields",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L813",
+      "source_location": "L816",
       "id": "scripts_formulario_operational_features_test_importpassengerdraftfields",
       "community": 12,
       "norm_label": "importpassengerdraftfields"
@@ -9574,7 +9574,7 @@
       "label": "passengerTextareaRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L841",
+      "source_location": "L844",
       "id": "scripts_formulario_operational_features_test_passengertextarearule",
       "community": 12,
       "norm_label": "passengertextarearule"
@@ -9583,7 +9583,7 @@
       "label": "importCopyPointerRule",
       "file_type": "code",
       "source_file": "scripts/formulario_operational_features.test.js",
-      "source_location": "L846",
+      "source_location": "L849",
       "id": "scripts_formulario_operational_features_test_importcopypointerrule",
       "community": 12,
       "norm_label": "importcopypointerrule"
@@ -10213,7 +10213,7 @@
       "label": "addImportPassengerHandlerStart",
       "file_type": "code",
       "source_file": "scripts/webresource_bundle.test.js",
-      "source_location": "L221",
+      "source_location": "L224",
       "id": "scripts_webresource_bundle_test_addimportpassengerhandlerstart",
       "community": 42,
       "norm_label": "addimportpassengerhandlerstart"
@@ -10222,7 +10222,7 @@
       "label": "addImportSolicitanteHandlerStart",
       "file_type": "code",
       "source_file": "scripts/webresource_bundle.test.js",
-      "source_location": "L222",
+      "source_location": "L225",
       "id": "scripts_webresource_bundle_test_addimportsolicitantehandlerstart",
       "community": 42,
       "norm_label": "addimportsolicitantehandlerstart"
@@ -10231,7 +10231,7 @@
       "label": "addImportPassengerHandler",
       "file_type": "code",
       "source_file": "scripts/webresource_bundle.test.js",
-      "source_location": "L224",
+      "source_location": "L227",
       "id": "scripts_webresource_bundle_test_addimportpassengerhandler",
       "community": 42,
       "norm_label": "addimportpassengerhandler"
@@ -40613,9 +40613,9 @@
       "source_file": "scripts/xlsx_import_core.js",
       "source_location": "L1046",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_xlsx_import_core_js",
-      "target": "scripts_xlsx_import_core_composeoriginsummarywithstops",
-      "confidence_score": 1.0
+      "target": "scripts_xlsx_import_core_composeoriginsummarywithstops"
     },
     {
       "relation": "contains",
@@ -40623,9 +40623,9 @@
       "source_file": "scripts/xlsx_import_core.js",
       "source_location": "L1074",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_xlsx_import_core_js",
-      "target": "scripts_xlsx_import_core_appendlinestopsummarygroup",
-      "confidence_score": 1.0
+      "target": "scripts_xlsx_import_core_appendlinestopsummarygroup"
     },
     {
       "relation": "contains",
@@ -41936,9 +41936,9 @@
       "source_file": "scripts/xlsx_import_core.js",
       "source_location": "L1049",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_xlsx_import_core_composeoriginsummarywithstops",
-      "target": "scripts_xlsx_import_core_sortimportedlines",
-      "confidence_score": 1.0
+      "target": "scripts_xlsx_import_core_sortimportedlines"
     },
     {
       "relation": "calls",
@@ -42101,9 +42101,9 @@
       "source_file": "scripts/xlsx_import_core.js",
       "source_location": "L1011",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_xlsx_import_core_composegroupedlinesummary",
-      "target": "scripts_xlsx_import_core_composeoriginsummarywithstops",
-      "confidence_score": 1.0
+      "target": "scripts_xlsx_import_core_composeoriginsummarywithstops"
     },
     {
       "relation": "calls",
@@ -42134,9 +42134,9 @@
       "source_file": "scripts/xlsx_import_core.js",
       "source_location": "L1078",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "scripts_xlsx_import_core_appendlinestopsummarygroup",
-      "target": "scripts_xlsx_import_core_normalizeaddress",
-      "confidence_score": 1.0
+      "target": "scripts_xlsx_import_core_normalizeaddress"
     },
     {
       "relation": "calls",
@@ -43724,9 +43724,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L462",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_12_campo_destino",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_28",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_28"
     },
     {
       "relation": "contains",
@@ -43734,9 +43734,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L469",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_12_campo_destino",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_29",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_29"
     },
     {
       "relation": "contains",
@@ -43774,9 +43774,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L487",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_13_campo_trajeto",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_31",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_31"
     },
     {
       "relation": "contains",
@@ -43784,9 +43784,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L493",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_13_campo_trajeto",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_32",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_32"
     },
     {
       "relation": "contains",
@@ -43814,9 +43814,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L503",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_14_pg_com_datas_diferentes",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_33",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_33"
     },
     {
       "relation": "contains",
@@ -43824,9 +43824,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L510",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_14_pg_com_datas_diferentes",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_34",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_34"
     },
     {
       "relation": "contains",
@@ -43884,9 +43884,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L561",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_manter_espera",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_35",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_35"
     },
     {
       "relation": "contains",
@@ -43894,9 +43894,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L568",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_manter_espera",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_36",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_36"
     },
     {
       "relation": "contains",
@@ -43934,9 +43934,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L588",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_separar_ida_busca",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_38",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_38"
     },
     {
       "relation": "contains",
@@ -43944,9 +43944,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L594",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_separar_ida_busca",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_39",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_39"
     },
     {
       "relation": "contains",
@@ -43974,9 +43974,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L635",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_16_split_separar_ida_e_busca",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_40",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_40"
     },
     {
       "relation": "contains",
@@ -43984,9 +43984,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L644",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_16_split_separar_ida_e_busca",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_41",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_41"
     },
     {
       "relation": "contains",
@@ -44014,9 +44014,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L688",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_17_fun\u00e7\u00e3o_removida_servi\u00e7o_manual_dentro_da_pg",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_42",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_42"
     },
     {
       "relation": "contains",
@@ -44034,9 +44034,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L770",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_20_duplicidade_de_servi\u00e7o",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_43",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_43"
     },
     {
       "relation": "contains",
@@ -44114,9 +44114,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L828",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_1_uma_ida_simples",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_44",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_44"
     },
     {
       "relation": "contains",
@@ -44124,9 +44124,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L835",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_1_uma_ida_simples",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_45",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_45"
     },
     {
       "relation": "contains",
@@ -44154,9 +44154,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L843",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_2_ida_e_volta_com_espera",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_46",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_46"
     },
     {
       "relation": "contains",
@@ -44164,9 +44164,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L851",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_2_ida_e_volta_com_espera",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_47",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_47"
     },
     {
       "relation": "contains",
@@ -44194,9 +44194,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L860",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_3_multi_coleta",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_48",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_48"
     },
     {
       "relation": "contains",
@@ -44204,9 +44204,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L868",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_3_multi_coleta",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_49",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_49"
     },
     {
       "relation": "contains",
@@ -44234,9 +44234,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L876",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_4_mesmo_destino_hor\u00e1rio_muito_distante",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_50",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_50"
     },
     {
       "relation": "contains",
@@ -44244,9 +44244,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L884",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_4_mesmo_destino_hor\u00e1rio_muito_distante",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_51",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_51"
     },
     {
       "relation": "contains",
@@ -44274,9 +44274,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L891",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_5_retorno_validado",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_52",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_52"
     },
     {
       "relation": "contains",
@@ -44284,9 +44284,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L901",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_5_retorno_validado",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_53",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_53"
     },
     {
       "relation": "contains",
@@ -44314,9 +44314,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L910",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_6_retorno_suspeito",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_54",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_54"
     },
     {
       "relation": "contains",
@@ -44324,9 +44324,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L918",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_exemplo_6_retorno_suspeito",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_55",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_55"
     },
     {
       "relation": "contains",
@@ -44404,9 +44404,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L967",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_25_mapa_mental_do_processo",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_56",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_56"
     },
     {
       "relation": "contains",
@@ -44414,9 +44414,9 @@
       "source_file": "IMPORTACAO_SERVICOS.md",
       "source_location": "L1017",
       "weight": 1.0,
+      "confidence_score": 1.0,
       "source": "tela_formul\u00e1rio_geral_importacao_servicos_27_regra_de_ouro_para_opera\u00e7\u00e3o",
-      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_57",
-      "confidence_score": 1.0
+      "target": "tela_formul\u00e1rio_geral_importacao_servicos_codeblock_57"
     },
     {
       "relation": "contains",
@@ -45330,5 +45330,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "c132d7c953fd0ff0ca899b98165e4e35c386b264"
+  "built_at_commit": "f045ffb3b6d3570f9759b50399d7122dce8281f5"
 }

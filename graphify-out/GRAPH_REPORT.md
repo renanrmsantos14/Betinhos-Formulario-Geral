@@ -1,7 +1,7 @@
 # Graph Report - Tela Formulário Geral  (2026-05-29)
 
 ## Corpus Check
-- 38 files · ~258,238 words
+- 38 files · ~258,338 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c132d7c9`
+- Built from commit: `f045ffb3`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -176,8 +176,8 @@ Cohesion: 0.07
 Nodes (23): bdFields, clamp, Confirmation(), Cursor(), detailFields, ease, fade(), Field (+15 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.20
-Nodes (19): applyDraftSnapshotToForm(), applyPassengerDefaults(), buildImportPassengerAddSelect(), clearDraftSnapshot(), dateTimeLocalFromParts(), formatCurrencyDisplayValue(), hasCommonDraftContent(), hydrateForm() (+11 more)
+Cohesion: 0.16
+Nodes (22): applyDraftSnapshotToForm(), applyPassengerDefaults(), buildImportPassengerAddSelect(), dateTimeLocalFromParts(), formatCurrencyDisplayValue(), hasCommonDraftContent(), hasInactiveRepeatDraft(), hasInactiveReturnDraft() (+14 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.11
@@ -240,8 +240,8 @@ Cohesion: 0.18
 Nodes (10): code:console (npm i), code:console (npm run dev), code:console (npx remotion render), code:console (npx remotion upgrade), Commands, Docs, Help, Issues (+2 more)
 
 ### Community 32 - "Community 32"
-Cohesion: 0.14
-Nodes (22): buildSaveContext(), closeReturnReceiveScope(), collectInactiveActivationDrafts(), combineDateTime(), composeEnderecoCompleto(), composeEnderecoCompletoInvertido(), composePassageirosTelefones(), composePreferencias() (+14 more)
+Cohesion: 0.15
+Nodes (21): buildSaveContext(), closeActivationGuard(), closeReturnReceiveScope(), collectInactiveActivationDrafts(), combineDateTime(), composeEnderecoCompleto(), composeEnderecoCompletoInvertido(), composePassageirosTelefones() (+13 more)
 
 ### Community 33 - "Community 33"
 Cohesion: 0.20
@@ -272,8 +272,8 @@ Cohesion: 0.22
 Nodes (8): Accessibility & Inclusion, Anti-references, Brand Personality, Design Principles, Product, Product Purpose, Register, Users
 
 ### Community 40 - "Community 40"
-Cohesion: 0.18
-Nodes (26): addPassengerFromId(), captureGlobalHistoryBeforeMutation(), clearAllFormsCompletely(), clearPassengerCreateForm(), clearValidationStates(), closePassengerEditPopup(), closePassengerPicker(), closePassengerPreview() (+18 more)
+Cohesion: 0.19
+Nodes (25): addPassengerFromId(), captureGlobalHistoryBeforeMutation(), clearAllFormsCompletely(), clearPassengerCreateForm(), clearValidationStates(), closePassengerEditPopup(), closePassengerPicker(), closePassengerPreview() (+17 more)
 
 ### Community 41 - "Community 41"
 Cohesion: 0.29
@@ -376,8 +376,8 @@ Cohesion: 0.25
 Nodes (9): closeAllCustomSelects(), focusAdjacentFormControl(), getKeyboardFormPanel(), getTabOrderedFormControls(), handleCommonFormTabNavigation(), handleGlobalCustomSelectClick(), handleGlobalCustomSelectFocusIn(), handleGlobalCustomSelectKeydown() (+1 more)
 
 ### Community 83 - "Community 83"
-Cohesion: 0.17
-Nodes (24): addSaveLog(), applyImportedExternalStatusRules(), buildImportReview(), checkImportedProgramDuplicates(), clearSaveLog(), closeActivationGuard(), closeWebResourceToGeral(), ensureXlsxLibrary() (+16 more)
+Cohesion: 0.18
+Nodes (23): addSaveLog(), applyImportedExternalStatusRules(), buildImportReview(), checkImportedProgramDuplicates(), clearDraftSnapshot(), clearSaveLog(), closeWebResourceToGeral(), ensureXlsxLibrary() (+15 more)
 
 ### Community 84 - "Community 84"
 Cohesion: 0.08

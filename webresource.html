@@ -8088,7 +8088,7 @@ textarea,
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.0.0.6</span>
+        <span>v</span><span id="codeVersionText">1.0.0.7</span>
       </footer>
     </main>
 
@@ -13052,7 +13052,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     updateSaveButtonText();
     document.documentElement.classList.toggle("is-editing-service", !state.isNew);
     el.tabImport.hidden = !state.isNew;
-    el.tabBd.hidden = !state.isNew;
+    el.tabBd.hidden = false;
     el.tabReturn.hidden = !state.isNew;
     el.tabRepeat.hidden = !state.isNew;
     if (el.importXlsxButton) el.importXlsxButton.hidden = !state.isNew;
@@ -15381,8 +15381,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function setTab(tab) {
-    if ((tab === "import" || tab === "bd" || tab === "return" || tab === "repeat") && !state.isNew) {
-      toast("Agendamento de retorno e serviços frequentes só na criação.", "error");
+    if ((tab === "import" || tab === "return" || tab === "repeat") && !state.isNew) {
+      toast("Importação, retorno e serviços frequentes só na criação.", "error");
       return;
     }
     state.currentTab = tab;

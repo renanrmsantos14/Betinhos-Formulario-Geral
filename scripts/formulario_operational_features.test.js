@@ -542,6 +542,9 @@ includes(app, "data-import-history-action", "botoes de historico devem manter co
 includes(app, "if (state.isNew) {\n      buttons.push(buildImportHistoryButton(\"Limpar\"", "botao Limpar deve aparecer somente em novo servico");
 includes(app, "state.globalHistory = { undo: [], redo: [], pending: null }", "Limpar formulario deve zerar historico global");
 includes(app, "if (el.importXlsxButton) el.importXlsxButton.hidden = !state.isNew", "botao XLSX deve sumir em modo edicao");
+includes(app, "el.tabBd.hidden = false;", "aba Cadastrar Passageiro deve ficar disponivel em modo edicao");
+includes(app, "if ((tab === \"import\" || tab === \"return\" || tab === \"repeat\") && !state.isNew)", "modo edicao deve bloquear abas de criacao sem bloquear cadastro de passageiro");
+excludes(app, "tab === \"bd\" || tab === \"return\"", "modo edicao nao deve bloquear aba Cadastrar Passageiro");
 includes(app, "Limpar formulário só está disponível em novo serviço.", "limpar deve ter bloqueio defensivo em edicao");
 includes(app, "function importHistoryIconSvg", "botoes de historico devem usar icones SVG");
 includes(app, "function focusImportHistoryTarget", "undo/redo deve focar item restaurado");

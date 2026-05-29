@@ -3295,7 +3295,7 @@
     updateSaveButtonText();
     document.documentElement.classList.toggle("is-editing-service", !state.isNew);
     el.tabImport.hidden = !state.isNew;
-    el.tabBd.hidden = !state.isNew;
+    el.tabBd.hidden = false;
     el.tabReturn.hidden = !state.isNew;
     el.tabRepeat.hidden = !state.isNew;
     if (el.importXlsxButton) el.importXlsxButton.hidden = !state.isNew;
@@ -5624,8 +5624,8 @@
   }
 
   function setTab(tab) {
-    if ((tab === "import" || tab === "bd" || tab === "return" || tab === "repeat") && !state.isNew) {
-      toast("Agendamento de retorno e serviços frequentes só na criação.", "error");
+    if ((tab === "import" || tab === "return" || tab === "repeat") && !state.isNew) {
+      toast("Importação, retorno e serviços frequentes só na criação.", "error");
       return;
     }
     state.currentTab = tab;
