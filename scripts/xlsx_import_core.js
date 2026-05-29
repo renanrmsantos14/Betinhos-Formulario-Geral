@@ -454,10 +454,10 @@
     return trecho;
   }
 
-  function ignoreImportedTrechoReview(trecho) {
+  function ignoreImportedTrechoReview(trecho, reason = "Ignorado manualmente na revisão.") {
     if (!trecho) return null;
     trecho.reviewStatus = IMPORT_REVIEW_STATUSES.IGNORED;
-    trecho.reviewBlockReason = "";
+    trecho.reviewBlockReason = reason;
     return trecho;
   }
 

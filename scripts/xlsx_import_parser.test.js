@@ -664,6 +664,7 @@ assert.equal(reviewTrechos[1].reviewBlockReason, "Destino vazio.", "Bloqueado de
 
 ignoreImportedTrechoReview(reviewTrechos[2]);
 assert.equal(reviewTrechos[2].reviewStatus, IMPORT_REVIEW_STATUSES.IGNORED, "ignorar deve marcar Ignorado");
+assert.equal(reviewTrechos[2].reviewBlockReason, "Ignorado manualmente na revisão.", "ignorar deve guardar motivo padrao");
 
 markImportedTrechoSaved(reviewTrechos[3], "reserva-1");
 assert.equal(reviewTrechos[3].reviewStatus, IMPORT_REVIEW_STATUSES.SAVED, "salvar deve marcar Salvo");

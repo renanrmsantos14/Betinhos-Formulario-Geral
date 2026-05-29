@@ -733,18 +733,25 @@ h3 {
 .activation-head .activation-switch {
   grid-column: auto;
   flex: 0 0 auto;
-  min-width: 0;
+  width: 148px;
+  min-width: 148px;
   min-height: 44px;
   padding: 8px 10px;
-  gap: 8px;
+  gap: 6px;
   border-color: color-mix(in srgb, var(--line) 86%, #ffffff);
   background: #ffffff;
   box-shadow: var(--shadow-control);
 }
 
 .activation-head .activation-switch span {
+  flex: 1 1 auto;
+  min-width: 0;
   color: var(--text-soft);
   letter-spacing: 0;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: clip;
+  white-space: nowrap;
 }
 
 .activation-head .activation-switch:has(input:checked) {
@@ -1025,27 +1032,8 @@ h3 {
   padding-top: 10px;
 }
 
-#tab-panel-return .section-head.inline.activation-head {
-  align-items: center;
-  margin-bottom: 8px;
-  padding-bottom: 7px;
-}
-
-#tab-panel-return .activation-title {
-  gap: 1px;
-}
-
-#tab-panel-return .activation-title p {
-  display: none;
-}
-
-#tab-panel-return .activation-head .activation-switch {
-  min-height: 36px;
-  padding: 6px 9px;
-}
-
 #tab-panel-return .form-section {
-  padding: 8px;
+  padding: 0;
 }
 
 #tab-panel-return .form-grid {
@@ -1072,8 +1060,8 @@ h3 {
 
 #tab-panel-return .field.datetime-field,
 #tab-panel-return .field.datetime-field.span-2 {
-  flex: 0 0 min(100%, var(--datetime-field-width));
-  width: min(100%, var(--datetime-field-width));
+  flex: 1 1 min(100%, var(--datetime-field-width));
+  width: auto;
 }
 
 #tab-panel-return .return-address-field,
@@ -4867,6 +4855,39 @@ body.is-import-dragging .import-drop-overlay {
   background: color-mix(in srgb, var(--danger-soft) 42%, #ffffff);
 }
 
+.import-ignored-reason-strip {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 7px;
+  align-items: center;
+  margin-top: -1px;
+  padding: 7px 9px 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 26%, var(--line));
+  border-top: 0;
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+  background: color-mix(in srgb, var(--danger-soft) 58%, #ffffff);
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+.import-ignored-reason-strip span {
+  color: var(--danger);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.import-ignored-reason-strip strong {
+  min-width: 0;
+  color: color-mix(in srgb, var(--danger) 86%, var(--text));
+  font-size: 11px;
+  font-weight: 780;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .import-service-row.is-pending {
   border-color: color-mix(in srgb, var(--warning) 28%, var(--line));
   background: color-mix(in srgb, var(--warning-soft) 36%, #ffffff);
@@ -4990,6 +5011,43 @@ body.is-import-dragging .import-drop-overlay {
 .import-inspector.is-duplicated {
   border-color: color-mix(in srgb, var(--danger) 42%, var(--line));
   background: color-mix(in srgb, var(--danger-soft) 20%, #ffffff);
+}
+
+.import-ignored-reason-notice {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+  padding: 11px 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 34%, var(--line));
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--danger-soft) 76%, #ffffff);
+  box-shadow:
+    inset 3px 0 0 var(--danger),
+    0 8px 18px rgb(184 28 28 / 0.08);
+}
+
+.import-ignored-reason-notice span {
+  color: var(--danger);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.import-ignored-reason-notice strong {
+  color: color-mix(in srgb, var(--danger) 84%, var(--text));
+  font-size: 13px;
+  font-weight: 880;
+  line-height: 1.25;
+}
+
+.import-ignored-reason-notice p {
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 720;
+  line-height: 1.35;
 }
 
 .import-inspector-head {
@@ -5380,14 +5438,14 @@ body.is-import-dragging .import-drop-overlay {
 
 .import-field[data-import-input-type="datetime-local"] {
   --import-field-min: min(100%, var(--datetime-field-width));
-  flex: 0 0 min(100%, var(--datetime-field-width));
-  width: min(100%, var(--datetime-field-width));
+  flex: 1 1 min(100%, var(--datetime-field-width));
+  width: auto;
 }
 
 .import-field[data-import-input-type="date"] {
   --import-field-min: min(100%, var(--date-field-width));
-  flex: 0 0 min(100%, var(--date-field-width));
-  width: min(100%, var(--date-field-width));
+  flex: 1 1 min(100%, var(--date-field-width));
+  width: auto;
 }
 
 .import-field[data-import-input-type="number"] {
@@ -7110,6 +7168,40 @@ body.is-import-dragging .import-drop-overlay {
     min-width: 0;
   }
 
+  .section-head.inline.activation-head {
+    position: sticky;
+    top: 0;
+    z-index: 7;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    padding: 0 2px 3px 0;
+    background: linear-gradient(180deg, var(--surface) 78%, rgb(255 255 255 / 0));
+  }
+
+  .activation-head .activation-switch {
+    justify-self: end;
+    align-self: center;
+    width: 146px;
+    min-width: 146px;
+    min-height: 40px;
+    padding: 6px 7px;
+    white-space: nowrap;
+  }
+
+  .activation-title h2 {
+    padding-right: 4px;
+  }
+
+  #tab-panel-return .field.datetime-field,
+  #tab-panel-return .field.datetime-field.span-2 {
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+  }
+
   .field.compact-time.saida-compact-time {
     width: 100%;
     flex: none;
@@ -7816,10 +7908,7 @@ textarea,
       </section>
 
       <section id="tab-panel-bd" class="panel" data-panel="bd">
-        <div class="section-head">
-          <h2>Banco de Dados</h2>
-          <p>Cadastro e manutenção de passageiro sem sair do fluxo de agendamento.</p>
-        </div>
+
 
         <section class="form-section">
           <div class="form-section-title">
@@ -7901,7 +7990,6 @@ textarea,
         <div class="section-head inline activation-head">
           <div class="activation-title">
             <h2>Agendar retorno</h2>
-            <p>Disponível apenas na criação.</p>
           </div>
           <label class="switch activation-switch">
             <input id="agendarRetorno" type="checkbox">
@@ -7939,7 +8027,7 @@ textarea,
             </div>
             <label class="toggle-field return-receive-field">
               <input id="receberRetorno" type="checkbox">
-              <span>Receber retorno?</span>
+              <span>Receber no retorno?</span>
             </label>
           </div>
         </section>
@@ -7949,7 +8037,6 @@ textarea,
         <div class="section-head inline activation-head">
           <div class="activation-title">
             <h2>Serviços frequentes</h2>
-            <p>Disponível apenas na criação.</p>
           </div>
           <label class="switch activation-switch">
             <input id="repetirServico" type="checkbox">
@@ -8624,10 +8711,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return trecho;
   }
 
-  function ignoreImportedTrechoReview(trecho) {
+  function ignoreImportedTrechoReview(trecho, reason = "Ignorado manualmente na revisão.") {
     if (!trecho) return null;
     trecho.reviewStatus = IMPORT_REVIEW_STATUSES.IGNORED;
-    trecho.reviewBlockReason = "";
+    trecho.reviewBlockReason = reason;
     return trecho;
   }
 
@@ -9664,6 +9751,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
   const PASSENGER_RECENCY_KEY = "formulario_geral_passenger_recency_v1";
   const XLSX_SOURCE_ELEMENT_ID = "xlsxLibrarySource";
+  const XLSX_DROP_CLASS_NAMES = ["is-import-dragging", "is-import-drag-invalid", "is-import-drag-blocked"];
   const BRAND_LOGO_WEBRESOURCE = "cr40f_LogoBetinhosB";
   const MAX_FREQUENT_SERVICE_DAYS = 90;
   const MAX_FREQUENT_SERVICE_RECORDS = 120;
@@ -9805,6 +9893,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     globalImportHistoryActions: $("globalImportHistoryActions"),
     importXlsxButton: $("importXlsxButton"),
     xlsxImportInput: $("xlsxImportInput"),
+    importDropOverlay: $("importDropOverlay"),
+    importDropOverlayCard: document.querySelector("#importDropOverlay .import-drop-overlay-card"),
+    importDropOverlayTitle: document.querySelector("#importDropOverlay .import-drop-overlay-title"),
+    importDropOverlayHint: document.querySelector("#importDropOverlay .import-drop-overlay-hint"),
     importReviewTitle: $("importReviewTitle"),
     importReviewSummary: $("importReviewSummary"),
     importReviewEmpty: $("importReviewEmpty"),
@@ -9990,6 +10082,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   let isRestoringImportHistory = false;
   let isRestoringGlobalHistory = false;
   let xlsxLibraryLoadPromise = null;
+  let xlsxImportDragDepth = 0;
+  let xlsxDropOverlayState = "";
   let contentTouchStartY = 0;
   let contentTouchPull = 0;
 
@@ -10337,6 +10431,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.globalImportHistoryActions?.addEventListener("click", handleGlobalImportHistoryAction);
     el.importXlsxButton?.addEventListener("click", openXlsxImportPicker);
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
+    document.addEventListener("dragenter", handleXlsxImportDragEnter);
+    document.addEventListener("dragover", handleXlsxImportDragOver);
+    document.addEventListener("dragleave", handleXlsxImportDragLeave);
+    document.addEventListener("drop", handleXlsxImportDrop);
     el.importReviewStats?.addEventListener("click", handleImportReviewFilterAction);
     el.importReviewPrograms?.addEventListener("click", handleImportFieldCopy);
     el.importReviewPrograms?.addEventListener("click", handleImportReviewAction);
@@ -14271,6 +14369,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function renderTabBadges() {
+    syncActivationSwitchLabels();
     el.tabImport?.classList.toggle("is-marked", !!state.importReview);
     renderActivationTabBadge(el.tabReturn, {
       label: "Retorno",
@@ -14282,6 +14381,18 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       active: !!el.repetirServico.checked,
       pending: hasInactiveRepeatDraft()
     });
+  }
+
+  function syncActivationSwitchLabels() {
+    syncActivationSwitchLabel(el.agendarRetorno);
+    syncActivationSwitchLabel(el.repetirServico);
+  }
+
+  function syncActivationSwitchLabel(input) {
+    const label = input?.closest?.(".activation-switch");
+    const text = label?.querySelector?.("span");
+    if (!text) return;
+    text.textContent = input.checked ? "Ativado" : "Desativado";
   }
 
   function renderActivationTabBadge(tab, options) {
@@ -16046,17 +16157,118 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return xlsxLibraryLoadPromise;
   }
 
-  async function openXlsxImportPicker() {
+  function isXlsxFile(file) {
+    const name = String(file?.name || "").toLowerCase();
+    return Boolean(file) && name.endsWith(".xlsx");
+  }
+
+  function eventHasFiles(event) {
+    return [...(event.dataTransfer?.types || [])].includes("Files");
+  }
+
+  function getDroppedXlsxFile(event) {
+    return [...(event.dataTransfer?.files || [])].find(isXlsxFile) || null;
+  }
+
+  function canStartXlsxImport() {
     if (!window.XlsxImportCore) {
-      toast("Leitor XLSX não carregado. Verifique os scripts do web resource.", "error", 8000);
-      return;
+      return { ok: false, message: "Leitor XLSX não carregado. Verifique os scripts do web resource.", type: "invalid" };
     }
     if (!state.isNew) {
-      toast("Importação XLSX só cria novos serviços. Abra uma tela nova para importar.", "warning", 6000);
-      return;
+      return { ok: false, message: "Importação XLSX só cria novos serviços. Abra uma tela nova para importar.", type: "blocked" };
     }
     if (state.isNew && hasPrimaryDraftChanges()) {
-      toast("Finalize o agendamento principal antes de importar novos serviços.", "warning", 7000);
+      return { ok: false, message: "Finalize o agendamento principal antes de importar novos serviços.", type: "blocked" };
+    }
+    if (hasImportedServicesDraft()) {
+      return { ok: false, message: "Já existe uma importação em revisão. Limpe o formulário antes de enviar outro XLSX.", type: "blocked" };
+    }
+    return { ok: true, message: "Solte o arquivo XLSX para importar", type: "ready" };
+  }
+
+  function updateXlsxDropOverlay(type = "ready", message = "Solte o arquivo XLSX para importar") {
+    const classType = type === "blocked" ? "blocked" : type === "invalid" ? "invalid" : "ready";
+    const nextState = `${classType}|${message}`;
+    if (xlsxDropOverlayState === nextState && el.importDropOverlay && !el.importDropOverlay.hidden) return;
+    xlsxDropOverlayState = nextState;
+    document.body.classList.remove(...XLSX_DROP_CLASS_NAMES);
+    el.importDropOverlayCard?.classList.remove("is-ready", "is-invalid", "is-blocked");
+
+    document.body.classList.add("is-import-dragging", `is-import-drag-${classType}`);
+    el.importDropOverlayCard?.classList.add(`is-${classType}`);
+    if (el.importDropOverlay) el.importDropOverlay.hidden = false;
+    if (el.importDropOverlayTitle) el.importDropOverlayTitle.textContent = message;
+    if (el.importDropOverlayHint) {
+      el.importDropOverlayHint.textContent = classType === "ready"
+        ? "Ao soltar, a revisão de importação abre automaticamente."
+        : "Use um arquivo .xlsx em uma tela nova e sem rascunho preenchido.";
+    }
+  }
+
+  function hideXlsxDropOverlay() {
+    xlsxImportDragDepth = 0;
+    xlsxDropOverlayState = "";
+    document.body.classList.remove(...XLSX_DROP_CLASS_NAMES);
+    el.importDropOverlayCard?.classList.remove("is-ready", "is-invalid", "is-blocked");
+    if (el.importDropOverlay) el.importDropOverlay.hidden = true;
+  }
+
+  function previewXlsxDrop(event, options = {}) {
+    const guard = canStartXlsxImport();
+    if (!guard.ok) {
+      updateXlsxDropOverlay(guard.type, guard.message);
+      return guard;
+    }
+    if (options.validateFile && event.dataTransfer?.files?.length && !getDroppedXlsxFile(event)) {
+      const invalid = { ok: false, message: "Arquivo inválido. Solte um .xlsx.", type: "invalid" };
+      updateXlsxDropOverlay(invalid.type, invalid.message);
+      return invalid;
+    }
+    updateXlsxDropOverlay("ready", "Solte o arquivo XLSX para importar");
+    return guard;
+  }
+
+  function handleXlsxImportDragEnter(event) {
+    if (!eventHasFiles(event)) return;
+    event.preventDefault();
+    xlsxImportDragDepth += 1;
+    previewXlsxDrop(event);
+  }
+
+  function handleXlsxImportDragOver(event) {
+    if (!eventHasFiles(event)) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = canStartXlsxImport().ok ? "copy" : "none";
+  }
+
+  function handleXlsxImportDragLeave(event) {
+    if (!eventHasFiles(event)) return;
+    event.preventDefault();
+    xlsxImportDragDepth = Math.max(0, xlsxImportDragDepth - 1);
+    if (xlsxImportDragDepth === 0) hideXlsxDropOverlay();
+  }
+
+  async function handleXlsxImportDrop(event) {
+    if (!eventHasFiles(event)) return;
+    event.preventDefault();
+    const file = getDroppedXlsxFile(event);
+    const guard = previewXlsxDrop(event, { validateFile: true });
+    hideXlsxDropOverlay();
+    if (!guard.ok) {
+      toast(guard.message, guard.type === "invalid" ? "error" : "warning", 7000);
+      return;
+    }
+    if (!file) {
+      toast("Arquivo inválido. Solte um .xlsx.", "error", 7000);
+      return;
+    }
+    await processXlsxImportFile(file);
+  }
+
+  async function openXlsxImportPicker() {
+    const guard = canStartXlsxImport();
+    if (!guard.ok) {
+      toast(guard.message, guard.type === "invalid" ? "error" : "warning", 8000);
       return;
     }
     setLoading(true);
@@ -16074,6 +16286,16 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   async function handleXlsxImportFile(event) {
     const file = event.target?.files?.[0];
     if (!file) return;
+    if (!isXlsxFile(file)) {
+      toast("Arquivo inválido. Selecione um .xlsx.", "error", 7000);
+      event.target.value = "";
+      return;
+    }
+    await processXlsxImportFile(file);
+    event.target.value = "";
+  }
+
+  async function processXlsxImportFile(file) {
     setLoading(true);
     try {
       await ensureXlsxLibrary();
@@ -16092,7 +16314,6 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       console.error(error);
       toast(error.message || "Falha ao importar XLSX.", "error", 9000);
     } finally {
-      event.target.value = "";
       setLoading(false);
     }
   }
@@ -17318,7 +17539,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       const reviewActions = buildImportInspectorReviewActions(selected.program.programacao, selected.trecho.key, selected.trecho, normalizeImportedReviewStatus(selected.trecho), isDuplicated);
       actions.append(...[editToggle, ...reviewActions].filter(Boolean));
       inspectorHead.append(title, actions);
-      inspector.append(inspectorHead, buildImportTrechoCard(selected.program, selected.trecho, selected.program.trechos.indexOf(selected.trecho), {
+      inspector.append(inspectorHead);
+      const ignoredReasonNotice = buildImportIgnoredReasonNotice(selected.trecho);
+      if (ignoredReasonNotice) inspector.appendChild(ignoredReasonNotice);
+      inspector.append(buildImportTrechoCard(selected.program, selected.trecho, selected.program.trechos.indexOf(selected.trecho), {
         editable: isEditing
       }));
     } else {
@@ -17383,6 +17607,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const isDuplicated = !!trecho.duplicatedRecordIds?.length;
     const isAutoIgnoredDuplicate = isImportedDuplicateAutoIgnored(trecho);
     const isSplit = isSplitImportedTrecho(trecho);
+    const ignoredReason = getImportedIgnoredReason(trecho);
     const wrap = document.createElement("div");
     wrap.className = "import-service-row-wrap";
     wrap.dataset.programacao = program.programacao;
@@ -17399,7 +17624,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     button.dataset.programacao = program.programacao;
     button.dataset.trechoKey = trecho.key;
     button.setAttribute("aria-current", isSelected ? "true" : "false");
-    button.setAttribute("aria-label", `${isSelected ? "Selecionado. " : ""}${importedTrechoServiceListTimeLabel(trecho)}. Status: ${isAutoIgnoredDuplicate ? "Duplicata automática (ignorado automaticamente)" : isDuplicated ? "Não editar" : status.label}.`);
+    button.setAttribute("aria-label", `${isSelected ? "Selecionado. " : ""}${importedTrechoServiceListTimeLabel(trecho)}. Status: ${isAutoIgnoredDuplicate ? "Duplicata automática (ignorado automaticamente)" : isDuplicated ? "Não editar" : status.label}.${ignoredReason ? ` Motivo: ${ignoredReason}.` : ""}`);
 
     const main = document.createElement("span");
     main.className = "import-service-main";
@@ -17423,6 +17648,17 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     side.append(badge);
     button.append(main, side);
     wrap.append(button);
+    if (ignoredReason) {
+      const reason = document.createElement("div");
+      reason.className = "import-ignored-reason-strip";
+      reason.setAttribute("aria-label", `Motivo do serviço ignorado: ${ignoredReason}`);
+      const label = document.createElement("span");
+      label.textContent = "Motivo";
+      const text = document.createElement("strong");
+      text.textContent = ignoredReason;
+      reason.append(label, text);
+      wrap.appendChild(reason);
+    }
     return wrap;
   }
 
@@ -17580,6 +17816,22 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return [splitButton, validateButton, ignoreButton].filter(Boolean);
   }
 
+  function buildImportIgnoredReasonNotice(trecho) {
+    const reasonText = getImportedIgnoredReason(trecho);
+    if (!reasonText) return null;
+    const notice = document.createElement("div");
+    notice.className = "import-ignored-reason-notice";
+    notice.setAttribute("role", "note");
+    const eyebrow = document.createElement("span");
+    eyebrow.textContent = "Motivo fixo";
+    const strong = document.createElement("strong");
+    strong.textContent = reasonText;
+    const detail = document.createElement("p");
+    detail.textContent = "Este serviço não será salvo enquanto estiver ignorado.";
+    notice.append(eyebrow, strong, detail);
+    return notice;
+  }
+
   function canShowImportedSplitAction(trecho, reviewStatus = normalizeImportedReviewStatus(trecho), isDuplicated = false) {
     const statuses = importReviewStatuses();
     const modes = importOperationalModes();
@@ -17684,7 +17936,20 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (status === statuses.BLOCKED && trecho.reviewBlockReason) {
       output.unshift(`Bloqueado: ${trecho.reviewBlockReason}`);
     }
+    const ignoredReason = getImportedIgnoredReason(trecho);
+    if (ignoredReason) {
+      output.unshift(`Ignorado: ${ignoredReason}`);
+    }
     return Array.from(new Set(output));
+  }
+
+  function getImportedIgnoredReason(trecho) {
+    const statuses = importReviewStatuses();
+    if (normalizeImportedReviewStatus(trecho) !== statuses.IGNORED) return "";
+    if (trecho?.reviewBlockReason) return trecho.reviewBlockReason;
+    if (isImportedDuplicateAutoIgnored(trecho)) return "Serviço repetido provável no Dataverse.";
+    if (trecho?.autoIgnoredByExternalStatus) return "Status XLSX Aguardando prestador.";
+    return "Ignorado manualmente na revisão.";
   }
 
   function isImportedDuplicateAutoIgnored(trecho) {
@@ -18695,10 +18960,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }
     if (action.dataset.importAction === "ignore-trecho") {
       captureImportReviewHistory("Ignorar serviço");
-      window.XlsxImportCore?.ignoreImportedTrechoReview?.(trecho);
+      window.XlsxImportCore?.ignoreImportedTrechoReview?.(trecho, "Ignorado manualmente na revisão.");
       if (!window.XlsxImportCore?.ignoreImportedTrechoReview) {
         trecho.reviewStatus = importReviewStatuses().IGNORED;
-        trecho.reviewBlockReason = "";
+        trecho.reviewBlockReason = "Ignorado manualmente na revisão.";
         trecho.autoIgnoredByDuplicate = false;
       }
       setImportedTrechoEditMode(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey, false);
@@ -18798,7 +19063,6 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         passenger.matchMessage = "Criar novo com nome, telefone, email, CR e cliente.";
         syncImportedSolicitanteFromPassenger(trecho, passenger, previousIdentity);
         renderImportReviewPreservingGallery();
-        openImportedPassengerEdit(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey, passengerIndex);
         return;
       }
       if (!isImportedTrechoEditing(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey)) {
@@ -19331,6 +19595,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
     const snapshot = createDraftSnapshot();
     return hasCommonDraftContent(snapshot);
+  }
+
+  function hasImportedServicesDraft() {
+    return !!state.importReview?.programs?.length;
   }
 
   async function performImportedServicesSave() {
@@ -20756,6 +21024,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.success.hidden = false;
   }
 
+  function getSelectedText() {
+    return String(window.getSelection?.().toString() || "").trim();
+  }
+
   function toast(message, type = "info", timeout = 5000, anchor = null) {
     const item = document.createElement("div");
     item.className = `toast ${type}`;
@@ -20769,7 +21041,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     close.type = "button";
     close.setAttribute("aria-label", "Fechar notificação");
     close.textContent = "×";
-    close?.addEventListener("click", () => item.remove());
+    close?.addEventListener("click", (event) => {
+      event.stopPropagation();
+      item.remove();
+    });
+    item.addEventListener("click", () => {
+      if (getSelectedText()) return;
+      item.remove();
+    });
 
     item.append(msg, close);
     if (anchor && Number.isFinite(anchor.clientX) && Number.isFinite(anchor.clientY)) {
