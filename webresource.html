@@ -1212,6 +1212,170 @@ h3 {
   min-width: min(100%, 240px);
 }
 
+.passenger-photo-field {
+  position: relative;
+  cursor: pointer;
+  align-content: start;
+  gap: 5px;
+  min-height: 66px;
+  border-style: solid;
+  background: var(--surface-soft);
+}
+
+.passenger-photo-field.is-dragging,
+.passenger-photo-field:focus,
+.passenger-photo-field:focus-within {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 34%, #ffffff);
+  box-shadow: var(--shadow-focus);
+}
+
+.passenger-photo-field.has-photo {
+  background: var(--surface-soft);
+}
+
+.passenger-photo-head,
+.passenger-photo-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.passenger-photo-head > span {
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.passenger-photo-head small {
+  display: inline;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.passenger-photo-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: var(--field-control-height);
+  height: var(--field-control-height);
+  padding: 2px 30px 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+
+.passenger-photo-field.has-photo .passenger-photo-body {
+  grid-template-columns: 28px minmax(0, 1fr);
+}
+
+.passenger-photo-field.has-photo .passenger-photo-icon {
+  display: none;
+}
+
+.passenger-photo-icon {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-soft) 42%, #ffffff);
+  color: var(--accent-strong);
+}
+
+.passenger-photo-icon svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.passenger-photo-preview {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  object-fit: cover;
+  background: #ffffff;
+}
+
+.passenger-photo-preview[hidden] {
+  display: none;
+}
+
+.passenger-photo-copy {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+
+.passenger-photo-copy strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.passenger-photo-copy span {
+  color: var(--text-soft);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.passenger-photo-actions {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+
+.passenger-photo-field.has-photo .passenger-photo-actions {
+  right: 6px;
+}
+
+.passenger-photo-clear {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 36%, #ffffff);
+  color: var(--text-soft);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.passenger-photo-clear:hover,
+.passenger-photo-clear:focus-visible {
+  background: color-mix(in srgb, var(--danger-soft) 62%, #ffffff);
+  color: var(--danger);
+  outline: 0;
+}
+
 .field,
 .toggle-field,
 .switch {
@@ -3633,6 +3797,47 @@ textarea.is-touch-resizing,
   padding-top: 9px;
 }
 
+.passenger-edit-field.is-photo {
+  align-items: stretch;
+}
+
+.passenger-edit-field.is-photo .passenger-edit-field-head {
+  padding-top: 0;
+  align-self: center;
+}
+
+.passenger-edit-field.is-photo .passenger-edit-control {
+  display: grid;
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  align-self: stretch;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.passenger-photo-edit {
+  position: relative;
+  display: block;
+  min-height: 100%;
+  height: 100%;
+  align-self: stretch;
+}
+
+.passenger-photo-edit.is-disabled {
+  opacity: 0.72;
+}
+
+.passenger-photo-edit .passenger-photo-body {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  min-height: 0;
+  height: auto;
+}
+
 .passenger-edit-field:focus-within {
   border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
   background: #ffffff;
@@ -3675,6 +3880,11 @@ textarea.is-touch-resizing,
 .passenger-edit-field .passenger-edit-control.is-empty,
 .passenger-edit-field .custom-select-trigger.is-empty,
 .passenger-edit-field textarea.passenger-edit-control.is-empty {
+  border-color: color-mix(in srgb, var(--warning) 42%, var(--line));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 12%, transparent);
+}
+
+.passenger-edit-field.is-empty .passenger-photo-body {
   border-color: color-mix(in srgb, var(--warning) 42%, var(--line));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 12%, transparent);
 }
@@ -6657,6 +6867,109 @@ body.is-import-dragging .import-drop-overlay {
   line-height: 1.4;
 }
 
+.success-dialog-actions {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.success-dialog-actions .primary-action,
+.success-dialog-actions .secondary-action {
+  min-width: 150px;
+  justify-content: center;
+}
+
+.passenger-photo-preview-dialog {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 14px;
+  justify-items: stretch;
+}
+
+.passenger-photo-preview-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.passenger-photo-preview-head h3 {
+  margin: 2px 0 0;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.passenger-photo-preview-head p:last-child {
+  margin: 5px 0 0;
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.passenger-photo-preview-close {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--text-soft);
+  font-size: 22px;
+  font-weight: 780;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.passenger-photo-preview-close:hover,
+.passenger-photo-preview-close:focus-visible {
+  border-color: color-mix(in srgb, var(--danger) 34%, var(--line));
+  color: var(--danger);
+  outline: 0;
+  box-shadow: var(--shadow-focus);
+}
+
+.passenger-photo-preview-frame {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  max-height: min(56vh, 430px);
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(45deg, #f2f5f8 25%, transparent 25%),
+    linear-gradient(-45deg, #f2f5f8 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #f2f5f8 75%),
+    linear-gradient(-45deg, transparent 75%, #f2f5f8 75%),
+    #ffffff;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+  overflow: hidden;
+}
+
+.passenger-photo-preview-frame img {
+  display: block;
+  max-width: 100%;
+  max-height: min(50vh, 390px);
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  box-shadow: 0 12px 34px rgb(15 23 42 / 0.18);
+}
+
+.passenger-photo-preview-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.passenger-photo-preview-actions .primary-action {
+  min-width: 120px;
+  justify-content: center;
+}
+
 .activation-guard-dialog {
   width: min(560px, 100%);
   justify-items: stretch;
@@ -8412,6 +8725,28 @@ textarea,
               <span>Tipo de veículo</span>
               <select id="bdTipoVeiculo"></select>
             </label>
+            <div id="bdPhotoDrop" class="field span-2 passenger-photo-field" tabindex="0" role="button" aria-label="Anexar ou colar foto do passageiro">
+              <div class="passenger-photo-head">
+                <span>Foto do passageiro</span>
+                <small id="bdPhotoMeta">JPG, PNG ou WebP até 5 MB</small>
+              </div>
+              <div class="passenger-photo-body">
+                <div class="passenger-photo-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M12 3.5 7.8 7.7l1.4 1.4L11 7.3V15h2V7.3l1.8 1.8 1.4-1.4L12 3.5ZM5 14v4.2c0 .5.2.9.5 1.3.4.3.8.5 1.3.5h10.4c.5 0 .9-.2 1.3-.5.3-.4.5-.8.5-1.3V14h-2v4H7v-4H5Z"></path>
+                  </svg>
+                </div>
+                <img id="bdPhotoPreview" class="passenger-photo-preview" alt="" hidden>
+                <div class="passenger-photo-copy">
+                  <strong>Clique para anexar foto</strong>
+                  <span>ou cole a imagem com Ctrl+V</span>
+                </div>
+                <div class="passenger-photo-actions">
+                  <input id="bdPhotoInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+                  <button id="bdPhotoClear" type="button" class="passenger-photo-clear" hidden aria-label="Remover foto">×</button>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -8509,7 +8844,7 @@ textarea,
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.0.12</span>
+        <span>v</span><span id="codeVersionText">1.0.13</span>
       </footer>
     </main>
 
@@ -8538,7 +8873,10 @@ textarea,
       <div class="dialog success-dialog">
         <strong>Concluído!</strong>
         <p id="successMessage">Serviço solicitado com sucesso.</p>
-        <button id="closeSuccess" type="button" class="primary-action">OK</button>
+        <div class="success-dialog-actions">
+          <button id="generateVoucher" type="button" class="secondary-action">Gerar Voucher</button>
+          <button id="closeSuccess" type="button" class="primary-action">OK</button>
+        </div>
       </div>
     </div>
 
@@ -8662,6 +9000,25 @@ textarea,
         <footer class="activation-guard-actions">
           <button id="clearAllFormsCancel" type="button" class="secondary-action">Cancelar</button>
           <button id="clearAllFormsConfirm" type="button" class="primary-action">Apagar e recomeçar</button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="passengerPhotoPreviewOverlay" class="overlay" hidden>
+      <div class="dialog passenger-photo-preview-dialog" role="dialog" aria-labelledby="passengerPhotoPreviewTitle" aria-modal="true" tabindex="-1">
+        <header class="passenger-photo-preview-head">
+          <div>
+            <p class="passenger-picker-eyebrow">Foto do passageiro</p>
+            <h3 id="passengerPhotoPreviewTitle">Confirmar imagem</h3>
+            <p id="passengerPhotoPreviewMeta">Confira antes de salvar.</p>
+          </div>
+          <button id="passengerPhotoPreviewCancel" type="button" class="passenger-photo-preview-close" aria-label="Cancelar foto">×</button>
+        </header>
+        <div class="passenger-photo-preview-frame">
+          <img id="passengerPhotoPreviewImage" alt="Prévia da foto do passageiro">
+        </div>
+        <footer class="passenger-photo-preview-actions">
+          <button id="passengerPhotoPreviewOk" type="button" class="primary-action">OK</button>
         </footer>
       </div>
     </div>
@@ -10240,7 +10597,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         cadastro: "cr40f_datadecadastro",
         classificacao: "cr40f_classificacao",
         status: "cr40f_status",
-        tipoVeiculo: "new_tipodoveiculo"
+        tipoVeiculo: "new_tipodoveiculo",
+        fotoUrl: "new_linkdafoto"
       },
       cliente: {
         id: "cr40f_clientes1id",
@@ -10287,6 +10645,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   const MAX_FREQUENT_SERVICE_RECORDS = 120;
   const IMPORT_SAVE_CONCURRENCY = 3;
   const INITIAL_PASSENGER_LOOKUP_LIMIT = 5000;
+  const PASSENGER_PHOTO_FLOW_URL_DEV = "https://25a2ab78cf07ee41a124457aa2c29a.ea.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/293ac35160b04517814dba9cd65367e5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=_LO4SdhQdi2DjpGBp9kBqAXxBDRw5QgaKYmzf1hvXxs";
+  const PASSENGER_PHOTO_FLOW_URL_PROD = "https://6847878f5a6fe08baed6d7119975e3.e1.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a0a24686b4d04443b83b6f281ca0fede/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=PT75nHGbRYJ78_oudaGod_rpV_z3_1FDnklPYsQT3Ek";
+  const PASSENGER_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
   const PT_BR_LOCALE = "pt-BR";
   const IMPORT_XLSX_STATUS_OPERATION_MAP = Object.freeze({
     "agendado": "Confirmado",
@@ -10414,6 +10775,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     loading: $("loadingOverlay"),
     success: $("successOverlay"),
     successMessage: $("successMessage"),
+    generateVoucher: $("generateVoucher"),
     closeSuccess: $("closeSuccess"),
     toastStack: $("toastStack"),
     saveButton: $("saveButton"),
@@ -10486,6 +10848,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     bdNascimento: $("bdNascimento"),
     bdPreferencias: $("bdPreferencias"),
     bdTipoVeiculo: $("bdTipoVeiculo"),
+    bdPhotoDrop: $("bdPhotoDrop"),
+    bdPhotoInput: $("bdPhotoInput"),
+    bdPhotoClear: $("bdPhotoClear"),
+    bdPhotoPreview: $("bdPhotoPreview"),
+    bdPhotoMeta: $("bdPhotoMeta"),
     passengerEditOverlay: $("passengerEditOverlay"),
     passengerEditTitle: $("passengerEditTitle"),
     passengerEditStatus: $("passengerEditStatus"),
@@ -10510,6 +10877,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     clearAllFormsOverlay: $("clearAllFormsOverlay"),
     clearAllFormsCancel: $("clearAllFormsCancel"),
     clearAllFormsConfirm: $("clearAllFormsConfirm"),
+    passengerPhotoPreviewOverlay: $("passengerPhotoPreviewOverlay"),
+    passengerPhotoPreviewImage: $("passengerPhotoPreviewImage"),
+    passengerPhotoPreviewMeta: $("passengerPhotoPreviewMeta"),
+    passengerPhotoPreviewOk: $("passengerPhotoPreviewOk"),
+    passengerPhotoPreviewCancel: $("passengerPhotoPreviewCancel"),
     createPassenger: $("createPassenger"),
     agendarRetorno: $("agendarRetorno"),
     receberRetorno: $("receberRetorno"),
@@ -10545,6 +10917,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     ordensPagamento: [],
     relacoes: [],
     passengerSelectionRecency: [],
+    bdPassengerPhotoDraft: null,
     selectedPassengers: [],
     scheduleDrafts: [],
     enderecoRascunho: [],
@@ -10568,6 +10941,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     passengerRowSeq: 0,
     scheduleDraftSeq: 0,
     pendingSaveContext: null,
+    lastSuccessVoucher: null,
     importReview: null,
     importReviewFilter: "all",
     saveLog: [],
@@ -10603,6 +10977,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   let suppressPassengerPickerOpenOnFocus = false;
   let activePassengerEditId = "";
   let activeImportedPassengerEditRef = null;
+  let activePassengerEditPhotoDraft = null;
   let passengerEditEnabled = false;
   let passengerEditStatusTimer = null;
   const passengerEditSaveTimers = new Map();
@@ -10610,6 +10985,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   let passengerMatchCandidates = [];
   let passengerMatchContext = null;
   let clearAllFormsConfirmationResolve = null;
+  let passengerPhotoPreviewResolve = null;
+  let passengerPhotoPreviewPreviousFocus = null;
   const importPassengerCreateLocks = new Map();
   const IMPORT_REVIEW_HISTORY_LIMIT = 80;
   const GLOBAL_HISTORY_LIMIT = 80;
@@ -10972,6 +11349,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       button?.addEventListener("click", () => setTab(button.dataset.tab));
     });
     document.addEventListener("pointerdown", handleTextareaResizePointerDown, { capture: true, passive: false });
+    el.generateVoucher?.addEventListener("click", openSuccessVoucher);
     el.closeSuccess?.addEventListener("click", closeWebResourceToGeral);
     el.closeRwButton?.addEventListener("click", closeWebResourceToGeral);
     el.saveButton?.addEventListener("click", saveForm);
@@ -11027,6 +11405,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.returnReceiveScopeAll?.addEventListener("click", () => resolveReturnReceiveScope("all"));
     el.clearAllFormsCancel?.addEventListener("click", () => resolveClearAllFormsConfirmation(false));
     el.clearAllFormsConfirm?.addEventListener("click", () => resolveClearAllFormsConfirmation(true));
+    el.passengerPhotoPreviewOk?.addEventListener("click", () => resolvePassengerPhotoPreview(true));
+    el.passengerPhotoPreviewCancel?.addEventListener("click", () => resolvePassengerPhotoPreview(false));
     el.activationGuardOverlay?.addEventListener("click", (event) => {
       if (event.target === el.activationGuardOverlay) {
         resolveActivationGuard("review");
@@ -11042,6 +11422,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         resolveClearAllFormsConfirmation(false);
       }
     });
+    el.passengerPhotoPreviewOverlay?.addEventListener("click", (event) => {
+      if (event.target === el.passengerPhotoPreviewOverlay) {
+        resolvePassengerPhotoPreview(false);
+      }
+    });
     el.activationGuardOverlay?.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || el.activationGuardOverlay.hidden) return;
       resolveActivationGuard("review");
@@ -11053,6 +11438,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.clearAllFormsOverlay?.addEventListener("keydown", (event) => {
       if (event.key !== "Escape" || el.clearAllFormsOverlay.hidden) return;
       resolveClearAllFormsConfirmation(false);
+    });
+    el.passengerPhotoPreviewOverlay?.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || el.passengerPhotoPreviewOverlay.hidden) return;
+      resolvePassengerPhotoPreview(false);
     });
     el.passengerEditFields?.addEventListener("input", handlePassengerEditInput);
     el.passengerEditFields?.addEventListener("change", handlePassengerEditInput);
@@ -11075,6 +11464,16 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     markPassengerEditEmptySignals();
     el.addPassenger?.addEventListener("click", addPassengerRow);
     el.passengerEmpty?.addEventListener("click", addPassengerRow);
+    el.bdPhotoDrop?.addEventListener("click", handleBdPassengerPhotoBlockClick);
+    el.bdPhotoDrop?.addEventListener("keydown", handleBdPassengerPhotoBlockKeydown);
+    el.bdPhotoInput?.addEventListener("change", handleBdPassengerPhotoFileChange);
+    el.bdPhotoClear?.addEventListener("click", clearBdPassengerPhotoDraft);
+    document.addEventListener("paste", handlePassengerPhotoGlobalPaste);
+    el.bdPhotoDrop?.addEventListener("dragover", handlePassengerPhotoDragOver);
+    el.bdPhotoDrop?.addEventListener("dragleave", handlePassengerPhotoDragLeave);
+    el.bdPhotoDrop?.addEventListener("drop", handleBdPassengerPhotoDrop);
+    el.passengerEditFields?.addEventListener("click", handlePassengerEditPhotoAction);
+    el.passengerEditFields?.addEventListener("change", handlePassengerEditPhotoFileChange);
     el.passengerRows?.addEventListener("pointerdown", handlePassengerRowPointerDown);
     el.passengerRows?.addEventListener("click", handlePassengerRowAction);
     el.passengerRows?.addEventListener("input", handlePassengerRowInput);
@@ -12022,6 +12421,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       f.nascimento,
       f.departamento,
       f.tipoVeiculo,
+      f.fotoUrl,
       "_cr40f_cliente_value"
     ].join(",");
   }
@@ -13371,6 +13771,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       nascimento: record[f.nascimento] || "",
       departamento: record[f.departamento] || "",
       tipoVeiculo: record[f.tipoVeiculo] || "",
+      fotoUrl: normalizePassengerPhotoUrl(record[f.fotoUrl]),
       tipoVeiculoLabel: record[`${f.tipoVeiculo}@OData.Community.Display.V1.FormattedValue`] || "",
       clienteId: record[clienteLookup] || "",
       clienteLabel: record[`${clienteLookup}@OData.Community.Display.V1.FormattedValue`] || ""
@@ -13632,7 +14033,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       { key: "cr", label: "CR", kind: "text", stateKey: "cr", payloadField: f.cr, inputType: "text" },
       { key: "nascimento", label: "Data de nascimento", kind: "date", stateKey: "nascimento", payloadField: f.nascimento },
       { key: "preferencias", label: "Perfil do passageiro", kind: "textarea", span: "wide", stateKey: "preferencias", payloadField: f.preferencias },
-      { key: "tipoVeiculo", label: "Tipo de veículo", kind: "choice", stateKey: "tipoVeiculo", payloadField: f.tipoVeiculo, optionsKey: "bdTipoVeiculo" }
+      { key: "tipoVeiculo", label: "Tipo de veículo", kind: "choice", stateKey: "tipoVeiculo", payloadField: f.tipoVeiculo, optionsKey: "bdTipoVeiculo" },
+      { key: "fotoUrl", label: "Foto do passageiro", kind: "photo", span: "wide", stateKey: "fotoUrl", payloadField: f.fotoUrl }
     ];
   }
 
@@ -13682,8 +14084,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }
     if (activePassengerEditId && !sameId(activePassengerEditId, passengerId)) {
       flushPassengerEditSaves(activePassengerEditId);
+      clearActivePassengerEditPhotoDraft(activePassengerEditId);
     }
     activePassengerEditId = passengerId;
+    clearActivePassengerEditPhotoDraft();
     passengerEditEnabled = false;
     renderPassengerEditHeader(passenger);
     renderPassengerEditFields(passenger);
@@ -13715,6 +14119,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (activePassengerEditId || activeImportedPassengerEditRef) {
       flushPassengerEditSaves(activePassengerEditId);
     }
+    clearActivePassengerEditPhotoDraft(activePassengerEditId);
     activePassengerEditId = "";
     activeImportedPassengerEditRef = {
       programacao,
@@ -13761,6 +14166,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (activePassengerEditId || activeImportedPassengerEditRef) {
       flushPassengerEditSaves(activePassengerEditId);
     }
+    clearActivePassengerEditPhotoDraft(activePassengerEditId);
     activePassengerEditId = "";
     activeImportedPassengerEditRef = {
       programacao,
@@ -13804,6 +14210,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       row.className = "passenger-edit-field";
       row.classList.toggle("is-wide", layout[index] === "wide");
       row.classList.toggle("is-multiline", field.kind === "textarea");
+      row.classList.toggle("is-photo", field.kind === "photo");
       row.dataset.fieldKey = field.key;
 
       const head = document.createElement("div");
@@ -13863,6 +14270,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       control = document.createElement("textarea");
       control.rows = 3;
       control.readOnly = true;
+    } else if (field.kind === "photo") {
+      control = buildPassengerPhotoControl(passenger);
     } else if (field.kind === "choice" || field.kind === "lookup") {
       control = document.createElement("select");
       control.disabled = true;
@@ -13878,11 +14287,82 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
     const rawValue = getPassengerEditValue(passenger, field);
     const value = field.key === "telefone" ? formatPhoneNumber(rawValue) : rawValue;
-    control.className = "passenger-edit-control";
+    control.classList.add("passenger-edit-control");
     control.dataset.passengerEditControl = field.key;
     control.dataset.savedValue = field.key === "telefone" ? phoneStorageValue(rawValue, "") : value;
-    control.value = value;
+    if (field.kind !== "photo") control.value = value;
     return control;
+  }
+
+  function buildPassengerPhotoControl(passenger) {
+    const passengerId = cleanGuid(passenger?.id || activePassengerEditId);
+    const draftState = getActivePassengerEditPhotoDraft(passengerId);
+    const draft = draftState?.draft || null;
+    const photoUrl = normalizePassengerPhotoUrl(passenger?.fotoUrl);
+    const previewUrl = draft?.previewDataUrl || photoUrl;
+    const hasPhoto = !!previewUrl;
+    const wrap = document.createElement("div");
+    wrap.className = "passenger-photo-field passenger-photo-edit";
+    wrap.classList.toggle("has-photo", hasPhoto);
+    wrap.classList.toggle("has-draft", !!draft);
+    wrap.tabIndex = 0;
+    wrap.dataset.passengerPhotoDrop = "edit";
+
+    const body = document.createElement("div");
+    body.className = "passenger-photo-body";
+
+    const icon = document.createElement("div");
+    icon.className = "passenger-photo-icon";
+    icon.setAttribute("aria-hidden", "true");
+    icon.innerHTML = '<svg viewBox="0 0 24 24" focusable="false"><path d="M12 3.5 7.8 7.7l1.4 1.4L11 7.3V15h2V7.3l1.8 1.8 1.4-1.4L12 3.5ZM5 14v4.2c0 .5.2.9.5 1.3.4.3.8.5 1.3.5h10.4c.5 0 .9-.2 1.3-.5.3-.4.5-.8.5-1.3V14h-2v4H7v-4H5Z"></path></svg>';
+
+    const preview = document.createElement("img");
+    preview.className = "passenger-photo-preview";
+    preview.alt = hasPhoto ? (draft ? "Prévia da nova foto do passageiro" : "Foto atual do passageiro") : "";
+    preview.hidden = !hasPhoto;
+    if (hasPhoto) preview.src = previewUrl;
+    preview.addEventListener("error", () => markPassengerPhotoControlEmpty(wrap));
+
+    const copy = document.createElement("div");
+    copy.className = "passenger-photo-copy";
+    const title = document.createElement("strong");
+    title.textContent = draft ? draft.fileName : (photoUrl ? "Foto cadastrada." : "Sem foto cadastrada.");
+    const hint = document.createElement("span");
+    hint.textContent = draft
+      ? formatPassengerEditPhotoDraftMeta(draftState)
+      : (photoUrl ? "Desbloqueie para substituir." : "Desbloqueie para anexar ou cole com Ctrl+V.");
+    copy.append(title, hint);
+    body.append(icon, preview, copy);
+
+    const actions = document.createElement("div");
+    actions.className = "passenger-photo-actions";
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/png,image/jpeg,image/webp,image/gif";
+    input.hidden = true;
+    input.dataset.passengerPhotoFile = "edit";
+    actions.append(input);
+    body.append(actions);
+    wrap.append(body);
+    return wrap;
+  }
+
+  function markPassengerPhotoControlEmpty(control) {
+    if (!control?.dataset || control.dataset.passengerEditControl !== "fotoUrl") return;
+    control.dataset.savedValue = "";
+    control.classList.remove("has-photo");
+    control.classList.remove("has-draft");
+    const preview = control.querySelector(".passenger-photo-preview");
+    if (preview) {
+      preview.hidden = true;
+      preview.removeAttribute("src");
+      preview.alt = "";
+    }
+    const title = control.querySelector(".passenger-photo-copy strong");
+    if (title) title.textContent = "Sem foto cadastrada.";
+    const hint = control.querySelector(".passenger-photo-copy span");
+    if (hint) hint.textContent = "Desbloqueie para anexar ou cole com Ctrl+V.";
+    applyPassengerEditEmptySignals();
   }
 
   function fillPassengerEditSelect(select, field) {
@@ -13900,8 +14380,57 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function getPassengerEditValue(passenger, field) {
     const raw = passenger?.[field.stateKey] ?? "";
+    if (field.key === "fotoUrl") return normalizePassengerPhotoUrl(raw);
     if (field.kind === "date" && raw) return String(raw).slice(0, 10);
     return raw === null || raw === undefined ? "" : String(raw);
+  }
+
+  function normalizePassengerPhotoUrl(value) {
+    const url = String(value || "").trim();
+    if (!url) return "";
+    if (/^https?:\/\//i.test(url)) return url;
+    if (/^data:image\/[a-z0-9.+-]+;base64,/i.test(url)) return url;
+    return "";
+  }
+
+  function getActivePassengerEditPhotoDraft(passengerId = activePassengerEditId) {
+    const cleanPassengerId = cleanGuid(passengerId);
+    if (!cleanPassengerId || !activePassengerEditPhotoDraft?.passengerId) return null;
+    return sameId(activePassengerEditPhotoDraft.passengerId, cleanPassengerId) ? activePassengerEditPhotoDraft : null;
+  }
+
+  function setActivePassengerEditPhotoDraft(passengerId, draft, options = {}) {
+    const cleanPassengerId = cleanGuid(passengerId);
+    if (!cleanPassengerId || !draft) {
+      activePassengerEditPhotoDraft = null;
+      return;
+    }
+    activePassengerEditPhotoDraft = {
+      passengerId: cleanPassengerId,
+      draft,
+      uploading: options.uploading !== false,
+      failed: !!options.failed
+    };
+  }
+
+  function clearActivePassengerEditPhotoDraft(passengerId = "") {
+    if (!activePassengerEditPhotoDraft) return;
+    if (!passengerId) {
+      activePassengerEditPhotoDraft = null;
+      return;
+    }
+    if (sameId(activePassengerEditPhotoDraft.passengerId, cleanGuid(passengerId))) {
+      activePassengerEditPhotoDraft = null;
+    }
+  }
+
+  function formatPassengerEditPhotoDraftMeta(draftState) {
+    const draft = draftState?.draft;
+    if (!draft) return "Desbloqueie para anexar ou cole com Ctrl+V.";
+    const kb = Math.max(1, Math.ceil((draft.fileSize || 0) / 1024));
+    if (draftState?.failed) return `${kb} KB - Falha no upload. Cole ou anexe outra imagem.`;
+    if (draftState?.uploading) return `${kb} KB - Enviando foto...`;
+    return `${kb} KB - Foto pronta para salvar.`;
   }
 
   function togglePassengerEditMode() {
@@ -13919,6 +14448,13 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       el.passengerEditToggle.setAttribute("aria-label", passengerEditEnabled ? "Bloquear edição" : "Habilitar edição");
     }
     el.passengerEditFields?.querySelectorAll("[data-passenger-edit-control]").forEach((control) => {
+      if (control.dataset.passengerEditControl === "fotoUrl") {
+        control.querySelectorAll("button, input").forEach((item) => {
+          item.disabled = !passengerEditEnabled;
+        });
+        control.classList.toggle("is-disabled", !passengerEditEnabled);
+        return;
+      }
       if (control.tagName === "SELECT") {
         control.disabled = !passengerEditEnabled;
         refreshCustomSelect(control);
@@ -13931,6 +14467,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function handlePassengerEditInput(event) {
     const control = event.target.closest("[data-passenger-edit-control]");
     if (!control || !el.passengerEditFields.contains(control)) return;
+    if (control.dataset.passengerEditControl === "fotoUrl") return;
     if (control.disabled || control.readOnly) return;
     formatPassengerEditControl(control.dataset.passengerEditControl, control);
     const delay = event.type === "input" && control.tagName !== "SELECT" ? 550 : 0;
@@ -14226,6 +14763,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (activePassengerEditId || activeImportedPassengerEditRef) {
       flushPassengerEditSaves(activePassengerEditId);
     }
+    clearActivePassengerEditPhotoDraft(activePassengerEditId);
     closeAllCustomSelects();
     if (el.passengerEditOverlay) el.passengerEditOverlay.hidden = true;
     if (el.passengerEditFields) el.passengerEditFields.replaceChildren();
@@ -16344,6 +16882,306 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }
   }
 
+  function resolvePassengerPhotoFlowUrl() {
+    const runtimeUrl = String(state.xrm?.Utility?.getGlobalContext?.()?.getClientUrl?.() || window.location.href || "").toLowerCase();
+    if (!runtimeUrl) return PASSENGER_PHOTO_FLOW_URL_PROD;
+    if (
+      runtimeUrl.includes("localhost") ||
+      runtimeUrl.includes("127.0.0.1") ||
+      runtimeUrl.includes("file:") ||
+      QUERY_MOCK_MODE
+    ) {
+      return PASSENGER_PHOTO_FLOW_URL_DEV;
+    }
+    return PASSENGER_PHOTO_FLOW_URL_PROD;
+  }
+
+  function currentUserName() {
+    try {
+      return state.xrm?.Utility?.getGlobalContext?.()?.userSettings?.userName || "";
+    } catch (error) {
+      return "";
+    }
+  }
+
+  function isSupportedPassengerPhoto(file) {
+    return !!file && /^image\/(png|jpe?g|webp|gif)$/i.test(file.type || "");
+  }
+
+  function passengerPhotoFileName(file, passengerName = "passageiro") {
+    const ext = String(file?.name || "").split(".").pop() || String(file?.type || "image/jpeg").split("/").pop() || "jpg";
+    const safeName = normalizePassengerDisplayName(passengerName || "passageiro")
+      .replace(/[\\/:*?#"<>|]/g, "-")
+      .trim() || "passageiro";
+    return `${safeName} - foto.${ext.toLowerCase()}`;
+  }
+
+  function readFileAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = () => reject(reader.error || new Error("Falha ao ler imagem."));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function preparePassengerPhotoDraft(file, passengerName = "") {
+    if (!isSupportedPassengerPhoto(file)) throw new Error("Use imagem JPG, PNG, WebP ou GIF.");
+    if (file.size > PASSENGER_PHOTO_MAX_BYTES) throw new Error("Imagem acima de 5 MB.");
+    const dataUrl = await readFileAsDataUrl(file);
+    const base64 = dataUrl.includes(",") ? dataUrl.split(",").pop() : "";
+    if (!base64) throw new Error("Imagem sem Base64 válido.");
+    return {
+      file,
+      fileName: passengerPhotoFileName(file, passengerName),
+      mimeType: file.type || "image/jpeg",
+      fileSize: file.size || 0,
+      base64,
+      previewDataUrl: dataUrl
+    };
+  }
+
+  function imageFileFromClipboardData(clipboardData) {
+    const items = [...(clipboardData?.items || [])];
+    const imageItem = items.find((item) => String(item.type || "").startsWith("image/"));
+    return imageItem?.getAsFile?.() || null;
+  }
+
+  async function setBdPassengerPhotoDraft(file) {
+    try {
+      const draft = await preparePassengerPhotoDraft(file, el.bdNome?.value || "");
+      const confirmed = await openPassengerPhotoPreview(draft);
+      if (!confirmed) return;
+      state.bdPassengerPhotoDraft = draft;
+      renderBdPassengerPhotoDraft();
+      toast("Foto pronta para upload ao cadastrar.", "success", 2500);
+    } catch (error) {
+      toast(error.message || "Falha ao preparar foto.", "error", 5000);
+    }
+  }
+
+  function openPassengerPhotoPreview(draft) {
+    if (!draft?.previewDataUrl || !el.passengerPhotoPreviewOverlay) return Promise.resolve(true);
+    if (passengerPhotoPreviewResolve) resolvePassengerPhotoPreview(false);
+    passengerPhotoPreviewPreviousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (el.passengerPhotoPreviewImage) {
+      el.passengerPhotoPreviewImage.src = draft.previewDataUrl;
+    }
+    if (el.passengerPhotoPreviewMeta) {
+      el.passengerPhotoPreviewMeta.textContent = `${draft.fileName} - ${Math.ceil((draft.fileSize || 0) / 1024)} KB`;
+    }
+    el.passengerPhotoPreviewOverlay.hidden = false;
+    window.setTimeout(() => el.passengerPhotoPreviewOk?.focus(), 0);
+    return new Promise((resolve) => {
+      passengerPhotoPreviewResolve = resolve;
+    });
+  }
+
+  function resolvePassengerPhotoPreview(confirmed) {
+    const resolve = passengerPhotoPreviewResolve;
+    passengerPhotoPreviewResolve = null;
+    if (el.passengerPhotoPreviewOverlay) el.passengerPhotoPreviewOverlay.hidden = true;
+    if (el.passengerPhotoPreviewImage) {
+      el.passengerPhotoPreviewImage.removeAttribute("src");
+    }
+    if (passengerPhotoPreviewPreviousFocus?.isConnected) {
+      passengerPhotoPreviewPreviousFocus.focus();
+    }
+    passengerPhotoPreviewPreviousFocus = null;
+    if (resolve) resolve(!!confirmed);
+  }
+
+  function renderBdPassengerPhotoDraft() {
+    const draft = state.bdPassengerPhotoDraft;
+    if (el.bdPhotoPreview) {
+      el.bdPhotoPreview.hidden = !draft;
+      el.bdPhotoPreview.src = draft?.previewDataUrl || "";
+      el.bdPhotoPreview.alt = draft ? "Prévia da foto do passageiro" : "";
+    }
+    if (el.bdPhotoMeta) {
+      el.bdPhotoMeta.textContent = draft ? `${draft.fileName} - ${Math.ceil((draft.fileSize || 0) / 1024)} KB` : "JPG, PNG ou WebP até 5 MB";
+    }
+    if (el.bdPhotoDrop) el.bdPhotoDrop.classList.toggle("has-photo", !!draft);
+    if (el.bdPhotoClear) el.bdPhotoClear.hidden = !draft;
+  }
+
+  function clearBdPassengerPhotoDraft() {
+    state.bdPassengerPhotoDraft = null;
+    if (el.bdPhotoInput) el.bdPhotoInput.value = "";
+    renderBdPassengerPhotoDraft();
+  }
+
+  async function handleBdPassengerPhotoFileChange(event) {
+    const file = event.target.files?.[0] || null;
+    try {
+      if (file) await setBdPassengerPhotoDraft(file);
+    } finally {
+      event.target.value = "";
+    }
+  }
+
+  function handleBdPassengerPhotoBlockClick(event) {
+    if (event.target.closest("#bdPhotoClear")) return;
+    el.bdPhotoInput?.click();
+  }
+
+  function handleBdPassengerPhotoBlockKeydown(event) {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    el.bdPhotoInput?.click();
+  }
+
+  function handlePassengerPhotoDragOver(event) {
+    if (!event.dataTransfer?.types?.includes("Files")) return;
+    event.preventDefault();
+    event.currentTarget.classList.add("is-dragging");
+  }
+
+  function handlePassengerPhotoDragLeave(event) {
+    event.currentTarget.classList.remove("is-dragging");
+  }
+
+  function handleBdPassengerPhotoDrop(event) {
+    const file = event.dataTransfer?.files?.[0] || null;
+    if (!file) return;
+    event.preventDefault();
+    event.currentTarget.classList.remove("is-dragging");
+    setBdPassengerPhotoDraft(file);
+  }
+
+  function isPassengerCreatePanelActive() {
+    return !!el.bdPhotoDrop?.closest(".panel")?.classList.contains("is-active");
+  }
+
+  function handlePassengerPhotoGlobalPaste(event) {
+    const file = imageFileFromClipboardData(event.clipboardData);
+    if (!file) return;
+
+    if (el.passengerEditOverlay && !el.passengerEditOverlay.hidden) {
+      event.preventDefault();
+      if (!passengerEditEnabled) {
+        toast("Desbloqueie a edição para trocar a foto do passageiro.", "warning", 5000);
+        return;
+      }
+      handlePassengerEditPhotoDraft(file);
+      return;
+    }
+
+    if (isPassengerCreatePanelActive()) {
+      event.preventDefault();
+      setBdPassengerPhotoDraft(file);
+    }
+  }
+
+  async function uploadPassengerPhoto(passenger, draft) {
+    const flowUrl = resolvePassengerPhotoFlowUrl();
+    if (!flowUrl) throw new Error("URL do Flow de foto não configurada.");
+    const passengerId = cleanGuid(passenger?.id || "");
+    const passengerName = normalizePassengerDisplayName(passenger?.label || passenger?.nome || "");
+    const clientName = String(passenger?.clienteLabel || "").trim();
+    const payload = {
+      curriculoId: passengerId,
+      passengerId,
+      externalId: passengerId,
+      fileName: draft.fileName,
+      mimeType: draft.mimeType,
+      fileSize: draft.fileSize,
+      base64: draft.base64,
+      candidateName: passengerName,
+      passengerName,
+      clientName,
+      uploadedBy: currentUserName(),
+      uploadedAt: new Date().toISOString()
+    };
+    const response = await fetch(flowUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error(`Flow retornou HTTP ${response.status}.`);
+    const result = await response.json().catch(() => ({}));
+    const webUrl = String(result.webUrl || result.url || result.link || "").trim();
+    if (!webUrl) throw new Error("Flow não retornou webUrl.");
+    return webUrl;
+  }
+
+  async function savePassengerPhotoLink(passengerId, photoUrl) {
+    const cleanPassengerId = cleanGuid(passengerId || "");
+    if (!cleanPassengerId || !photoUrl) return null;
+    const payload = { [CONFIG.fields.passageiro.fotoUrl]: photoUrl };
+    if (state.xrm && !state.mockMode) {
+      await state.xrm.WebApi.updateRecord(CONFIG.entities.passageiro, cleanPassengerId, payload);
+    }
+    const field = getPassengerEditField("fotoUrl");
+    return applyPassengerFieldToState(cleanPassengerId, field, photoUrl);
+  }
+
+  async function uploadAndSavePassengerPhoto(passenger, draft) {
+    const photoUrl = await uploadPassengerPhoto(passenger, draft);
+    const updatedPassenger = await savePassengerPhotoLink(passenger.id, photoUrl);
+    if (updatedPassenger) persistMockPassengerRecord(updatedPassenger);
+    return { photoUrl, updatedPassenger };
+  }
+
+  async function handlePassengerEditPhotoDraft(file) {
+    if (!passengerEditEnabled) {
+      toast("Habilite a edição antes de trocar a foto.", "warning", 4000);
+      return;
+    }
+    const passengerId = cleanGuid(activePassengerEditId);
+    const passenger = getPassengerById(passengerId);
+    if (!passenger) {
+      toast("Passageiro não encontrado para foto.", "error", 5000);
+      return;
+    }
+    try {
+      const draft = await preparePassengerPhotoDraft(file, passenger.label || "");
+      const confirmed = await openPassengerPhotoPreview(draft);
+      if (!confirmed) return;
+      setActivePassengerEditPhotoDraft(passengerId, draft, { uploading: true });
+      renderPassengerEditFields(passenger);
+      setPassengerEditMode(true);
+      setPassengerEditStatus("Enviando foto...", "saving");
+      const { updatedPassenger } = await uploadAndSavePassengerPhoto(passenger, draft);
+      clearActivePassengerEditPhotoDraft(passengerId);
+      setPassengerEditStatus("Foto atualizada.", "saved");
+      renderPassengerEditFields(updatedPassenger || getPassengerById(passengerId));
+      setPassengerEditMode(true);
+      refreshPassengerDependentViews(passengerId);
+    } catch (error) {
+      console.error(error);
+      setActivePassengerEditPhotoDraft(
+        passengerId,
+        activePassengerEditPhotoDraft?.draft || null,
+        { uploading: false, failed: true }
+      );
+      renderPassengerEditFields(getPassengerById(passengerId) || passenger);
+      setPassengerEditMode(true);
+      setPassengerEditStatus("Falha ao salvar foto.", "error");
+      toast(error.message || "Falha ao salvar foto.", "error", 8000);
+    }
+  }
+
+  function handlePassengerEditPhotoAction(event) {
+    const wrap = event.target.closest("[data-passenger-edit-control='fotoUrl']");
+    if (!wrap) return;
+    if (!passengerEditEnabled) {
+      toast("Desbloqueie a edição para trocar a foto do passageiro.", "warning", 5000);
+      return;
+    }
+    wrap.querySelector("[data-passenger-photo-file]")?.click();
+  }
+
+  async function handlePassengerEditPhotoFileChange(event) {
+    if (!event.target.matches("[data-passenger-photo-file]")) return;
+    const file = event.target.files?.[0] || null;
+    try {
+      if (file) await handlePassengerEditPhotoDraft(file);
+    } finally {
+      event.target.value = "";
+    }
+  }
+
   async function createPassenger() {
     clearValidationStates();
     el.bdNome.value = normalizePassengerDisplayName(el.bdNome.value);
@@ -16377,6 +17215,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
     if (!validateEmailControl(el.bdEmail, { tab: "bd" })) {
       toast("'Email' inválido.", "error");
+      return;
+    }
+
+    if (state.bdPassengerPhotoDraft && !resolvePassengerPhotoFlowUrl()) {
+      toast("Configure a URL do Flow de foto antes de cadastrar com imagem.", "error", 7000);
+      revealInvalidField(el.bdPhotoDrop, "URL do Flow de foto não configurada.", { tab: "bd" });
       return;
     }
 
@@ -16418,6 +17262,15 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         id: cleanGuid(created.id),
         ...passengerFormState()
       };
+      if (state.bdPassengerPhotoDraft) {
+        try {
+          const { photoUrl } = await uploadAndSavePassengerPhoto(newPassenger, state.bdPassengerPhotoDraft);
+          newPassenger.fotoUrl = photoUrl;
+        } catch (photoError) {
+          console.error(photoError);
+          toast(`Passageiro criado, mas a foto não foi salva. ${photoError.message || ""}`, "warning", 9000);
+        }
+      }
       state.passageiros.push(newPassenger);
       persistMockPassengerRecord(newPassenger);
       state.passageiros.sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
@@ -16427,7 +17280,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       renderRiskPanel();
       markDraftDirty();
       setTab("details");
-      toast(`Cadastro criado para ${newPassenger.label}!`, "success");
+      toast(`Cadastro criado para ${newPassenger.label}${newPassenger.fotoUrl ? " com foto" : ""}!`, "success");
     } catch (error) {
       console.error(error);
       toast(`Falha ao cadastrar passageiro. ${error.message || ""}`, "error", 9000);
@@ -16453,6 +17306,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       setSelectValue(select, "");
     });
     resetPhoneControl();
+    clearBdPassengerPhotoDraft();
     clearValidationStates();
   }
 
@@ -16465,6 +17319,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       preferencias: el.bdPreferencias.value.trim(),
       cr: el.bdCr.value.trim(),
       clienteId: el.bdCliente.value,
+      clienteLabel: state.clientes.find((item) => sameId(item.id, el.bdCliente.value))?.label || "",
       status: getActivePassengerStatusValue(),
       classificacao: el.bdClassificacao.value,
       sexo: el.bdSexo.value,
@@ -16472,7 +17327,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       cargo: el.bdCargo.value,
       nascimento: el.bdNascimento.value,
       departamento: el.bdDepartamento.value.trim(),
-      tipoVeiculo: el.bdTipoVeiculo.value
+      tipoVeiculo: el.bdTipoVeiculo.value,
+      fotoUrl: ""
     };
   }
 
@@ -20800,6 +21656,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const context = state.pendingSaveContext || buildSaveContext();
     closeReviewOverlay(false);
     clearSaveLog();
+    state.lastSuccessVoucher = null;
     addSaveLog("success", "Validação concluída", "Campos obrigatórios aprovados.");
     setLoading(true);
     try {
@@ -20845,6 +21702,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         ? (total === 1 ? "Serviço criado com sucesso" : `${total} serviços criados com sucesso!`)
         : "Serviço editado com sucesso!";
       addSaveLog("success", "Fluxo concluído", message);
+      state.lastSuccessVoucher = buildSuccessVoucherSnapshot(context, results);
       showSuccess(message);
       clearDraftSnapshot(false);
       state.pendingSaveContext = null;
@@ -21631,6 +22489,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         "input.passenger-edit-control:not([type='checkbox']), " +
           "textarea.passenger-edit-control, " +
           "select.passenger-edit-control, " +
+          "[data-passenger-edit-control='fotoUrl'], " +
           ".custom-select-trigger"
       );
       if (!controls.length) return;
@@ -21652,6 +22511,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       return String(source.value || "").trim().length === 0;
     }
     if (!control) return true;
+    if (control.dataset?.passengerEditControl === "fotoUrl") {
+      return !normalizePassengerPhotoUrl(control.dataset.savedValue);
+    }
     if (control.tagName === "SELECT") {
       return String(control.value || "").trim().length === 0;
     }
@@ -22039,14 +22901,928 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }).format(date);
   }
 
+  function formatVoucherIssuedAt(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "";
+    return new Intl.DateTimeFormat(PT_BR_LOCALE, {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(date);
+  }
+
+  function selectDisplayLabel(select, fallback = "") {
+    if (!select) return fallback;
+    const option = select.options?.[select.selectedIndex];
+    const label = String(option?.textContent || option?.label || "").trim();
+    if (label && option?.value) return label;
+    return String(fallback || "").trim();
+  }
+
+  function buildVoucherReference(date, count) {
+    const pad = (value) => String(value).padStart(2, "0");
+    return `VC-${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}-${count}`;
+  }
+
+  function voucherServiceKindLabel(tipo) {
+    if (tipo === "Principal") return "Serviço principal";
+    if (tipo === "Retorno") return "Retorno";
+    if (tipo === "Ida") return "Recorrência ida";
+    if (tipo === "Edição") return "Serviço confirmado";
+    return "Serviço confirmado";
+  }
+
+  function buildVoucherServiceSnapshot(context, item, shared) {
+    const isReturn = item.tipo === "Retorno";
+    const note = String(isReturn ? state.obsRet.final : state.obs.final).trim();
+    const recordId = cleanGuid(item.result?.id || "");
+    return {
+      typeLabel: voucherServiceKindLabel(item.tipo),
+      shortId: recordId ? recordId.slice(-6).toUpperCase() : "",
+      scheduledAt: formatDateTime(item.data),
+      sortTime: item.data instanceof Date ? item.data.getTime() : 0,
+      serviceType: shared.serviceType,
+      vehicleType: shared.vehicleType,
+      requester: shared.requester,
+      passengerSummary: shared.passengerSummary,
+      route: String(isReturn ? invertTrajeto(context.trajeto) : context.trajeto).trim() || shared.serviceType,
+      origin: String(isReturn ? shared.returnOrigin : shared.origin).trim() || "Não informado",
+      destination: String(isReturn ? shared.returnDestination : shared.destination).trim() || "Não informado",
+      note
+    };
+  }
+
+  function buildSuccessVoucherSnapshot(context, results) {
+    const generatedAt = new Date();
+    const passengerRows = [...(context.colOrdemPassageiros || [])].sort((a, b) => a.ordem - b.ordem);
+    const passengerNames = passengerRows
+      .map((item) => normalizePassengerDisplayName(item.passageiro?.label || `Passageiro ${item.ordem}`))
+      .filter(Boolean);
+    const passengerSummary = passengerNames.length ? passengerNames.join("\n") : "Não informado";
+    const shared = {
+      client: selectDisplayLabel(el.cliente, "Não informado"),
+      requester: selectDisplayLabel(el.solicitante, passengerNames[0] || "Não informado"),
+      serviceType: optionLabel("tipoServico", el.tipoServico.value) || "Não informado",
+      vehicleType: optionLabel("tipoVeiculo", el.tipoVeiculo.value) || "A confirmar",
+      status: optionLabel("statusOperacao", el.statusOperacao.value) || "Confirmado",
+      operationCode: selectDisplayLabel(el.op, ""),
+      costCenter: normalizeCodeValue(el.cr.value) || "",
+      passengerSummary,
+      preferenceSummary: String(context.preferencias || "").trim(),
+      origin: String(context.enderecoCompleto || "").trim(),
+      destination: String(el.destino.value || "").trim(),
+      returnOrigin: String(el.retornoEndereco.value || el.destino.value || "").trim(),
+      returnDestination: String(el.retornoDestino.value || context.enderecoCompletoInvertido || context.enderecoCompleto || "").trim()
+    };
+    const services = [...results]
+      .map((item) => buildVoucherServiceSnapshot(context, item, shared))
+      .sort((a, b) => a.sortTime - b.sortTime)
+      .map((item, index) => ({ ...item, order: index + 1 }));
+
+    return {
+      reference: buildVoucherReference(generatedAt, services.length),
+      issuedAtLabel: formatVoucherIssuedAt(generatedAt),
+      client: shared.client,
+      requester: shared.requester,
+      serviceType: shared.serviceType,
+      vehicleType: shared.vehicleType,
+      status: shared.status,
+      operationCode: shared.operationCode,
+      costCenter: shared.costCenter,
+      passengerSummary,
+      passengerCount: passengerNames.length,
+      preferenceSummary: shared.preferenceSummary,
+      services
+    };
+  }
+
+  function chunkVoucherItems(items, size) {
+    const output = [];
+    for (let index = 0; index < items.length; index += size) {
+      output.push(items.slice(index, index + size));
+    }
+    return output;
+  }
+
+  function escapeVoucherHtml(value) {
+    return String(value || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function renderVoucherInfoLine(label, value) {
+    return `<div class="voucher-info-line">
+      <span>${escapeVoucherHtml(label)}</span>
+      <strong>${escapeVoucherHtml(value || "Não informado")}</strong>
+    </div>`;
+  }
+
+  function renderVoucherServiceRow(service) {
+    const noteHtml = service.note
+      ? `<div class="voucher-service-note">
+          <span>Observações</span>
+          <p>${escapeVoucherHtml(service.note)}</p>
+        </div>`
+      : "";
+    return `<article class="voucher-itinerary-item">
+      <div class="voucher-itinerary-index">${String(service.order).padStart(2, "0")}</div>
+      <div class="voucher-itinerary-body">
+        <header class="voucher-itinerary-head">
+          <div>
+            <strong>${escapeVoucherHtml(service.typeLabel)}</strong>
+            <span>${escapeVoucherHtml(service.shortId ? `Ref. ${service.shortId}` : "Confirmação")}</span>
+          </div>
+          <time>${escapeVoucherHtml(service.scheduledAt || "Não informado")}</time>
+        </header>
+        <div class="voucher-route-panel">
+          <div>
+            <span>Origem</span>
+            <p>${escapeVoucherHtml(service.origin || "Não informado")}</p>
+          </div>
+          <div class="voucher-route-arrow" aria-hidden="true"></div>
+          <div>
+            <span>Destino</span>
+            <p>${escapeVoucherHtml(service.destination || "Não informado")}</p>
+          </div>
+        </div>
+        <div class="voucher-itinerary-details">
+          <div><span>Passageiro(s)</span><strong>${escapeVoucherHtml(service.passengerSummary || "Não informado")}</strong></div>
+          <div><span>Trajeto</span><strong>${escapeVoucherHtml(service.route || "Não informado")}</strong></div>
+          <div><span>Tipo / veículo</span><strong>${escapeVoucherHtml(`${service.serviceType} / ${service.vehicleType}`)}</strong></div>
+          <div><span>Solicitante</span><strong>${escapeVoucherHtml(service.requester || "Não informado")}</strong></div>
+        </div>
+        ${noteHtml}
+      </div>
+    </article>`;
+  }
+
+  function renderVoucherServiceSummary(services) {
+    const first = services[0];
+    if (!first) return "";
+    const last = services[services.length - 1];
+    const period = services.length === 1
+      ? first.scheduledAt
+      : `${first.scheduledAt} - ${last.scheduledAt}`;
+    const routeList = services
+      .map((service) => service.route)
+      .filter(Boolean)
+      .filter((route, index, list) => list.indexOf(route) === index)
+      .join("; ");
+    return `<section class="voucher-description">
+      <span>Resumo executivo</span>
+      <h2>Transporte confirmado</h2>
+      <p>Serviço(s) terrestre(s) programado(s) para <strong>${escapeVoucherHtml(period)}</strong>.</p>
+      <p>${escapeVoucherHtml(routeList || first.route || "Não informado")}</p>
+    </section>`;
+  }
+
+  function buildSuccessVoucherHtml(voucher) {
+    const firstPageServices = voucher.services.slice(0, 4);
+    const continuationPages = chunkVoucherItems(voucher.services.slice(4), 5);
+    const preferenceBlock = voucher.preferenceSummary
+      ? `<div class="voucher-observation">
+          <span>Perfil / preferências informadas:</span>
+          <p>${escapeVoucherHtml(voucher.preferenceSummary)}</p>
+        </div>`
+      : "";
+    const firstPage = `<section class="voucher-page">
+      <header class="voucher-topbar">
+        <div class="voucher-brand-block">
+          <div class="voucher-brand-mark" aria-hidden="true">B</div>
+          <div>
+            <strong>BETINHOS</strong>
+            <span>Executive Service</span>
+          </div>
+        </div>
+        <div class="voucher-document-title">
+          <span>Confirmação executiva</span>
+          <h1>Serviço confirmado</h1>
+        </div>
+      </header>
+      <main class="voucher-page-body">
+        <section class="voucher-summary-panel">
+          <div class="voucher-summary-main">
+            <span>Cliente / solicitante</span>
+            <strong>${escapeVoucherHtml(voucher.client)}</strong>
+            <p>${escapeVoucherHtml(voucher.requester)}</p>
+          </div>
+          <div class="voucher-summary-meta">
+            <div><span>Referência</span><strong>${escapeVoucherHtml(voucher.reference)}</strong></div>
+            <div><span>Emissão</span><strong>${escapeVoucherHtml(voucher.issuedAtLabel)}</strong></div>
+            <div><span>Status</span><strong>${escapeVoucherHtml(voucher.status)}</strong></div>
+            <div><span>Serviços</span><strong>${escapeVoucherHtml(String(voucher.services.length))}</strong></div>
+          </div>
+        </section>
+        ${renderVoucherServiceSummary(voucher.services)}
+        <section class="voucher-service-stack">
+          ${firstPageServices.map(renderVoucherServiceRow).join("")}
+        </section>
+        ${preferenceBlock}
+      </main>
+      <footer class="voucher-footer">
+        <p>Documento de confirmação operacional. Valores, cobrança e forma de pagamento constam apenas no recibo ou faturamento oficial.</p>
+        <div class="voucher-contact-grid">
+          <span>Júnior de Paula</span><strong>Concierge (Bilingual)</strong><span>+55 12 99723 6961</span><span>junior@betinhos.com.br</span>
+          <span>Deborah Keila</span><strong>Operations Manager</strong><span>+55 12 99615 9093</span><span>deborah.keila@betinhos.com.br</span>
+          <span>Juliana Rodrigues</span><strong>Finance Manager</strong><span>+55 12 99615 9085</span><span>financeiro@betinhos.com.br</span>
+        </div>
+      </footer>
+    </section>`;
+    const nextPages = continuationPages.map((chunk, index) => `<section class="voucher-page voucher-page-continuation">
+      <header class="voucher-continuation-head">
+        <div class="voucher-brand-block">
+          <div class="voucher-brand-mark" aria-hidden="true">B</div>
+          <div>
+            <strong>BETINHOS</strong>
+            <span>Executive Service</span>
+          </div>
+        </div>
+        <div class="voucher-document-title">
+          <span>${escapeVoucherHtml(voucher.reference)} - Página ${index + 2}</span>
+          <h1>Continuação</h1>
+        </div>
+      </header>
+      <div class="voucher-page-body">
+        <section class="voucher-service-stack">
+          ${chunk.map(renderVoucherServiceRow).join("")}
+        </section>
+      </div>
+      <footer class="voucher-footer">
+        <p>Documento gerado automaticamente pelo formulário operacional Betinhos.</p>
+      </footer>
+    </section>`).join("");
+    return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${escapeVoucherHtml(voucher.reference)} - Voucher Betinhos</title>
+  <style>
+    :root {
+      --navy: #06182f;
+      --gold: #b98e43;
+      --gold-soft: #d7bd7c;
+      --ink: #101820;
+      --muted: #6d7480;
+      --blue-strip: #eaf1fa;
+      --line: #bfc8d2;
+      --soft-line: #dfe6ef;
+      --paper: #fefefe;
+      --shell: #d8e0e9;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--shell);
+      color: var(--ink);
+      font-family: "Manrope", "Segoe UI", Arial, sans-serif;
+    }
+    body { padding: 20px; }
+    .voucher-toolbar {
+      width: min(210mm, 100%);
+      margin: 0 auto 12px;
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .voucher-toolbar button {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      padding: 8px 14px;
+      font: inherit;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .02em;
+      cursor: pointer;
+      transition: transform 140ms ease, opacity 140ms ease;
+    }
+    .voucher-toolbar button:hover {
+      transform: translateY(-1px);
+      opacity: .9;
+    }
+    .voucher-print {
+      background: var(--navy);
+      color: #f7f9fc;
+    }
+    .voucher-close {
+      background: #f7f9fc;
+      color: var(--navy);
+    }
+    .voucher-document {
+      display: grid;
+      gap: 18px;
+    }
+    .voucher-page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      background: var(--paper);
+      border: 1px solid #0a1b31;
+      box-shadow: 0 18px 42px rgba(6, 24, 47, .18);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .voucher-topbar,
+    .voucher-continuation-head {
+      min-height: 72px;
+      padding: 11px 36px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--navy);
+      color: #f7f9fc;
+    }
+    .voucher-topbar h1,
+    .voucher-continuation-head strong {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 31px;
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: .01em;
+    }
+    .voucher-continuation-head span {
+      color: #d9e4f1;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .voucher-brand-mark {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 2px solid var(--gold);
+      display: grid;
+      place-items: center;
+      color: var(--gold-soft);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 34px;
+      font-weight: 800;
+      box-shadow: inset 0 0 0 2px rgba(255,255,255,.16);
+    }
+    .voucher-brand-block {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 210px;
+    }
+    .voucher-brand-block strong {
+      display: block;
+      color: #f7f9fc;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 22px;
+      font-weight: 500;
+      line-height: .96;
+    }
+    .voucher-brand-block span {
+      display: block;
+      margin-top: 3px;
+      color: #cbd6e2;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .voucher-document-title {
+      display: grid;
+      gap: 5px;
+      justify-items: end;
+      text-align: right;
+    }
+    .voucher-document-title span {
+      color: var(--gold-soft);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+    }
+    .voucher-document-title h1 {
+      margin: 0;
+      color: #f7f9fc;
+      font-size: 25px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: 0;
+    }
+    .voucher-ribbon {
+      min-height: 28px;
+      padding: 0 34px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      background: var(--blue-strip);
+      color: #536170;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .voucher-ribbon strong,
+    .voucher-ribbon span:last-child {
+      color: var(--navy);
+      font-weight: 900;
+    }
+    .voucher-page-body {
+      flex: 1;
+      padding: 26px 34px 18px;
+      display: grid;
+      align-content: start;
+      gap: 16px;
+      background:
+        linear-gradient(90deg, rgba(185,142,67,.14) 0 2px, transparent 2px 100%) 34px 24px / calc(100% - 68px) 1px no-repeat,
+        var(--paper);
+    }
+    .voucher-summary-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, .95fr);
+      gap: 22px;
+      align-items: stretch;
+      padding: 16px 18px;
+      border: 1px solid var(--line);
+      background: #f7f9fc;
+    }
+    .voucher-summary-main {
+      display: grid;
+      align-content: center;
+      gap: 6px;
+    }
+    .voucher-summary-main span,
+    .voucher-summary-meta span,
+    .voucher-description span,
+    .voucher-itinerary-details span,
+    .voucher-route-panel span,
+    .voucher-service-note span {
+      color: #758191;
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    .voucher-summary-main strong {
+      color: #081a31;
+      font-size: 19px;
+      font-weight: 900;
+      line-height: 1.12;
+    }
+    .voucher-summary-main p {
+      margin: 0;
+      color: #334255;
+      font-size: 13px;
+      font-weight: 750;
+    }
+    .voucher-summary-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      border-left: 1px solid var(--soft-line);
+      padding-left: 18px;
+      gap: 12px 18px;
+    }
+    .voucher-summary-meta div {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+    .voucher-summary-meta strong {
+      color: #081a31;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.25;
+      word-break: break-word;
+    }
+    .voucher-party-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(260px, .9fr);
+      gap: 30px;
+      align-items: start;
+    }
+    .voucher-party-primary {
+      display: grid;
+      gap: 2px;
+      padding-top: 1px;
+      font-size: 13px;
+      line-height: 1.18;
+    }
+    .voucher-party-primary strong {
+      font-size: 14px;
+      line-height: 1.16;
+    }
+    .voucher-party-primary span {
+      font-weight: 800;
+    }
+    .voucher-info-panel {
+      display: grid;
+      gap: 2px;
+      font-size: 11px;
+    }
+    .voucher-info-line {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr;
+      gap: 14px;
+      align-items: baseline;
+    }
+    .voucher-info-line span {
+      color: #87909b;
+      text-align: right;
+      line-height: 1.15;
+    }
+    .voucher-info-line strong {
+      color: #001a33;
+      text-align: right;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+    .voucher-description {
+      margin-top: 2px;
+      display: grid;
+      gap: 5px;
+    }
+    .voucher-description h2 {
+      margin: 0;
+      color: #081a31;
+      font-size: 18px;
+      font-weight: 900;
+    }
+    .voucher-description p {
+      margin: 0;
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1.45;
+    }
+    .voucher-service-stack {
+      display: grid;
+      gap: 12px;
+    }
+    .voucher-itinerary-item {
+      display: grid;
+      grid-template-columns: 42px minmax(0, 1fr);
+      gap: 12px;
+      break-inside: avoid;
+    }
+    .voucher-itinerary-index {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      background: var(--navy);
+      color: #f7f9fc;
+      font-size: 13px;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+    .voucher-itinerary-body {
+      min-width: 0;
+      border: 1px solid var(--line);
+      background: #ffffff;
+    }
+    .voucher-itinerary-head {
+      min-height: 42px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 9px 12px;
+      border-bottom: 1px solid var(--soft-line);
+    }
+    .voucher-itinerary-head strong {
+      display: block;
+      color: #081a31;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .voucher-itinerary-head div span {
+      display: block;
+      margin-top: 2px;
+      color: #758191;
+      font-size: 10px;
+      font-weight: 750;
+    }
+    .voucher-itinerary-head time {
+      color: #081a31;
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .voucher-route-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 28px minmax(0, 1fr);
+      gap: 12px;
+      padding: 12px;
+      background: #f7f9fc;
+      border-bottom: 1px solid var(--soft-line);
+    }
+    .voucher-route-panel p {
+      margin: 4px 0 0;
+      color: #172333;
+      font-size: 11px;
+      font-weight: 780;
+      line-height: 1.35;
+      white-space: pre-line;
+    }
+    .voucher-route-arrow {
+      position: relative;
+      align-self: center;
+      height: 1px;
+      background: var(--gold);
+    }
+    .voucher-route-arrow::after {
+      content: "";
+      position: absolute;
+      right: 0;
+      top: 50%;
+      width: 7px;
+      height: 7px;
+      border-top: 1px solid var(--gold);
+      border-right: 1px solid var(--gold);
+      transform: translateY(-50%) rotate(45deg);
+    }
+    .voucher-itinerary-details {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px 14px;
+      padding: 12px;
+    }
+    .voucher-itinerary-details div {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+    .voucher-itinerary-details strong {
+      color: #172333;
+      font-size: 11px;
+      font-weight: 780;
+      line-height: 1.35;
+      white-space: pre-line;
+    }
+    .voucher-service-note {
+      margin: 0 12px 12px;
+      padding: 9px 10px;
+      background: #fbf7ed;
+      border: 1px solid #e2d4ae;
+    }
+    .voucher-service-note p {
+      margin: 4px 0 0;
+      color: #4d5968;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.4;
+      white-space: pre-line;
+    }
+    .voucher-service-block {
+      border: 1px solid var(--line);
+      break-inside: avoid;
+    }
+    .voucher-service-title-row {
+      min-height: 30px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding: 6px 8px;
+      background: var(--blue-strip);
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+    }
+    .voucher-service-title-row strong {
+      color: #001a33;
+      font-weight: 900;
+    }
+    .voucher-service-title-row span {
+      color: #001a33;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+    .voucher-service-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      font-size: 11px;
+    }
+    .voucher-service-table th,
+    .voucher-service-table td {
+      padding: 6px 8px;
+      border-top: 1px solid var(--soft-line);
+      vertical-align: top;
+      line-height: 1.35;
+    }
+    .voucher-service-table tr:first-child th,
+    .voucher-service-table tr:first-child td {
+      border-top: 0;
+    }
+    .voucher-service-table th {
+      width: 118px;
+      color: #778290;
+      text-align: left;
+      font-weight: 700;
+    }
+    .voucher-service-table td {
+      font-weight: 800;
+      white-space: pre-line;
+    }
+    .voucher-service-note-row span {
+      display: block;
+      color: #778290;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+    .voucher-observation {
+      margin-top: 1px;
+      font-size: 11px;
+      color: #6f7a86;
+    }
+    .voucher-observation span {
+      display: block;
+      margin-bottom: 4px;
+      font-weight: 800;
+    }
+    .voucher-observation p {
+      margin: 0;
+      white-space: pre-line;
+      line-height: 1.4;
+    }
+    .voucher-footer {
+      margin-top: auto;
+      padding: 14px 28px 16px;
+      display: grid;
+      gap: 10px;
+      border-top: 1px solid var(--soft-line);
+      background: #f7f9fc;
+      color: var(--ink);
+    }
+    .voucher-affiliations {
+      display: grid;
+      grid-template-columns: 1fr 1.1fr 1fr;
+      align-items: end;
+      gap: 22px;
+      min-height: 112px;
+    }
+    .voucher-nla {
+      font-size: 37px;
+      font-weight: 950;
+      line-height: .82;
+      letter-spacing: -.06em;
+    }
+    .voucher-nla span {
+      display: block;
+      margin-top: 3px;
+      font-size: 8px;
+      font-weight: 800;
+      letter-spacing: 0;
+      line-height: 1.1;
+    }
+    .voucher-brand-lockup {
+      display: grid;
+      justify-items: center;
+      gap: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      color: #111820;
+      text-align: center;
+    }
+    .voucher-brand-lockup span {
+      width: 42px;
+      height: 42px;
+      border: 2px solid var(--gold);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--gold);
+      font-size: 28px;
+      font-weight: 900;
+      line-height: 1;
+    }
+    .voucher-brand-lockup strong {
+      font-size: 28px;
+      font-weight: 500;
+      line-height: .9;
+    }
+    .voucher-brand-lockup small {
+      font-family: "Segoe UI", Arial, sans-serif;
+      font-size: 9px;
+      letter-spacing: .08em;
+    }
+    .voucher-recognized {
+      justify-self: end;
+      width: 126px;
+      display: grid;
+      justify-items: center;
+      gap: 3px;
+      font-size: 8px;
+      text-align: center;
+      color: #111820;
+    }
+    .voucher-recognized strong {
+      width: 58px;
+      height: 58px;
+      border: 2px solid #111820;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 20px;
+    }
+    .voucher-recognized span {
+      font-size: 8px;
+      font-weight: 700;
+    }
+    .voucher-footer p {
+      margin: 0;
+      padding: 0;
+      border-top: 0;
+      color: #566272;
+      font-size: 10px;
+      text-align: left;
+    }
+    .voucher-contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.25fr 1.1fr 1.55fr;
+      gap: 4px 16px;
+      padding-top: 10px;
+      border-top: 1px solid #c7d0dc;
+      font-size: 9.5px;
+      line-height: 1.25;
+      align-items: center;
+    }
+    .voucher-contact-grid strong {
+      color: #064bb0;
+      font-weight: 500;
+    }
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+      html, body {
+        background: #fff;
+        padding: 0;
+      }
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .voucher-toolbar {
+        display: none !important;
+      }
+      .voucher-document {
+        gap: 0;
+      }
+      .voucher-page {
+        margin: 0;
+        box-shadow: none;
+        page-break-after: always;
+      }
+      .voucher-page:last-child {
+        page-break-after: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="voucher-toolbar">
+    <button type="button" class="voucher-close" onclick="window.close()">Fechar</button>
+    <button type="button" class="voucher-print" onclick="window.print()">Imprimir / Salvar PDF</button>
+  </div>
+  <main class="voucher-document">
+    ${firstPage}
+    ${nextPages}
+  </main>
+</body>
+</html>`;
+  }
+
   function setLoading(value) {
     state.loading = value;
     el.loading.hidden = !value;
     el.saveButton.disabled = value;
   }
 
+  function openSuccessVoucher() {
+    const voucher = state.lastSuccessVoucher;
+    if (!voucher?.services?.length) {
+      toast("Não há serviços salvos para gerar o voucher.", "warning", 5000);
+      return;
+    }
+    const popup = window.open("", "_blank", "width=1160,height=920");
+    if (!popup) {
+      toast("Permita pop-ups para abrir o voucher.", "warning", 7000);
+      return;
+    }
+    popup.document.open();
+    popup.document.write(buildSuccessVoucherHtml(voucher));
+    popup.document.close();
+  }
+
   function showSuccess(message) {
     el.successMessage.textContent = message;
+    if (el.generateVoucher) {
+      const hasVoucher = !!state.lastSuccessVoucher?.services?.length;
+      el.generateVoucher.hidden = !hasVoucher;
+      el.generateVoucher.disabled = !hasVoucher;
+    }
     el.success.hidden = false;
   }
 

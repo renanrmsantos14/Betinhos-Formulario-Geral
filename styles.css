@@ -1204,6 +1204,170 @@ h3 {
   min-width: min(100%, 240px);
 }
 
+.passenger-photo-field {
+  position: relative;
+  cursor: pointer;
+  align-content: start;
+  gap: 5px;
+  min-height: 66px;
+  border-style: solid;
+  background: var(--surface-soft);
+}
+
+.passenger-photo-field.is-dragging,
+.passenger-photo-field:focus,
+.passenger-photo-field:focus-within {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 34%, #ffffff);
+  box-shadow: var(--shadow-focus);
+}
+
+.passenger-photo-field.has-photo {
+  background: var(--surface-soft);
+}
+
+.passenger-photo-head,
+.passenger-photo-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.passenger-photo-head > span {
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.passenger-photo-head small {
+  display: inline;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.passenger-photo-body {
+  position: relative;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: var(--field-control-height);
+  height: var(--field-control-height);
+  padding: 2px 30px 2px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: #ffffff;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+
+.passenger-photo-field.has-photo .passenger-photo-body {
+  grid-template-columns: 28px minmax(0, 1fr);
+}
+
+.passenger-photo-field.has-photo .passenger-photo-icon {
+  display: none;
+}
+
+.passenger-photo-icon {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--line));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-soft) 42%, #ffffff);
+  color: var(--accent-strong);
+}
+
+.passenger-photo-icon svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+
+.passenger-photo-preview {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  object-fit: cover;
+  background: #ffffff;
+}
+
+.passenger-photo-preview[hidden] {
+  display: none;
+}
+
+.passenger-photo-copy {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+
+.passenger-photo-copy strong {
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.passenger-photo-copy span {
+  color: var(--text-soft);
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.passenger-photo-actions {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  pointer-events: none;
+}
+
+.passenger-photo-field.has-photo .passenger-photo-actions {
+  right: 6px;
+}
+
+.passenger-photo-clear {
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--line) 36%, #ffffff);
+  color: var(--text-soft);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.passenger-photo-clear:hover,
+.passenger-photo-clear:focus-visible {
+  background: color-mix(in srgb, var(--danger-soft) 62%, #ffffff);
+  color: var(--danger);
+  outline: 0;
+}
+
 .field,
 .toggle-field,
 .switch {
@@ -3625,6 +3789,47 @@ textarea.is-touch-resizing,
   padding-top: 9px;
 }
 
+.passenger-edit-field.is-photo {
+  align-items: stretch;
+}
+
+.passenger-edit-field.is-photo .passenger-edit-field-head {
+  padding-top: 0;
+  align-self: center;
+}
+
+.passenger-edit-field.is-photo .passenger-edit-control {
+  display: grid;
+  width: 100%;
+  min-height: 100%;
+  height: 100%;
+  align-self: stretch;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.passenger-photo-edit {
+  position: relative;
+  display: block;
+  min-height: 100%;
+  height: 100%;
+  align-self: stretch;
+}
+
+.passenger-photo-edit.is-disabled {
+  opacity: 0.72;
+}
+
+.passenger-photo-edit .passenger-photo-body {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  min-height: 0;
+  height: auto;
+}
+
 .passenger-edit-field:focus-within {
   border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
   background: #ffffff;
@@ -3667,6 +3872,11 @@ textarea.is-touch-resizing,
 .passenger-edit-field .passenger-edit-control.is-empty,
 .passenger-edit-field .custom-select-trigger.is-empty,
 .passenger-edit-field textarea.passenger-edit-control.is-empty {
+  border-color: color-mix(in srgb, var(--warning) 42%, var(--line));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 12%, transparent);
+}
+
+.passenger-edit-field.is-empty .passenger-photo-body {
   border-color: color-mix(in srgb, var(--warning) 42%, var(--line));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--warning) 12%, transparent);
 }
@@ -6647,6 +6857,109 @@ body.is-import-dragging .import-drop-overlay {
 .success-dialog p {
   color: var(--muted);
   line-height: 1.4;
+}
+
+.success-dialog-actions {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.success-dialog-actions .primary-action,
+.success-dialog-actions .secondary-action {
+  min-width: 150px;
+  justify-content: center;
+}
+
+.passenger-photo-preview-dialog {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 14px;
+  justify-items: stretch;
+}
+
+.passenger-photo-preview-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.passenger-photo-preview-head h3 {
+  margin: 2px 0 0;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
+.passenger-photo-preview-head p:last-child {
+  margin: 5px 0 0;
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.passenger-photo-preview-close {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--text-soft);
+  font-size: 22px;
+  font-weight: 780;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.passenger-photo-preview-close:hover,
+.passenger-photo-preview-close:focus-visible {
+  border-color: color-mix(in srgb, var(--danger) 34%, var(--line));
+  color: var(--danger);
+  outline: 0;
+  box-shadow: var(--shadow-focus);
+}
+
+.passenger-photo-preview-frame {
+  display: grid;
+  place-items: center;
+  min-height: 280px;
+  max-height: min(56vh, 430px);
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background:
+    linear-gradient(45deg, #f2f5f8 25%, transparent 25%),
+    linear-gradient(-45deg, #f2f5f8 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #f2f5f8 75%),
+    linear-gradient(-45deg, transparent 75%, #f2f5f8 75%),
+    #ffffff;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+  overflow: hidden;
+}
+
+.passenger-photo-preview-frame img {
+  display: block;
+  max-width: 100%;
+  max-height: min(50vh, 390px);
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  box-shadow: 0 12px 34px rgb(15 23 42 / 0.18);
+}
+
+.passenger-photo-preview-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.passenger-photo-preview-actions .primary-action {
+  min-width: 120px;
+  justify-content: center;
 }
 
 .activation-guard-dialog {
