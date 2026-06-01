@@ -6348,7 +6348,7 @@
 
   function resolvePassengerPhotoFlowUrl() {
     const runtimeUrl = String(state.xrm?.Utility?.getGlobalContext?.()?.getClientUrl?.() || window.location.href || "").toLowerCase();
-    if (runtimeUrl.includes("org23b93544.crm2.dynamics.com")) return PASSENGER_PHOTO_FLOW_URL_PROD;
+    if (runtimeUrl.includes("orgf261ae8e.crm2.dynamics.com")) return PASSENGER_PHOTO_FLOW_URL_PROD;
     return PASSENGER_PHOTO_FLOW_URL_DEV;
   }
 
