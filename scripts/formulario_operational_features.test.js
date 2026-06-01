@@ -873,7 +873,7 @@ excludes(importedPassengerEditFields, 'key: "destino"', "popup de passageiro imp
 const importedPassengerPreviewFields = extractFunction(app, "importedPassengerPreviewRecord");
 excludes(importedPassengerPreviewFields, "origem:", "hover do passageiro importado nao deve tratar origem como dado cadastral");
 excludes(importedPassengerPreviewFields, "destino:", "hover do passageiro importado nao deve tratar destino como dado cadastral");
-includes(importedPassengerPreviewFields, "cr: passenger.centroCusto || existing?.cr || \"\"", "hover do passageiro importado deve priorizar CR do servico sobre CR do BD");
+includes(importedPassengerPreviewFields, "cr: \"\",", "hover do passageiro importado nao deve exibir CR como dado do passageiro");
 const importedCrResolver = extractFunction(app, "importedTrechoCr");
 includes(importedCrResolver, ".join(\" / \")", "CR da reserva importada deve juntar centros de custo distintos com barra");
 includes(importedCrResolver, "new Set", "CR da reserva importada deve remover centros de custo repetidos");
@@ -884,7 +884,7 @@ excludes(importPassengerDraftFields, "destino:", "rascunho manual de passageiro 
 includes(app, "renderImportedPassengerEditFields(passenger)", "passageiro importado deve renderizar no popup passenger-edit");
 includes(app, "function saveImportedPassengerEditField", "popup deve salvar alteracoes locais do passageiro importado");
 includes(app, "activeImportedPassengerEditRef", "popup deve guardar o passageiro importado ativo");
-includes(app, "[\"nome\", \"telefone\", \"email\", \"centroCusto\"].includes(field.key)", "edicao local deve atualizar dados que serao gravados no novo passageiro");
+includes(app, "[\"nome\", \"telefone\", \"email\"].includes(passengerField)", "edicao local deve atualizar apenas dados cadastrais do novo passageiro");
 const importedObservationStateFn = extractFunction(app, "ensureImportedObservationState");
 includes(importedObservationStateFn, "motorista: existing.motorista ?? trecho?.observacaoOperacional ?? importedMotoristaObservationFromXlsx(trecho)", "OBS Mot importada deve manter edicao local e usar XLSX apenas como valor inicial");
 const importedObservationSyncFn = extractFunction(app, "syncImportedObservationFields");

@@ -7,10 +7,9 @@ const versionPath = path.join(root, "version.json");
 const indexPath = path.join(root, "index.html");
 
 const PART_INDEX = {
-  app: 0,
-  build: 1,
-  feat: 2,
-  fix: 3
+  major: 0,
+  minor: 1,
+  patch: 2
 };
 
 function readText(filePath) {
@@ -23,9 +22,9 @@ function writeText(filePath, content) {
 
 function readVersion() {
   const data = JSON.parse(readText(versionPath));
-  const parts = String(data.version || "1.0.0.0").split(".").map((part) => Number(part));
-  while (parts.length < 4) parts.push(0);
-  return parts.slice(0, 4).map((part) => (Number.isFinite(part) && part >= 0 ? part : 0));
+  const parts = String(data.version || "1.0.0").split(".").map((part) => Number(part));
+  while (parts.length < 3) parts.push(0);
+  return parts.slice(0, 3).map((part) => (Number.isFinite(part) && part >= 0 ? part : 0));
 }
 
 function resolveKind() {
@@ -43,10 +42,9 @@ function resolveKind() {
 
 function normalizeKind(kind) {
   const normalized = String(kind || "").toLowerCase();
-  if (normalized === "app") return "app";
-  if (normalized === "build") return "build";
-  if (normalized === "feat" || normalized === "feature") return "feat";
-  return "fix";
+  if (normalized === "major" || normalized === "app") return "major";
+  if (normalized === "minor" || normalized === "feat" || normalized === "feature") return "minor";
+  return "patch";
 }
 
 function bumpVersion(parts, kind) {

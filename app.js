@@ -318,6 +318,7 @@
     passengerMatchList: $("passengerMatchList"),
     passengerMatchCancel: $("passengerMatchCancel"),
     passengerMatchContinue: $("passengerMatchContinue"),
+    passengerMatchUseSelected: $("passengerMatchUseSelected"),
     activationGuardOverlay: $("activationGuardOverlay"),
     activationGuardList: $("activationGuardList"),
     activationGuardReview: $("activationGuardReview"),
@@ -428,6 +429,7 @@
   const passengerEditSaveTimers = new Map();
   let passengerMatchResolve = null;
   let passengerMatchCandidates = [];
+  let passengerMatchContext = null;
   let clearAllFormsConfirmationResolve = null;
   const importPassengerCreateLocks = new Map();
   const IMPORT_REVIEW_HISTORY_LIMIT = 80;
@@ -822,6 +824,13 @@
     });
     el.passengerMatchCancel?.addEventListener("click", () => resolvePassengerMatchReview({ action: "cancel" }));
     el.passengerMatchContinue?.addEventListener("click", () => resolvePassengerMatchReview({ action: "continue" }));
+    el.passengerMatchUseSelected?.addEventListener("click", () => {
+      const passengerId = passengerMatchContext?.selectedPassengerId || "";
+      if (!passengerId) return;
+      resolvePassengerMatchReview({ action: "use-existing", passengerId });
+    });
+    el.passengerMatchList?.addEventListener("click", handlePassengerMatchListAction);
+    el.passengerMatchList?.addEventListener("keydown", handlePassengerMatchListAction);
     el.passengerMatchOverlay?.addEventListener("click", (event) => {
       if (event.target === el.passengerMatchOverlay) {
         resolvePassengerMatchReview({ action: "cancel" });
@@ -3456,8 +3465,7 @@
     return [
       { key: "nome", label: "Nome do passageiro", kind: "text", required: true, span: "wide", stateKey: "nome", inputType: "text" },
       { key: "telefone", label: "Telefone", kind: "text", stateKey: "telefone", inputType: "tel" },
-      { key: "email", label: "Email", kind: "text", span: "wide", stateKey: "email", inputType: "email" },
-      { key: "centroCusto", label: "CR", kind: "text", stateKey: "centroCusto", inputType: "text" }
+      { key: "email", label: "Email", kind: "text", span: "wide", stateKey: "email", inputType: "email" }
     ];
   }
 
@@ -4827,71 +4835,70 @@
     if (!container) return;
     container.replaceChildren();
     const importClient = getImportClient();
-    const imported = {
-      label: normalizePassengerDisplayName(passenger.nome || passenger.passageiroLabel) || "",
-      telefone: formatPhoneNumber(passenger.telefone || ""),
-      email: passenger.email || "",
-      clienteLabel: importClient?.label || CONFIG.importDefaults.clienteLabel || "",
-      cr: passenger.centroCusto || "",
-      status: importedPassengerStatusLabel(passenger)
-    };
-    const registered = {
-      label: normalizePassengerDisplayName(existing?.label) || "",
-      telefone: formatPhoneNumber(existing?.telefone || ""),
-      email: existing?.email || "",
-      clienteLabel: existing?.clienteLabel || "",
-      cr: existing?.cr || "",
-      status: "Registro do Banco de Dados"
-    };
-    const normalizeCompareValue = (value) => normalize((value || "").toString());
     const rows = [
-      ["Nome", imported.label, registered.label],
-      ["Telefone", imported.telefone, registered.telefone],
-      ["Email", imported.email, registered.email],
-      ["Cliente", imported.clienteLabel, registered.clienteLabel],
-      ["CR", imported.cr, registered.cr],
-      ["Decisão", imported.status, registered.status]
-    ].filter((row) => row.slice(1).some((value) => (value || "").toString().trim()));
+      ["Nome", normalizePassengerDisplayName(passenger.nome || passenger.passageiroLabel) || "", normalizePassengerDisplayName(existing?.label) || ""],
+      ["Telefone", formatPhoneNumber(passenger.telefone || ""), formatPhoneNumber(existing?.telefone || "")],
+      ["Email", passenger.email || "", existing?.email || ""],
+      ["Cliente", importClient?.label || CONFIG.importDefaults.clienteLabel || "", existing?.clienteLabel || ""]
+    ].filter(([, importedValue, registeredValue]) => [importedValue, registeredValue].some((value) => (value || "").toString().trim()));
 
-    const header = document.createElement("div");
-    header.className = "passenger-compare-head";
-    const title = document.createElement("strong");
-    title.textContent = "Comparar passageiro";
-    const hint = document.createElement("span");
-    hint.textContent = passenger.matchStatus === "ambiguous" ? "Candidato mais próximo" : "Cadastro selecionado";
-    header.append(title, hint);
-
-    const grid = document.createElement("div");
-    grid.className = "passenger-compare-grid";
-    const headField = document.createElement("span");
-    headField.className = "passenger-compare-column-head";
-    headField.textContent = "Campo";
-    const headImport = document.createElement("span");
-    headImport.className = "passenger-compare-column-head";
-    headImport.textContent = "XLSX";
-    const headExisting = document.createElement("span");
-    headExisting.className = "passenger-compare-column-head";
-    headExisting.textContent = "Cadastro";
-    grid.append(headField, headImport, headExisting);
+    const shell = document.createElement("section");
+    shell.className = "passenger-simple-compare";
 
     rows.forEach(([label, importedValue, registeredValue]) => {
-      const sameValue = normalizeCompareValue(importedValue) === normalizeCompareValue(registeredValue);
-      const field = document.createElement("span");
-      field.className = "passenger-compare-field";
+      const state = passengerCompareState(importedValue, registeredValue);
+      const row = document.createElement("div");
+      row.className = `passenger-simple-compare-row is-${state.tone}`;
+      const main = document.createElement("div");
+      main.className = "passenger-simple-compare-main";
+      const field = document.createElement("strong");
       field.textContent = label;
-      const importedCell = buildPassengerCompareValue(importedValue || "Vazio", sameValue);
-      const registeredCell = buildPassengerCompareValue(registeredValue || "Vazio", sameValue);
-      grid.append(field, importedCell, registeredCell);
+      const result = document.createElement("span");
+      result.className = `passenger-simple-compare-result is-${state.tone}`;
+      result.textContent = state.label;
+      main.append(field, result);
+
+      const values = document.createElement("div");
+      values.className = "passenger-simple-compare-values";
+      if (state.tone === "same") {
+        values.appendChild(buildPassengerCompareValue(importedValue || registeredValue || "Vazio", state.tone, ""));
+      } else {
+        values.append(
+          buildPassengerCompareValue(importedValue || "Vazio", state.tone, "XLSX"),
+          buildPassengerCompareValue(registeredValue || "Vazio", state.tone, "BD")
+        );
+      }
+      row.append(main, values);
+      shell.appendChild(row);
     });
 
-    container.append(header, grid);
+    container.appendChild(shell);
   }
 
-  function buildPassengerCompareValue(value, sameValue) {
+  function passengerCompareState(left, right) {
+    const leftValue = String(left || "").trim();
+    const rightValue = String(right || "").trim();
+    if (!leftValue && !rightValue) return { tone: "empty", label: "Vazio nos dois" };
+    if (!leftValue) return { tone: "missing-left", label: "Sem dado no XLSX" };
+    if (!rightValue) return { tone: "missing-right", label: "Ausente no cadastro" };
+    if (normalize(leftValue) === normalize(rightValue)) return { tone: "same", label: "Igual" };
+    return { tone: "different", label: "Diferente" };
+  }
+
+  function buildPassengerCompareValue(value, tone, sourceLabel = "") {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `passenger-preview-value passenger-compare-value ${sameValue ? "is-same" : "is-different"}`;
-    button.textContent = value;
+    button.className = `passenger-preview-value passenger-simple-compare-value is-${tone}`;
+    if (sourceLabel) {
+      const source = document.createElement("span");
+      source.className = "passenger-simple-compare-source";
+      source.textContent = sourceLabel;
+      const text = document.createElement("b");
+      text.textContent = value;
+      button.append(source, text);
+    } else {
+      button.textContent = value;
+    }
     button.dataset.copyValue = value;
     button.title = "Copiar valor";
     button.setAttribute("aria-label", "Copiar valor");
@@ -4904,6 +4911,25 @@
       }
     });
     return button;
+  }
+
+  function buildImportedPassengerSourceCard(passenger) {
+    const importClient = getImportClient();
+    const card = document.createElement("section");
+    card.className = "passenger-match-imported";
+    const source = document.createElement("span");
+    source.className = "passenger-match-imported-source";
+    source.textContent = "Veio do XLSX";
+    const name = document.createElement("strong");
+    name.textContent = normalizePassengerDisplayName(passenger.nome || passenger.passageiroLabel) || "Passageiro sem nome";
+    const meta = document.createElement("span");
+    meta.textContent = [
+      formatPhoneNumber(passenger.telefone || ""),
+      passenger.email || "",
+      importClient?.label || CONFIG.importDefaults.clienteLabel || ""
+    ].filter(Boolean).join(" | ") || "Sem contato no XLSX";
+    card.append(source, name, meta);
+    return card;
   }
 
   function renderTabBadges() {
@@ -6413,6 +6439,14 @@
       reasons.push("Mesmo departamento");
     }
 
+    const candidateIsEmbraer = normalize(candidate.clienteLabel || candidate.clienteNome) === "embraer";
+    const passengerIsEmbraer = normalize(passenger.clienteLabel || passenger.clienteNome) === "embraer";
+    const embraerPhoneOnlyDuplicate = candidateIsEmbraer
+      && passengerIsEmbraer
+      && reasons.includes("Telefone igual")
+      && reasons.every((reason) => ["Telefone igual", "Mesmo cliente"].includes(reason));
+    if (embraerPhoneOnlyDuplicate) return null;
+
     const strongContactMatch = reasons.includes("Telefone igual") || reasons.includes("Email igual");
     if (!strongContactMatch && score < 45) return null;
     return {
@@ -6570,7 +6604,7 @@
     return previous[right.length];
   }
 
-  function openPassengerMatchReview(candidates) {
+  function openPassengerMatchReview(candidates, options = {}) {
     if (!candidates.length || !el.passengerMatchOverlay || !el.passengerMatchList) {
       return Promise.resolve({ action: "continue" });
     }
@@ -6579,8 +6613,20 @@
       passengerMatchResolve = null;
     }
     passengerMatchCandidates = candidates;
+    passengerMatchContext = {
+      mode: options.mode || "create",
+      title: options.title || "Passageiro encontrado",
+      summary: options.summary || `${candidates.length} cadastro${candidates.length === 1 ? "" : "s"} parecido${candidates.length === 1 ? "" : "s"}.`,
+      eyebrow: options.eyebrow || "Duplicidade",
+      continueLabel: options.continueLabel || "Criar novo",
+      cancelLabel: options.cancelLabel || "Revisar",
+      useSelectedLabel: options.useSelectedLabel || "Usar selecionado",
+      importedPassenger: options.importedPassenger || null,
+      selectedPassengerId: cleanGuid(options.selectedPassengerId || candidates[0]?.passenger?.id || "")
+    };
     renderPassengerMatchList(candidates);
     el.passengerMatchOverlay.hidden = false;
+    el.passengerMatchOverlay.querySelector(".passenger-match-dialog")?.classList.toggle("is-import-review", passengerMatchContext.mode === "import");
     requestAnimationFrame(() => {
       el.passengerMatchOverlay.querySelector(".passenger-match-dialog")?.focus();
     });
@@ -6591,22 +6637,51 @@
 
   function renderPassengerMatchList(candidates) {
     el.passengerMatchList.innerHTML = "";
-    if (el.passengerMatchSummary) {
-      el.passengerMatchSummary.textContent = `${candidates.length} cadastro${candidates.length === 1 ? "" : "s"} parecido${candidates.length === 1 ? "" : "s"}.`;
+    const context = passengerMatchContext || {};
+    const isImportMode = context.mode === "import" && !!context.importedPassenger;
+    const isSelectionMode = isPassengerMatchSelectionMode(context);
+    const title = document.getElementById("passengerMatchTitle");
+    const eyebrow = el.passengerMatchOverlay?.querySelector(".passenger-picker-eyebrow");
+    if (eyebrow) eyebrow.textContent = context.eyebrow || "Duplicidade";
+    if (title) title.textContent = context.title || "Passageiro encontrado";
+    if (el.passengerMatchSummary) el.passengerMatchSummary.textContent = context.summary || "";
+    if (el.passengerMatchCancel) el.passengerMatchCancel.textContent = context.cancelLabel || "Revisar";
+    if (el.passengerMatchContinue) el.passengerMatchContinue.textContent = context.continueLabel || "Criar novo";
+    if (el.passengerMatchUseSelected) {
+      el.passengerMatchUseSelected.hidden = !isSelectionMode;
+      el.passengerMatchUseSelected.disabled = !context.selectedPassengerId;
+      el.passengerMatchUseSelected.textContent = context.useSelectedLabel || "Usar selecionado";
     }
     const questionSearchKey = "Certeza que este nao e o passageiro desejado?";
+    if (isImportMode) {
+      el.passengerMatchList.appendChild(buildImportedPassengerSourceCard(context.importedPassenger));
+    }
     candidates.forEach((candidate, index) => {
       const passenger = candidate.passenger;
+      const isSelected = sameId(passenger.id, context.selectedPassengerId);
       const item = document.createElement("article");
       item.className = "passenger-match-item";
+      item.classList.toggle("is-import-option", isImportMode);
+      item.classList.toggle("is-selected", isSelectionMode && isSelected);
+      if (isSelectionMode) {
+        item.dataset.passengerMatchAction = "select-candidate";
+        item.dataset.passengerId = passenger.id;
+        item.tabIndex = 0;
+        item.setAttribute("role", "radio");
+        item.setAttribute("aria-checked", isSelected ? "true" : "false");
+      }
       item.dataset.questionKey = questionSearchKey;
       item.style.setProperty("--match-index", index);
 
       const main = document.createElement("div");
       main.className = "passenger-match-main";
       const reasonMap = getPassengerMatchReasonMap(candidate.reasons);
-
+      const top = document.createElement("div");
+      top.className = "passenger-match-top";
+      const titleMain = document.createElement("div");
+      titleMain.className = "passenger-match-title-main";
       const title = document.createElement("strong");
+      title.className = "passenger-match-name";
       title.append(document.createTextNode(passenger.label || "Passageiro sem nome"));
       if (reasonMap.has("nome")) {
         title.classList.add("is-match");
@@ -6615,6 +6690,19 @@
         titleReason.textContent = reasonMap.get("nome");
         title.appendChild(titleReason);
       }
+      const badges = document.createElement("div");
+      badges.className = "passenger-match-badges";
+      badges.append(
+        buildPassengerMatchBadge(index === 0 ? "Mais parecido" : `Opcao ${index + 1}`, index === 0 ? "top" : "neutral")
+      );
+      if (isSelectionMode && isSelected) {
+        badges.appendChild(buildPassengerMatchBadge("Selecionado", "selected"));
+      }
+      if (!isImportMode) {
+        badges.appendChild(buildPassengerMatchBadge(passengerMatchStrengthLabel(candidate.score), passengerMatchStrengthTone(candidate.score)));
+      }
+      titleMain.append(title, badges);
+      top.appendChild(titleMain);
 
       const meta = document.createElement("div");
       meta.className = "passenger-match-meta";
@@ -6622,11 +6710,11 @@
         ["cliente", "Cliente", passenger.clienteLabel],
         ["telefone", "Telefone", passenger.telefone],
         ["email", "Email", passenger.email],
-        ["cr", "CR", passenger.cr],
+        ...(isImportMode ? [] : [["cr", "CR", passenger.cr]]),
         ["departamento", "Departamento", passenger.departamento]
       ].filter(([, , value]) => Boolean(value));
 
-      if (details.length) {
+      if (!isImportMode && details.length) {
         details.forEach(([key, label, value]) => {
           const detail = document.createElement("span");
           detail.className = "passenger-match-detail";
@@ -6645,17 +6733,85 @@
           }
           meta.appendChild(detail);
         });
-      } else {
+      } else if (!isImportMode) {
         const emptyDetail = document.createElement("span");
         emptyDetail.className = "passenger-match-empty";
         emptyDetail.textContent = "Sem contato cadastrado";
         meta.appendChild(emptyDetail);
       }
 
-      main.append(title, meta);
+      const reasons = buildPassengerMatchReasonChips(candidate.reasons || []);
+      main.appendChild(top);
+      if (!isImportMode) {
+        main.appendChild(meta);
+        if (reasons) main.appendChild(reasons);
+      }
+      if (isImportMode) {
+        const compare = document.createElement("div");
+        compare.className = "passenger-match-import-compare";
+        renderImportedPassengerComparisonPreview(compare, context.importedPassenger, passenger);
+        main.appendChild(compare);
+      }
       item.append(main);
       el.passengerMatchList.appendChild(item);
     });
+  }
+
+  function handlePassengerMatchListAction(event) {
+    const action = event.target.closest("[data-passenger-match-action]");
+    if (!action) return;
+    if (action.dataset.passengerMatchAction === "select-candidate") {
+      if (event.type === "keydown" && !["Enter", " "].includes(event.key)) return;
+      event.preventDefault();
+      if (passengerMatchContext) {
+        passengerMatchContext.selectedPassengerId = cleanGuid(action.dataset.passengerId || "");
+        renderPassengerMatchList(passengerMatchCandidates || []);
+      }
+      return;
+    }
+    if (action.dataset.passengerMatchAction === "use-existing") {
+      resolvePassengerMatchReview({
+        action: "use-existing",
+        passengerId: action.dataset.passengerId || ""
+      });
+    }
+  }
+
+  function isPassengerMatchSelectionMode(context = passengerMatchContext || {}) {
+    return context.mode === "import";
+  }
+
+  function buildPassengerMatchReasonChips(reasons = []) {
+    const uniqueReasons = Array.from(new Set(reasons.filter(Boolean))).slice(0, 4);
+    if (!uniqueReasons.length) return null;
+    const wrap = document.createElement("div");
+    wrap.className = "passenger-match-reasons";
+    uniqueReasons.forEach((reason) => {
+      const chip = document.createElement("span");
+      chip.className = "passenger-match-chip";
+      chip.textContent = reason;
+      wrap.appendChild(chip);
+    });
+    return wrap;
+  }
+
+  function buildPassengerMatchBadge(label, tone = "neutral") {
+    const badge = document.createElement("span");
+    badge.className = `passenger-match-badge is-${tone}`;
+    badge.textContent = label;
+    return badge;
+  }
+
+  function passengerMatchStrengthLabel(score = 0) {
+    if (score >= 120) return "Sinal forte";
+    if (score >= 80) return "Sinal medio";
+    return "Sinal fraco";
+  }
+
+  function passengerMatchStrengthTone(score = 0) {
+    if (score >= 120) return "strong";
+    if (score >= 80) return "medium";
+    return "weak";
   }
 
   function getPassengerMatchReasonMap(reasons) {
@@ -7281,7 +7437,7 @@
       label: passenger.nome || "",
       telefone: passenger.telefone || "",
       email: passenger.email || "",
-      cr: passenger.centroCusto || "",
+      cr: "",
       departamento: "",
       clienteId: importClient?.id || "",
       clienteLabel: importClient?.label || CONFIG.importDefaults.clienteLabel || ""
@@ -8960,7 +9116,7 @@
       label: nome,
       telefone: passenger.telefone || "",
       email: passenger.email || "",
-      centroCusto: passenger.centroCusto || passenger.cr || ""
+      centroCusto: ""
     };
   }
 
@@ -8974,7 +9130,7 @@
     passenger.nome = label;
     passenger.telefone = existing.telefone || "";
     passenger.email = existing.email || "";
-    passenger.centroCusto = existing.cr || passenger.centroCusto || "";
+    passenger.centroCusto = "";
     passenger.preferencias = existing.preferencias || "";
     return passenger;
   }
@@ -8988,7 +9144,7 @@
     passenger.nome = name;
     passenger.telefone = selected.telefone || "";
     passenger.email = selected.email || "";
-    passenger.centroCusto = selected.centroCusto || importedTrechoCr(trecho) || "";
+    passenger.centroCusto = "";
     passenger.matchCandidates = [];
     if (!isImportedSolicitanteTempId(value)) {
       passenger.matchStatus = "use-existing";
@@ -8999,7 +9155,7 @@
           label: selected.label || name,
           telefone: selected.telefone || "",
           email: selected.email || "",
-          cr: selected.centroCusto || importedTrechoCr(trecho) || ""
+          cr: ""
         },
         "Cadastro existente vinculado. Banco de Dados não será atualizado."
       );
@@ -9008,7 +9164,7 @@
     passenger.matchStatus = "create-new";
     passenger.passageiroId = "";
     passenger.passageiroLabel = "";
-    passenger.matchMessage = "Criar novo com nome, telefone, email, CR e cliente.";
+    passenger.matchMessage = "Criar novo com nome, telefone, email e cliente.";
     return passenger;
   }
 
@@ -9043,7 +9199,7 @@
       label: nome,
       telefone: linked.telefone || draft.telefone || selected.telefone || "",
       email: linked.email || draft.email || selected.email || "",
-      centroCusto: linked.centroCusto || draft.centroCusto || selected.centroCusto || importedTrechoCr(trecho) || ""
+      centroCusto: ""
     };
   }
 
@@ -9062,7 +9218,7 @@
       nome,
       telefone: draft?.telefone || "",
       email: draft?.email || "",
-      centroCusto: draft?.centroCusto || importedTrechoCr(trecho) || ""
+      centroCusto: ""
     };
     trecho.solicitanteNome = nome;
     trecho.solicitanteRecordLabel = nome;
@@ -9092,7 +9248,7 @@
     passenger.nome = normalizePassengerDisplayName(draft.nome || draft.label);
     passenger.telefone = draft.telefone || "";
     passenger.email = draft.email || "";
-    passenger.centroCusto = draft.centroCusto || importedTrechoCr(trecho) || "";
+    passenger.centroCusto = "";
     passenger.passageiroId = "";
     passenger.passageiroLabel = "";
     passenger.matchCandidates = [];
@@ -9159,25 +9315,14 @@
       removeButton.classList.add("import-passenger-remove");
       decision.appendChild(removeButton);
     }
-
     if (passenger.matchStatus === "ambiguous" && passenger.matchCandidates?.length) {
-      passenger.matchCandidates.slice(0, 3).forEach((candidate) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "text-action import-candidate";
-        button.dataset.importAction = "use-existing-passenger";
-        button.dataset.passengerId = candidate.passenger.id;
-        button.textContent = `É ${normalizePassengerDisplayName(candidate.passenger.label) || candidate.passenger.label}`;
-        button.title = "Vincular ao cadastro existente, sem atualizar o Banco de Dados.";
-        decision.appendChild(button);
-      });
-      const createButton = document.createElement("button");
-      createButton.type = "button";
-      createButton.className = "text-action danger";
-      createButton.dataset.importAction = "create-new-passenger";
-      createButton.textContent = "Novo";
-      createButton.title = "Criar novo cadastro com nome, telefone, email, CR e cliente.";
-      decision.appendChild(createButton);
+      const reviewButton = document.createElement("button");
+      reviewButton.type = "button";
+      reviewButton.className = "text-action primary import-passenger-match-cta";
+      reviewButton.dataset.importAction = "open-passenger-match-review";
+      reviewButton.textContent = "Validar";
+      reviewButton.title = "Abrir a validação completa deste passageiro importado.";
+      decision.appendChild(reviewButton);
     }
 
     row.append(label);
@@ -9185,6 +9330,50 @@
       row.append(decision);
     }
     return row;
+  }
+
+  async function openImportedPassengerMatchReview(trecho, passenger) {
+    if (!trecho || !passenger?.matchCandidates?.length) return;
+    const displayName = normalizePassengerDisplayName(passenger.nome || passenger.passageiroLabel) || "Passageiro importado";
+    const decision = await openPassengerMatchReview(passenger.matchCandidates, {
+      mode: "import",
+      eyebrow: "Passageiro parecido",
+      title: displayName,
+      summary: "Selecione o cadastro verdadeiro ou crie um novo.",
+      cancelLabel: "Fechar",
+      continueLabel: "Criar novo",
+      useSelectedLabel: "Usar selecionado",
+      importedPassenger: passenger
+    });
+    if (decision.action === "cancel") return;
+
+    const previousIdentity = importedPassengerIdentityKey(passenger);
+    if (decision.action === "use-existing") {
+      const candidate = passenger.matchCandidates.find((item) => sameId(item.passenger.id, decision.passengerId));
+      if (!candidate) return;
+      captureImportReviewHistory("Vincular passageiro existente");
+      markImportedReviewPending(trecho);
+      mergePassengerRecords([candidate.passenger]);
+      applyExistingPassengerToImportedPassenger(
+        passenger,
+        candidate.passenger,
+        "Cadastro existente vinculado. Banco de Dados não será atualizado."
+      );
+      syncImportedSolicitanteFromPassenger(trecho, passenger, previousIdentity);
+      renderImportReviewPreservingGallery();
+      return;
+    }
+
+    if (decision.action === "continue") {
+      captureImportReviewHistory("Criar novo passageiro");
+      markImportedReviewPending(trecho);
+      passenger.matchStatus = "create-new";
+      passenger.passageiroId = "";
+      passenger.passageiroLabel = "";
+      passenger.matchMessage = "Criar novo com nome, telefone, email e cliente.";
+      syncImportedSolicitanteFromPassenger(trecho, passenger, previousIdentity);
+      renderImportReviewPreservingGallery();
+    }
   }
 
   function importedPassengerPreviewRecord(passenger) {
@@ -9199,7 +9388,7 @@
       clienteLabel: existing?.clienteLabel || importClient?.label || CONFIG.importDefaults.clienteLabel || "",
       cargo: existing?.cargo || "",
       departamento: existing?.departamento || "",
-      cr: passenger.centroCusto || existing?.cr || "",
+      cr: "",
       preferencias: existing?.preferencias || "",
       tipoVeiculoLabel: existing?.tipoVeiculoLabel || "",
       endereco: existing?.endereco || "",
@@ -9235,7 +9424,7 @@
       clienteLabel: existing?.clienteLabel || importClient?.label || CONFIG.importDefaults.clienteLabel || "",
       cargo: existing?.cargo || "",
       departamento: existing?.departamento || "",
-      cr: draft.centroCusto || existing?.cr || "",
+      cr: "",
       preferencias: existing?.preferencias || "",
       tipoVeiculoLabel: existing?.tipoVeiculoLabel || "",
       endereco: existing?.endereco || "",
@@ -9597,6 +9786,10 @@
       const passengerIndex = Number(passengerRow.dataset.passengerIndex);
       const passenger = trecho.passageiros[passengerIndex];
       if (!passenger) return;
+      if (action.dataset.importAction === "open-passenger-match-review") {
+        openImportedPassengerMatchReview(trecho, passenger);
+        return;
+      }
       if (action.dataset.importAction === "open-import-passenger") {
         openImportedPassengerEdit(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey, passengerIndex);
         return;
@@ -9619,15 +9812,15 @@
       }
       if (action.dataset.importAction === "create-new-passenger") {
         const previousIdentity = importedPassengerIdentityKey(passenger);
-        captureImportReviewHistory("Criar novo passageiro");
-        markImportedReviewPending(trecho);
-        passenger.matchStatus = "create-new";
-        passenger.passageiroId = "";
-        passenger.passageiroLabel = "";
-        passenger.matchMessage = "Criar novo com nome, telefone, email, CR e cliente.";
-        syncImportedSolicitanteFromPassenger(trecho, passenger, previousIdentity);
-        renderImportReviewPreservingGallery();
-        return;
+      captureImportReviewHistory("Criar novo passageiro");
+      markImportedReviewPending(trecho);
+      passenger.matchStatus = "create-new";
+      passenger.passageiroId = "";
+      passenger.passageiroLabel = "";
+      passenger.matchMessage = "Criar novo com nome, telefone, email e cliente.";
+      syncImportedSolicitanteFromPassenger(trecho, passenger, previousIdentity);
+      renderImportReviewPreservingGallery();
+      return;
       }
       if (!isImportedTrechoEditing(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey)) {
         toast("Habilite a edição pelo ícone de lápis antes de alterar o serviço.", "warning", 5000);
@@ -9678,7 +9871,7 @@
       captureImportReviewHistory("Editar passageiro do serviço");
       markImportedReviewPending(trecho);
       passenger[passengerField] = event.target.value;
-      if (["nome", "telefone", "email", "centroCusto"].includes(passengerField)) {
+      if (["nome", "telefone", "email"].includes(passengerField)) {
         passenger.passageiroId = "";
         passenger.passageiroLabel = "";
         passenger.matchCandidates = [];
@@ -9750,7 +9943,7 @@
         nome: selected.nome || selected.label || "",
         telefone: selected.telefone || "",
         email: selected.email || "",
-        centroCusto: selected.centroCusto || importedTrechoCr(trecho) || ""
+        centroCusto: ""
       } : null;
       const linkedPassenger = linkedImportedPassengerForSolicitante(trecho, value, solicitanteRows || []);
       if (linkedPassenger) {
@@ -9934,7 +10127,7 @@
       telefone: selected?.telefone || trecho.solicitantePessoaImportada?.telefone || "",
       email: selected?.email || trecho.solicitantePessoaImportada?.email || "",
       origem: "",
-      centroCusto: selected?.centroCusto || trecho.solicitantePessoaImportada?.centroCusto || importedTrechoCr(trecho),
+      centroCusto: "",
       matchStatus: "create-new",
       passageiroId: "",
       passageiroLabel: ""
@@ -9961,7 +10154,6 @@
       person.nome,
       person.telefone,
       person.email,
-      person.centroCusto,
       importClient.id
     ].join("|"));
     if (importPassengerCreateLocks.has(key)) return importPassengerCreateLocks.get(key);
@@ -10050,8 +10242,10 @@
   }
 
   function importedTrechoCr(trecho) {
+    if (!trecho) return "";
+    if (String(trecho.importedServiceCr || "").trim()) return String(trecho.importedServiceCr).trim();
     const seen = new Set();
-    return (trecho.passageiros || [])
+    const value = ((trecho.linhasImportadas || []).length ? trecho.linhasImportadas : (trecho.passageiros || []))
       .map((passenger) => String(passenger.centroCusto || "").trim())
       .filter((centroCusto) => {
         const key = normalize(centroCusto);
@@ -10060,6 +10254,8 @@
         return true;
       })
       .join(" / ");
+    trecho.importedServiceCr = value;
+    return value;
   }
 
   function composeImportPassengerDestinations(trecho) {
@@ -10100,6 +10296,8 @@
     passengerMatchResolve = null;
     if (resolve) resolve(result || { action: "cancel" });
     if (el.passengerMatchOverlay) el.passengerMatchOverlay.hidden = true;
+    el.passengerMatchOverlay?.querySelector(".passenger-match-dialog")?.classList.remove("is-import-review");
+    passengerMatchContext = null;
   }
 
   async function saveForm() {
