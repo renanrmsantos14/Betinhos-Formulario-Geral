@@ -108,6 +108,7 @@
   const MAX_FREQUENT_SERVICE_RECORDS = 120;
   const IMPORT_SAVE_CONCURRENCY = 3;
   const INITIAL_PASSENGER_LOOKUP_LIMIT = 5000;
+  const PT_BR_LOCALE = "pt-BR";
   const IMPORT_XLSX_STATUS_OPERATION_MAP = Object.freeze({
     "agendado": "Confirmado",
     "aguardando faturamento": "Confirmado",
@@ -438,6 +439,7 @@
   let xlsxDropOverlayState = "";
   let contentTouchStartY = 0;
   let contentTouchPull = 0;
+  let ptBrDateLocaleObserver = null;
 
   state.mockMode = QUERY_MOCK_MODE || state.xrm === null;
 
@@ -446,7 +448,9 @@
     syncViewportMetrics();
     setLoading(true);
     applyBrandLogo();
+    enforceDocumentPtBrLocale();
     enforcePtBrDateLocale();
+    installPtBrDateLocaleObserver();
     bindStaticEvents();
     populateTimeSelects();
     loadPassengerSelectionRecency();
@@ -511,7 +515,7 @@
     if (state.currentTab !== "details" || !el.saidaData || el.saidaData.disabled) return;
     window.setTimeout(() => {
       if (document.activeElement && document.activeElement !== document.body) return;
-      el.saidaData.focus({ preventScroll: true });
+      focusField(el.saidaData);
     }, 0);
   }
 
@@ -5048,7 +5052,7 @@
     if (el.agendarRetorno.checked && !context.dataHoraRetorno) risks.push("Retorno ativo sem data/hora completa.");
     if (el.agendarRetorno.checked && context.dataHoraRetorno && context.dataHoraPrincipal && context.dataHoraRetorno < context.dataHoraPrincipal) risks.push("Data de retorno anterior à saída.");
     if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) risks.push("Serviço frequente ativo sem período completo.");
-    if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) risks.push("Período frequente com data final anterior à inicial.");
+    if (el.repetirServico.checked && datesAreInverted(el.frequenteInicio.value, el.frequenteFim.value)) risks.push("Período frequente com data final anterior à inicial.");
     if (el.repetirServico.checked) {
       const frequentPeriodError = validateFrequentServicePeriod();
       if (frequentPeriodError) risks.push(frequentPeriodError);
@@ -5591,9 +5595,9 @@
   }
 
   function formatTime(value) {
-    const date = new Date(value);
+    const date = parseDateTimeInputValue(value) || new Date(value);
     if (Number.isNaN(date.getTime())) return "";
-    return new Intl.DateTimeFormat("pt-BR", {
+    return new Intl.DateTimeFormat(PT_BR_LOCALE, {
       hour: "2-digit",
       minute: "2-digit"
     }).format(date);
@@ -10551,7 +10555,7 @@
     if (el.agendarRetorno.checked && !el.retornoDestino.value.trim()) return "'Destino - Retorno' é obrigatório.";
     if (el.agendarRetorno.checked && context.dataHoraRetorno && context.dataHoraPrincipal && context.dataHoraRetorno < context.dataHoraPrincipal) return "Data de retorno nao pode ser anterior a saida.";
     if (el.repetirServico.checked && (!el.frequenteInicio.value || !el.frequenteFim.value)) return "'Data de início e fim - Serviços Frequentes' são obrigatórios.";
-    if (el.repetirServico.checked && el.frequenteInicio.value && el.frequenteFim.value && new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) return "'Data final' não pode ser anterior à data inicial.";
+    if (el.repetirServico.checked && datesAreInverted(el.frequenteInicio.value, el.frequenteFim.value)) return "'Data final' não pode ser anterior à data inicial.";
     const frequentPeriodError = validateFrequentServicePeriod();
     if (frequentPeriodError) return frequentPeriodError;
     if (el.repetirServico.checked && !el.frequenteTipo.value) return "'Tipo de Serviço Frequente' é obrigatório.";
@@ -10574,10 +10578,16 @@
   }
 
   function dateRangeDays(startValue, endValue) {
-    const start = new Date(`${startValue}T00:00:00`);
-    const end = new Date(`${endValue}T00:00:00`);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
+    const start = parseDateInputValue(startValue);
+    const end = parseDateInputValue(endValue);
+    if (!start || !end || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return 0;
     return Math.floor((end.getTime() - start.getTime()) / 86400000) + 1;
+  }
+
+  function datesAreInverted(startValue, endValue) {
+    const start = parseDateInputValue(startValue);
+    const end = parseDateInputValue(endValue);
+    return !!(start && end && end < start);
   }
 
   function buildReservaPayload(context, kind, dataHora, scheduleOverride = null) {
@@ -10633,7 +10643,7 @@
     if (frequentPeriodError) {
       throw new Error(frequentPeriodError);
     }
-    if (new Date(el.frequenteFim.value) < new Date(el.frequenteInicio.value)) {
+    if (datesAreInverted(el.frequenteInicio.value, el.frequenteFim.value)) {
       throw new Error("Data final não pode ser anterior a data inicial para serviços frequentes.");
     }
     const results = [];
@@ -10895,8 +10905,9 @@
     const parsed = parseDateTimeInputValue(dateValue);
     if (parsed) return parsed;
     if (!dateValue || hourValue === "" || minuteValue === "") return null;
-    const [year, month, day] = dateValue.split("-").map(Number);
-    return new Date(year, month - 1, day, Number(hourValue), Number(minuteValue), 0, 0);
+    const date = parseDateInputValue(dateValue);
+    if (!date) return null;
+    return withClock(date, Number(hourValue), Number(minuteValue));
   }
 
   function setDateTimeFields(date, dateInput, hourSelect, minuteSelect, allowBlank = false) {
@@ -10932,9 +10943,10 @@
   }
 
   function generateFrequentDates(startValue, endValue, includeWeekends) {
-    const start = new Date(`${startValue}T00:00:00`);
-    const end = new Date(`${endValue}T00:00:00`);
+    const start = parseDateInputValue(startValue);
+    const end = parseDateInputValue(endValue);
     const dates = [];
+    if (!start || !end) return dates;
     for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
       const day = date.getDay();
       if (includeWeekends || (day !== 0 && day !== 6)) dates.push(new Date(date));
@@ -11389,17 +11401,72 @@
 
   function applyPtBrDateLocale(input) {
     if (!input) return input;
-    const type = String(input.type || "").toLowerCase();
-    if (type !== "date" && type !== "datetime-local") return input;
-    input.lang = "pt-BR";
-    input.setAttribute("lang", "pt-BR");
+    if (!ptBrDateInputType(input)) return input;
+    input.lang = PT_BR_LOCALE;
+    input.setAttribute("lang", PT_BR_LOCALE);
+    input.autocomplete = "off";
+    input.setAttribute("autocomplete", "off");
+    input.spellcheck = false;
+    input.setAttribute("data-locale", PT_BR_LOCALE);
     return input;
+  }
+
+  function enforceDocumentPtBrLocale() {
+    document.documentElement.lang = PT_BR_LOCALE;
+    document.documentElement.setAttribute("lang", PT_BR_LOCALE);
+    document.body?.setAttribute("lang", PT_BR_LOCALE);
   }
 
   function enforcePtBrDateLocale(root = document) {
     root.querySelectorAll?.('input[type="date"], input[type="datetime-local"]').forEach((input) => {
       applyPtBrDateLocale(input);
     });
+  }
+
+  function installPtBrDateLocaleObserver() {
+    if (ptBrDateLocaleObserver || !document?.body || typeof MutationObserver !== "function") return;
+    ptBrDateLocaleObserver = new MutationObserver((records) => {
+      records.forEach((record) => {
+        record.addedNodes?.forEach((node) => {
+          if (node?.nodeType !== 1) return;
+          if (ptBrDateInputType(node)) applyPtBrDateLocale(node);
+          enforcePtBrDateLocale(node);
+        });
+      });
+    });
+    ptBrDateLocaleObserver.observe(document.body, { childList: true, subtree: true });
+  }
+
+  function ptBrDateInputType(input) {
+    const type = String(input?.getAttribute?.("type") || input?.type || "").toLowerCase();
+    return type === "date" || type === "datetime-local" ? type : "";
+  }
+
+  function isValidLocalDateParts(year, month, day, hour = 0, minute = 0) {
+    if (year < 1 || year > 9999 || month < 1 || month > 12 || day < 1 || hour < 0 || hour > 23 || minute < 0 || minute > 59) return false;
+    const date = new Date(0);
+    date.setFullYear(year, month - 1, day);
+    date.setHours(hour, minute, 0, 0);
+    return date.getFullYear() === year
+      && date.getMonth() === month - 1
+      && date.getDate() === day
+      && date.getHours() === hour
+      && date.getMinutes() === minute;
+  }
+
+  function isPtBrDateValueInRange(value, input, type) {
+    const comparable = type === "date" ? value.slice(0, 10) : normalizeDateTimeRangeValue(value);
+    const min = input.getAttribute("min");
+    const max = input.getAttribute("max");
+    if (min && comparable < (type === "date" ? min.slice(0, 10) : normalizeDateTimeRangeValue(min))) return false;
+    if (max && comparable > (type === "date" ? max.slice(0, 10) : normalizeDateTimeRangeValue(max))) return false;
+    return true;
+  }
+
+  function normalizeDateTimeRangeValue(value) {
+    const text = String(value || "").trim();
+    if (!text) return "";
+    return text.includes("T") ? text.slice(0, 16) : `${text.slice(0, 10)}T00:00`;
   }
 
   function parseDateTimeInputValue(value) {
@@ -11409,8 +11476,20 @@
     const [year, month, day] = datePart.split("-").map(Number);
     const [hour = 0, minute = 0] = timePart.split(":").map(Number);
     if (![year, month, day, hour, minute].every(Number.isFinite)) return null;
+    if (!isValidLocalDateParts(year, month, day, hour, minute)) return null;
     const date = new Date(year, month - 1, day, hour, minute, 0, 0);
     return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function parseDateInputValue(value) {
+    const datePart = datePartFromInputValue(value);
+    const [year, month, day] = datePart.split("-").map(Number);
+    if (![year, month, day].every(Number.isFinite)) return null;
+    if (!isValidLocalDateParts(year, month, day)) return null;
+    const date = new Date(0);
+    date.setFullYear(year, month - 1, day);
+    date.setHours(0, 0, 0, 0);
+    return date;
   }
 
   function datePartFromInputValue(value) {
@@ -11497,7 +11576,7 @@
   function formatCurrencyDisplayValue(value) {
     const parsed = parseNumber(value);
     if (parsed === null) return "";
-    return parsed.toLocaleString("pt-BR", {
+    return parsed.toLocaleString(PT_BR_LOCALE, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
@@ -11568,7 +11647,7 @@
   }
 
   function formatDateTime(date) {
-    return new Intl.DateTimeFormat("pt-BR", {
+    return new Intl.DateTimeFormat(PT_BR_LOCALE, {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",

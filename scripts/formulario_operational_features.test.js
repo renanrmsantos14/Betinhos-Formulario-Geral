@@ -411,6 +411,15 @@ includes(css, ".switch", "switch deve ter regra CSS propria");
 includes(css, "cursor: pointer;", "controles clicaveis devem exibir cursor de clique");
 includes(css, "input[type=\"datetime-local\"]:not(:disabled)", "seletor de data/hora deve ter cursor clicavel");
 includes(css, "::-webkit-calendar-picker-indicator", "icone nativo de calendario deve ter cursor clicavel");
+includes(app, "const PT_BR_LOCALE = \"pt-BR\";", "locale pt-BR deve ser constante unica para datas");
+includes(app, "function enforceDocumentPtBrLocale", "documento deve reforcar locale pt-BR");
+includes(app, "installPtBrDateLocaleObserver();", "datas dinamicas devem receber locale pt-BR automaticamente");
+includes(app, "input.setAttribute(\"lang\", PT_BR_LOCALE);", "date/datetime nativo deve receber lang pt-BR");
+includes(app, "input.setAttribute(\"autocomplete\", \"off\");", "date/datetime nativo deve desativar autocomplete do browser");
+includes(app, "input.setAttribute(\"data-locale\", PT_BR_LOCALE);", "date/datetime nativo deve carregar marcador de locale");
+includes(app, "parseDateInputValue(startValue)", "periodo frequente deve parsear date local sem depender do parser nativo");
+excludes(app, "function installPtBrDateInput", "date/datetime nao deve trocar controle nativo por display texto");
+excludes(css, ".ptbr-date-native", "controle nativo nao deve ser ocultado");
 {
   const returnPanelStart = html.indexOf("id=\"tab-panel-return\"");
   const returnPanelEnd = html.indexOf("<section class=\"form-section\">", returnPanelStart);
