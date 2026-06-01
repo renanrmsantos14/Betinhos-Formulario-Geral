@@ -446,6 +446,7 @@
     syncViewportMetrics();
     setLoading(true);
     applyBrandLogo();
+    enforcePtBrDateLocale();
     bindStaticEvents();
     populateTimeSelects();
     loadPassengerSelectionRecency();
@@ -3306,7 +3307,7 @@
 
     const saida = r[f.dataSaida] ? new Date(r[f.dataSaida]) : null;
     const prevRet = r[f.previsaoRetorno] ? new Date(r[f.previsaoRetorno]) : null;
-    setDateTimeFields(saida || new Date(), el.saidaData, el.saidaHora, el.saidaMinuto);
+    setDateTimeFields(saida, el.saidaData, el.saidaHora, el.saidaMinuto, true);
     setDateTimeFields(prevRet, el.retPrevDateTime, el.retPrevHora, el.retPrevMinuto, true);
 
     setSelectValue(el.statusOperacao, r[f.status], findOptionValue("statusOperacao", "Confirmado"));
@@ -3678,6 +3679,7 @@
     } else {
       control = document.createElement("input");
       control.type = field.kind === "date" ? "date" : (field.inputType || "text");
+      applyPtBrDateLocale(control);
       if (field.inputType === "tel") control.inputMode = "tel";
       if (field.inputType === "email") control.autocomplete = "email";
       control.readOnly = true;
@@ -4089,7 +4091,7 @@
         <label class="field span-2 required datetime-field">
           <span>Data e horário</span>
           <div class="inline-time">
-            <input type="datetime-local" data-schedule-field="dataHora" step="300">
+            <input type="datetime-local" lang="pt-BR" data-schedule-field="dataHora" step="300">
             <input type="hidden" data-schedule-field="data">
             <input type="hidden" data-schedule-field="hora">
             <input type="hidden" data-schedule-field="minuto">
@@ -4098,7 +4100,7 @@
         <label class="field datetime-field">
           <span>Hr prev retorno</span>
           <div class="inline-time">
-            <input type="datetime-local" data-schedule-field="retPrevDateTime" step="300">
+            <input type="datetime-local" lang="pt-BR" data-schedule-field="retPrevDateTime" step="300">
             <input type="hidden" data-schedule-field="retPrevHora">
             <input type="hidden" data-schedule-field="retPrevMinuto">
           </div>
@@ -8521,6 +8523,7 @@
     span.textContent = label;
     const input = document.createElement("input");
     input.type = type;
+    applyPtBrDateLocale(input);
     if (type === "datetime-local") input.step = "300";
     input.value = value ?? "";
     input.dataset.importField = field;
@@ -11382,6 +11385,21 @@
     }
     if (hourInput) hourInput.value = String(date.getHours()).padStart(2, "0");
     if (minuteInput) minuteInput.value = String(Math.min(55, Math.floor(date.getMinutes() / 5) * 5)).padStart(2, "0");
+  }
+
+  function applyPtBrDateLocale(input) {
+    if (!input) return input;
+    const type = String(input.type || "").toLowerCase();
+    if (type !== "date" && type !== "datetime-local") return input;
+    input.lang = "pt-BR";
+    input.setAttribute("lang", "pt-BR");
+    return input;
+  }
+
+  function enforcePtBrDateLocale(root = document) {
+    root.querySelectorAll?.('input[type="date"], input[type="datetime-local"]').forEach((input) => {
+      applyPtBrDateLocale(input);
+    });
   }
 
   function parseDateTimeInputValue(value) {

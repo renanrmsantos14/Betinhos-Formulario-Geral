@@ -7765,7 +7765,7 @@ textarea,
               <label class="field compact-time saida-compact-time datetime-field required">
                 <span>Data e horário de saída</span>
                 <div class="inline-time">
-                  <input id="saidaData" type="datetime-local" required aria-required="true" step="300" max="9999-12-31T23:59">
+                  <input id="saidaData" type="datetime-local" lang="pt-BR" required aria-required="true" step="300" max="9999-12-31T23:59">
                   <input id="saidaHora" type="hidden">
                   <input id="saidaMinuto" type="hidden">
                 </div>
@@ -7774,7 +7774,7 @@ textarea,
               <label class="field datetime-field">
                 <span>Horário previsto de retorno</span>
                 <div class="inline-time">
-                  <input id="retPrevDateTime" type="datetime-local" step="300" max="9999-12-31T23:59">
+                  <input id="retPrevDateTime" type="datetime-local" lang="pt-BR" step="300" max="9999-12-31T23:59">
                   <input id="retPrevHora" type="hidden">
                   <input id="retPrevMinuto" type="hidden">
                 </div>
@@ -7981,7 +7981,7 @@ textarea,
             </label>
             <label class="field date-field">
               <span>Data de nascimento</span>
-              <input id="bdNascimento" type="date" max="9999-12-31">
+              <input id="bdNascimento" type="date" lang="pt-BR" max="9999-12-31">
             </label>
             <label class="field span-2">
               <span>Perfil do passageiro</span>
@@ -8018,7 +8018,7 @@ textarea,
             <label class="field span-2 datetime-field">
               <span>Data e horário de retorno</span>
               <div class="inline-time">
-                <input id="retornoData" type="datetime-local" step="300" max="9999-12-31T23:59">
+                <input id="retornoData" type="datetime-local" lang="pt-BR" step="300" max="9999-12-31T23:59">
                 <input id="retornoHora" type="hidden">
                 <input id="retornoMinuto" type="hidden">
               </div>
@@ -8064,11 +8064,11 @@ textarea,
           <div class="form-grid">
             <label class="field date-field">
               <span>Data de início</span>
-              <input id="frequenteInicio" type="date" max="9999-12-31">
+              <input id="frequenteInicio" type="date" lang="pt-BR" max="9999-12-31">
             </label>
             <label class="field date-field">
               <span>Data de fim</span>
-              <input id="frequenteFim" type="date" max="9999-12-31">
+              <input id="frequenteFim" type="date" lang="pt-BR" max="9999-12-31">
             </label>
             <label class="field">
               <span>Tipo</span>
@@ -8088,7 +8088,7 @@ textarea,
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.0.0.7</span>
+        <span>v</span><span id="codeVersionText">1.0.0.8</span>
       </footer>
     </main>
 
@@ -10203,6 +10203,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     syncViewportMetrics();
     setLoading(true);
     applyBrandLogo();
+    enforcePtBrDateLocale();
     bindStaticEvents();
     populateTimeSelects();
     loadPassengerSelectionRecency();
@@ -13063,7 +13064,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
     const saida = r[f.dataSaida] ? new Date(r[f.dataSaida]) : null;
     const prevRet = r[f.previsaoRetorno] ? new Date(r[f.previsaoRetorno]) : null;
-    setDateTimeFields(saida || new Date(), el.saidaData, el.saidaHora, el.saidaMinuto);
+    setDateTimeFields(saida, el.saidaData, el.saidaHora, el.saidaMinuto, true);
     setDateTimeFields(prevRet, el.retPrevDateTime, el.retPrevHora, el.retPrevMinuto, true);
 
     setSelectValue(el.statusOperacao, r[f.status], findOptionValue("statusOperacao", "Confirmado"));
@@ -13435,6 +13436,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     } else {
       control = document.createElement("input");
       control.type = field.kind === "date" ? "date" : (field.inputType || "text");
+      applyPtBrDateLocale(control);
       if (field.inputType === "tel") control.inputMode = "tel";
       if (field.inputType === "email") control.autocomplete = "email";
       control.readOnly = true;
@@ -13846,7 +13848,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         <label class="field span-2 required datetime-field">
           <span>Data e horário</span>
           <div class="inline-time">
-            <input type="datetime-local" data-schedule-field="dataHora" step="300">
+            <input type="datetime-local" lang="pt-BR" data-schedule-field="dataHora" step="300">
             <input type="hidden" data-schedule-field="data">
             <input type="hidden" data-schedule-field="hora">
             <input type="hidden" data-schedule-field="minuto">
@@ -13855,7 +13857,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         <label class="field datetime-field">
           <span>Hr prev retorno</span>
           <div class="inline-time">
-            <input type="datetime-local" data-schedule-field="retPrevDateTime" step="300">
+            <input type="datetime-local" lang="pt-BR" data-schedule-field="retPrevDateTime" step="300">
             <input type="hidden" data-schedule-field="retPrevHora">
             <input type="hidden" data-schedule-field="retPrevMinuto">
           </div>
@@ -18278,6 +18280,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     span.textContent = label;
     const input = document.createElement("input");
     input.type = type;
+    applyPtBrDateLocale(input);
     if (type === "datetime-local") input.step = "300";
     input.value = value ?? "";
     input.dataset.importField = field;
@@ -21139,6 +21142,21 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }
     if (hourInput) hourInput.value = String(date.getHours()).padStart(2, "0");
     if (minuteInput) minuteInput.value = String(Math.min(55, Math.floor(date.getMinutes() / 5) * 5)).padStart(2, "0");
+  }
+
+  function applyPtBrDateLocale(input) {
+    if (!input) return input;
+    const type = String(input.type || "").toLowerCase();
+    if (type !== "date" && type !== "datetime-local") return input;
+    input.lang = "pt-BR";
+    input.setAttribute("lang", "pt-BR");
+    return input;
+  }
+
+  function enforcePtBrDateLocale(root = document) {
+    root.querySelectorAll?.('input[type="date"], input[type="datetime-local"]').forEach((input) => {
+      applyPtBrDateLocale(input);
+    });
   }
 
   function parseDateTimeInputValue(value) {
