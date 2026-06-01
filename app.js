@@ -5991,6 +5991,7 @@
       }
     }
     touchPassengerSelectionRecency(selected.id);
+    applySelectedPassengerClientDefault(selected);
     applyPassengerDefaults(true);
     const currentSolicitante = el.solicitante.value;
     renderLookupSelect(el.solicitante, state.passageiros);
@@ -6075,6 +6076,17 @@
 
   function getDraftAddress(ordem) {
     return state.enderecoRascunho.find((row) => row.ordem === ordem)?.endereco || "";
+  }
+
+  function applySelectedPassengerClientDefault(passenger) {
+    if (el.cliente?.value || !passenger?.clienteId) return;
+    setSelectValue(el.cliente, passenger.clienteId);
+    if (!el.cliente.value && passenger.clienteLabel) {
+      setSelectValue(el.cliente, findOptionValue("cliente", passenger.clienteLabel));
+    }
+    if (!el.cliente.value) return;
+    applyStatusFaturamentoDefault();
+    renderStatusFaturamento();
   }
 
   function applyPassengerDefaults(force) {
@@ -8450,8 +8462,7 @@
         return;
       }
       if (control.hasAttribute("data-import-observation-text")) {
-        const activeObsType = card.querySelector("[data-import-obs-type].is-active")?.dataset.importObsType || "motorista";
-        control.readOnly = !isEditing || activeObsType === "motorista";
+        control.readOnly = !isEditing;
         return;
       }
       if (control.tagName === "SELECT" || control.tagName === "BUTTON") {
@@ -8603,7 +8614,7 @@
       : "motorista";
     const existing = trecho?.observacoesFormulario || {};
     const obs = {
-      motorista: importedMotoristaObservationFromXlsx(trecho),
+      motorista: existing.motorista ?? trecho?.observacaoOperacional ?? importedMotoristaObservationFromXlsx(trecho),
       interna: existing.interna ?? trecho?.observacaoInterna ?? importedDefaultInternalObservation(trecho),
       final: existing.final ?? trecho?.observacaoFinal ?? "",
       passageiro: existing.passageiro ?? trecho?.observacaoPassageiro ?? composeImportedTrechoPreferencias(trecho),
@@ -8622,7 +8633,7 @@
 
   function syncImportedObservationFields(trecho) {
     const obs = trecho?.observacoesFormulario || {};
-    trecho.observacaoOperacional = importedMotoristaObservationFromXlsx(trecho);
+    trecho.observacaoOperacional = obs.motorista || "";
     trecho.observacaoInterna = obs.interna || "";
     trecho.observacaoFinal = obs.final || "";
     trecho.observacaoPassageiro = obs.passageiro || "";
@@ -9418,7 +9429,7 @@
       });
       if (textarea) {
         textarea.value = obs[next] || "";
-        textarea.readOnly = !isImportedTrechoEditing(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey) || next === "motorista";
+        textarea.readOnly = !isImportedTrechoEditing(trechoCard.dataset.programacao, trechoCard.dataset.trechoKey);
         requestAnimationFrame(() => {
           textarea.focus();
           textarea.setSelectionRange?.(textarea.value.length, textarea.value.length);
@@ -9652,10 +9663,6 @@
     if (event.target.dataset.importObservationText) {
       const obs = ensureImportedObservationState(trecho);
       const current = obs.current || "motorista";
-      if (current === "motorista") {
-        event.target.value = importedMotoristaObservationFromXlsx(trecho);
-        return;
-      }
       if (String(obs[current] ?? "") === String(event.target.value ?? "")) return;
       captureImportReviewHistory("Editar observação do serviço");
       markImportedReviewPending(trecho);
@@ -9962,8 +9969,7 @@
       const payload = {
         [CONFIG.fields.passageiro.nome]: normalizePassengerDisplayName(person.nome),
         [CONFIG.fields.passageiro.telefone]: phoneStorageValue(person.telefone || "", "55"),
-        [CONFIG.fields.passageiro.email]: normalizeEmail(person.email || ""),
-        [CONFIG.fields.passageiro.cr]: person.centroCusto || ""
+        [CONFIG.fields.passageiro.email]: normalizeEmail(person.email || "")
       };
       bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, importClient.id);
 
@@ -9980,7 +9986,7 @@
         email: normalizeEmail(person.email || ""),
         endereco: "",
         preferencias: "",
-        cr: person.centroCusto || "",
+        cr: "",
         clienteId: importClient.id,
         clienteLabel: importClient.label
       };
@@ -10209,7 +10215,7 @@
       if (failedCount) {
         toast(`${savedCount} serviço(s) agendado(s). ${failedCount} serviço(s) falharam.`, "warning", 8000);
       } else {
-        toast(`${savedCount} serviço(s) importado(s) agendado(s) com sucesso.`, "success", 7000);
+        showSuccess(savedCount === 1 ? "1 serviço importado!" : `${savedCount} serviços importados!`);
       }
       renderImportReview();
       renderTabBadges();

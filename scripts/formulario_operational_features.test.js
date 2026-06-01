@@ -131,6 +131,40 @@ return function parse(search, hostId = "") {
   return Function(body)();
 }
 
+function buildPassengerClientDefaultHarness() {
+  const body = `
+let sideEffects = [];
+const el = {
+  cliente: {
+    value: "",
+    options: []
+  }
+};
+function findOptionValue(field, label) {
+  if (field === "cliente" && label === "Cliente A") return "cliente-a";
+  return "";
+}
+function refreshCustomSelect() {}
+${extractFunction(app, "setSelectValue")}
+function applyStatusFaturamentoDefault() {
+  sideEffects.push("status-default");
+}
+function renderStatusFaturamento() {
+  sideEffects.push("render-status");
+}
+${extractFunction(app, "applySelectedPassengerClientDefault")}
+return {
+  run(passenger, currentValue = "", options = [{ value: "cliente-a" }]) {
+    el.cliente.value = currentValue;
+    el.cliente.options = options;
+    sideEffects = [];
+    applySelectedPassengerClientDefault(passenger);
+    return { value: el.cliente.value, sideEffects: [...sideEffects] };
+  }
+};`;
+  return Function(body)();
+}
+
 [
   "riskList",
   "saveLogList",
@@ -198,6 +232,7 @@ includes(app, "Mesmo cliente", "validacao por cliente");
 const matcher = buildPassengerMatcher();
 const importedMatchSelector = buildImportedMatchSelector();
 const phone = buildPhoneParser();
+const passengerClientDefault = buildPassengerClientDefaultHarness();
 assert.ok(
   matcher.scorePassengerCandidate(
     { label: "Ricardo Almeida", clienteId: "cliente-a", telefone: "", email: "" },
@@ -262,6 +297,25 @@ assert.equal(
   ], { id: "cliente-a", label: "Embraer" }),
   null,
   "importacao nao deve auto-vincular nome identico quando o importado tem contato sem bater"
+);
+assert.deepEqual(
+  passengerClientDefault.run({ clienteId: "cliente-a", clienteLabel: "Cliente A" }),
+  { value: "cliente-a", sideEffects: ["status-default", "render-status"] },
+  "selecionar passageiro deve preencher cliente vazio com o cliente salvo no cadastro"
+);
+assert.deepEqual(
+  passengerClientDefault.run(
+    { clienteId: "cliente-a", clienteLabel: "Cliente A" },
+    "cliente-manual",
+    [{ value: "cliente-a" }, { value: "cliente-manual" }]
+  ),
+  { value: "cliente-manual", sideEffects: [] },
+  "cliente escolhido manualmente nao deve ser sobrescrito ao selecionar passageiro"
+);
+assert.deepEqual(
+  passengerClientDefault.run({ clienteId: "", clienteLabel: "" }),
+  { value: "", sideEffects: [] },
+  "passageiro sem cliente salvo nao deve alterar o formulario"
 );
 
 assert.equal(
@@ -485,8 +539,9 @@ excludes(app, "LEMBRETE TEMPORARIO", "toast temporario de status deve ser removi
 const createImportedPersonRecordFn = extractFunction(app, "createImportedPersonRecord");
 includes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.email]: normalizeEmail(person.email || \"\")", "passageiro novo importado deve gravar email quando existir");
 includes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.telefone]: phoneStorageValue(person.telefone || \"\", \"55\")", "passageiro novo importado deve gravar telefone");
-includes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.cr]: person.centroCusto || \"\"", "passageiro novo importado deve gravar CR");
+excludes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.cr]: person.centroCusto || \"\"", "passageiro novo importado nao deve gravar CR");
 includes(createImportedPersonRecordFn, "bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, importClient.id)", "passageiro novo importado deve gravar cliente");
+includes(createImportedPersonRecordFn, "cr: \"\",", "registro local criado por importacao nao deve fingir CR salvo no BD");
 excludes(createImportedPersonRecordFn, "setChoice(payload", "passageiro novo importado nao deve gravar choices automaticos");
 excludes(createImportedPersonRecordFn, "CONFIG.fields.passageiro.cadastro", "passageiro novo importado nao deve gravar data de cadastro pela importacao");
 includes(app, "function openXlsxImportPicker", "abertura do seletor XLSX");
@@ -499,6 +554,7 @@ includes(canStartXlsxImportFn, "hasPrimaryDraftChanges()", "upload XLSX deve blo
 includes(canStartXlsxImportFn, "hasImportedServicesDraft()", "upload XLSX deve bloquear nova importacao quando ja existe revisao");
 includes(app, "function hasImportedServicesDraft()", "estado de importacao carregada deve ter guard proprio");
 includes(app, "Já existe uma importação em revisão", "bloqueio de novo XLSX deve explicar que ja existe importacao");
+includes(app, "showSuccess(savedCount === 1 ? \"1 serviço importado!\" : `${savedCount} serviços importados!`);", "agendamento importado totalmente bem-sucedido deve abrir popup final com retorno para Geral");
 includes(app, "getDroppedXlsxFile(event)", "drop deve extrair arquivo XLSX do DataTransfer");
 includes(app, "Arquivo inválido. Solte um .xlsx.", "drop deve bloquear arquivo que nao seja XLSX");
 includes(app, "if (el.importDropOverlay) el.importDropOverlay.hidden = false", "overlay de drop deve remover hidden ao arrastar arquivo");
@@ -829,6 +885,12 @@ includes(app, "renderImportedPassengerEditFields(passenger)", "passageiro import
 includes(app, "function saveImportedPassengerEditField", "popup deve salvar alteracoes locais do passageiro importado");
 includes(app, "activeImportedPassengerEditRef", "popup deve guardar o passageiro importado ativo");
 includes(app, "[\"nome\", \"telefone\", \"email\", \"centroCusto\"].includes(field.key)", "edicao local deve atualizar dados que serao gravados no novo passageiro");
+const importedObservationStateFn = extractFunction(app, "ensureImportedObservationState");
+includes(importedObservationStateFn, "motorista: existing.motorista ?? trecho?.observacaoOperacional ?? importedMotoristaObservationFromXlsx(trecho)", "OBS Mot importada deve manter edicao local e usar XLSX apenas como valor inicial");
+const importedObservationSyncFn = extractFunction(app, "syncImportedObservationFields");
+includes(importedObservationSyncFn, "trecho.observacaoOperacional = obs.motorista || \"\";", "OBS Mot editada no import deve persistir no trecho");
+excludes(app, "activeObsType === \"motorista\"", "OBS Mot importada nao deve ficar travada por tipo ativo");
+excludes(app, "if (current === \"motorista\") {", "digitacao em OBS Mot importada nao deve ser descartada");
 excludes(app, "function buildImportPassengerDraftEditor", "importacao nao deve abrir editor inline de passageiro");
 excludes(css, ".import-passenger-draft-editor", "CSS do editor inline de passageiro importado deve sair");
 excludes(css, ".import-passenger-row.is-draft-editing", "linha do passageiro importado nao deve virar formulario inline");
