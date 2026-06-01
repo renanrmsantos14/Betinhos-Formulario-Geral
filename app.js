@@ -6348,16 +6348,8 @@
 
   function resolvePassengerPhotoFlowUrl() {
     const runtimeUrl = String(state.xrm?.Utility?.getGlobalContext?.()?.getClientUrl?.() || window.location.href || "").toLowerCase();
-    if (!runtimeUrl) return PASSENGER_PHOTO_FLOW_URL_PROD;
-    if (
-      runtimeUrl.includes("localhost") ||
-      runtimeUrl.includes("127.0.0.1") ||
-      runtimeUrl.includes("file:") ||
-      QUERY_MOCK_MODE
-    ) {
-      return PASSENGER_PHOTO_FLOW_URL_DEV;
-    }
-    return PASSENGER_PHOTO_FLOW_URL_PROD;
+    if (runtimeUrl.includes("org23b93544.crm2.dynamics.com")) return PASSENGER_PHOTO_FLOW_URL_PROD;
+    return PASSENGER_PHOTO_FLOW_URL_DEV;
   }
 
   function currentUserName() {
