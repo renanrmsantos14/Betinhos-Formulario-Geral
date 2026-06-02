@@ -451,6 +451,7 @@
   let clearAllFormsConfirmationResolve = null;
   let passengerPhotoPreviewResolve = null;
   let passengerPhotoPreviewPreviousFocus = null;
+  let activePassengerPhotoHoverZoom = null;
   const importPassengerCreateLocks = new Map();
   const IMPORT_REVIEW_HISTORY_LIMIT = 80;
   const GLOBAL_HISTORY_LIMIT = 80;
@@ -937,6 +938,8 @@
     el.bdPhotoDrop?.addEventListener("dragleave", handlePassengerPhotoDragLeave);
     el.bdPhotoDrop?.addEventListener("drop", handleBdPassengerPhotoDrop);
     el.passengerEditFields?.addEventListener("click", handlePassengerEditPhotoAction);
+    el.passengerEditFields?.addEventListener("pointerover", handlePassengerEditPhotoHover);
+    el.passengerEditFields?.addEventListener("pointerout", handlePassengerEditPhotoHoverLeave);
     el.passengerEditFields?.addEventListener("change", handlePassengerEditPhotoFileChange);
     el.passengerRows?.addEventListener("pointerdown", handlePassengerRowPointerDown);
     el.passengerRows?.addEventListener("click", handlePassengerRowAction);
@@ -4868,6 +4871,12 @@
     portal?.addEventListener("pointerenter", clearPassengerPreviewCloseTimer);
     portal?.addEventListener("pointerleave", () => schedulePassengerPreviewClose());
     portal?.addEventListener("click", async (event) => {
+      const photoButton = event.target.closest("[data-passenger-preview-photo]");
+      if (photoButton) {
+        const data = passengerPhotoViewerDataFromElement(photoButton);
+        if (data) openPassengerPhotoViewer(data);
+        return;
+      }
       const valueEl = event.target.closest(".passenger-preview-value");
       if (!valueEl) return;
       const value = valueEl.dataset.copyValue || valueEl.textContent || "";
@@ -4877,6 +4886,17 @@
       } catch (error) {
         showCopyNotice(valueEl, "Falha ao copiar.", true);
       }
+    });
+    portal?.addEventListener("pointerover", (event) => {
+      const photoButton = event.target.closest("[data-passenger-preview-photo]");
+      if (!photoButton) return;
+      const data = passengerPhotoViewerDataFromElement(photoButton);
+      if (data) openPassengerPhotoHoverZoom(photoButton, data);
+    });
+    portal?.addEventListener("pointerout", (event) => {
+      const photoButton = event.target.closest("[data-passenger-preview-photo]");
+      if (!photoButton || photoButton.contains(event.relatedTarget)) return;
+      closePassengerPhotoHoverZoom();
     });
     document.body.appendChild(portal);
     return portal;
@@ -5006,6 +5026,7 @@
       if (!raw) return "";
       return optionsKey ? optionLabel(optionsKey, raw) || raw : raw;
     };
+    const hasPhotoHeader = !!normalizePassengerPhotoUrl(passenger?.fotoUrl);
     const rows = [
       ["Nome", passenger.label],
       ["Telefone", passenger.telefone],
@@ -5023,16 +5044,23 @@
       ["Idioma", previewValue(passenger.idioma, "bdIdioma")],
       ["Sexo", previewValue(passenger.sexo, "bdSexo")],
       ["Classificação", previewValue(passenger.classificacao, "bdClassificacao")]
-    ].filter((item) => (item[1] || "").toString().trim());
+    ].filter(([label, value]) => {
+      if (hasPhotoHeader && (label === "Nome" || label === "Cliente")) return false;
+      return (value || "").toString().trim();
+    });
     if (!rows.length) {
       const empty = document.createElement("p");
       empty.className = "passenger-preview-empty";
       empty.textContent = "Sem informações adicionais.";
+      const photoHeader = buildPassengerPreviewPhotoHeader(passenger);
+      if (photoHeader) container.appendChild(photoHeader);
       container.appendChild(empty);
       return;
     }
     const list = document.createElement("div");
     list.className = "passenger-preview-list";
+    const photoHeader = buildPassengerPreviewPhotoHeader(passenger);
+    if (photoHeader) container.appendChild(photoHeader);
     rows.forEach(([label, value]) => {
       const line = document.createElement("div");
       line.className = "passenger-preview-line";
@@ -5058,6 +5086,31 @@
       list.appendChild(line);
     });
     container.appendChild(list);
+  }
+
+  function buildPassengerPreviewPhotoHeader(passenger) {
+    if (!normalizePassengerPhotoUrl(passenger?.fotoUrl)) return null;
+    const data = photoViewerDataFromPassenger(passenger);
+    if (!data?.src) return null;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "passenger-preview-photo-header";
+    button.dataset.passengerPreviewPhoto = "true";
+    hydratePassengerPhotoViewerDataset(button, data);
+    button.title = "Ver foto";
+    button.setAttribute("aria-label", "Ver foto do passageiro");
+    const img = document.createElement("img");
+    img.alt = `Foto de ${data.passengerName || "passageiro"}`;
+    img.src = data.src;
+    const text = document.createElement("span");
+    text.className = "passenger-preview-photo-text";
+    const name = document.createElement("strong");
+    name.textContent = data.passengerName || "Passageiro";
+    const client = document.createElement("small");
+    client.textContent = data.clientName || "Cliente não informado";
+    text.append(name, client);
+    button.append(img, text);
+    return button;
   }
 
   function renderImportedPassengerComparisonPreview(container, passenger, existing) {
@@ -6468,6 +6521,8 @@
     if (!draft?.previewDataUrl || !el.passengerPhotoPreviewOverlay) return Promise.resolve(true);
     if (passengerPhotoPreviewResolve) resolvePassengerPhotoPreview(false);
     passengerPhotoPreviewPreviousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setPassengerPhotoPreviewMode("confirm");
+    if (el.passengerPhotoPreviewTitle) el.passengerPhotoPreviewTitle.textContent = "Confirmar imagem";
     if (el.passengerPhotoPreviewImage) {
       el.passengerPhotoPreviewImage.src = draft.previewDataUrl;
     }
@@ -6481,10 +6536,51 @@
     });
   }
 
+  function setPassengerPhotoPreviewMode(mode) {
+    const dialog = el.passengerPhotoPreviewOverlay?.querySelector(".passenger-photo-preview-dialog");
+    if (!dialog) return;
+    dialog.dataset.photoPreviewMode = mode;
+    dialog.classList.toggle("is-view-only", mode === "view");
+    if (el.passengerPhotoPreviewOk) el.passengerPhotoPreviewOk.hidden = mode === "view";
+  }
+
+  function openPassengerPhotoViewer(data) {
+    if (!data?.src || !el.passengerPhotoPreviewOverlay) return false;
+    if (passengerPhotoPreviewResolve) resolvePassengerPhotoPreview(false);
+    closePassengerPhotoHoverZoom();
+    passengerPhotoPreviewPreviousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setPassengerPhotoPreviewMode("view");
+    if (el.passengerPhotoPreviewTitle) {
+      el.passengerPhotoPreviewTitle.textContent = data.passengerName ? `Foto de ${data.passengerName}` : "Foto do passageiro";
+    }
+    if (el.passengerPhotoPreviewImage) {
+      el.passengerPhotoPreviewImage.src = data.src;
+    }
+    renderPassengerPhotoViewerMeta(data);
+    el.passengerPhotoPreviewOverlay.hidden = false;
+    window.setTimeout(() => el.passengerPhotoPreviewCancel?.focus(), 0);
+    loadPassengerPhotoLinkMetadata(data, renderPassengerPhotoViewerMeta);
+    return true;
+  }
+
+  function renderPassengerPhotoViewerMeta(data) {
+    if (!el.passengerPhotoPreviewMeta) return;
+    el.passengerPhotoPreviewMeta.textContent = passengerPhotoViewerMetaText(data);
+  }
+
+  function passengerPhotoViewerMetaText(data) {
+    return [
+      data.fileName || fileNameFromPhotoUrl(data.src) || "Arquivo de imagem",
+      formatPhotoFileSize(data.fileSize) || "Tamanho indisponivel pelo link",
+      formatPhotoSavedAt(data.savedAt) || "Data indisponivel pelo link"
+    ].join(" - ");
+  }
+
   function resolvePassengerPhotoPreview(confirmed) {
     const resolve = passengerPhotoPreviewResolve;
     passengerPhotoPreviewResolve = null;
     if (el.passengerPhotoPreviewOverlay) el.passengerPhotoPreviewOverlay.hidden = true;
+    setPassengerPhotoPreviewMode("confirm");
     if (el.passengerPhotoPreviewImage) {
       el.passengerPhotoPreviewImage.removeAttribute("src");
     }
@@ -6679,10 +6775,167 @@
     const wrap = event.target.closest("[data-passenger-edit-control='fotoUrl']");
     if (!wrap) return;
     if (!passengerEditEnabled) {
+      if (openLockedPassengerEditPhotoViewer(wrap)) return;
       toast("Desbloqueie a edição para trocar a foto do passageiro.", "warning", 5000);
       return;
     }
     wrap.querySelector("[data-passenger-photo-file]")?.click();
+  }
+
+  function handlePassengerEditPhotoHover(event) {
+    const wrap = event.target.closest("[data-passenger-edit-control='fotoUrl']");
+    if (!wrap || passengerEditEnabled) return;
+    const data = photoViewerDataFromPassenger(getPassengerById(activePassengerEditId), wrap);
+    if (!data?.src) return;
+    openPassengerPhotoHoverZoom(wrap, data);
+  }
+
+  function handlePassengerEditPhotoHoverLeave(event) {
+    const wrap = event.target.closest("[data-passenger-edit-control='fotoUrl']");
+    if (!wrap || wrap.contains(event.relatedTarget)) return;
+    closePassengerPhotoHoverZoom();
+  }
+
+  function openLockedPassengerEditPhotoViewer(wrap) {
+    return openPassengerPhotoViewer(photoViewerDataFromPassenger(getPassengerById(activePassengerEditId), wrap));
+  }
+
+  function photoViewerDataFromPassenger(passenger, control = null) {
+    const draft = getActivePassengerEditPhotoDraft(passenger?.id || activePassengerEditId)?.draft || null;
+    const savedUrl = normalizePassengerPhotoUrl(control?.dataset?.savedValue || passenger?.fotoUrl || "");
+    const src = draft?.previewDataUrl || passengerPhotoPreviewCandidates(savedUrl)[0] || "";
+    if (!src) return null;
+    return {
+      src,
+      url: savedUrl || src,
+      passengerName: normalizePassengerDisplayName(passenger?.label || passenger?.nome || ""),
+      clientName: String(passenger?.clienteLabel || "").trim(),
+      fileName: draft?.fileName || fileNameFromPhotoUrl(savedUrl || src),
+      fileSize: draft?.fileSize || "",
+      savedAt: draft ? new Date().toISOString() : ""
+    };
+  }
+
+  function hydratePassengerPhotoViewerDataset(element, data) {
+    element.dataset.photoSrc = data.src || "";
+    element.dataset.photoUrl = data.url || data.src || "";
+    element.dataset.photoPassengerName = data.passengerName || "";
+    element.dataset.photoClientName = data.clientName || "";
+    element.dataset.photoFileName = data.fileName || "";
+    element.dataset.photoFileSize = data.fileSize || "";
+    element.dataset.photoSavedAt = data.savedAt || "";
+  }
+
+  function passengerPhotoViewerDataFromElement(element) {
+    if (!element?.dataset?.photoSrc) return null;
+    return {
+      src: element.dataset.photoSrc,
+      url: element.dataset.photoUrl || element.dataset.photoSrc,
+      passengerName: element.dataset.photoPassengerName || "",
+      clientName: element.dataset.photoClientName || "",
+      fileName: element.dataset.photoFileName || "",
+      fileSize: element.dataset.photoFileSize || "",
+      savedAt: element.dataset.photoSavedAt || ""
+    };
+  }
+
+  function ensurePassengerPhotoHoverZoom() {
+    let zoom = document.getElementById("passengerPhotoHoverZoom");
+    if (zoom) return zoom;
+    zoom = document.createElement("div");
+    zoom.id = "passengerPhotoHoverZoom";
+    zoom.className = "passenger-photo-hover-zoom";
+    zoom.setAttribute("aria-hidden", "true");
+    const img = document.createElement("img");
+    img.alt = "";
+    zoom.appendChild(img);
+    document.body.appendChild(zoom);
+    return zoom;
+  }
+
+  function openPassengerPhotoHoverZoom(anchor, data) {
+    if (!data?.src || isMobilePassengerPreviewDisabled()) return;
+    const zoom = ensurePassengerPhotoHoverZoom();
+    const img = zoom.querySelector("img");
+    if (img) img.src = data.src;
+    zoom.classList.add("is-open");
+    zoom.setAttribute("aria-hidden", "false");
+    activePassengerPhotoHoverZoom = { anchor, zoom };
+    updatePassengerPhotoHoverZoomPosition();
+  }
+
+  function closePassengerPhotoHoverZoom() {
+    if (!activePassengerPhotoHoverZoom) return;
+    const { zoom } = activePassengerPhotoHoverZoom;
+    zoom.classList.remove("is-open");
+    zoom.setAttribute("aria-hidden", "true");
+    const img = zoom.querySelector("img");
+    if (img) img.removeAttribute("src");
+    activePassengerPhotoHoverZoom = null;
+  }
+
+  function updatePassengerPhotoHoverZoomPosition() {
+    if (!activePassengerPhotoHoverZoom) return;
+    const { anchor, zoom } = activePassengerPhotoHoverZoom;
+    if (!anchor?.isConnected) {
+      closePassengerPhotoHoverZoom();
+      return;
+    }
+    const rect = anchor.getBoundingClientRect();
+    const viewport = currentViewportMetrics();
+    const size = Math.min(260, Math.max(180, viewport.width - 24));
+    const gap = 10;
+    const left = Math.min(viewport.offsetLeft + viewport.width - size - gap, Math.max(viewport.offsetLeft + gap, rect.right + gap));
+    const top = Math.min(viewport.offsetTop + viewport.height - size - gap, Math.max(viewport.offsetTop + gap, rect.top));
+    zoom.style.width = `${size}px`;
+    zoom.style.height = `${size}px`;
+    zoom.style.left = `${left}px`;
+    zoom.style.top = `${top}px`;
+  }
+
+  function fileNameFromPhotoUrl(value) {
+    const url = String(value || "").trim();
+    if (!url || /^data:image\//i.test(url)) return "";
+    try {
+      const parsed = new URL(url, window.location.href);
+      const pathName = decodeURIComponent(parsed.pathname.split("/").filter(Boolean).pop() || "");
+      return pathName || "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function formatPhotoFileSize(value) {
+    const bytes = Number(value || 0);
+    if (!Number.isFinite(bytes) || bytes <= 0) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${Math.ceil(bytes / 1024)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1)} MB`;
+  }
+
+  function formatPhotoSavedAt(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  }
+
+  async function loadPassengerPhotoLinkMetadata(data, callback) {
+    if (!data?.url || /^data:image\//i.test(data.url) || data.fileSize || data.savedAt) return;
+    try {
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 2500);
+      const response = await fetch(data.url, { method: "HEAD", signal: controller.signal, credentials: "include" });
+      window.clearTimeout(timer);
+      const next = {
+        ...data,
+        fileSize: response.headers.get("content-length") || "",
+        savedAt: response.headers.get("last-modified") || ""
+      };
+      callback(next);
+    } catch (_) {
+      callback(data);
+    }
   }
 
   async function handlePassengerEditPhotoFileChange(event) {

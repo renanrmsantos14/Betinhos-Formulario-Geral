@@ -2985,6 +2985,100 @@ textarea.is-touch-resizing,
   transform: translateY(0) scale(1);
 }
 
+.passenger-preview-photo-header {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 0 0 10px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  cursor: zoom-in;
+}
+
+.passenger-preview-photo-header img {
+  width: 54px;
+  height: 54px;
+  display: block;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--surface-soft);
+  box-shadow: 0 8px 22px rgb(15 23 42 / 0.16);
+}
+
+.passenger-preview-photo-text {
+  min-width: 0;
+  overflow: hidden;
+  display: grid;
+  gap: 3px;
+  color: var(--text);
+}
+
+.passenger-preview-photo-text strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 820;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.passenger-preview-photo-text small {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text-soft);
+  font-size: 11px;
+  font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.passenger-preview-photo-header:hover strong,
+.passenger-preview-photo-header:focus-visible strong {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.passenger-photo-hover-zoom {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2147483647;
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  box-shadow: 0 18px 42px rgb(15 23 37 / 0.24);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px) scale(0.98);
+  transition:
+    opacity 130ms var(--ease-out),
+    transform 130ms var(--ease-out);
+}
+
+.passenger-photo-hover-zoom.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.passenger-photo-hover-zoom img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border-radius: calc(var(--radius-sm) - 2px);
+  object-fit: contain;
+}
+
 .passenger-row.is-incomplete .row-title {
   color: var(--warning);
 }
@@ -6880,6 +6974,10 @@ body.is-import-dragging .import-drop-overlay {
   justify-items: stretch;
 }
 
+.passenger-photo-preview-dialog.is-view-only {
+  width: min(680px, 100%);
+}
+
 .passenger-photo-preview-head {
   display: flex;
   align-items: start;
@@ -6955,6 +7053,10 @@ body.is-import-dragging .import-drop-overlay {
 .passenger-photo-preview-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.passenger-photo-preview-dialog.is-view-only .passenger-photo-preview-actions {
+  display: none;
 }
 
 .passenger-photo-preview-actions .primary-action {
