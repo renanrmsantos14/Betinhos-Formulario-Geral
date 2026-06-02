@@ -2968,7 +2968,7 @@ textarea.is-touch-resizing,
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 2147483647;
+  z-index: 2147483646;
   max-width: calc(100vw - 20px);
   max-height: calc(100vh - 20px);
   padding: 10px 12px;
@@ -6987,10 +6987,19 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .passenger-photo-preview-head {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 14px;
+  position: relative;
+  display: block;
+  min-height: 34px;
+  padding: 0 44px;
+  text-align: center;
+}
+
+.passenger-photo-preview-head > div {
+  min-width: 0;
+}
+
+.passenger-photo-preview-head .passenger-picker-eyebrow:empty {
+  display: none;
 }
 
 .passenger-photo-preview-head h3 {
@@ -7007,11 +7016,13 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .passenger-photo-preview-close {
+  position: absolute;
+  top: 0;
+  right: 0;
   width: 32px;
   height: 32px;
   display: grid;
   place-items: center;
-  flex: 0 0 auto;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #ffffff;
@@ -9002,7 +9013,7 @@ textarea,
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.2.1</span>
+        <span>v</span><span id="codeVersionText">1.2.2</span>
       </footer>
     </main>
 
@@ -9166,8 +9177,8 @@ textarea,
       <div class="dialog passenger-photo-preview-dialog" role="dialog" aria-labelledby="passengerPhotoPreviewTitle" aria-modal="true" tabindex="-1" data-photo-preview-mode="confirm">
         <header class="passenger-photo-preview-head">
           <div>
-            <p class="passenger-picker-eyebrow">Foto do passageiro</p>
-            <h3 id="passengerPhotoPreviewTitle">Confirmar imagem</h3>
+            <p id="passengerPhotoPreviewEyebrow" class="passenger-picker-eyebrow">Foto do passageiro</p>
+            <h3 id="passengerPhotoPreviewTitle">Passageiro</h3>
             <p id="passengerPhotoPreviewMeta">Confira antes de salvar.</p>
           </div>
           <button id="passengerPhotoPreviewCancel" type="button" class="passenger-photo-preview-close" aria-label="Cancelar foto">×</button>
@@ -11048,6 +11059,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     passengerPhotoPreviewFallback: $("passengerPhotoPreviewFallback"),
     passengerPhotoPreviewFrame: $("passengerPhotoPreviewFrame"),
     passengerPhotoPreviewOpenLink: $("passengerPhotoPreviewOpenLink"),
+    passengerPhotoPreviewEyebrow: $("passengerPhotoPreviewEyebrow"),
     passengerPhotoPreviewMeta: $("passengerPhotoPreviewMeta"),
     passengerPhotoPreviewOk: $("passengerPhotoPreviewOk"),
     passengerPhotoPreviewCancel: $("passengerPhotoPreviewCancel"),
@@ -11157,6 +11169,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   let passengerPhotoPreviewResolve = null;
   let passengerPhotoPreviewPreviousFocus = null;
   let activePassengerPhotoHoverZoom = null;
+  const passengerPhotoImageCache = new Map();
   const importPassengerCreateLocks = new Map();
   const IMPORT_REVIEW_HISTORY_LIMIT = 80;
   const GLOBAL_HISTORY_LIMIT = 80;
@@ -11613,7 +11626,6 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       if (event.key !== "Escape" || el.passengerPhotoPreviewOverlay.hidden) return;
       resolvePassengerPhotoPreview(false);
     });
-    el.passengerPhotoPreviewImage?.addEventListener("error", handlePassengerPhotoPreviewImageError);
     el.passengerEditFields?.addEventListener("input", handlePassengerEditInput);
     el.passengerEditFields?.addEventListener("change", handlePassengerEditInput);
     const markPassengerEditEmptySignals = () => requestAnimationFrame(applyPassengerEditEmptySignals);
@@ -13933,7 +13945,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function mapPassageiro(record) {
     const f = CONFIG.fields.passageiro;
     const clienteLookup = "_cr40f_cliente_value";
-    return {
+    const passenger = {
       id: record[f.id],
       label: record[f.nome] || record[`${clienteLookup}@OData.Community.Display.V1.FormattedValue`] || "(passageiro)",
       telefone: formatPhoneNumber(record[f.telefone] || ""),
@@ -13954,6 +13966,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       clienteId: record[clienteLookup] || "",
       clienteLabel: record[`${clienteLookup}@OData.Community.Display.V1.FormattedValue`] || ""
     };
+    debugPassengerPhoto("record:map", {
+      passengerId: passenger.id,
+      passengerName: passenger.label,
+      hasRawUrl: !!record[f.fotoUrl],
+      rawUrl: record[f.fotoUrl] || "",
+      normalizedUrl: passenger.fotoUrl || ""
+    });
+    return passenger;
   }
 
   async function retrieveAll(entity, options) {
@@ -14267,6 +14287,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     activePassengerEditId = passengerId;
     clearActivePassengerEditPhotoDraft();
     passengerEditEnabled = false;
+    preloadPassengerPhoto(passenger, "edit-open");
     renderPassengerEditHeader(passenger);
     renderPassengerEditFields(passenger);
     setPassengerEditMode(false);
@@ -14501,9 +14522,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (hasPhoto) {
       preview.dataset.previewIndex = "0";
       preview.dataset.previewCandidates = JSON.stringify(previewCandidates);
-      preview.src = previewCandidates[0];
+      setPassengerPhotoImageSource(preview, previewCandidates[0], "edit-field");
     }
-    preview.addEventListener("error", () => advancePassengerPhotoPreview(preview, wrap));
+    preview.dataset.photoEditControl = "true";
+    preview._passengerPhotoEditControl = wrap;
 
     const copy = document.createElement("div");
     copy.className = "passenger-photo-copy";
@@ -14586,9 +14608,155 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const candidates = [url];
     const pathUrl = passengerPhotoPathUrl(url);
     if (pathUrl) candidates.push(pathUrl);
+    if (pathUrl) {
+      const sharePointPreview = passengerPhotoSharePointPreviewUrl(pathUrl);
+      if (sharePointPreview) candidates.push(sharePointPreview);
+      const sharePointDownload = passengerPhotoSharePointDownloadUrl(pathUrl);
+      if (sharePointDownload) candidates.push(sharePointDownload);
+    }
     const downloadable = passengerPhotoDownloadUrl(url);
     if (downloadable) candidates.push(downloadable);
-    return [...new Set(candidates)];
+    const unique = [...new Set(candidates)].filter((candidate) => passengerPhotoImageCache.get(candidate)?.status !== "failed");
+    const cached = bestCachedPassengerPhotoCandidate(unique);
+    const ordered = cached ? [cached, ...unique.filter((candidate) => candidate !== cached)] : unique;
+    debugPassengerPhoto("candidates", { source: url, cached: cached || "", candidates: ordered });
+    return ordered;
+  }
+
+  function bestCachedPassengerPhotoCandidate(candidates) {
+    return (candidates || []).find((candidate) => passengerPhotoImageCache.get(candidate)?.status === "loaded") || "";
+  }
+
+  function setPassengerPhotoImageSource(img, src, surface = "image") {
+    const url = normalizePassengerPhotoUrl(src);
+    if (!img || !url) return;
+    const cached = passengerPhotoImageCache.get(url);
+    const current = img.currentSrc || img.src || "";
+    const token = `${Date.now()}:${Math.random().toString(36).slice(2)}`;
+    debugPassengerPhoto(cached?.status === "loaded" ? "render:cache-hit" : "render:cache-miss", {
+      surface,
+      src: url,
+      status: cached?.status || "not-cached",
+      sameSrc: current === url,
+      complete: !!cached?.image?.complete,
+      naturalWidth: cached?.image?.naturalWidth || cached?.width || 0,
+      naturalHeight: cached?.image?.naturalHeight || cached?.height || 0
+    });
+    if (current === url) return;
+    img.dataset.photoSrcToken = token;
+    img.onload = () => {
+      if (img.dataset.photoSrcToken !== token) return;
+      passengerPhotoImageCache.set(url, {
+        status: "loaded",
+        image: img,
+        loadedAt: Date.now(),
+        width: img.naturalWidth || 0,
+        height: img.naturalHeight || 0
+      });
+      debugPassengerPhoto("render:loaded", {
+        surface,
+        src: url,
+        width: img.naturalWidth || 0,
+        height: img.naturalHeight || 0
+      });
+    };
+    img.onerror = () => {
+      if (img.dataset.photoSrcToken !== token) return;
+      markPassengerPhotoCandidateFailed(url, surface);
+      if (surface === "viewer" || surface === "viewer-retry") {
+        handlePassengerPhotoPreviewImageError();
+        return;
+      }
+      if (surface === "edit-field" || surface === "edit-field-retry") {
+        advancePassengerPhotoPreview(img, img._passengerPhotoEditControl || null);
+        return;
+      }
+      advancePassengerPhotoImageElement(img);
+    };
+    img.src = url;
+  }
+
+  function markPassengerPhotoCandidateFailed(src, surface = "image") {
+    const url = normalizePassengerPhotoUrl(src);
+    if (!url) return;
+    const cached = passengerPhotoImageCache.get(url);
+    if (cached?.status === "loaded") return;
+    passengerPhotoImageCache.set(url, {
+      ...(cached || {}),
+      status: "failed",
+      failedAt: Date.now()
+    });
+    debugPassengerPhoto("render:failed", { surface, src: url });
+  }
+
+  function preloadPassengerPhoto(passenger, reason = "manual") {
+    const url = normalizePassengerPhotoUrl(passenger?.fotoUrl);
+    if (!url || /^data:image\//i.test(url)) return;
+    const candidates = passengerPhotoPreviewCandidates(url);
+    if (!candidates.length) return;
+    debugPassengerPhoto("preload:start", {
+      reason,
+      passengerId: passenger?.id || "",
+      passengerName: passenger?.label || passenger?.nome || "",
+      candidates
+    });
+    preloadPassengerPhotoCandidate(candidates[0], passenger, reason);
+  }
+
+  function preloadPassengerPhotoCandidate(src, passenger, reason) {
+    const url = normalizePassengerPhotoUrl(src);
+    if (!url) return;
+    const cached = passengerPhotoImageCache.get(url);
+    if (cached?.status === "loaded" || cached?.status === "loading") {
+      debugPassengerPhoto("preload:cache-hit", {
+        reason,
+        passengerId: passenger?.id || "",
+        src: url,
+        status: cached.status
+      });
+      return;
+    }
+    const img = new Image();
+    passengerPhotoImageCache.set(url, {
+      status: "loading",
+      image: img,
+      startedAt: Date.now(),
+      passengerId: passenger?.id || "",
+      passengerName: passenger?.label || passenger?.nome || ""
+    });
+    img.onload = () => {
+      passengerPhotoImageCache.set(url, {
+        status: "loaded",
+        image: img,
+        loadedAt: Date.now(),
+        width: img.naturalWidth || 0,
+        height: img.naturalHeight || 0,
+        passengerId: passenger?.id || "",
+        passengerName: passenger?.label || passenger?.nome || ""
+      });
+      debugPassengerPhoto("preload:loaded", {
+        reason,
+        passengerId: passenger?.id || "",
+        src: url,
+        width: img.naturalWidth || 0,
+        height: img.naturalHeight || 0
+      });
+    };
+    img.onerror = () => {
+      passengerPhotoImageCache.set(url, {
+        status: "failed",
+        image: img,
+        failedAt: Date.now(),
+        passengerId: passenger?.id || "",
+        passengerName: passenger?.label || passenger?.nome || ""
+      });
+      debugPassengerPhoto("preload:failed", {
+        reason,
+        passengerId: passenger?.id || "",
+        src: url
+      });
+    };
+    img.src = url;
   }
 
   function passengerPhotoPathUrl(url) {
@@ -14611,6 +14779,32 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       if (!host.includes("sharepoint.com") && !host.includes("onedrive.com")) return "";
       parsed.searchParams.set("download", "1");
       return parsed.toString();
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function passengerPhotoSharePointPreviewUrl(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      const host = parsed.hostname.toLowerCase();
+      if (!host.includes("sharepoint.com")) return "";
+      const path = parsed.pathname.match(/^\/:[a-z]:\/r(\/.+)$/i)?.[1] || parsed.pathname;
+      if (!path || path.includes("/_layouts/")) return "";
+      return `${parsed.origin}/_layouts/15/getpreview.ashx?path=${encodeURIComponent(path)}`;
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function passengerPhotoSharePointDownloadUrl(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      const host = parsed.hostname.toLowerCase();
+      if (!host.includes("sharepoint.com")) return "";
+      const path = parsed.pathname.match(/^\/:[a-z]:\/r(\/.+)$/i)?.[1] || parsed.pathname;
+      if (!path || path.includes("/_layouts/")) return "";
+      return `${parsed.origin}/_layouts/download.aspx?SourceUrl=${encodeURIComponent(`${parsed.origin}${path}`)}`;
     } catch (_) {
       return "";
     }
@@ -14639,11 +14833,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       candidates = [];
     }
     const nextIndex = Number(preview?.dataset?.previewIndex || "0") + 1;
+    markPassengerPhotoCandidateFailed(preview?.currentSrc || preview?.src || "", "edit-field");
     if (preview && candidates[nextIndex]) {
       preview.dataset.previewIndex = String(nextIndex);
-      preview.src = candidates[nextIndex];
+      debugPassengerPhoto("edit-field:retry", { nextSrc: candidates[nextIndex], nextIndex, candidates });
+      setPassengerPhotoImageSource(preview, candidates[nextIndex], "edit-field-retry");
       return;
     }
+    debugPassengerPhoto("edit-field:fallback-empty", { candidates });
     markPassengerPhotoControlEmpty(control);
   }
 
@@ -15418,6 +15615,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     row.dataset.ordem = String(item.ordem);
     row.style.setProperty("--row-index", String(index));
     const selectedName = item.passageiro?.label || "";
+    if (hasPassenger) preloadPassengerPhoto(item.passageiro, "row-render");
     if (rowIndex) {
       rowIndex.textContent = String(item.ordem).padStart(2, "0");
     }
@@ -15615,7 +15813,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       const photoButton = event.target.closest("[data-passenger-preview-photo]");
       if (photoButton) {
         const data = passengerPhotoViewerDataFromElement(photoButton);
-        if (data) openPassengerPhotoViewer(data);
+        if (data) {
+          closePassengerPreview();
+          openPassengerPhotoViewer(data);
+        }
         return;
       }
       const valueEl = event.target.closest(".passenger-preview-value");
@@ -15842,7 +16043,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     button.setAttribute("aria-label", "Ver foto do passageiro");
     const img = document.createElement("img");
     img.alt = `Foto de ${data.passengerName || "passageiro"}`;
-    img.src = data.src;
+    hydratePassengerPhotoImageElement(img, data, "header");
     const text = document.createElement("span");
     text.className = "passenger-preview-photo-text";
     const name = document.createElement("strong");
@@ -17040,6 +17241,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       }
     }
     touchPassengerSelectionRecency(selected.id);
+    preloadPassengerPhoto(selected, "selected");
     applySelectedPassengerClientDefault(selected);
     applyPassengerDefaults(true);
     const currentSolicitante = el.solicitante.value;
@@ -17248,7 +17450,10 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   async function setBdPassengerPhotoDraft(file) {
     try {
       const draft = await preparePassengerPhotoDraft(file, el.bdNome?.value || "");
-      const confirmed = await openPassengerPhotoPreview(draft);
+      const confirmed = await openPassengerPhotoPreview(draft, {
+        label: normalizePassengerDisplayName(el.bdNome?.value || ""),
+        clienteLabel: el.bdCliente?.selectedOptions?.[0]?.textContent || ""
+      });
       if (!confirmed) return;
       state.bdPassengerPhotoDraft = draft;
       renderBdPassengerPhotoDraft();
@@ -17258,14 +17463,15 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }
   }
 
-  function openPassengerPhotoPreview(draft) {
+  function openPassengerPhotoPreview(draft, passenger = null) {
     if (!draft?.previewDataUrl || !el.passengerPhotoPreviewOverlay) return Promise.resolve(true);
     if (passengerPhotoPreviewResolve) resolvePassengerPhotoPreview(false);
     passengerPhotoPreviewPreviousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setPassengerPhotoPreviewMode("confirm");
-    if (el.passengerPhotoPreviewTitle) el.passengerPhotoPreviewTitle.textContent = "Confirmar imagem";
+    if (el.passengerPhotoPreviewEyebrow) el.passengerPhotoPreviewEyebrow.textContent = "Foto do passageiro";
+    if (el.passengerPhotoPreviewTitle) el.passengerPhotoPreviewTitle.textContent = passengerPhotoTitleFromPassenger(passenger);
     if (el.passengerPhotoPreviewImage) {
-      el.passengerPhotoPreviewImage.src = draft.previewDataUrl;
+      setPassengerPhotoImageSource(el.passengerPhotoPreviewImage, draft.previewDataUrl, "confirm");
     }
     if (el.passengerPhotoPreviewMeta) {
       el.passengerPhotoPreviewMeta.textContent = `${draft.fileName} - ${Math.ceil((draft.fileSize || 0) / 1024)} KB`;
@@ -17286,26 +17492,38 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function openPassengerPhotoViewer(data) {
-    if (!data?.src || !el.passengerPhotoPreviewOverlay) return false;
+    if (!data?.src || !el.passengerPhotoPreviewOverlay) {
+      debugPassengerPhoto("viewer:blocked", { reason: "missing-src-or-overlay", data });
+      return false;
+    }
     if (passengerPhotoPreviewResolve) resolvePassengerPhotoPreview(false);
     closePassengerPhotoHoverZoom();
     passengerPhotoPreviewPreviousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setPassengerPhotoPreviewMode("view");
+    if (el.passengerPhotoPreviewEyebrow) {
+      el.passengerPhotoPreviewEyebrow.textContent = "";
+    }
     if (el.passengerPhotoPreviewTitle) {
-      el.passengerPhotoPreviewTitle.textContent = data.passengerName ? `Foto de ${data.passengerName}` : "Foto do passageiro";
+      el.passengerPhotoPreviewTitle.textContent = passengerPhotoViewerTitle(data);
     }
     if (el.passengerPhotoPreviewImage) {
+      const candidates = data.candidates?.length ? data.candidates : passengerPhotoPreviewCandidates(data.url || data.src);
+      debugPassengerPhoto("viewer:open", {
+        passengerName: data.passengerName || "",
+        src: data.src,
+        url: data.url || "",
+        candidates
+      });
       el.passengerPhotoPreviewImage.hidden = false;
       el.passengerPhotoPreviewImage.dataset.previewIndex = "0";
-      el.passengerPhotoPreviewImage.dataset.previewCandidates = JSON.stringify(passengerPhotoPreviewCandidates(data.url || data.src));
+      el.passengerPhotoPreviewImage.dataset.previewCandidates = JSON.stringify(candidates);
       el.passengerPhotoPreviewImage.dataset.fallbackUrl = data.url || data.src;
-      el.passengerPhotoPreviewImage.src = data.src;
+      setPassengerPhotoImageSource(el.passengerPhotoPreviewImage, candidates[0] || data.src, "viewer");
     }
     hidePassengerPhotoLinkFallback();
     renderPassengerPhotoViewerMeta(data);
     el.passengerPhotoPreviewOverlay.hidden = false;
     window.setTimeout(() => el.passengerPhotoPreviewCancel?.focus(), 0);
-    loadPassengerPhotoLinkMetadata(data, renderPassengerPhotoViewerMeta);
     return true;
   }
 
@@ -17319,9 +17537,16 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       candidates = [];
     }
     const nextIndex = Number(preview.dataset.previewIndex || "0") + 1;
+    markPassengerPhotoCandidateFailed(preview.currentSrc || preview.src || "", "viewer");
+    debugPassengerPhoto("viewer:image-error", {
+      failedSrc: preview.currentSrc || preview.src || "",
+      nextIndex,
+      candidates
+    });
     if (candidates[nextIndex]) {
+      debugPassengerPhoto("viewer:retry", { nextSrc: candidates[nextIndex], nextIndex });
       preview.dataset.previewIndex = String(nextIndex);
-      preview.src = candidates[nextIndex];
+      setPassengerPhotoImageSource(preview, candidates[nextIndex], "viewer-retry");
       return;
     }
     showPassengerPhotoLinkFallback(preview.dataset.fallbackUrl || preview.src || "");
@@ -17329,6 +17554,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function showPassengerPhotoLinkFallback(url) {
     const frameUrl = passengerPhotoFrameUrl(url);
+    debugPassengerPhoto("viewer:fallback", {
+      url,
+      frameUrl,
+      openLink: normalizePassengerPhotoUrl(url) || ""
+    });
     if (el.passengerPhotoPreviewImage) {
       el.passengerPhotoPreviewImage.hidden = true;
       el.passengerPhotoPreviewImage.removeAttribute("src");
@@ -17361,10 +17591,18 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function passengerPhotoViewerMetaText(data) {
     return [
-      data.fileName || fileNameFromPhotoUrl(data.src) || "Arquivo de imagem",
-      formatPhotoFileSize(data.fileSize) || "Tamanho indisponivel pelo link",
-      formatPhotoSavedAt(data.savedAt) || "Data indisponivel pelo link"
-    ].join(" - ");
+      passengerPhotoDisplayFileName(data),
+      formatPhotoFileSize(data.fileSize),
+      formatPhotoSavedAt(data.savedAt)
+    ].filter(Boolean).join(" - ");
+  }
+
+  function passengerPhotoViewerTitle(data) {
+    return normalizePassengerDisplayName(data?.passengerName || "") || "Passageiro";
+  }
+
+  function passengerPhotoTitleFromPassenger(passenger) {
+    return normalizePassengerDisplayName(passenger?.label || passenger?.nome || "") || "Passageiro";
   }
 
   function resolvePassengerPhotoPreview(confirmed) {
@@ -17372,6 +17610,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     passengerPhotoPreviewResolve = null;
     if (el.passengerPhotoPreviewOverlay) el.passengerPhotoPreviewOverlay.hidden = true;
     setPassengerPhotoPreviewMode("confirm");
+    if (el.passengerPhotoPreviewEyebrow) el.passengerPhotoPreviewEyebrow.textContent = "Foto do passageiro";
     hidePassengerPhotoLinkFallback();
     if (el.passengerPhotoPreviewImage) {
       el.passengerPhotoPreviewImage.removeAttribute("src");
@@ -17522,6 +17761,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const photoUrl = await uploadPassengerPhoto(passenger, draft);
     const updatedPassenger = await savePassengerPhotoLink(passenger.id, photoUrl);
     if (updatedPassenger) persistMockPassengerRecord(updatedPassenger);
+    preloadPassengerPhoto(updatedPassenger || { ...passenger, fotoUrl: photoUrl }, "photo-upload");
     return { photoUrl, updatedPassenger };
   }
 
@@ -17538,7 +17778,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }
     try {
       const draft = await preparePassengerPhotoDraft(file, passenger.label || "");
-      const confirmed = await openPassengerPhotoPreview(draft);
+      const confirmed = await openPassengerPhotoPreview(draft, passenger);
       if (!confirmed) return;
       setActivePassengerEditPhotoDraft(passengerId, draft, { uploading: true });
       renderPassengerEditFields(passenger);
@@ -17596,11 +17836,21 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function photoViewerDataFromPassenger(passenger, control = null) {
     const draft = getActivePassengerEditPhotoDraft(passenger?.id || activePassengerEditId)?.draft || null;
     const savedUrl = normalizePassengerPhotoUrl(control?.dataset?.savedValue || passenger?.fotoUrl || "");
-    const src = draft?.previewDataUrl || passengerPhotoPreviewCandidates(savedUrl)[0] || "";
-    if (!src) return null;
+    const candidates = draft?.previewDataUrl ? [draft.previewDataUrl] : passengerPhotoPreviewCandidates(savedUrl);
+    const src = candidates[0] || "";
+    if (!src) {
+      debugPassengerPhoto("viewer:data-missing", {
+        passengerId: passenger?.id || activePassengerEditId || "",
+        passengerName: passenger?.label || passenger?.nome || "",
+        hasDraft: !!draft,
+        savedUrl
+      });
+      return null;
+    }
     return {
       src,
       url: savedUrl || src,
+      candidates,
       passengerName: normalizePassengerDisplayName(passenger?.label || passenger?.nome || ""),
       clientName: String(passenger?.clienteLabel || "").trim(),
       fileName: draft?.fileName || fileNameFromPhotoUrl(savedUrl || src),
@@ -17612,6 +17862,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function hydratePassengerPhotoViewerDataset(element, data) {
     element.dataset.photoSrc = data.src || "";
     element.dataset.photoUrl = data.url || data.src || "";
+    element.dataset.photoCandidates = JSON.stringify(data.candidates || []);
     element.dataset.photoPassengerName = data.passengerName || "";
     element.dataset.photoClientName = data.clientName || "";
     element.dataset.photoFileName = data.fileName || "";
@@ -17624,6 +17875,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return {
       src: element.dataset.photoSrc,
       url: element.dataset.photoUrl || element.dataset.photoSrc,
+      candidates: parsePassengerPhotoCandidates(element.dataset.photoCandidates),
       passengerName: element.dataset.photoPassengerName || "",
       clientName: element.dataset.photoClientName || "",
       fileName: element.dataset.photoFileName || "",
@@ -17650,7 +17902,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (!data?.src || isMobilePassengerPreviewDisabled()) return;
     const zoom = ensurePassengerPhotoHoverZoom();
     const img = zoom.querySelector("img");
-    if (img) img.src = data.src;
+    if (img) hydratePassengerPhotoImageElement(img, data, "hover");
     zoom.classList.add("is-open");
     zoom.setAttribute("aria-hidden", "false");
     activePassengerPhotoHoverZoom = { anchor, zoom };
@@ -17686,16 +17938,102 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     zoom.style.top = `${top}px`;
   }
 
+  function parsePassengerPhotoCandidates(value) {
+    try {
+      const parsed = JSON.parse(value || "[]");
+      return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function hydratePassengerPhotoImageElement(img, data, surface) {
+    const candidates = data?.candidates?.length ? data.candidates : passengerPhotoPreviewCandidates(data?.url || data?.src);
+    img.dataset.previewIndex = "0";
+    img.dataset.previewCandidates = JSON.stringify(candidates);
+    img.dataset.photoSurface = surface || "";
+    img.dataset.fallbackUrl = data?.url || data?.src || "";
+    setPassengerPhotoImageSource(img, candidates[0] || data?.src || "", surface || "image");
+  }
+
+  function advancePassengerPhotoImageElement(img) {
+    if (!img) return;
+    let candidates = [];
+    try {
+      candidates = JSON.parse(img.dataset.previewCandidates || "[]");
+    } catch (_) {
+      candidates = [];
+    }
+    const nextIndex = Number(img.dataset.previewIndex || "0") + 1;
+    markPassengerPhotoCandidateFailed(img.currentSrc || img.src || "", img.dataset.photoSurface || "image");
+    debugPassengerPhoto(`${img.dataset.photoSurface || "image"}:image-error`, {
+      failedSrc: img.currentSrc || img.src || "",
+      nextIndex,
+      candidates
+    });
+    if (candidates[nextIndex]) {
+      debugPassengerPhoto(`${img.dataset.photoSurface || "image"}:retry`, {
+        nextSrc: candidates[nextIndex],
+        nextIndex
+      });
+      img.dataset.previewIndex = String(nextIndex);
+      setPassengerPhotoImageSource(img, candidates[nextIndex], `${img.dataset.photoSurface || "image"}-retry`);
+      return;
+    }
+    debugPassengerPhoto(`${img.dataset.photoSurface || "image"}:fallback-unavailable`, {
+      url: img.dataset.fallbackUrl || ""
+    });
+  }
+
   function fileNameFromPhotoUrl(value) {
     const url = String(value || "").trim();
     if (!url || /^data:image\//i.test(url)) return "";
     try {
       const parsed = new URL(url, window.location.href);
+      const queryName = ["file", "filename", "name", "title"]
+        .map((key) => parsed.searchParams.get(key))
+        .find((entry) => String(entry || "").trim());
+      if (queryName) {
+        const cleanQueryName = decodeURIComponent(String(queryName).trim());
+        return isOpaquePhotoFileName(cleanQueryName) ? "" : cleanQueryName;
+      }
       const pathName = decodeURIComponent(parsed.pathname.split("/").filter(Boolean).pop() || "");
-      return pathName || "";
+      return isOpaquePhotoFileName(pathName) ? "" : pathName;
     } catch (_) {
       return "";
     }
+  }
+
+  function isOpaquePhotoFileName(value) {
+    const clean = String(value || "").trim();
+    if (!clean) return false;
+    if (/\.[a-z0-9]{2,8}$/i.test(clean)) return false;
+    return /^[a-z0-9_-]{20,}$/i.test(clean);
+  }
+
+  function photoFileNameFromContentDisposition(value) {
+    const header = String(value || "").trim();
+    if (!header) return "";
+    const utfMatch = header.match(/filename\*=([^;]+)/i);
+    if (utfMatch) {
+      const raw = utfMatch[1].trim().replace(/^utf-8''/i, "").replace(/^["']|["']$/g, "");
+      try {
+        const decoded = decodeURIComponent(raw);
+        return isOpaquePhotoFileName(decoded) ? "" : decoded;
+      } catch (_) {
+        debugPassengerPhoto("metadata:filename-decode-fail", { raw });
+      }
+    }
+    const quotedMatch = header.match(/filename\s*=\s*"([^"]+)"/i);
+    const plainMatch = header.match(/filename\s*=\s*([^;]+)/i);
+    const fileName = (quotedMatch?.[1] || plainMatch?.[1] || "").trim().replace(/^["']|["']$/g, "");
+    return isOpaquePhotoFileName(fileName) ? "" : fileName;
+  }
+
+  function passengerPhotoDisplayFileName(data) {
+    const fileName = String(data?.fileName || "").trim();
+    if (fileName && !isOpaquePhotoFileName(fileName)) return fileName;
+    return fileNameFromPhotoUrl(data?.url || data?.src || "") || String(data?.clientName || "").trim();
   }
 
   function formatPhotoFileSize(value) {
@@ -17714,20 +18052,18 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   async function loadPassengerPhotoLinkMetadata(data, callback) {
-    if (!data?.url || /^data:image\//i.test(data.url) || data.fileSize || data.savedAt) return;
+    debugPassengerPhoto("metadata:head:skipped", {
+      reason: "sharepoint-cors",
+      url: data?.url || ""
+    });
+    callback?.(data);
+  }
+
+  function debugPassengerPhoto(eventName, payload = {}) {
     try {
-      const controller = new AbortController();
-      const timer = window.setTimeout(() => controller.abort(), 2500);
-      const response = await fetch(data.url, { method: "HEAD", signal: controller.signal, credentials: "include" });
-      window.clearTimeout(timer);
-      const next = {
-        ...data,
-        fileSize: response.headers.get("content-length") || "",
-        savedAt: response.headers.get("last-modified") || ""
-      };
-      callback(next);
+      console.info("[TFG foto pax]", eventName, payload);
     } catch (_) {
-      callback(data);
+      // noop
     }
   }
 

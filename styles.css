@@ -2960,7 +2960,7 @@ textarea.is-touch-resizing,
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 2147483647;
+  z-index: 2147483646;
   max-width: calc(100vw - 20px);
   max-height: calc(100vh - 20px);
   padding: 10px 12px;
@@ -6979,10 +6979,19 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .passenger-photo-preview-head {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 14px;
+  position: relative;
+  display: block;
+  min-height: 34px;
+  padding: 0 44px;
+  text-align: center;
+}
+
+.passenger-photo-preview-head > div {
+  min-width: 0;
+}
+
+.passenger-photo-preview-head .passenger-picker-eyebrow:empty {
+  display: none;
 }
 
 .passenger-photo-preview-head h3 {
@@ -6999,11 +7008,13 @@ body.is-import-dragging .import-drop-overlay {
 }
 
 .passenger-photo-preview-close {
+  position: absolute;
+  top: 0;
+  right: 0;
   width: 32px;
   height: 32px;
   display: grid;
   place-items: center;
-  flex: 0 0 auto;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: #ffffff;
