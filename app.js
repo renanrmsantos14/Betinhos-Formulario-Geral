@@ -3763,8 +3763,8 @@
     const draftState = getActivePassengerEditPhotoDraft(passengerId);
     const draft = draftState?.draft || null;
     const photoUrl = normalizePassengerPhotoUrl(passenger?.fotoUrl);
-    const previewUrl = draft?.previewDataUrl || photoUrl;
-    const hasPhoto = !!previewUrl;
+    const previewCandidates = draft?.previewDataUrl ? [draft.previewDataUrl] : passengerPhotoPreviewCandidates(photoUrl);
+    const hasPhoto = previewCandidates.length > 0;
     const wrap = document.createElement("div");
     wrap.className = "passenger-photo-field passenger-photo-edit";
     wrap.classList.toggle("has-photo", hasPhoto);
@@ -3784,8 +3784,12 @@
     preview.className = "passenger-photo-preview";
     preview.alt = hasPhoto ? (draft ? "Prévia da nova foto do passageiro" : "Foto atual do passageiro") : "";
     preview.hidden = !hasPhoto;
-    if (hasPhoto) preview.src = previewUrl;
-    preview.addEventListener("error", () => markPassengerPhotoControlEmpty(wrap));
+    if (hasPhoto) {
+      preview.dataset.previewIndex = "0";
+      preview.dataset.previewCandidates = JSON.stringify(previewCandidates);
+      preview.src = previewCandidates[0];
+    }
+    preview.addEventListener("error", () => advancePassengerPhotoPreview(preview, wrap));
 
     const copy = document.createElement("div");
     copy.className = "passenger-photo-copy";
@@ -3813,7 +3817,6 @@
 
   function markPassengerPhotoControlEmpty(control) {
     if (!control?.dataset || control.dataset.passengerEditControl !== "fotoUrl") return;
-    control.dataset.savedValue = "";
     control.classList.remove("has-photo");
     control.classList.remove("has-draft");
     const preview = control.querySelector(".passenger-photo-preview");
@@ -3823,9 +3826,14 @@
       preview.alt = "";
     }
     const title = control.querySelector(".passenger-photo-copy strong");
-    if (title) title.textContent = "Sem foto cadastrada.";
+    const savedValue = normalizePassengerPhotoUrl(control.dataset.savedValue);
+    if (title) title.textContent = savedValue ? "Foto cadastrada." : "Sem foto cadastrada.";
     const hint = control.querySelector(".passenger-photo-copy span");
-    if (hint) hint.textContent = "Desbloqueie para anexar ou cole com Ctrl+V.";
+    if (hint) {
+      hint.textContent = savedValue
+        ? "Preview indisponivel para este link. Desbloqueie para substituir."
+        : "Desbloqueie para anexar ou cole com Ctrl+V.";
+    }
     applyPassengerEditEmptySignals();
   }
 
@@ -3857,6 +3865,44 @@
     return "";
   }
 
+  function passengerPhotoPreviewCandidates(value) {
+    const url = normalizePassengerPhotoUrl(value);
+    if (!url) return [];
+    if (/^data:image\//i.test(url)) return [url];
+    const candidates = [url];
+    const downloadable = passengerPhotoDownloadUrl(url);
+    if (downloadable && downloadable !== url) candidates.push(downloadable);
+    return [...new Set(candidates)];
+  }
+
+  function passengerPhotoDownloadUrl(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      const host = parsed.hostname.toLowerCase();
+      if (!host.includes("sharepoint.com") && !host.includes("onedrive.com")) return "";
+      parsed.searchParams.set("download", "1");
+      return parsed.toString();
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function advancePassengerPhotoPreview(preview, control) {
+    let candidates = [];
+    try {
+      candidates = JSON.parse(preview?.dataset?.previewCandidates || "[]");
+    } catch (_) {
+      candidates = [];
+    }
+    const nextIndex = Number(preview?.dataset?.previewIndex || "0") + 1;
+    if (preview && candidates[nextIndex]) {
+      preview.dataset.previewIndex = String(nextIndex);
+      preview.src = candidates[nextIndex];
+      return;
+    }
+    markPassengerPhotoControlEmpty(control);
+  }
+
   function getActivePassengerEditPhotoDraft(passengerId = activePassengerEditId) {
     const cleanPassengerId = cleanGuid(passengerId);
     if (!cleanPassengerId || !activePassengerEditPhotoDraft?.passengerId) return null;
@@ -3873,6 +3919,7 @@
       passengerId: cleanPassengerId,
       draft,
       uploading: options.uploading !== false,
+      saved: !!options.saved,
       failed: !!options.failed
     };
   }
@@ -3893,6 +3940,7 @@
     if (!draft) return "Desbloqueie para anexar ou cole com Ctrl+V.";
     const kb = Math.max(1, Math.ceil((draft.fileSize || 0) / 1024));
     if (draftState?.failed) return `${kb} KB - Falha no upload. Cole ou anexe outra imagem.`;
+    if (draftState?.saved) return `${kb} KB - Foto salva no Dataverse.`;
     if (draftState?.uploading) return `${kb} KB - Enviando foto...`;
     return `${kb} KB - Foto pronta para salvar.`;
   }
@@ -6556,7 +6604,16 @@
     });
     if (!response.ok) throw new Error(`Flow retornou HTTP ${response.status}.`);
     const result = await response.json().catch(() => ({}));
-    const webUrl = String(result.webUrl || result.url || result.link || "").trim();
+    const webUrl = String(
+      result.downloadUrl ||
+        result.directUrl ||
+        result.previewUrl ||
+        result.imageUrl ||
+        result.webUrl ||
+        result.url ||
+        result.link ||
+        ""
+    ).trim();
     if (!webUrl) throw new Error("Flow não retornou webUrl.");
     return webUrl;
   }
@@ -6599,7 +6656,7 @@
       setPassengerEditMode(true);
       setPassengerEditStatus("Enviando foto...", "saving");
       const { updatedPassenger } = await uploadAndSavePassengerPhoto(passenger, draft);
-      clearActivePassengerEditPhotoDraft(passengerId);
+      setActivePassengerEditPhotoDraft(passengerId, draft, { uploading: false, saved: true });
       setPassengerEditStatus("Foto atualizada.", "saved");
       renderPassengerEditFields(updatedPassenger || getPassengerById(passengerId));
       setPassengerEditMode(true);
