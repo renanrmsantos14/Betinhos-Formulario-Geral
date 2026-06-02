@@ -455,7 +455,7 @@
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.1.3</span>
+        <span>v</span><span id="codeVersionText">1.2.0</span>
       </footer>
     </main>
 
@@ -627,6 +627,14 @@
         </header>
         <div class="passenger-photo-preview-frame">
           <img id="passengerPhotoPreviewImage" alt="Prévia da foto do passageiro">
+          <div id="passengerPhotoPreviewFallback" class="passenger-photo-preview-fallback" hidden>
+            <iframe id="passengerPhotoPreviewFrame" title="Visualização da foto do passageiro"></iframe>
+            <div class="passenger-photo-preview-fallback-copy">
+              <strong>Visualização pelo link</strong>
+              <span>Se o OneDrive bloquear a prévia aqui, abra o arquivo em uma nova guia.</span>
+              <a id="passengerPhotoPreviewOpenLink" href="#" target="_blank" rel="noopener noreferrer">Abrir arquivo</a>
+            </div>
+          </div>
         </div>
         <footer class="passenger-photo-preview-actions">
           <button id="passengerPhotoPreviewOk" type="button" class="primary-action">OK</button>

@@ -343,6 +343,9 @@
     clearAllFormsConfirm: $("clearAllFormsConfirm"),
     passengerPhotoPreviewOverlay: $("passengerPhotoPreviewOverlay"),
     passengerPhotoPreviewImage: $("passengerPhotoPreviewImage"),
+    passengerPhotoPreviewFallback: $("passengerPhotoPreviewFallback"),
+    passengerPhotoPreviewFrame: $("passengerPhotoPreviewFrame"),
+    passengerPhotoPreviewOpenLink: $("passengerPhotoPreviewOpenLink"),
     passengerPhotoPreviewMeta: $("passengerPhotoPreviewMeta"),
     passengerPhotoPreviewOk: $("passengerPhotoPreviewOk"),
     passengerPhotoPreviewCancel: $("passengerPhotoPreviewCancel"),
@@ -908,6 +911,7 @@
       if (event.key !== "Escape" || el.passengerPhotoPreviewOverlay.hidden) return;
       resolvePassengerPhotoPreview(false);
     });
+    el.passengerPhotoPreviewImage?.addEventListener("error", handlePassengerPhotoPreviewImageError);
     el.passengerEditFields?.addEventListener("input", handlePassengerEditInput);
     el.passengerEditFields?.addEventListener("change", handlePassengerEditInput);
     const markPassengerEditEmptySignals = () => requestAnimationFrame(applyPassengerEditEmptySignals);
@@ -1421,10 +1425,10 @@
 
     const normalizedSelectedValue = String(nativeSelect.value || "");
     const hasMatches = options.some((option) => {
-      const optionText = normalize(option.textContent);
+      const optionText = normalize(`${option.textContent || ""} ${option.dataset.search || ""}`);
       if (!query) return true;
       if (!optionText) return false;
-      return optionText.includes(query);
+      return searchableTextMatches(optionText, query);
     });
 
     if (!hasMatches) {
@@ -1437,7 +1441,7 @@
     options.forEach((option) => {
       const optionText = option.textContent;
       const normalizedOptionText = normalize(`${optionText} ${option.dataset.search || ""}`);
-      if (query && !normalizedOptionText.includes(query)) return;
+      if (query && !searchableTextMatches(normalizedOptionText, query)) return;
 
       const button = document.createElement("button");
       button.type = "button";
@@ -1908,14 +1912,10 @@
       return mergePassengerRecords(rows.map(mapPassageiro));
     }
 
-    const escaped = escapeODataString(search);
     const digits = onlyDigits(search);
-    const filters = [
-      `contains(${f.nome},'${escaped}')`,
-      `contains(${f.email},'${escaped}')`,
-      `contains(${f.telefone},'${escaped}')`,
-      `contains(${f.cr},'${escaped}')`
-    ];
+    const filters = [];
+    const textFilter = buildPassengerServerSearchFilter(search, [f.nome, f.email, f.telefone, f.cr]);
+    if (textFilter) filters.push(textFilter);
     if (digits.length >= 4) {
       filters.push(`contains(${f.telefone},'${escapeODataString(digits.slice(-4))}')`);
     }
@@ -1933,6 +1933,15 @@
     return mergePassengerRecords(rows.map(mapPassageiro));
   }
 
+  function buildPassengerServerSearchFilter(search, fields) {
+    const tokens = searchTokens(search);
+    const cleanFields = (fields || []).filter(Boolean);
+    if (!tokens.length || !cleanFields.length) return "";
+    return tokens
+      .map((token) => `(${cleanFields.map((field) => `contains(${field},'${escapeODataString(token)}')`).join(" or ")})`)
+      .join(" and ");
+  }
+
   function searchPassengersLocal(term, limit = 25) {
     const query = normalize(term);
     const digits = onlyDigits(term);
@@ -1946,7 +1955,7 @@
         passenger.cr,
         passenger.departamento
       ].filter(Boolean).join(" "));
-      return haystack.includes(query) || (digits && onlyDigits(passenger.telefone).includes(digits));
+      return searchableTextMatches(haystack, query) || (digits && onlyDigits(passenger.telefone).includes(digits));
     });
     return rows.slice(0, limit);
   }
@@ -3873,9 +3882,24 @@
     if (!url) return [];
     if (/^data:image\//i.test(url)) return [url];
     const candidates = [url];
+    const pathUrl = passengerPhotoPathUrl(url);
+    if (pathUrl) candidates.push(pathUrl);
     const downloadable = passengerPhotoDownloadUrl(url);
-    if (downloadable && downloadable !== url) candidates.push(downloadable);
+    if (downloadable) candidates.push(downloadable);
     return [...new Set(candidates)];
+  }
+
+  function passengerPhotoPathUrl(url) {
+    try {
+      const parsed = new URL(url, window.location.href);
+      const host = parsed.hostname.toLowerCase();
+      if (!host.includes("sharepoint.com") && !host.includes("onedrive.com")) return "";
+      const marker = parsed.pathname.match(/^\/:[a-z]:\/r(\/.+)$/i);
+      if (!marker?.[1]) return "";
+      return `${parsed.origin}${marker[1]}`;
+    } catch (_) {
+      return "";
+    }
   }
 
   function passengerPhotoDownloadUrl(url) {
@@ -3887,6 +3911,21 @@
       return parsed.toString();
     } catch (_) {
       return "";
+    }
+  }
+
+  function passengerPhotoFrameUrl(value) {
+    const url = normalizePassengerPhotoUrl(value);
+    if (!url || /^data:image\//i.test(url)) return "";
+    try {
+      const parsed = new URL(url, window.location.href);
+      const host = parsed.hostname.toLowerCase();
+      if (!host.includes("sharepoint.com") && !host.includes("onedrive.com")) return url;
+      parsed.searchParams.set("web", "1");
+      parsed.searchParams.delete("download");
+      return parsed.toString();
+    } catch (_) {
+      return url;
     }
   }
 
@@ -6554,13 +6593,63 @@
       el.passengerPhotoPreviewTitle.textContent = data.passengerName ? `Foto de ${data.passengerName}` : "Foto do passageiro";
     }
     if (el.passengerPhotoPreviewImage) {
+      el.passengerPhotoPreviewImage.hidden = false;
+      el.passengerPhotoPreviewImage.dataset.previewIndex = "0";
+      el.passengerPhotoPreviewImage.dataset.previewCandidates = JSON.stringify(passengerPhotoPreviewCandidates(data.url || data.src));
+      el.passengerPhotoPreviewImage.dataset.fallbackUrl = data.url || data.src;
       el.passengerPhotoPreviewImage.src = data.src;
     }
+    hidePassengerPhotoLinkFallback();
     renderPassengerPhotoViewerMeta(data);
     el.passengerPhotoPreviewOverlay.hidden = false;
     window.setTimeout(() => el.passengerPhotoPreviewCancel?.focus(), 0);
     loadPassengerPhotoLinkMetadata(data, renderPassengerPhotoViewerMeta);
     return true;
+  }
+
+  function handlePassengerPhotoPreviewImageError() {
+    const preview = el.passengerPhotoPreviewImage;
+    if (!preview || el.passengerPhotoPreviewOverlay?.hidden) return;
+    let candidates = [];
+    try {
+      candidates = JSON.parse(preview.dataset.previewCandidates || "[]");
+    } catch (_) {
+      candidates = [];
+    }
+    const nextIndex = Number(preview.dataset.previewIndex || "0") + 1;
+    if (candidates[nextIndex]) {
+      preview.dataset.previewIndex = String(nextIndex);
+      preview.src = candidates[nextIndex];
+      return;
+    }
+    showPassengerPhotoLinkFallback(preview.dataset.fallbackUrl || preview.src || "");
+  }
+
+  function showPassengerPhotoLinkFallback(url) {
+    const frameUrl = passengerPhotoFrameUrl(url);
+    if (el.passengerPhotoPreviewImage) {
+      el.passengerPhotoPreviewImage.hidden = true;
+      el.passengerPhotoPreviewImage.removeAttribute("src");
+    }
+    if (el.passengerPhotoPreviewFallback) el.passengerPhotoPreviewFallback.hidden = false;
+    if (el.passengerPhotoPreviewFrame) {
+      el.passengerPhotoPreviewFrame.hidden = !frameUrl;
+      el.passengerPhotoPreviewFrame.src = frameUrl || "about:blank";
+    }
+    if (el.passengerPhotoPreviewOpenLink) {
+      el.passengerPhotoPreviewOpenLink.href = normalizePassengerPhotoUrl(url) || "#";
+    }
+    return true;
+  }
+
+  function hidePassengerPhotoLinkFallback() {
+    if (el.passengerPhotoPreviewFallback) el.passengerPhotoPreviewFallback.hidden = true;
+    if (el.passengerPhotoPreviewFrame) {
+      el.passengerPhotoPreviewFrame.removeAttribute("src");
+    }
+    if (el.passengerPhotoPreviewOpenLink) {
+      el.passengerPhotoPreviewOpenLink.href = "#";
+    }
   }
 
   function renderPassengerPhotoViewerMeta(data) {
@@ -6581,8 +6670,10 @@
     passengerPhotoPreviewResolve = null;
     if (el.passengerPhotoPreviewOverlay) el.passengerPhotoPreviewOverlay.hidden = true;
     setPassengerPhotoPreviewMode("confirm");
+    hidePassengerPhotoLinkFallback();
     if (el.passengerPhotoPreviewImage) {
       el.passengerPhotoPreviewImage.removeAttribute("src");
+      el.passengerPhotoPreviewImage.hidden = false;
     }
     if (passengerPhotoPreviewPreviousFocus?.isConnected) {
       passengerPhotoPreviewPreviousFocus.focus();
@@ -12554,6 +12645,28 @@
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .trim();
+  }
+
+  function searchTokens(value) {
+    return normalize(value)
+      .split(/[^a-z0-9]+/i)
+      .map((token) => token.trim())
+      .filter(Boolean);
+  }
+
+  function searchableTextMatches(text, query) {
+    const normalizedText = normalize(text);
+    const normalizedQuery = normalize(query);
+    if (!normalizedQuery) return true;
+    if (!normalizedText) return false;
+    if (normalizedText.includes(normalizedQuery)) return true;
+    const textTokens = searchTokens(normalizedText);
+    const queryTokens = searchTokens(normalizedQuery);
+    if (!queryTokens.length) return true;
+    return queryTokens.every((queryToken) => (
+      normalizedText.includes(queryToken)
+        || textTokens.some((textToken) => textToken.startsWith(queryToken) || textToken.includes(queryToken))
+    ));
   }
 
   function parseNumber(value) {
