@@ -108,6 +108,9 @@ assert.ok(html.includes("min-height: 66px;\n  padding: 8px;"), "bundle deve usar
 assert.ok(html.includes("buildImportSelect(\"Tipo do serviço\", \"tipoServicoValue\", sortByLabel(state.options.tipoServico)"), "bundle deve usar label e ordenacao comum em Tipo do servico importado");
 assert.ok(html.includes("buildImportSelect(\"Tipo do veículo\", \"tipoVeiculoValue\", state.options.tipoVeiculo"), "bundle deve usar label comum em Tipo do veiculo importado");
 assert.ok(html.includes("buildImportObservationField(trecho)"), "bundle deve usar observacao importada segmentada igual ao formulario comum");
+assert.ok(html.includes("buildImportedDataverseStatusField(trecho)"), "bundle deve exibir Status Dataverse no stack de campos editaveis");
+assert.ok(html.includes("function resolveImportedOperationStatusValue"), "bundle deve permitir override do status Dataverse");
+assert.ok(html.includes("setChoice(payload, f.status, resolveImportedOperationStatusValue(trecho))"), "bundle deve salvar status Dataverse escolhido/conversao XLSX");
 assert.ok(html.includes("function ensureImportedObservationState"), "bundle deve manter buffers de observacao importada");
 assert.ok(html.includes("data-import-observation-text"), "bundle deve renderizar textarea de observacao importada proprio");
 assert.ok(html.includes("switch-import-obs"), "bundle deve permitir trocar Mot/Interna/Final/Pref Pax na importacao");
@@ -209,6 +212,12 @@ assert.ok(html.includes("function canShowImportedSplitAction"), "bundle deve ter
 assert.ok(html.includes("reviewStatus === statuses.PENDING"), "bundle deve exibir Separar ida/busca apenas em pendentes");
 assert.ok(html.includes("trecho?.operationalMode !== modes.MULTI_PICKUP"), "bundle nao deve exibir Split em multi-coleta");
 assert.ok(html.includes("trecho?.operationalMode !== modes.INDEPENDENT_SERVICES"), "bundle nao deve exibir Split em servicos independentes");
+assert.ok(html.includes("await findExistingImportedReservaByProgramacao(trecho.programacao)"), "bundle deve revalidar PG antes de criar reserva importada");
+assert.ok(html.includes("markImportedTrechoAsDuplicate(trecho, existingReserva"), "bundle deve bloquear PG existente antes do create");
+assert.ok(html.includes("function isDataverseDuplicateKeyError"), "bundle deve tratar erro de chave duplicada do Dataverse");
+assert.ok(html.includes("function findImportedExistingPersonFromDuplicateError"), "bundle deve reaproveitar passageiro quando Dataverse retorna chave duplicada");
+assert.ok(html.includes("function extractDuplicatePassengerId"), "bundle deve extrair ID do passageiro duplicado do erro Dataverse");
+assert.ok(html.includes("findImportedExistingPerson(person)\n              || await findImportedExistingPersonFromDuplicateError(person, error)"), "bundle deve tentar fallback robusto no erro de passageiro duplicado");
 assert.ok(html.includes("if (normalizeImportedReviewStatus(trecho) !== importReviewStatuses().PENDING)"), "bundle deve bloquear Split fora do status pendente");
 assert.ok(html.includes("permitido enquanto o serviço está pendente."), "bundle deve explicar bloqueio de Split fora de pendente");
 assert.ok(!html.includes("function buildImportTimeline"), "bundle nao deve renderizar bloco Janela da PG");
@@ -255,6 +264,11 @@ assert.ok(html.includes(".tab.is-pending::after"), "bundle deve conter bolinha a
 assert.ok(html.includes("id=\"closeRwButton\""), "bundle deve conter botao sutil para fechar o RW");
 assert.ok(html.includes("pageType: \"entitylist\""), "bundle deve voltar para a lista da tabela Geral");
 assert.ok(html.includes("entityName: CONFIG.entities.reserva"), "bundle deve navegar para a entidade real da Geral");
+assert.ok(html.includes("log: \"new_appmotoristaslog\""), "bundle deve usar tabela unificada de LOG do Dataverse");
+assert.ok(html.includes("function installAppErrorLogging"), "bundle deve instalar captura global de erro");
+assert.ok(html.includes("window.addEventListener(\"unhandledrejection\""), "bundle deve logar promises rejeitadas");
+assert.ok(html.includes("console.error = (...args)"), "bundle deve logar erros capturados em catch");
+assert.ok(html.includes("APP_ERROR_LOG_QUEUE_KEY"), "bundle deve manter fila local de logs");
 assert.ok(html.includes(".passenger-edit-field textarea.passenger-edit-control"), "bundle deve conter regra dos textareas de passageiro");
 assert.ok(html.includes("resize: vertical;"), "bundle deve manter textareas redimensionaveis");
 assert.ok(html.includes("max-height: none;"), "bundle deve permitir crescimento vertical dos textareas");

@@ -6053,6 +6053,18 @@ body.is-import-dragging .import-drop-overlay {
   --import-field-min: 200px;
 }
 
+.import-dataverse-status-field {
+  --import-field-min: 240px;
+}
+
+.import-field-hint {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-soft);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
 .import-field[data-import-input-type="textarea"] {
   --import-field-min: 300px;
   min-height: 66px;
@@ -9013,7 +9025,7 @@ textarea,
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.2.2</span>
+        <span>v</span><span id="codeVersionText">1.2.9</span>
       </footer>
     </main>
 
@@ -10721,7 +10733,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       cliente: "cr40f_clientes1",
       funcionario: "cr40f_funcionarios",
       servicoPassageiro: "cr40f_servicosporpassageiro",
-      financeiro: "cr40f_financeiro"
+      financeiro: "cr40f_financeiro",
+      log: "new_appmotoristaslog"
     },
     entitySets: {
       reserva: "cr40f_reservadeveculoses",
@@ -10794,6 +10807,43 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       financeiro: {
         id: "cr40f_financeiroid",
         label: "cr40f_idfinanceiro"
+      },
+      log: {
+        name: "new_name",
+        appName: "new_appname",
+        appVersion: "new_appversion",
+        action: "new_action",
+        builtAt: "new_builtat",
+        clientUrl: "new_clienturl",
+        component: "new_component",
+        connectionType: "new_connectiontype",
+        detailId: "new_detailid",
+        detailType: "new_detailtype",
+        errorCode: "new_errorcode",
+        errorName: "new_errorname",
+        isOffline: "new_isoffline",
+        language: "new_language",
+        message: "new_message",
+        occurredAt: "new_occurredat",
+        payloadJson: "new_payloadjson",
+        phase: "new_phase",
+        platform: "new_platform",
+        rawJson: "new_rawjson",
+        referrer: "new_referrer",
+        screen: "new_screen",
+        sessionId: "new_sessionid",
+        severity: "new_severity",
+        source: "new_source",
+        stack: "new_stack",
+        timezone: "new_timezone",
+        url: "new_url",
+        userAgent: "new_useragent",
+        userDomainName: "new_userdomainname",
+        userEmail: "new_useremail",
+        userId: "new_userid",
+        userName: "new_username",
+        viewport: "new_viewport",
+        visibilityState: "new_visibilitystate"
       }
     },
     nav: {
@@ -10814,6 +10864,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   const QUERY_MOCK_MODE = (URL_PARAMS.get("mock") === "1" || URL_PARAMS.get("mockData") === "1");
   const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
+  const APP_ERROR_LOG_QUEUE_KEY = "formulario_geral_error_log_queue_v1";
+  const APP_ERROR_LOG_MAX_QUEUE = 30;
+  const APP_ERROR_LOG_DEDUPE_MS = 2000;
   const PASSENGER_RECENCY_KEY = "formulario_geral_passenger_recency_v1";
   const XLSX_SOURCE_ELEMENT_ID = "xlsxLibrarySource";
   const XLSX_DROP_CLASS_NAMES = ["is-import-dragging", "is-import-drag-invalid", "is-import-drag-blocked"];
@@ -11143,7 +11196,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     importDraftEditState: {
       common: false,
       retorno: false
-    }
+    },
+    appSessionId: createAppSessionId(),
+    errorLoggingInstalled: false,
+    errorLoggingBusy: false,
+    lastErrorLogSignature: "",
+    lastErrorLogAt: 0
   };
   const customSelectRoots = new WeakMap();
   let activeCustomSelect = null;
@@ -11220,6 +11278,223 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       }
     }
     return null;
+  }
+
+  function createAppSessionId() {
+    const randomPart = Math.random().toString(36).slice(2, 10);
+    return `form-${Date.now().toString(36)}-${randomPart}`;
+  }
+
+  function installAppErrorLogging() {
+    if (state.errorLoggingInstalled) return;
+    state.errorLoggingInstalled = true;
+
+    const originalConsoleError = console.error?.bind(console);
+    console.error = (...args) => {
+      if (originalConsoleError) originalConsoleError(...args);
+      void reportAppError(args[0] instanceof Error ? args[0] : args, {
+        source: "console.error",
+        phase: "runtime",
+        severity: "error"
+      });
+    };
+
+    window.addEventListener("error", (event) => {
+      void reportAppError(event.error || event.message, {
+        source: "window.error",
+        phase: "runtime",
+        payload: {
+          filename: event.filename || "",
+          lineno: event.lineno || "",
+          colno: event.colno || ""
+        }
+      });
+    });
+
+    window.addEventListener("unhandledrejection", (event) => {
+      void reportAppError(event.reason || "Unhandled promise rejection", {
+        source: "unhandledrejection",
+        phase: "runtime"
+      });
+    });
+
+    void flushAppErrorLogQueue();
+  }
+
+  async function reportAppError(error, details = {}) {
+    if (state.mockMode) return;
+    const normalized = normalizeAppError(error);
+    const payload = buildAppErrorLogPayload(normalized, details);
+    const signature = [
+      payload[CONFIG.fields.log.source],
+      payload[CONFIG.fields.log.phase],
+      payload[CONFIG.fields.log.message],
+      String(payload[CONFIG.fields.log.stack] || "").slice(0, 180)
+    ].join("|");
+    const now = Date.now();
+    if (signature === state.lastErrorLogSignature && now - state.lastErrorLogAt < APP_ERROR_LOG_DEDUPE_MS) return;
+    state.lastErrorLogSignature = signature;
+    state.lastErrorLogAt = now;
+
+    enqueueAppErrorLog(payload);
+    await flushAppErrorLogQueue();
+  }
+
+  function normalizeAppError(error) {
+    if (error instanceof Error) {
+      return {
+        name: error.name || "Error",
+        message: error.message || "Erro sem mensagem.",
+        stack: error.stack || "",
+        code: error.code || error.errorCode || ""
+      };
+    }
+    if (Array.isArray(error)) {
+      const text = error.map((item) => normalizeAppError(item).message).join(" | ");
+      return { name: "ConsoleError", message: text || "console.error", stack: "", code: "" };
+    }
+    if (error && typeof error === "object") {
+      return {
+        name: String(error.name || error.errorName || "ObjectError"),
+        message: String(error.message || error.errorMessage || error.statusText || safeJson(error)),
+        stack: String(error.stack || ""),
+        code: String(error.code || error.errorCode || error.status || "")
+      };
+    }
+    return {
+      name: "Error",
+      message: String(error || "Erro sem mensagem."),
+      stack: "",
+      code: ""
+    };
+  }
+
+  function buildAppErrorLogPayload(error, details = {}) {
+    const fields = CONFIG.fields.log;
+    const context = getGlobalXrmContext();
+    const userSettings = context?.userSettings || {};
+    const nav = window.navigator || {};
+    const payloadObject = details.payload || null;
+    const appVersion = document.getElementById("codeVersionText")?.textContent?.trim() || "";
+    const now = new Date();
+    const payload = {
+      [fields.name]: trimForDataverse(`${details.source || "app"} - ${error.message}`, 160),
+      [fields.appName]: "Tela Formulario Geral",
+      [fields.appVersion]: trimForDataverse(appVersion, 60),
+      [fields.action]: trimForDataverse(details.action || "", 180),
+      [fields.builtAt]: trimForDataverse(appVersion ? `v${appVersion}` : "", 80),
+      [fields.clientUrl]: trimForDataverse(context?.getClientUrl?.() || "", 500),
+      [fields.component]: trimForDataverse(details.component || "", 180),
+      [fields.connectionType]: trimForDataverse(nav.connection?.effectiveType || nav.connection?.type || "", 80),
+      [fields.detailId]: trimForDataverse(state.recordId || "", 120),
+      [fields.detailType]: state.isNew ? "novo" : "edicao",
+      [fields.errorCode]: trimForDataverse(error.code || "", 120),
+      [fields.errorName]: trimForDataverse(error.name || "Error", 220),
+      [fields.isOffline]: String(!(nav.onLine ?? true)),
+      [fields.language]: trimForDataverse(nav.language || "", 80),
+      [fields.message]: error.message || "Erro sem mensagem.",
+      [fields.occurredAt]: now.toISOString(),
+      [fields.payloadJson]: payloadObject ? safeJson(payloadObject) : "",
+      [fields.phase]: trimForDataverse(details.phase || "", 120),
+      [fields.platform]: trimForDataverse(nav.platform || "", 160),
+      [fields.rawJson]: safeJson({ error, details }),
+      [fields.referrer]: document.referrer || "",
+      [fields.screen]: trimForDataverse(state.currentTab || "", 120),
+      [fields.sessionId]: trimForDataverse(state.appSessionId, 120),
+      [fields.severity]: trimForDataverse(details.severity || "error", 30),
+      [fields.source]: trimForDataverse(details.source || "app", 120),
+      [fields.stack]: error.stack || "",
+      [fields.timezone]: trimForDataverse(Intl.DateTimeFormat().resolvedOptions().timeZone || "", 120),
+      [fields.url]: window.location.href || "",
+      [fields.userAgent]: nav.userAgent || "",
+      [fields.userDomainName]: trimForDataverse(userSettings.domainName || "", 300),
+      [fields.userEmail]: trimForDataverse(userSettings.userEmail || userSettings.email || "", 300),
+      [fields.userId]: trimForDataverse(cleanGuid(userSettings.userId || ""), 120),
+      [fields.userName]: trimForDataverse(userSettings.userName || "", 300),
+      [fields.viewport]: `${window.innerWidth || 0}x${window.innerHeight || 0}`,
+      [fields.visibilityState]: trimForDataverse(document.visibilityState || "", 40)
+    };
+    return payload;
+  }
+
+  function getGlobalXrmContext() {
+    try {
+      const xrm = state.xrm || getXrm();
+      return xrm?.Utility?.getGlobalContext?.() || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function trimForDataverse(value, maxLength) {
+    const text = String(value || "");
+    return text.length > maxLength ? text.slice(0, maxLength) : text;
+  }
+
+  function safeJson(value) {
+    try {
+      return JSON.stringify(value, (_key, item) => {
+        if (item instanceof Error) {
+          return {
+            name: item.name,
+            message: item.message,
+            stack: item.stack,
+            code: item.code || item.errorCode || ""
+          };
+        }
+        if (typeof item === "function") return `[Function ${item.name || "anonymous"}]`;
+        return item;
+      });
+    } catch (error) {
+      return String(value || "");
+    }
+  }
+
+  function readAppErrorLogQueue() {
+    try {
+      const raw = localStorage.getItem(APP_ERROR_LOG_QUEUE_KEY);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  function writeAppErrorLogQueue(queue) {
+    try {
+      localStorage.setItem(APP_ERROR_LOG_QUEUE_KEY, JSON.stringify(queue.slice(-APP_ERROR_LOG_MAX_QUEUE)));
+    } catch (_) {
+      /* ignore logging storage failure */
+    }
+  }
+
+  function enqueueAppErrorLog(payload) {
+    const queue = readAppErrorLogQueue();
+    queue.push(payload);
+    writeAppErrorLogQueue(queue);
+  }
+
+  async function flushAppErrorLogQueue() {
+    if (state.errorLoggingBusy || state.mockMode) return;
+    const xrm = state.xrm || getXrm();
+    if (!xrm?.WebApi?.createRecord) return;
+    state.errorLoggingBusy = true;
+    try {
+      const queue = readAppErrorLogQueue();
+      let sentCount = 0;
+      for (let index = 0; index < queue.length; index += 1) {
+        const item = queue[index];
+        try {
+          await xrm.WebApi.createRecord(CONFIG.entities.log, item);
+          sentCount += 1;
+        } catch (_) {
+          break;
+        }
+      }
+      writeAppErrorLogQueue(queue.slice(sentCount));
+    } finally {
+      state.errorLoggingBusy = false;
+    }
   }
 
   function closeWebResourceToGeral() {
@@ -17598,11 +17873,35 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function passengerPhotoViewerTitle(data) {
-    return normalizePassengerDisplayName(data?.passengerName || "") || "Passageiro";
+    return normalizePassengerDisplayName(
+      data?.passengerName ||
+        passengerNameFromPhotoUrl(data?.url || data?.src || "") ||
+        getPassengerById(activePassengerEditId)?.label ||
+        ""
+    ) || "Passageiro";
   }
 
   function passengerPhotoTitleFromPassenger(passenger) {
-    return normalizePassengerDisplayName(passenger?.label || passenger?.nome || "") || "Passageiro";
+    return normalizePassengerDisplayName(
+      passenger?.label ||
+        passenger?.nome ||
+        passengerNameFromPhotoUrl(passenger?.fotoUrl || "") ||
+        getPassengerById(activePassengerEditId)?.label ||
+        ""
+    ) || "Passageiro";
+  }
+
+  function passengerNameFromPhotoUrl(value) {
+    const url = normalizePassengerPhotoUrl(value);
+    if (!url) return "";
+    const candidates = passengerPhotoPreviewCandidates(url);
+    const passenger = state.passageiros.find((item) => {
+      const photoUrl = normalizePassengerPhotoUrl(item?.fotoUrl || "");
+      if (!photoUrl) return false;
+      const itemCandidates = passengerPhotoPreviewCandidates(photoUrl);
+      return itemCandidates.some((candidate) => candidates.includes(candidate));
+    });
+    return normalizePassengerDisplayName(passenger?.label || passenger?.nome || "");
   }
 
   function resolvePassengerPhotoPreview(confirmed) {
@@ -17851,7 +18150,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       src,
       url: savedUrl || src,
       candidates,
-      passengerName: normalizePassengerDisplayName(passenger?.label || passenger?.nome || ""),
+      passengerName: normalizePassengerDisplayName(passenger?.label || passenger?.nome || "") || passengerNameFromPhotoUrl(savedUrl || src),
       clientName: String(passenger?.clienteLabel || "").trim(),
       fileName: draft?.fileName || fileNameFromPhotoUrl(savedUrl || src),
       fileSize: draft?.fileSize || "",
@@ -19283,12 +19582,28 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function resolveImportedOperationStatusLabel(trecho) {
+    const overrideLabel = optionLabel("statusOperacao", trecho?.statusOperacaoValue);
+    if (overrideLabel) return overrideLabel;
     const externalStatuses = importedTrechoExternalStatuses(trecho);
     for (const status of externalStatuses) {
       const key = importedExternalStatusKey(status);
       if (IMPORT_XLSX_STATUS_OPERATION_MAP[key]) return IMPORT_XLSX_STATUS_OPERATION_MAP[key];
     }
     return "Confirmado";
+  }
+
+  function resolveImportedOperationStatusValue(trecho) {
+    return trecho?.statusOperacaoValue
+      || findOptionValue("statusOperacao", resolveImportedOperationStatusLabel(trecho))
+      || findOptionValue("statusOperacao", "Confirmado")
+      || "";
+  }
+
+  function importedDataverseStatusHint(trecho) {
+    const external = importedTrechoExternalStatuses(trecho);
+    const converted = resolveImportedOperationStatusLabel(trecho);
+    if (!external.length) return `Sem status Embraer. Envia como ${converted}.`;
+    return `Embraer: ${external.join(", ")} -> Dataverse: ${converted}.`;
   }
 
   function markImportedReviewPending(trecho) {
@@ -20368,6 +20683,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const fieldStack = document.createElement("div");
     fieldStack.className = "import-hot-grid import-editor-stack";
     fieldStack.append(
+      buildImportedDataverseStatusField(trecho),
       buildImportInput("Data e hora", "dataHora", importedTrechoDateTimeLocal(trecho), "datetime-local"),
       buildImportInput("Horário previsto de retorno", "retornoPrevisto", importedTrechoReturnDateTimeLocal(trecho), "datetime-local"),
       buildImportSelect("Tipo do serviço", "tipoServicoValue", sortByLabel(state.options.tipoServico), trecho.tipoServicoValue || findOptionValue("tipoServico", trecho.tipoServicoSugerido)),
@@ -20436,6 +20752,16 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     card.append(...blocks);
     setImportedTrechoControlsMode(card, isEditing);
     return card;
+  }
+
+  function buildImportedDataverseStatusField(trecho) {
+    const field = buildImportSelect("Status Dataverse", "statusOperacaoValue", state.options.statusOperacao, resolveImportedOperationStatusValue(trecho));
+    field.classList.add("import-dataverse-status-field");
+    const hint = document.createElement("small");
+    hint.className = "import-field-hint";
+    hint.textContent = importedDataverseStatusHint(trecho);
+    field.appendChild(hint);
+    return field;
   }
 
   function buildImportInspectorReviewActions(programacao, trechoKey, trecho, reviewStatus, isDuplicated = false) {
@@ -21844,6 +22170,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         ? importedTrechoReturnDateTimeLocal(trecho)
         : field === "solicitanteRecordId"
           ? resolveImportedSolicitanteSelectValue(trecho, solicitanteRows || [])
+          : field === "statusOperacaoValue"
+            ? resolveImportedOperationStatusValue(trecho)
           : String(trecho[field] ?? "");
     if (String(currentValue ?? "") === String(value ?? "")) return;
     captureImportReviewHistory("Editar campo do serviço");
@@ -21927,6 +22255,13 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       toast("Serviço repetido provável. A importação não cria outro registro com horário, trajeto, endereço, destino e passageiros parecidos.", "error", 9000);
       return null;
     }
+    const existingReserva = await findExistingImportedReservaByProgramacao(trecho.programacao);
+    if (existingReserva) {
+      markImportedTrechoAsDuplicate(trecho, existingReserva, "Serviço ignorado automaticamente: já existe serviço com esta PG (ID Tenaris) no Dataverse.");
+      toast("Serviço já existe no Dataverse. A importação bloqueou a criação duplicada.", "error", 9000);
+      renderImportReview();
+      return null;
+    }
     const manageLoading = !options.skipLoading;
     if (manageLoading) setLoading(true);
     let createdReservaId = "";
@@ -21950,6 +22285,13 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       return saved;
     } catch (error) {
       console.error(error);
+      if (isDataverseDuplicateKeyError(error)) {
+        const duplicate = await findExistingImportedReservaByProgramacao(trecho.programacao);
+        if (duplicate) {
+          markImportedTrechoAsDuplicate(trecho, duplicate, "Serviço ignorado automaticamente: o Dataverse recusou criação duplicada desta PG.");
+          renderImportReview();
+        }
+      }
       if (createdReservaId && state.xrm && !state.mockMode) {
         try {
           await state.xrm.WebApi.deleteRecord(CONFIG.entities.reserva, createdReservaId);
@@ -21962,6 +22304,37 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     } finally {
       if (manageLoading) setLoading(false);
     }
+  }
+
+  async function findExistingImportedReservaByProgramacao(programacao) {
+    const id = String(programacao || "").trim();
+    if (!id) return null;
+    const f = CONFIG.fields.reserva;
+    const idField = importedReservaTenarisIdField();
+    if (!state.xrm || state.mockMode) {
+      const row = getMockDb().reservas.find((item) => String(item[idField] || item[f.idExterno] || item.programacao || "") === id);
+      return row ? importedDuplicateCandidateFromReserva(row) : null;
+    }
+    const select = [f.id, idField, f.idExterno, f.dataSaida, f.trajeto, f.enderecoView, f.destino, f.paxView].join(",");
+    const filter = `${idField} eq '${escapeODataString(id)}'`;
+    const rows = await retrieveAll(CONFIG.entities.reserva, `?$select=${select}&$filter=${filter}&$top=1`);
+    return rows.length ? importedDuplicateCandidateFromReserva(rows[0]) : null;
+  }
+
+  function markImportedTrechoAsDuplicate(trecho, duplicate, reason) {
+    const recordId = cleanGuid(duplicate?.recordId || duplicate?.id || "");
+    const match = {
+      recordId,
+      score: 999,
+      level: "exact",
+      reasons: ["mesma PG (ID Tenaris já existe no Dataverse)"]
+    };
+    trecho.duplicateMatches = [match];
+    trecho.possibleDuplicateMatches = [];
+    trecho.duplicatedRecordIds = recordId ? [recordId] : [];
+    trecho.reviewStatus = importReviewStatuses().IGNORED;
+    trecho.reviewBlockReason = reason;
+    trecho.autoIgnoredByDuplicate = true;
   }
 
   async function buildImportedSaveContext(trecho) {
@@ -22078,6 +22451,64 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return selected.passenger;
   }
 
+  async function findImportedExistingPersonFromDuplicateError(person, error) {
+    const byId = await findImportedDuplicatePassengerByErrorId(error);
+    if (byId) return byId;
+    return findImportedExistingPersonByExactName(person);
+  }
+
+  async function findImportedDuplicatePassengerByErrorId(error) {
+    const id = extractDuplicatePassengerId(error);
+    if (!id || !state.xrm || state.mockMode) return null;
+    try {
+      const record = await state.xrm.WebApi.retrieveRecord(
+        CONFIG.entities.passageiro,
+        id,
+        `?$select=${passengerSelectFields()}`
+      );
+      const passenger = mapPassageiro(record);
+      mergePassengerRecords([passenger]);
+      return passenger;
+    } catch (retrieveError) {
+      console.warn("Falha ao recuperar passageiro duplicado pelo ID do erro.", retrieveError);
+      return null;
+    }
+  }
+
+  async function findImportedExistingPersonByExactName(person) {
+    const name = normalizePassengerDisplayName(person?.nome || "");
+    if (!name) return null;
+    const importClient = requireImportClient();
+    const f = CONFIG.fields.passageiro;
+    const rows = await retrieveAll(
+      CONFIG.entities.passageiro,
+      `?$select=${passengerSelectFields()}&$filter=${f.nome} eq '${escapeODataString(name)}'&$top=10`
+    );
+    const passengers = mergePassengerRecords(rows.map(mapPassageiro));
+    return passengers.find((passenger) => sameId(passenger.clienteId, importClient.id))
+      || passengers.find((passenger) => normalizePassengerDisplayName(passenger.label) === name)
+      || null;
+  }
+
+  function extractDuplicatePassengerId(error) {
+    const text = [
+      error?.message,
+      error?.details,
+      error?.raw,
+      error?.responseText,
+      safeJson(error)
+    ].filter(Boolean).join(" ");
+    const normalizedEntity = normalize(text);
+    if (!normalizedEntity.includes(normalize(CONFIG.entities.passageiro))) return "";
+    const idField = CONFIG.fields.passageiro.id;
+    const fieldPattern = new RegExp(`${idField}[\\s\\S]{0,500}?([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})`, "i");
+    const fieldMatch = text.match(fieldPattern);
+    if (fieldMatch) return cleanGuid(fieldMatch[1]);
+    const idMatch = text.match(/<Id>\s*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\s*<\/Id>/i)
+      || text.match(/\b([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\b/i);
+    return idMatch ? cleanGuid(idMatch[1]) : "";
+  }
+
   async function createImportedPersonRecord(person) {
     const importClient = requireImportClient();
     const key = normalize([
@@ -22097,7 +22528,16 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
       let created;
       if (state.xrm && !state.mockMode) {
-        created = await state.xrm.WebApi.createRecord(CONFIG.entities.passageiro, payload);
+        try {
+          created = await state.xrm.WebApi.createRecord(CONFIG.entities.passageiro, payload);
+        } catch (error) {
+          if (isDataverseDuplicateKeyError(error)) {
+            const existing = await findImportedExistingPerson(person)
+              || await findImportedExistingPersonFromDuplicateError(person, error);
+            if (existing) return existing;
+          }
+          throw error;
+        }
       } else {
         created = { id: `import-pax-${Date.now().toString(36)}-${Math.random().toString(16).slice(2, 8)}` };
       }
@@ -22145,7 +22585,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       [f.receber]: false,
       [f.cr]: importedTrechoCr(trecho)
     };
-    setChoice(payload, f.status, findOptionValue("statusOperacao", resolveImportedOperationStatusLabel(trecho)) || findOptionValue("statusOperacao", "Confirmado"));
+    setChoice(payload, f.status, resolveImportedOperationStatusValue(trecho));
     setChoice(payload, f.statusFaturamento, el.statusFaturamento.value || findOptionValue("statusFaturamento", "Pendente"));
     setChoice(payload, f.tipoServico, resolveImportOption("tipoServico", trecho.tipoServicoValue, trecho.tipoServicoSugerido));
     setChoice(payload, f.tipoVeiculo, resolveImportOption("tipoVeiculo", trecho.tipoVeiculoValue, trecho.tipoVeiculoSugerido));
@@ -22186,6 +22626,23 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       .join(" / ");
     trecho.importedServiceCr = value;
     return value;
+  }
+
+  function isDataverseDuplicateKeyError(error) {
+    const text = [
+      error?.message,
+      error?.errorCode,
+      error?.code,
+      error?.details,
+      safeJson(error)
+    ].filter(Boolean).join(" ");
+    const normalized = normalize(text);
+    return normalized.includes("duplicate")
+      || normalized.includes("duplicad")
+      || normalized.includes("chave de entidade")
+      || normalized.includes("entity key")
+      || normalized.includes("valores exclusivos")
+      || normalized.includes("unique");
   }
 
   function composeImportPassengerDestinations(trecho) {
@@ -24748,6 +25205,13 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function toast(message, type = "info", timeout = 5000, anchor = null) {
+    if (type === "error") {
+      void reportAppError(message, {
+        source: "toast",
+        phase: "ui-feedback",
+        severity: "error"
+      });
+    }
     const item = document.createElement("div");
     item.className = `toast ${type}`;
 
@@ -24780,6 +25244,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     }
     window.setTimeout(() => item.remove(), timeout);
   }
+
+  installAppErrorLogging();
 
   init().catch((error) => {
     console.error(error);

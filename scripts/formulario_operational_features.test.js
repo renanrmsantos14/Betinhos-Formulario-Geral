@@ -523,6 +523,9 @@ includes(app, "function getImportClient", "resolucao do cliente padrao Embraer")
 includes(app, "function ensureImportedSolicitanteRecord", "criacao/resolucao automatica do solicitante importado");
 includes(app, "function selectImportedExistingMatch", "match automatico seguro de cadastro existente");
 includes(app, "function createImportedPersonRecord", "criacao automatica de solicitante/passageiro importado");
+includes(app, "function findImportedExistingPersonFromDuplicateError", "erro de passageiro duplicado deve reaproveitar cadastro existente");
+includes(app, "function extractDuplicatePassengerId", "erro Dataverse deve permitir extrair ID do passageiro duplicado");
+includes(app, "findImportedExistingPerson(person)\n              || await findImportedExistingPersonFromDuplicateError(person, error)", "criacao importada deve usar fallback robusto para chave duplicada");
 includes(app, "function uniquePassengerRelationItems", "vinculos servico-passageiro devem deduplicar passageiro antes do Dataverse");
 includes(app, "const relationPassengers = uniquePassengerRelationItems(passengers);", "salvamento deve usar lista deduplicada para evitar chave duplicada");
 includes(app, "Falha ao desfazer reserva importada incompleta", "falha em vinculo importado deve tentar desfazer reserva recem-criada");
@@ -533,7 +536,8 @@ includes(app, "serviço(s) com status XLSX Aguardando prestador foram ignorados 
 includes(app, "function notifyUnknownImportedExternalStatuses", "status XLSX desconhecido deve avisar o operador");
 includes(app, "Estes serviços serão assumidos como Confirmado", "status desconhecido deve assumir Confirmado com aviso");
 includes(app, "function resolveImportedOperationStatusLabel", "salvamento importado deve resolver status operacional pelo status XLSX");
-includes(app, "resolveImportedOperationStatusLabel(trecho)", "payload importado deve usar conversao de status do XLSX");
+includes(app, "function resolveImportedOperationStatusValue", "salvamento importado deve permitir override do status Dataverse");
+includes(app, "setChoice(payload, f.status, resolveImportedOperationStatusValue(trecho))", "payload importado deve usar status Dataverse escolhido/conversao XLSX");
 excludes(app, "showTemporaryStatusLogicReminder", "lembrete temporario de status deve ser removido");
 excludes(app, "LEMBRETE TEMPORARIO", "toast temporario de status deve ser removido");
 const createImportedPersonRecordFn = extractFunction(app, "createImportedPersonRecord");
@@ -578,6 +582,10 @@ excludes(app, "async function applyImportedTrechoToForm", "servico importado nao
 includes(app, "async function checkImportedProgramDuplicates", "checagem de duplicidade por servico importado");
 includes(app, "function scoreImportedTrechoDuplicate", "pontuacao de duplicidade por horario/trajeto/endereco/passageiros");
 includes(app, "possibleDuplicateMatches", "alerta de servico parecido sem bloquear automaticamente");
+includes(app, "await findExistingImportedReservaByProgramacao(trecho.programacao)", "salvamento importado deve revalidar PG antes de criar reserva");
+includes(app, "markImportedTrechoAsDuplicate(trecho, existingReserva", "salvamento importado deve bloquear PG existente antes do create");
+includes(app, "if (isDataverseDuplicateKeyError(error))", "erro Dataverse de chave duplicada deve ter tratamento especifico");
+includes(app, "const existing = await findImportedExistingPerson(person);", "duplicidade de passageiro importado deve tentar vincular cadastro existente");
 includes(app, "function handleImportFieldCopy", "campo bloqueado deve copiar valor clicado");
 includes(app, "Serviço criado com sucesso", "mensagem simples ao criar 1 servico");
 includes(app, "serviços criados com sucesso!", "mensagem simples ao criar varios servicos");
@@ -641,6 +649,8 @@ includes(app, "[f.obsFinal]: importObs.final", "salvamento importado deve gravar
 includes(app, "[f.perfilPassageiro]: importObs.passageiro", "salvamento importado deve gravar preferencias do passageiro");
 includes(importTrechoCardFunction, "buildImportSelect(\"Tipo do serviço\", \"tipoServicoValue\", sortByLabel(state.options.tipoServico)", "tipo do servico importado deve seguir label e ordenacao do formulario comum");
 includes(importTrechoCardFunction, "buildImportSelect(\"Tipo do veículo\", \"tipoVeiculoValue\", state.options.tipoVeiculo", "tipo do veiculo importado deve seguir label do formulario comum");
+includes(importTrechoCardFunction, "buildImportedDataverseStatusField(trecho)", "servico importado deve exibir Status Dataverse no stack de campos editaveis");
+assert.ok(importTrechoCardFunction.indexOf("buildImportedDataverseStatusField(trecho)") < importTrechoCardFunction.indexOf("buildImportInput(\"Data e hora\""), "Status Dataverse deve ser o primeiro campo importado");
 includes(importTrechoCardFunction, "const solicitanteSection = buildImportSolicitanteSection(trecho, {\n      editable: isEditing", "solicitante importado deve ter secao propria com modo de edicao");
 includes(importTrechoCardFunction, "const isPassengerPickerOpen = !!trecho.passengerPickerOpen && isEditing;", "adicionar passageiro deve abrir seletor inline em modo editavel");
 includes(importTrechoCardFunction, "buildImportAction(\"+\", \"add-import-passenger\", !isEditing)", "adicionar passageiro deve ficar disponivel sempre que o servico estiver em edicao");
@@ -911,6 +921,12 @@ includes(app, "persistMockPassengerRecord(newPassenger)", "cadastro manual deve 
 includes(app, "persistMockPassengerRecord(updatedPassenger)", "hot edit local deve salvar alteracoes do passageiro");
 includes(app, "persistMockPassengerRecord(record)", "importacao deve salvar solicitante/passageiro no banco local");
 excludes(app, "function openPassengerRecord", "passageiro deve abrir hot edit direto sem fallback morto para form nativo");
+includes(app, "log: \"new_appmotoristaslog\"", "formulario deve usar tabela unificada de LOG do Dataverse");
+includes(app, "function installAppErrorLogging", "formulario deve instalar captura global de erro");
+includes(app, "window.addEventListener(\"unhandledrejection\"", "promises rejeitadas devem virar log Dataverse");
+includes(app, "console.error = (...args)", "erros capturados em catch via console.error devem virar log Dataverse");
+includes(app, "if (type === \"error\")", "toast de erro deve virar registro de log");
+includes(app, "APP_ERROR_LOG_QUEUE_KEY", "logs devem ter fila local para falha/offline");
 
 const passengerTextareaRule = extractCssRule(css, ".passenger-edit-field textarea.passenger-edit-control {");
 includes(passengerTextareaRule, "resize: vertical;", "textarea de passageiro readonly deve permitir ajuste de tamanho");

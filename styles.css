@@ -6045,6 +6045,18 @@ body.is-import-dragging .import-drop-overlay {
   --import-field-min: 200px;
 }
 
+.import-dataverse-status-field {
+  --import-field-min: 240px;
+}
+
+.import-field-hint {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-soft);
+  font-size: 11px;
+  line-height: 1.25;
+}
+
 .import-field[data-import-input-type="textarea"] {
   --import-field-min: 300px;
   min-height: 66px;

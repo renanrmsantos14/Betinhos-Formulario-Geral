@@ -2,7 +2,10 @@
   "scripts": {
     "dev": "node scripts/dev_server.js --port 4000 --watch",
     "start": "node scripts/dev_server.js --port 4000",
-    "wr": "node scripts/build_webresource.js",
-    "rw": "node scripts/build_webresource.js"
+    "build": "node scripts/build_webresource.js",
+    "wr": "node scripts/build_webresource.js --no-version",
+    "rw": "node scripts/build_webresource.js --no-version",
+    "deploy:webresource": "powershell -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1",
+    "push": "powershell -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1 -EnvironmentUrl https://org23b93544.crm2.dynamics.com/ -WebResourceName new_formulario_geral.html"
   }
 }

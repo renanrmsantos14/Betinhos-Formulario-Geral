@@ -62,6 +62,9 @@ includes(app, "el.passengerPhotoPreviewEyebrow.textContent = \"\";", "viewer nao
 includes(app, "el.passengerPhotoPreviewTitle.textContent = passengerPhotoViewerTitle(data);", "viewer deve mostrar nome do passageiro no titulo");
 includes(app, "el.passengerPhotoPreviewTitle.textContent = passengerPhotoTitleFromPassenger(passenger);", "confirmacao de foto deve mostrar nome do passageiro");
 includes(app, "function passengerPhotoTitleFromPassenger(passenger)", "titulo da confirmacao deve resolver nome do pax");
+includes(app, "function passengerNameFromPhotoUrl(value)", "titulo deve buscar nome do pax pelo link da foto quando vier sem nome");
+includes(app, "passengerNameFromPhotoUrl(data?.url || data?.src || \"\")", "viewer nao deve cair em Passageiro sem tentar resolver pelo link");
+includes(app, "passengerNameFromPhotoUrl(savedUrl || src)", "dados do viewer devem preencher nome pelo link da foto");
 excludes(app, "textContent = \"Confirmar imagem\"", "confirmacao nao deve manter titulo generico");
 excludes(html, "Confirmar imagem", "html inicial nao deve conter titulo generico");
 includes(app, "function openPassengerPhotoHoverZoom", "hover na foto do pax deve abrir zoom somente com imagem");
