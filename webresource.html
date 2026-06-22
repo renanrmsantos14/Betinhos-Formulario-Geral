@@ -782,6 +782,13 @@ h3 {
   color: var(--accent-strong);
 }
 
+.activation-head .return-receive-head {
+  flex: 0 0 auto;
+  min-width: 164px;
+  min-height: 44px;
+  margin-left: 0;
+}
+
 .panel-stack {
   display: grid;
   gap: 8px;
@@ -3443,6 +3450,13 @@ textarea.is-touch-resizing,
   min-width: 0;
 }
 
+.passenger-picker-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
 .passenger-picker-eyebrow {
   display: block;
   font-size: 11px;
@@ -3492,6 +3506,19 @@ textarea.is-touch-resizing,
   background: var(--surface-soft);
   color: var(--text);
   outline: none;
+}
+
+.passenger-picker-icon-action--accent {
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--line));
+  background: color-mix(in srgb, var(--accent) 9%, #ffffff);
+  color: var(--accent);
+}
+
+.passenger-picker-icon-action--accent:hover,
+.passenger-picker-icon-action--accent:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+  background: color-mix(in srgb, var(--accent) 14%, #ffffff);
+  color: color-mix(in srgb, var(--accent) 82%, #0f172a);
 }
 
 .passenger-picker-icon-action:active,
@@ -8104,7 +8131,7 @@ body.is-import-dragging .import-drop-overlay {
     top: 0;
     z-index: 7;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: center;
     gap: 6px;
     margin-bottom: 4px;
@@ -8112,14 +8139,24 @@ body.is-import-dragging .import-drop-overlay {
     background: linear-gradient(180deg, var(--surface) 78%, rgb(255 255 255 / 0));
   }
 
+  .activation-head .activation-title {
+    grid-column: 1 / -1;
+  }
+
   .activation-head .activation-switch {
     justify-self: end;
     align-self: center;
-    width: 146px;
-    min-width: 146px;
+    width: 100%;
+    min-width: 0;
     min-height: 40px;
     padding: 6px 7px;
     white-space: nowrap;
+  }
+
+  .activation-head .return-receive-head {
+    justify-self: stretch;
+    align-self: center;
+    min-width: 0;
   }
 
   .activation-title h2 {
@@ -8790,6 +8827,11 @@ textarea,
                 <span>Receber?</span>
               </label>
 
+              <label class="field currency-field">
+                <span>Valor a receber</span>
+                <input id="valorReceber" type="text" inputmode="decimal" autocomplete="off">
+              </label>
+
               <label class="field">
                 <span>Status de faturamento</span>
                 <select id="statusFaturamento"></select>
@@ -8948,6 +8990,10 @@ textarea,
             <input id="agendarRetorno" type="checkbox">
             <span>Ativado</span>
           </label>
+          <label class="toggle-field return-receive-field return-receive-head">
+            <input id="receberRetorno" type="checkbox">
+            <span>Receber no retorno?</span>
+          </label>
         </div>
 
         <section class="form-section">
@@ -8967,10 +9013,6 @@ textarea,
             <label class="field span-2 return-destination-field">
               <span>Destino</span>
               <textarea id="retornoDestino" rows="2"></textarea>
-            </label>
-            <label class="toggle-field return-receive-field">
-              <input id="receberRetorno" type="checkbox">
-              <span>Receber no retorno?</span>
             </label>
             <div class="field span-2 obs-field return-observation-field">
               <span>Observação de retorno</span>
@@ -9025,7 +9067,7 @@ textarea,
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.2.9</span>
+        <span>v</span><span id="codeVersionText">1.2.21</span>
       </footer>
     </main>
 
@@ -9068,11 +9110,18 @@ textarea,
             <span class="passenger-picker-eyebrow">Banco de dados</span>
             <h3 id="passengerPickerTitle">Selecionar passageiro</h3>
           </div>
-          <button id="passengerPickerClose" type="button" class="passenger-picker-icon-action" aria-label="Fechar seleção de passageiro">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M6.7 5.3 12 10.6l5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z"></path>
-            </svg>
-          </button>
+          <div class="passenger-picker-head-actions">
+            <button id="passengerPickerCreateShortcut" type="button" class="passenger-picker-icon-action passenger-picker-icon-action--accent" aria-label="Ir para cadastro de passageiro" title="Cadastrar novo passageiro">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6Z"></path>
+              </svg>
+            </button>
+            <button id="passengerPickerClose" type="button" class="passenger-picker-icon-action" aria-label="Fechar seleção de passageiro">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M6.7 5.3 12 10.6l5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z"></path>
+              </svg>
+            </button>
+          </div>
         </header>
         <label class="passenger-picker-field">
           <span class="passenger-picker-label">Busca</span>
@@ -10765,6 +10814,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         paxView: "cr40f_passageirosetelefonedecontato",
         trajeto: "cr40f_trajeto",
         cotacao: "cr40f_cotao",
+        valorReceber: "cr40f_valor_a_receber",
         receber: "cr40f_receber",
         cr: "cr40f_cr",
         formaPagamento: "cr40f_formadepagamento",
@@ -10785,6 +10835,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         idioma: "cr40f_idioma",
         departamento: "cr40f_departamento",
         cadastro: "cr40f_datadecadastro",
+        ultimoServico: "cr40f_datadoultimoservico",
         classificacao: "cr40f_classificacao",
         status: "cr40f_status",
         tipoVeiculo: "new_tipodoveiculo",
@@ -10954,7 +11005,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         { value: 202410002, label: "Pix" }
       ],
       bdStatus: [
-        { value: 202410001, label: "Ativo" }
+        { value: 202410000, label: "Ativo" },
+        { value: 202410001, label: "Inativo" }
       ],
       bdClassificacao: [
         { value: 202410000, label: "Passageiro Frequente" },
@@ -11046,6 +11098,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     observacao: $("observacao"),
     receber: $("receber"),
     cotacao: $("cotacao"),
+    valorReceber: $("valorReceber"),
     op: $("op"),
     opWrap: $("opWrap"),
     formaPagamento: $("formaPagamento"),
@@ -11059,6 +11112,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     passengerPickerSearch: $("passengerPickerSearch"),
     passengerPickerResults: $("passengerPickerResults"),
     passengerPickerClose: $("passengerPickerClose"),
+    passengerPickerCreateShortcut: $("passengerPickerCreateShortcut"),
     passengerPickerCancel: $("passengerPickerCancel"),
     customAddressWrap: $("customAddressWrap"),
     enderecoPersonalizado: $("enderecoPersonalizado"),
@@ -11229,6 +11283,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   let activePassengerPhotoHoverZoom = null;
   const passengerPhotoImageCache = new Map();
   const importPassengerCreateLocks = new Map();
+  const importedTrechoTimestampCache = new WeakMap();
   const IMPORT_REVIEW_HISTORY_LIMIT = 80;
   const GLOBAL_HISTORY_LIMIT = 80;
   let isRestoringImportHistory = false;
@@ -11652,6 +11707,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return true;
   }
 
+  function shouldOpenCustomSelectOnFocus(select) {
+    if (shouldKeepCustomSelectClosedOnFocus(select)) return false;
+    return shouldAutofocusSearchInputs();
+  }
+
   function isMobilePassengerPreviewDisabled() {
     try {
       const coarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches;
@@ -11824,6 +11884,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.importReviewPrograms?.addEventListener("keydown", handleImportReviewKeyboardNavigation);
     el.importReviewPrograms?.addEventListener("input", handleImportReviewInput);
     el.importReviewPrograms?.addEventListener("change", handleImportReviewInput);
+    el.importReviewPrograms?.addEventListener("focusout", handleImportReviewFocusOut);
     el.importReviewPrograms?.addEventListener("pointerover", handlePassengerPreviewEnter);
     el.importReviewPrograms?.addEventListener("pointerout", handlePassengerPreviewLeave);
     el.importReviewPrograms?.addEventListener("focusin", handlePassengerPreviewFocusIn);
@@ -11942,6 +12003,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.passengerRows?.addEventListener("focusin", handlePassengerPreviewFocusIn);
     el.passengerRows?.addEventListener("focusout", handlePassengerPreviewFocusOut);
     el.passengerPickerClose?.addEventListener("click", closePassengerPicker);
+    el.passengerPickerCreateShortcut?.addEventListener("click", openPassengerCreateShortcut);
     el.passengerPickerCancel?.addEventListener("click", closePassengerPicker);
     el.passengerPickerOverlay?.addEventListener("click", (event) => {
       if (event.target === el.passengerPickerOverlay) {
@@ -12078,6 +12140,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     bindFormattedInput(el.bdCr, normalizeCodeValue);
     bindFormattedInput(el.cr, normalizeCodeValue);
     bindCurrencyInput(el.cotacao);
+    bindCurrencyInput(el.valorReceber);
     document.querySelectorAll("input[id*='cpf' i], input[name*='cpf' i]").forEach((input) => {
       bindFormattedInput(input, formatCpf);
       input.addEventListener("blur", () => {
@@ -12280,7 +12343,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
     trigger?.addEventListener("focus", () => {
       if (state.suppressOpenOnFocus) return;
-      if (select.disabled || shouldKeepCustomSelectClosedOnFocus(select)) return;
+      if (select.disabled || !shouldOpenCustomSelectOnFocus(select)) return;
       openCustomSelect(select, { focusSearch: true, focusTrigger: false });
     });
 
@@ -12879,6 +12942,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       f.idioma,
       f.cargo,
       f.nascimento,
+      f.ultimoServico,
       f.departamento,
       f.tipoVeiculo,
       f.fotoUrl,
@@ -14234,6 +14298,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       idioma: record[f.idioma] || "",
       cargo: record[f.cargo] || "",
       nascimento: record[f.nascimento] || "",
+      ultimoServico: record[f.ultimoServico] || "",
       departamento: record[f.departamento] || "",
       tipoVeiculo: record[f.tipoVeiculo] || "",
       fotoUrl: normalizePassengerPhotoUrl(record[f.fotoUrl]),
@@ -14296,6 +14361,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       f.paxView,
       f.trajeto,
       f.cotacao,
+      f.valorReceber,
       f.receber,
       f.cr,
       f.formaPagamento,
@@ -14389,6 +14455,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.trajeto.value = r[f.trajeto] || "";
     el.destino.value = r[f.destino] || "";
     el.cotacao.value = formatCurrencyDisplayValue(r[f.cotacao] ?? "");
+    el.valorReceber.value = formatCurrencyDisplayValue(r[f.valorReceber] ?? "");
     el.cr.value = normalizeCodeValue(r[f.cr] || "");
     el.receber.checked = !!r[f.receber];
     setFieldValue(el.receberRetorno, false);
@@ -16690,12 +16757,32 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return JSON.parse(JSON.stringify(value ?? null));
   }
 
+  function importReviewRowCount(review) {
+    if (typeof review?.rowsCount === "number" && Number.isFinite(review.rowsCount)) {
+      return Math.max(0, review.rowsCount);
+    }
+    return Array.isArray(review?.rows) ? review.rows.length : 0;
+  }
+
+  function cloneImportReviewForGlobalHistory(review) {
+    if (!review) return null;
+    return {
+      fileName: review.fileName || "",
+      rowsCount: importReviewRowCount(review),
+      programs: cloneGlobalHistoryValue(review.programs || []),
+      selectedProgramacao: review.selectedProgramacao || "",
+      selectedTrechoKey: review.selectedTrechoKey || "",
+      editingTrechoKey: review.editingTrechoKey || "",
+      createdAt: review.createdAt || "",
+      history: { undo: [], redo: [] }
+    };
+  }
+
   function createGlobalHistorySnapshot() {
     captureObsState();
     const draft = createDraftSnapshot();
     draft.updatedAt = "";
-    const importReview = cloneGlobalHistoryValue(state.importReview);
-    if (importReview?.history) importReview.history = { undo: [], redo: [] };
+    const importReview = cloneImportReviewForGlobalHistory(state.importReview);
     return {
       draft,
       importReview,
@@ -16867,6 +16954,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         observacao: el.observacao.value,
         receber: el.receber.checked,
         cotacao: el.cotacao.value,
+        valorReceber: el.valorReceber.value,
         op: el.op.value,
         formaPagamento: el.formaPagamento.value,
         cr: el.cr.value,
@@ -16936,6 +17024,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       setFieldValue(el.trajeto, fields.trajeto);
       setFieldValue(el.receber, fields.receber);
       setFieldValue(el.cotacao, formatCurrencyDisplayValue(fields.cotacao));
+      setFieldValue(el.valorReceber, formatCurrencyDisplayValue(fields.valorReceber));
       setSelectValue(el.op, fields.op || "");
       setSelectValue(el.formaPagamento, fields.formaPagamento || "");
       setFieldValue(el.cr, fields.cr);
@@ -17010,6 +17099,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     setFieldValue(el.trajeto, fields.trajeto);
     setFieldValue(el.receber, fields.receber);
     setFieldValue(el.cotacao, formatCurrencyDisplayValue(fields.cotacao));
+    setFieldValue(el.valorReceber, formatCurrencyDisplayValue(fields.valorReceber));
     setSelectValue(el.op, fields.op || "");
     setSelectValue(el.formaPagamento, fields.formaPagamento || "");
     setFieldValue(el.cr, fields.cr);
@@ -17651,6 +17741,15 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         syncLegacyTimePartsFromDateTime(el.retornoData, el.retornoHora, el.retornoMinuto);
       }
     }
+  }
+
+  function openPassengerCreateShortcut() {
+    closePassengerPicker();
+    setTab("bd");
+    requestAnimationFrame(() => {
+      el.bdNome?.focus();
+      el.bdNome?.select?.();
+    });
   }
 
   function syncReturnDefaults() {
@@ -19289,6 +19388,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return {
       fileName,
       rows: normalizedRows,
+      rowsCount: normalizedRows.length,
       programs,
       history: { undo: [], redo: [] },
       createdAt: new Date().toISOString()
@@ -19475,6 +19575,19 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return false;
   }
 
+  function captureImportReviewHistoryForEditSession(target, label) {
+    if (!target) return;
+    if (target.dataset.importHistoryCaptured === "1") return;
+    captureImportReviewHistory(label);
+    target.dataset.importHistoryCaptured = "1";
+  }
+
+  function handleImportReviewFocusOut(event) {
+    const target = event.target;
+    if (!target?.dataset?.importHistoryCaptured) return;
+    delete target.dataset.importHistoryCaptured;
+  }
+
   function shouldHandleImportHistoryShortcut(event) {
     if (event.altKey) return false;
     const key = String(event.key || "").toLowerCase();
@@ -19636,6 +19749,37 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       saveableTrechos,
       canScheduleConfirmed,
       blockedReason: canScheduleConfirmed ? "" : (counts.pending ? `${counts.pending} trecho(s) pendente(s) de revisão.` : "Nenhum trecho confirmado para agendar.")
+    };
+  }
+
+  function collectImportReviewRenderMetrics(programs) {
+    const statuses = importReviewStatuses();
+    const trechos = [];
+    const counts = {
+      all: 0,
+      validated: 0,
+      pending: 0,
+      ignored: 0,
+      duplicated: 0
+    };
+    (programs || []).forEach((program) => {
+      (program?.trechos || []).forEach((trecho) => {
+        trechos.push(trecho);
+        counts.all += 1;
+        const status = normalizeImportedReviewStatus(trecho);
+        if (status === statuses.CONFIRMED || status === statuses.SAVED) {
+          counts.validated += 1;
+        } else if (status === statuses.IGNORED) {
+          counts.ignored += 1;
+        } else {
+          counts.pending += 1;
+        }
+        if (trecho.duplicatedRecordIds?.length) counts.duplicated += 1;
+      });
+    });
+    return {
+      trechos,
+      counts
     };
   }
 
@@ -19848,18 +19992,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     renderGlobalImportHistoryControls();
     const review = state.importReview;
     const importedPrograms = review?.programs || [];
-    const trechos = importedPrograms.flatMap((program) => program.trechos || []);
-    const pendingPrograms = getImportProgramsForReview(importedPrograms);
-    const pendingTrechos = pendingPrograms.flatMap((program) => program.trechos || []);
-    const validatedTrechos = getValidatedImportTrechos(importedPrograms);
-    const ignoredTrechos = getIgnoredImportTrechos(importedPrograms);
+    const metrics = collectImportReviewRenderMetrics(importedPrograms);
+    const trechos = metrics.trechos;
     const activeFilter = normalizeImportReviewFilter(state.importReviewFilter);
     state.importReviewFilter = activeFilter;
     const visiblePrograms = getImportProgramsByReviewFilter(importedPrograms, activeFilter);
     const reviewState = summarizeCurrentImportTrechos(trechos);
-    const duplicatedTrechos = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
-    const hasImportedRows = Array.isArray(review?.rows) && review.rows.length > 0;
-    const hasImportData = importedPrograms.length > 0 && hasImportedRows;
+    const rowCount = importReviewRowCount(review);
+    const hasImportData = importedPrograms.length > 0 && rowCount > 0;
     if (!el.importReviewPrograms) return;
 
     if (!hasImportData) {
@@ -19876,19 +20016,19 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const summary = [];
 
     if (hasImportData) {
-      summary.push(`${review.rows.length} linha(s)`);
+      summary.push(`${rowCount} linha(s)`);
       summary.push(`${review.programs.length} PG(s)`);
-      summary.push(`${trechos.length} trecho(s)`);
+      summary.push(`${metrics.counts.all} trecho(s)`);
       summary.push(`${reviewState.counts.confirmed} confirmado(s)`);
       summary.push(`${reviewState.counts.pending} pendente(s)`);
       summary.push(`${reviewState.counts.blocked} bloqueado(s)`);
       summary.push(`${reviewState.counts.ignored} ignorado(s)`);
       summary.push(`Cliente: ${importClient?.label || CONFIG.importDefaults.clienteLabel}`);
       renderImportReviewFilters({
-        all: trechos.length,
-        validated: validatedTrechos.length,
-        pending: pendingTrechos.length,
-        ignored: ignoredTrechos.length
+        all: metrics.counts.all,
+        validated: metrics.counts.validated,
+        pending: metrics.counts.pending,
+        ignored: metrics.counts.ignored
       }, activeFilter);
       renderImportGlobalIssues(trechos);
     } else {
@@ -19897,7 +20037,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       if (el.importReviewIssues) el.importReviewIssues.hidden = true;
     }
     summary.push(`Arquivo: ${review.fileName}.`);
-    if (duplicatedTrechos.length) summary.push(`${duplicatedTrechos.length} serviços repetidos.`);
+    if (metrics.counts.duplicated) summary.push(`${metrics.counts.duplicated} serviços repetidos.`);
     el.importReviewSummary.textContent = summary.join("  ");
 
     el.importReviewPrograms.replaceChildren();
@@ -19951,27 +20091,36 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function sortImportProgramsByServiceDateTime(programs) {
     return [...(programs || [])]
-      .map((program) => ({
-        ...program,
-        trechos: sortImportedTrechosByServiceDateTime(program?.trechos || [])
-      }))
-      .sort((a, b) => compareImportProgramsByFirstServiceDateTime(a, b));
+      .map((program) => {
+        const sortedTrechos = sortImportedTrechosByServiceDateTime(program?.trechos || []);
+        return {
+          program: {
+            ...program,
+            trechos: sortedTrechos
+          },
+          firstServiceTimestamp: importedTrechoServiceTimestamp(sortedTrechos[0])
+        };
+      })
+      .sort((a, b) => compareImportProgramsByFirstServiceDateTime(
+        a.program,
+        b.program,
+        a.firstServiceTimestamp,
+        b.firstServiceTimestamp
+      ))
+      .map((entry) => entry.program);
   }
 
   function sortImportedTrechosByServiceDateTime(trechos) {
     return [...(trechos || [])].sort((a, b) => compareImportedTrechosByServiceDateTime(a, b));
   }
 
-  function compareImportProgramsByFirstServiceDateTime(programA, programB) {
-    const firstA = importProgramFirstServiceTimestamp(programA);
-    const firstB = importProgramFirstServiceTimestamp(programB);
+  function compareImportProgramsByFirstServiceDateTime(programA, programB, firstA = importProgramFirstServiceTimestamp(programA), firstB = importProgramFirstServiceTimestamp(programB)) {
     if (firstA !== firstB) return firstA - firstB;
     return String(programA?.programacao || "").localeCompare(String(programB?.programacao || ""), "pt-BR");
   }
 
   function importProgramFirstServiceTimestamp(program) {
-    const firstTrecho = sortImportedTrechosByServiceDateTime(program?.trechos || [])[0];
-    return importedTrechoServiceTimestamp(firstTrecho);
+    return importedTrechoServiceTimestamp((program?.trechos || [])[0]);
   }
 
   function compareImportedTrechosByServiceDateTime(trechoA, trechoB) {
@@ -19982,10 +20131,15 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function importedTrechoServiceTimestamp(trecho) {
+    if (!trecho) return Number.POSITIVE_INFINITY;
+    const cacheKey = `${trecho.dataIso || ""}|${trecho.horario || ""}`;
+    const cached = importedTrechoTimestampCache.get(trecho);
+    if (cached?.key === cacheKey) return cached.value;
     const localDateTime = importedTrechoDateTimeLocal(trecho);
     const parsed = parseDateTimeInputValue(localDateTime);
-    if (parsed) return parsed.getTime();
-    return Number.POSITIVE_INFINITY;
+    const value = parsed ? parsed.getTime() : Number.POSITIVE_INFINITY;
+    importedTrechoTimestampCache.set(trecho, { key: cacheKey, value });
+    return value;
   }
 
   function isValidatedImportedTrecho(trecho) {
@@ -20025,7 +20179,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const hasAddressDraft = (snapshot?.enderecoRascunho || []).some((item) => hasText(item?.endereco));
     const hasLookupDraft = hasText(fields.cliente) || hasText(fields.solicitante) || hasText(fields.motorista);
     return hasPassengers || hasAddressDraft || hasLookupDraft || hasText(fields.trajeto) || hasText(fields.destino) || hasText(fields.observacao)
-      || hasText(fields.tipoServico) || hasText(fields.tipoVeiculo) || hasText(fields.formaPagamento) || hasText(fields.cr) || hasText(fields.cotacao);
+      || hasText(fields.tipoServico) || hasText(fields.tipoVeiculo) || hasText(fields.formaPagamento) || hasText(fields.cr) || hasText(fields.cotacao) || hasText(fields.valorReceber);
   }
 
   function renderImportReviewFilters(counts, activeFilter) {
@@ -21062,7 +21216,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function importedDefaultInternalObservation(trecho) {
     if (!trecho?.programacao) return "";
     if (isSplitImportedTrecho(trecho)) return `Serviço criado por Split na PG: ${trecho.programacao}.`;
-    return `Importado via XLSX. PG: ${trecho.programacao}. ST: ${(trecho.solicitacoes || []).join(", ") || "-"}.`;
+    return String(trecho.programacao || "").trim();
   }
 
   function composeImportedTrechoPreferencias(trecho) {
@@ -22113,7 +22267,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       const obs = ensureImportedObservationState(trecho);
       const current = obs.current || "motorista";
       if (String(obs[current] ?? "") === String(event.target.value ?? "")) return;
-      captureImportReviewHistory("Editar observação do serviço");
+      captureImportReviewHistoryForEditSession(event.target, "Editar observação do serviço");
       markImportedReviewPending(trecho);
       obs[current] = event.target.value;
       syncImportedObservationFields(trecho);
@@ -22124,7 +22278,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       const passenger = trecho.passageiros[Number(passengerRow.dataset.passengerIndex)];
       if (!passenger) return;
       if (String(passenger[passengerField] ?? "") === String(event.target.value ?? "")) return;
-      captureImportReviewHistory("Editar passageiro do serviço");
+      captureImportReviewHistoryForEditSession(event.target, "Editar passageiro do serviço");
       markImportedReviewPending(trecho);
       passenger[passengerField] = event.target.value;
       if (["nome", "telefone", "email"].includes(passengerField)) {
@@ -22174,7 +22328,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
             ? resolveImportedOperationStatusValue(trecho)
           : String(trecho[field] ?? "");
     if (String(currentValue ?? "") === String(value ?? "")) return;
-    captureImportReviewHistory("Editar campo do serviço");
+    if (event.type === "input" && isTextEditingTarget(event.target)) {
+      captureImportReviewHistoryForEditSession(event.target, "Editar campo do serviço");
+    } else {
+      captureImportReviewHistory("Editar campo do serviço");
+    }
     markImportedReviewPending(trecho);
     if (field === "dataHora") {
       trecho.dataIso = datePartFromInputValue(value);
@@ -22271,6 +22429,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       const saved = await saveReserva(payload);
       createdReservaId = saved.id;
       await replacePassengerRelations(saved.id, context.colOrdemPassageiros, context, true);
+      await updatePassengersLastServiceDate(context.colOrdemPassageiros, context.dataHoraPrincipal);
       window.XlsxImportCore?.markImportedTrechoSaved?.(trecho, saved.id);
       if (!window.XlsxImportCore?.markImportedTrechoSaved) {
         trecho.savedRecordId = saved.id;
@@ -22524,6 +22683,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         [CONFIG.fields.passageiro.telefone]: phoneStorageValue(person.telefone || "", "55"),
         [CONFIG.fields.passageiro.email]: normalizeEmail(person.email || "")
       };
+      setChoice(payload, CONFIG.fields.passageiro.status, getActivePassengerStatusValue());
       bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, importClient.id);
 
       let created;
@@ -22549,6 +22709,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         endereco: "",
         preferencias: "",
         cr: "",
+        status: getActivePassengerStatusValue(),
+        ultimoServico: "",
         clienteId: importClient.id,
         clienteLabel: importClient.label
       };
@@ -22614,16 +22776,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function importedTrechoCr(trecho) {
     if (!trecho) return "";
     if (String(trecho.importedServiceCr || "").trim()) return String(trecho.importedServiceCr).trim();
-    const seen = new Set();
-    const value = ((trecho.linhasImportadas || []).length ? trecho.linhasImportadas : (trecho.passageiros || []))
-      .map((passenger) => String(passenger.centroCusto || "").trim())
-      .filter((centroCusto) => {
-        const key = normalize(centroCusto);
-        if (!key || seen.has(key)) return false;
-        seen.add(key);
-        return true;
-      })
-      .join(" / ");
+    const value = String(trecho.programacao || "").trim();
     trecho.importedServiceCr = value;
     return value;
   }
@@ -22979,6 +23132,13 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return Array.from(new Set(timestamps)).sort((a, b) => a - b);
   }
 
+  function maxServiceResultDate(results) {
+    return (results || [])
+      .map((item) => item?.data)
+      .filter((date) => date && !Number.isNaN(date.getTime?.()))
+      .sort((a, b) => b.getTime() - a.getTime())[0] || null;
+  }
+
   function resolveActivationGuard(action) {
     const drafts = [...(state.activationGuardDrafts || [])];
     const context = state.pendingSaveContext || buildSaveContext();
@@ -23049,6 +23209,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         addSaveLog("success", "Edição salva", state.recordId);
       }
 
+      await updatePassengersLastServiceDate(context.colOrdemPassageiros, maxServiceResultDate(results));
       const total = results.length;
       const message = state.isNew
         ? (total === 1 ? "Serviço criado com sucesso" : `${total} serviços criados com sucesso!`)
@@ -23201,6 +23362,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       [f.trajeto]: isReturn ? invertTrajeto(context.trajeto) : trajeto,
       [f.paxView]: context.passageirosTelefones,
       [f.cotacao]: parseNumber(el.cotacao.value),
+      [f.valorReceber]: parseNumber(el.valorReceber.value),
       [f.receber]: resolveReceberPayloadValue(context, kind, dataHora),
       [f.cr]: normalizeCodeValue(el.cr.value)
     };
@@ -23390,6 +23552,67 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     )));
   }
 
+  async function updatePassengersLastServiceDate(passengers, serviceDate) {
+    const dateOnly = dateOnlyValue(serviceDate);
+    if (!dateOnly) return;
+    const uniquePassengers = uniquePassengerRelationItems(passengers);
+    if (!uniquePassengers.length) return;
+    await Promise.all(uniquePassengers.map((item) => updatePassengerLastServiceDate(item.guid, dateOnly)));
+  }
+
+  async function updatePassengerLastServiceDate(passengerId, dateOnly) {
+    const cleanPassengerId = cleanGuid(passengerId);
+    if (!cleanPassengerId || !dateOnly) return;
+    const passenger = getPassengerById(cleanPassengerId);
+    const existingDate = state.xrm && !state.mockMode
+      ? await retrievePassengerLastServiceDate(cleanPassengerId, passenger?.ultimoServico || "")
+      : passenger?.ultimoServico || "";
+    if (!shouldReplaceLastServiceDate(existingDate, dateOnly)) return;
+
+    if (state.xrm && !state.mockMode) {
+      await state.xrm.WebApi.updateRecord(CONFIG.entities.passageiro, cleanPassengerId, {
+        [CONFIG.fields.passageiro.ultimoServico]: dateOnly
+      });
+    }
+    const index = state.passageiros.findIndex((item) => sameId(item.id, cleanPassengerId));
+    if (index >= 0) {
+      state.passageiros[index] = { ...state.passageiros[index], ultimoServico: dateOnly };
+      persistMockPassengerRecord(state.passageiros[index]);
+    }
+  }
+
+  async function retrievePassengerLastServiceDate(passengerId, fallback = "") {
+    try {
+      const record = await state.xrm.WebApi.retrieveRecord(
+        CONFIG.entities.passageiro,
+        passengerId,
+        `?$select=${CONFIG.fields.passageiro.ultimoServico}`
+      );
+      return record[CONFIG.fields.passageiro.ultimoServico] || fallback || "";
+    } catch (error) {
+      console.warn("Falha ao consultar Data do Último Serviço do passageiro.", error);
+      return fallback || "";
+    }
+  }
+
+  function shouldReplaceLastServiceDate(existingDate, nextDate) {
+    if (!nextDate) return false;
+    if (!existingDate) return true;
+    const existing = parseDateInputValue(existingDate);
+    const next = parseDateInputValue(nextDate);
+    if (!next) return false;
+    if (!existing) return true;
+    return next.getTime() > existing.getTime();
+  }
+
+  function dateOnlyValue(date) {
+    if (!date || Number.isNaN(date.getTime?.())) return "";
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
   function setChoice(payload, field, value) {
     if (value === "" || value === null || value === undefined) return;
     const numeric = Number(value);
@@ -23416,6 +23639,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       el.trajeto,
       el.observacao,
       el.cotacao,
+      el.valorReceber,
       el.cr,
       el.destino,
       el.retornoEndereco,

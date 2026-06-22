@@ -5755,7 +5755,9 @@
     if (target?.closest?.("#passengerEditOverlay")) return;
 
     clearFieldValidation(target);
-    captureObsState();
+    captureObsState({
+      includeDerivedPassengerPreferences: !(event.type === "input" && isTextEditingTarget(target))
+    });
     markActivationDraftEdited(target);
     renderTabBadges();
     renderRiskPanel();
@@ -5988,8 +5990,10 @@
     };
   }
 
-  function createGlobalHistorySnapshot() {
-    captureObsState();
+  function createGlobalHistorySnapshot(options = {}) {
+    captureObsState({
+      includeDerivedPassengerPreferences: options.includeDerivedPassengerPreferences !== false
+    });
     const draft = createDraftSnapshot();
     draft.updatedAt = "";
     const importReview = cloneImportReviewForGlobalHistory(state.importReview);
@@ -6021,11 +6025,11 @@
     );
   }
 
-  function captureGlobalHistoryBeforeMutation(label = "Alteração") {
+  function captureGlobalHistoryBeforeMutation(label = "Alteração", options = {}) {
     if (!globalHistoryCanTrack()) return;
     state.globalHistory.pending = {
       label,
-      snapshot: createGlobalHistorySnapshot()
+      snapshot: createGlobalHistorySnapshot(options)
     };
   }
 
@@ -6033,13 +6037,18 @@
     if (!globalHistoryCanTrack()) return;
     const target = event.target;
     if (!shouldTrackGlobalHistoryTarget(target)) return;
+    const isTextTarget = isTextEditingTarget(target);
+    if (event.type === "pointerdown" && isTextTarget) return;
     if (event.type === "keydown") {
-      if (!isGlobalHistoryMutationKey(event) || !isTextEditingTarget(target)) return;
+      if (!isGlobalHistoryMutationKey(event) || !isTextTarget) return;
       if (state.globalHistory.pending?.textTarget === target) return;
     }
-    if (event.type === "focusin" && !isTextEditingTarget(target)) return;
-    captureGlobalHistoryBeforeMutation(globalHistoryLabelFromTarget(target));
-    if (isTextEditingTarget(target)) state.globalHistory.pending.textTarget = target;
+    if (event.type === "focusin" && !isTextTarget) return;
+    captureGlobalHistoryBeforeMutation(
+      globalHistoryLabelFromTarget(target),
+      isTextTarget ? { includeDerivedPassengerPreferences: false } : {}
+    );
+    if (isTextTarget) state.globalHistory.pending.textTarget = target;
   }
 
   function isGlobalHistoryMutationKey(event) {
@@ -8623,9 +8632,9 @@
     return JSON.stringify(a || null) === JSON.stringify(b || null);
   }
 
-  function captureImportReviewHistory(label = "Alteração") {
+  function captureImportReviewHistory(label = "Alteração", options = {}) {
     if (!state.importReview || isRestoringImportHistory) return;
-    captureGlobalHistoryBeforeMutation(label);
+    captureGlobalHistoryBeforeMutation(label, options);
     window.setTimeout(() => commitGlobalHistoryChange(label), 0);
     const history = importReviewHistory();
     const snapshot = createImportReviewSnapshot();
@@ -8776,7 +8785,7 @@
   function captureImportReviewHistoryForEditSession(target, label) {
     if (!target) return;
     if (target.dataset.importHistoryCaptured === "1") return;
-    captureImportReviewHistory(label);
+    captureImportReviewHistory(label, { includeDerivedPassengerPreferences: false });
     target.dataset.importHistoryCaptured = "1";
   }
 
@@ -12424,11 +12433,17 @@
     }
   }
 
-  function captureObsState() {
+  function captureObsState(options = {}) {
+    const config = {
+      includeDerivedPassengerPreferences: true,
+      ...options
+    };
     state.obs[state.obsAtual] = el.observacao.value;
     state.obsRet[state.retObsAtual] = el.retornoObservacao.value;
-    state.obs.passageiro = composePreferencias();
-    state.obsRet.passageiro = composePreferencias();
+    if (!config.includeDerivedPassengerPreferences) return;
+    const preferencias = composePreferencias();
+    state.obs.passageiro = preferencias;
+    state.obsRet.passageiro = preferencias;
   }
 
   function buildSaveContext() {

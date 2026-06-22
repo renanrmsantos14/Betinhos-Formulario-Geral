@@ -220,6 +220,11 @@
                 <span>Receber?</span>
               </label>
 
+              <label class="field currency-field">
+                <span>Valor a receber</span>
+                <input id="valorReceber" type="text" inputmode="decimal" autocomplete="off">
+              </label>
+
               <label class="field">
                 <span>Status de faturamento</span>
                 <select id="statusFaturamento"></select>
@@ -378,6 +383,10 @@
             <input id="agendarRetorno" type="checkbox">
             <span>Ativado</span>
           </label>
+          <label class="toggle-field return-receive-field return-receive-head">
+            <input id="receberRetorno" type="checkbox">
+            <span>Receber no retorno?</span>
+          </label>
         </div>
 
         <section class="form-section">
@@ -397,10 +406,6 @@
             <label class="field span-2 return-destination-field">
               <span>Destino</span>
               <textarea id="retornoDestino" rows="2"></textarea>
-            </label>
-            <label class="toggle-field return-receive-field">
-              <input id="receberRetorno" type="checkbox">
-              <span>Receber no retorno?</span>
             </label>
             <div class="field span-2 obs-field return-observation-field">
               <span>Observação de retorno</span>
@@ -455,7 +460,7 @@
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.2.9</span>
+        <span>v</span><span id="codeVersionText">1.2.21</span>
       </footer>
     </main>
 
@@ -498,11 +503,18 @@
             <span class="passenger-picker-eyebrow">Banco de dados</span>
             <h3 id="passengerPickerTitle">Selecionar passageiro</h3>
           </div>
-          <button id="passengerPickerClose" type="button" class="passenger-picker-icon-action" aria-label="Fechar seleção de passageiro">
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-              <path d="M6.7 5.3 12 10.6l5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z"></path>
-            </svg>
-          </button>
+          <div class="passenger-picker-head-actions">
+            <button id="passengerPickerCreateShortcut" type="button" class="passenger-picker-icon-action passenger-picker-icon-action--accent" aria-label="Ir para cadastro de passageiro" title="Cadastrar novo passageiro">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6Z"></path>
+              </svg>
+            </button>
+            <button id="passengerPickerClose" type="button" class="passenger-picker-icon-action" aria-label="Fechar seleção de passageiro">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M6.7 5.3 12 10.6l5.3-5.3 1.4 1.4-5.3 5.3 5.3 5.3-1.4 1.4-5.3-5.3-5.3 5.3-1.4-1.4 5.3-5.3-5.3-5.3 1.4-1.4Z"></path>
+              </svg>
+            </button>
+          </div>
         </header>
         <label class="passenger-picker-field">
           <span class="passenger-picker-label">Busca</span>
