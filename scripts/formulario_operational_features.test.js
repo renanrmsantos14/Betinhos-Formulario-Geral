@@ -78,7 +78,7 @@ return { selectImportedExistingMatch };`;
 }
 
 function buildPhoneParser() {
-  const start = app.indexOf("function countryFlagFromIso");
+  const start = app.indexOf("const PHONE_MAX_LENGTH");
   const end = app.indexOf("function formatCpf");
   assert.ok(start >= 0 && end > start, "Bloco de telefone nao encontrado");
   const phoneBlock = app.slice(start, end);
@@ -319,44 +319,34 @@ assert.deepEqual(
 );
 
 assert.equal(
-  phone.parsePhoneNumberForInput("+54 11 9999-9999", "55").countryCode,
-  "54",
-  "deve detectar DDI explicito ao colar"
+  phone.parsePhoneNumberForInput("+54 11 9999-9999").formatted,
+  "+54 11 9999-9999",
+  "deve manter caracteres comuns de telefone ao colar"
 );
 assert.equal(
-  phone.parsePhoneNumberForSelectedCountry("+54 11 9999-9999", "55").countryCode,
-  "55",
-  "troca manual do seletor deve vencer a deteccao anterior"
+  phone.parsePhoneNumberForSelectedCountry("+54 11 9999-9999").formatted,
+  "+54 11 9999-9999",
+  "parser simplificado nao deve depender de seletor de pais"
 );
 assert.equal(
-  phone.parsePhoneNumberForInput("4155552671", "1", { manualCountry: true }).e164,
-  "+14155552671",
-  "pais selecionado manualmente deve aceitar numero nacional"
+  phone.parsePhoneNumberForInput("4155552671").digits,
+  "4155552671",
+  "deve aceitar numero nacional simples"
 );
 assert.equal(
-  phone.parsePhoneNumberForInput("14155552671", "1", { manualCountry: true }).e164,
-  "+14155552671",
-  "pais selecionado manualmente deve corrigir DDI duplicado"
+  phone.parsePhoneNumberForInput("14155552671").digits,
+  "14155552671",
+  "nao deve reformatar numero ja digitado"
 );
 assert.equal(
-  phone.parsePhoneNumberForInput("02079460056", "44", { manualCountry: true }).e164,
-  "+442079460056",
-  "deve remover tronco local quando o pais selecionado exigir E.164"
+  phone.parsePhoneNumberForInput("02079460056").digits,
+  "02079460056",
+  "nao deve validar DDD, tronco ou padrao internacional"
 );
 assert.equal(
-  phone.parsePhoneNumberForInput("+55 11 99999-9999", "351", { manualCountry: true }).countryCode,
-  "55",
-  "DDI explicito deve sobrescrever seletor manual"
-);
-assert.equal(
-  phone.parsePhoneNumberForInput("5511999999999", "351", { manualCountry: true }).countryCode,
-  "351",
-  "seletor manual deve vencer DDI puro sem sinal de internacional"
-);
-assert.equal(
-  phone.phoneStorageValue("+55 (11) 98765-4321", "55"),
-  "+5511987654321",
-  "valor salvo deve sair canonico em E.164"
+  phone.phoneStorageValue("+55 (11) 98765-4321"),
+  "+55 (11) 98765-4321",
+  "valor salvo deve preservar mascara comum de telefone"
 );
 
 const mockDb = buildMockDbHarness();
@@ -424,8 +414,11 @@ includes(app, "hasInactiveRepeatDraft", "repetir preenchido sem ativar deve ter 
 includes(html, "id=\"activationGuardOverlay\"", "popup de confirmacao para abas preenchidas sem ativar");
 includes(html, "id=\"activationGuardActivate\"", "popup deve permitir ativar e agendar");
 includes(html, "id=\"receberRetorno\"", "aba retorno deve ter receber separado da ida");
+includes(html, "id=\"valorReceber\"", "formulario deve expor campo Valor a receber");
 includes(html, "id=\"returnReceiveScopeOverlay\"", "repetir ida e retorno deve perguntar escopo do receber retorno");
 includes(app, "resolveReceberPayloadValue", "payload deve separar receber da ida e do retorno");
+includes(app, "valorReceber: \"cr40f_valor_a_receber\"", "formulario deve mapear campo Valor a receber");
+includes(app, "[f.valorReceber]: parseNumber(el.valorReceber.value)", "payload deve salvar Valor a receber como money");
 includes(app, "shouldAskReturnReceiveScope", "salvar deve perguntar se receber retorno vale para todos ou ultimo");
 includes(app, "receberRetornoUltimoTimestamp", "escopo apenas ultimo deve marcar somente o ultimo retorno");
 includes(css, ".tab.is-pending::after", "aba pendente deve ter bolinha amarela propria");
@@ -441,7 +434,7 @@ includes(app, "function syncActivationSwitchLabels()", "switch de ativacao deve 
 includes(app, "text.textContent = input.checked ? \"Ativado\" : \"Desativado\";", "switch desligado deve mostrar Desativado");
 const mobileActivationHeadRule = extractCssRule(css, "  .section-head.inline.activation-head {");
 includes(mobileActivationHeadRule, "position: sticky;", "mobile deve fixar cabecalho de ativacao no topo");
-includes(mobileActivationHeadRule, "grid-template-columns: minmax(0, 1fr) auto;", "mobile deve manter titulo e ativacao lado a lado");
+includes(mobileActivationHeadRule, "grid-template-columns: minmax(0, 1fr) auto auto;", "mobile deve manter titulo, ativacao e receber no cabecalho");
 includes(mobileActivationHeadRule, "align-items: center;", "mobile deve centralizar titulo com botao de ativacao");
 includes(mobileActivationHeadRule, "padding: 0 2px 3px 0;", "mobile deve reduzir padding do bloco de ativacao");
 const mobileActivationSwitchRule = extractCssRule(css, "  .activation-head .activation-switch {");
@@ -482,10 +475,9 @@ excludes(css, ".ptbr-date-native", "controle nativo nao deve ser ocultado");
     returnHead.indexOf("<h2>Agendar retorno</h2>") < returnHead.indexOf("class=\"switch activation-switch\""),
     "switch de retorno deve ficar a direita do titulo"
   );
-  const returnPanel = html.slice(returnPanelStart, html.indexOf("id=\"tab-panel-repeat\"", returnPanelStart));
   assert.ok(
-    returnPanel.indexOf("id=\"retornoObservacao\"") < returnPanel.indexOf("id=\"receberRetorno\""),
-    "receber retorno deve ser o ultimo campo da aba retorno"
+    returnHead.indexOf("id=\"receberRetorno\"") > returnHead.indexOf("class=\"switch activation-switch\""),
+    "receber retorno deve ficar ao lado do switch de ativacao no cabecalho"
   );
 
   const repeatPanelStart = html.indexOf("id=\"tab-panel-repeat\"");
@@ -526,6 +518,10 @@ includes(app, "function createImportedPersonRecord", "criacao automatica de soli
 includes(app, "function findImportedExistingPersonFromDuplicateError", "erro de passageiro duplicado deve reaproveitar cadastro existente");
 includes(app, "function extractDuplicatePassengerId", "erro Dataverse deve permitir extrair ID do passageiro duplicado");
 includes(app, "findImportedExistingPerson(person)\n              || await findImportedExistingPersonFromDuplicateError(person, error)", "criacao importada deve usar fallback robusto para chave duplicada");
+includes(app, "ultimoServico: \"cr40f_datadoultimoservico\"", "campo Data do Ultimo Servico deve estar mapeado no passageiro");
+includes(app, "async function updatePassengersLastServiceDate", "salvamento deve atualizar Data do Ultimo Servico dos passageiros");
+includes(app, "await updatePassengersLastServiceDate(context.colOrdemPassageiros, maxServiceResultDate(results))", "formulario deve atualizar passageiro pela maior data salva");
+includes(app, "await updatePassengersLastServiceDate(context.colOrdemPassageiros, context.dataHoraPrincipal)", "importacao deve atualizar passageiro pela data do trecho salvo");
 includes(app, "function uniquePassengerRelationItems", "vinculos servico-passageiro devem deduplicar passageiro antes do Dataverse");
 includes(app, "const relationPassengers = uniquePassengerRelationItems(passengers);", "salvamento deve usar lista deduplicada para evitar chave duplicada");
 includes(app, "Falha ao desfazer reserva importada incompleta", "falha em vinculo importado deve tentar desfazer reserva recem-criada");
@@ -542,11 +538,12 @@ excludes(app, "showTemporaryStatusLogicReminder", "lembrete temporario de status
 excludes(app, "LEMBRETE TEMPORARIO", "toast temporario de status deve ser removido");
 const createImportedPersonRecordFn = extractFunction(app, "createImportedPersonRecord");
 includes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.email]: normalizeEmail(person.email || \"\")", "passageiro novo importado deve gravar email quando existir");
-includes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.telefone]: phoneStorageValue(person.telefone || \"\", \"55\")", "passageiro novo importado deve gravar telefone");
+includes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.telefone]: phoneStorageValue(person.telefone || \"\")", "passageiro novo importado deve gravar telefone");
+includes(createImportedPersonRecordFn, "setChoice(payload, CONFIG.fields.passageiro.status, getActivePassengerStatusValue())", "passageiro novo importado deve gravar status Ativo");
 excludes(createImportedPersonRecordFn, "[CONFIG.fields.passageiro.cr]: person.centroCusto || \"\"", "passageiro novo importado nao deve gravar CR");
 includes(createImportedPersonRecordFn, "bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, importClient.id)", "passageiro novo importado deve gravar cliente");
 includes(createImportedPersonRecordFn, "cr: \"\",", "registro local criado por importacao nao deve fingir CR salvo no BD");
-excludes(createImportedPersonRecordFn, "setChoice(payload", "passageiro novo importado nao deve gravar choices automaticos");
+excludes(createImportedPersonRecordFn, "setChoice(payload, CONFIG.fields.passageiro.classificacao", "passageiro novo importado nao deve gravar classificacao automatica");
 excludes(createImportedPersonRecordFn, "CONFIG.fields.passageiro.cadastro", "passageiro novo importado nao deve gravar data de cadastro pela importacao");
 includes(app, "function openXlsxImportPicker", "abertura do seletor XLSX");
 includes(app, "async function handleXlsxImportFile", "leitura do XLSX");
@@ -885,9 +882,12 @@ excludes(importedPassengerPreviewFields, "origem:", "hover do passageiro importa
 excludes(importedPassengerPreviewFields, "destino:", "hover do passageiro importado nao deve tratar destino como dado cadastral");
 includes(importedPassengerPreviewFields, "cr: \"\",", "hover do passageiro importado nao deve exibir CR como dado do passageiro");
 const importedCrResolver = extractFunction(app, "importedTrechoCr");
-includes(importedCrResolver, ".join(\" / \")", "CR da reserva importada deve juntar centros de custo distintos com barra");
-includes(importedCrResolver, "new Set", "CR da reserva importada deve remover centros de custo repetidos");
-includes(app, "[f.cr]: importedTrechoCr(trecho)", "reserva importada deve gravar CR consolidado do servico");
+includes(importedCrResolver, "String(trecho.programacao || \"\").trim()", "CR da reserva importada deve ser a PG");
+includes(app, "[f.cr]: importedTrechoCr(trecho)", "reserva importada deve gravar PG no campo CR");
+const importedInternalObsResolver = extractFunction(app, "importedDefaultInternalObservation");
+includes(importedInternalObsResolver, "return String(trecho.programacao || \"\").trim();", "observacao interna padrao importada deve ser apenas a PG");
+excludes(importedInternalObsResolver, "Importado via XLSX", "observacao interna importada nao deve salvar texto explicativo");
+excludes(importedInternalObsResolver, "solicitacoes", "observacao interna importada nao deve salvar ST");
 const importPassengerDraftFields = extractFunction(app, "createImportPassengerDraft");
 excludes(importPassengerDraftFields, "origem:", "rascunho manual de passageiro importado nao deve herdar origem do servico");
 excludes(importPassengerDraftFields, "destino:", "rascunho manual de passageiro importado nao deve carregar destino proprio");

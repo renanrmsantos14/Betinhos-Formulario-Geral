@@ -1,0 +1,61 @@
+diff --git a/app.js b/app.js
+index fa8f9f3..72b40b9 100644
+--- a/app.js
++++ b/app.js
+@@ -5758 +5906,3 @@
+-    captureObsState();
++    captureObsState({
++      includeDerivedPassengerPreferences: !(event.type === "input" && isTextEditingTarget(target))
++    });
+@@ -5991,2 +6144,4 @@
+-  function createGlobalHistorySnapshot() {
+-    captureObsState();
++  function createGlobalHistorySnapshot(options = {}) {
++    captureObsState({
++      includeDerivedPassengerPreferences: options.includeDerivedPassengerPreferences !== false
++    });
+@@ -6024 +6179 @@
+-  function captureGlobalHistoryBeforeMutation(label = "Alteração") {
++  function captureGlobalHistoryBeforeMutation(label = "Alteração", options = {}) {
+@@ -6028 +6183 @@
+-      snapshot: createGlobalHistorySnapshot()
++      snapshot: createGlobalHistorySnapshot(options)
+@@ -6035,0 +6191,2 @@
++    const isTextTarget = isTextEditingTarget(target);
++    if (event.type === "pointerdown" && isTextTarget) return;
+@@ -6037 +6194 @@
+-      if (!isGlobalHistoryMutationKey(event) || !isTextEditingTarget(target)) return;
++      if (!isGlobalHistoryMutationKey(event) || !isTextTarget) return;
+@@ -6040,3 +6197,6 @@
+-    if (event.type === "focusin" && !isTextEditingTarget(target)) return;
+-    captureGlobalHistoryBeforeMutation(globalHistoryLabelFromTarget(target));
+-    if (isTextEditingTarget(target)) state.globalHistory.pending.textTarget = target;
++    if (event.type === "focusin" && !isTextTarget) return;
++    captureGlobalHistoryBeforeMutation(
++      globalHistoryLabelFromTarget(target),
++      isTextTarget ? { includeDerivedPassengerPreferences: false } : {}
++    );
++    if (isTextTarget) state.globalHistory.pending.textTarget = target;
+@@ -8626 +8798 @@
+-  function captureImportReviewHistory(label = "Alteração") {
++  function captureImportReviewHistory(label = "Alteração", options = {}) {
+@@ -8628 +8800 @@
+-    captureGlobalHistoryBeforeMutation(label);
++    captureGlobalHistoryBeforeMutation(label, options);
+@@ -8779 +8951 @@
+-    captureImportReviewHistory(label);
++    captureImportReviewHistory(label, { includeDerivedPassengerPreferences: false });
+@@ -12427 +12602,5 @@
+-  function captureObsState() {
++  function captureObsState(options = {}) {
++    const config = {
++      includeDerivedPassengerPreferences: true,
++      ...options
++    };
+@@ -12430,2 +12609,4 @@
+-    state.obs.passageiro = composePreferencias();
+-    state.obsRet.passageiro = composePreferencias();
++    if (!config.includeDerivedPassengerPreferences) return;
++    const preferencias = composePreferencias();
++    state.obs.passageiro = preferencias;
++    state.obsRet.passageiro = preferencias;

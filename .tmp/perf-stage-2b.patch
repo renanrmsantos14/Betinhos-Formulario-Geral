@@ -1,0 +1,13 @@
+diff --git a/app.js b/app.js
+index 2a6af04..6ad5d9c 100644
+--- a/app.js
++++ b/app.js
+@@ -11476,7 +11476,7 @@
+       const passenger = trecho.passageiros[Number(passengerRow.dataset.passengerIndex)];
+       if (!passenger) return;
+       if (String(passenger[passengerField] ?? "") === String(event.target.value ?? "")) return;
+-      captureImportReviewHistory("Editar passageiro do serviço");
++      captureImportReviewHistoryForEditSession(event.target, "Editar passageiro do serviço");
+       markImportedReviewPending(trecho);
+       passenger[passengerField] = event.target.value;
+       if (["nome", "telefone", "email"].includes(passengerField)) {

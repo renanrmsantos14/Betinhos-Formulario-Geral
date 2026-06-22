@@ -101,7 +101,7 @@ O novo formulario sera publicado como web resource e usado dentro de um Model-dr
 - Export da solucao `AppBetinhos_1_0_0_133_managed` para confirmar logical names.
 - `metadata-AppBetinhos-2026-05-18T12-03-52-460Z.json`
   - Gerado em: `2026-05-18T12:03:52.446Z`
-  - Ambiente: `https://org23b93544.crm2.dynamics.com`
+  - Ambiente: `https://appbetinhosdev.crm2.dynamics.com`
   - Solucao: `AppBetinhos` versao `1.0.0.152`
 
 ## Arquitetura entregue

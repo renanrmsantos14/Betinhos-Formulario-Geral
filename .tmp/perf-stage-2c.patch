@@ -1,0 +1,17 @@
+diff --git a/app.js b/app.js
+index 6ad5d9c..fa8f9f3 100644
+--- a/app.js
++++ b/app.js
+@@ -11526,7 +11526,11 @@
+             ? resolveImportedOperationStatusValue(trecho)
+           : String(trecho[field] ?? "");
+     if (String(currentValue ?? "") === String(value ?? "")) return;
+-    captureImportReviewHistory("Editar campo do serviço");
++    if (event.type === "input" && isTextEditingTarget(event.target)) {
++      captureImportReviewHistoryForEditSession(event.target, "Editar campo do serviço");
++    } else {
++      captureImportReviewHistory("Editar campo do serviço");
++    }
+     markImportedReviewPending(trecho);
+     if (field === "dataHora") {
+       trecho.dataIso = datePartFromInputValue(value);

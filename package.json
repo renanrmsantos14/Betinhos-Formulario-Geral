@@ -6,6 +6,6 @@
     "wr": "node scripts/build_webresource.js --no-version",
     "rw": "node scripts/build_webresource.js --no-version",
     "deploy:webresource": "powershell -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1",
-    "push": "powershell -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1 -EnvironmentUrl https://org23b93544.crm2.dynamics.com/ -WebResourceName new_formulario_geral.html"
+    "push": "powershell -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1 -EnvironmentUrl https://appbetinhosdev.crm2.dynamics.com/ -WebResourceName new_formulario_geral.html"
   }
 }

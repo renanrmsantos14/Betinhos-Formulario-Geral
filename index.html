@@ -146,7 +146,7 @@
               </label>
 
               <label class="field">
-                <span>Motorista</span>
+                <span class="field-inline-label">Motorista <span id="motoristaVeiculoAtual" class="field-inline-value" hidden></span></span>
                 <select id="motorista"></select>
               </label>
 
@@ -288,10 +288,7 @@
             </label>
             <label class="field">
               <span>Telefone</span>
-              <div class="phone-field">
-                <select id="bdTelefonePais" class="phone-country-select" data-select-variant="phone-country" aria-label="País do telefone"></select>
-                <input id="bdTelefone" type="tel" inputmode="tel" autocomplete="tel">
-              </div>
+              <input id="bdTelefone" type="tel" inputmode="tel" autocomplete="tel" maxlength="32" placeholder="Ex.: +55 (11) 99999-9999">
             </label>
             <label class="field span-2">
               <span>Endereço de saída</span>
@@ -460,7 +457,7 @@
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.2.21</span>
+        <span>v</span><span id="codeVersionText">1.2.29</span>
       </footer>
     </main>
 

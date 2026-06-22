@@ -31,6 +31,8 @@ assert.ok(html.includes("function persistMockPassengerRecord"), "bundle deve per
 assert.ok(html.includes("async function ensureXlsxLibrary"), "bundle deve carregar SheetJS sob demanda");
 assert.ok(html.includes('id="xlsxLibrarySource" type="application/x-formulario-vendor"'), "bundle deve manter SheetJS inerte no boot");
 assert.ok(html.includes("new_idexterno"), "bundle deve conter o campo externo PG");
+assert.ok(html.includes("id=\"valorReceber\""), "bundle deve conter campo Valor a receber");
+assert.ok(html.includes("cr40f_valor_a_receber"), "bundle deve conter mapping do campo Valor a receber");
 assert.ok(html.includes("split-trecho"), "bundle deve expor acao Split na revisao de importacao");
 assert.ok(html.includes("importedTrechoReturnDateTimeLocal"), "bundle deve editar horario previsto de retorno importado");
 assert.ok(!html.includes("import-decision-panel"), "bundle nao deve conter painel de decisao operacional da PG");
@@ -56,7 +58,8 @@ assert.ok(html.includes("input,\nselect,\ntextarea,\n.passenger-address,"), "bun
 assert.ok(html.includes(".passenger-picker-field input {\n  font-size: 14px;\n}"), "fontes dos inputs devem ser 2px menores");
 assert.ok(html.includes(".database-passenger-grid .field {\n  flex: 1 1 210px;"), "campos de cadastrar passageiro devem ter largura base compacta");
 assert.ok(html.includes(".database-passenger-grid .field.span-2 {\n  flex: 2 1 420px;"), "campos largos de cadastrar passageiro devem ter largura compacta");
-assert.ok(html.includes(".database-passenger-grid .field:has(.phone-field) {\n  flex: 1 1 260px;"), "campo telefone do cadastro deve ter largura minima maior");
+assert.ok(html.includes(".database-passenger-grid .field:has(#bdTelefone) {\n  flex: 1 1 260px;"), "campo telefone do cadastro deve ter largura minima maior");
+assert.ok(!html.includes("id=\"bdTelefonePais\""), "bundle nao deve manter seletor de pais no telefone");
 assert.ok(html.includes(".panel:not(.import-review-panel) .form-section {\n  padding: 0;\n  border: 0;"), "abas comuns nao devem mostrar divisao visual de secoes");
 assert.ok(html.includes(".panel:not(.import-review-panel) .form-section-title {\n  position: absolute;"), "titulos internos de secoes comuns devem ficar ocultos");
 assert.ok(html.includes("function importHistoryIconSvg"), "bundle deve renderizar icones nos botoes de historico");
@@ -116,6 +119,9 @@ assert.ok(html.includes("data-import-observation-text"), "bundle deve renderizar
 assert.ok(html.includes("switch-import-obs"), "bundle deve permitir trocar Mot/Interna/Final/Pref Pax na importacao");
 assert.ok(html.includes("[f.obsOperacao]: importObs.motorista"), "bundle deve salvar observacao motorista importada");
 assert.ok(html.includes("[f.obsInterna]: importObs.interna"), "bundle deve salvar observacao interna importada");
+assert.ok(html.includes("return String(trecho.programacao || \"\").trim();"), "bundle deve usar apenas PG na observacao interna e no CR importado");
+assert.ok(!html.includes("Importado via XLSX. PG:"), "bundle nao deve salvar texto explicativo na observacao interna importada");
+assert.ok(!html.includes("ST: ${(trecho.solicitacoes || []).join"), "bundle nao deve salvar ST na observacao interna importada");
 assert.ok(html.includes("[f.obsFinal]: importObs.final"), "bundle deve salvar observacao final importada");
 assert.ok(html.includes("[f.perfilPassageiro]: importObs.passageiro"), "bundle deve salvar preferencias do passageiro importadas");
 assert.ok(!html.includes("\"decision passengers\""), "bundle nao deve reservar linha para painel de decisao");
@@ -218,6 +224,10 @@ assert.ok(html.includes("function isDataverseDuplicateKeyError"), "bundle deve t
 assert.ok(html.includes("function findImportedExistingPersonFromDuplicateError"), "bundle deve reaproveitar passageiro quando Dataverse retorna chave duplicada");
 assert.ok(html.includes("function extractDuplicatePassengerId"), "bundle deve extrair ID do passageiro duplicado do erro Dataverse");
 assert.ok(html.includes("findImportedExistingPerson(person)\n              || await findImportedExistingPersonFromDuplicateError(person, error)"), "bundle deve tentar fallback robusto no erro de passageiro duplicado");
+assert.ok(html.includes("ultimoServico: \"cr40f_datadoultimoservico\""), "bundle deve mapear Data do Ultimo Servico do passageiro");
+assert.ok(html.includes("setChoice(payload, CONFIG.fields.passageiro.status, getActivePassengerStatusValue())"), "bundle deve criar passageiro importado com status Ativo");
+assert.ok(html.includes("function updatePassengersLastServiceDate"), "bundle deve atualizar Data do Ultimo Servico apos salvar servico");
+assert.ok(html.includes("await updatePassengersLastServiceDate(context.colOrdemPassageiros, maxServiceResultDate(results))"), "bundle deve usar maior data salva para atualizar passageiro");
 assert.ok(html.includes("if (normalizeImportedReviewStatus(trecho) !== importReviewStatuses().PENDING)"), "bundle deve bloquear Split fora do status pendente");
 assert.ok(html.includes("permitido enquanto o serviço está pendente."), "bundle deve explicar bloqueio de Split fora de pendente");
 assert.ok(!html.includes("function buildImportTimeline"), "bundle nao deve renderizar bloco Janela da PG");

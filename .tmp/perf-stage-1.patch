@@ -1,0 +1,245 @@
+﻿diff --git a/app.js b/app.js
+index e16aa75..7b1b400 100644
+--- a/app.js
++++ b/app.js
+@@ -504,6 +504,7 @@
+   let activePassengerPhotoHoverZoom = null;
+   const passengerPhotoImageCache = new Map();
+   const importPassengerCreateLocks = new Map();
++  const importedTrechoTimestampCache = new WeakMap();
+   const IMPORT_REVIEW_HISTORY_LIMIT = 80;
+   const GLOBAL_HISTORY_LIMIT = 80;
+   let isRestoringImportHistory = false;
+@@ -1099,6 +1100,7 @@
+     el.importReviewPrograms?.addEventListener("keydown", handleImportReviewKeyboardNavigation);
+     el.importReviewPrograms?.addEventListener("input", handleImportReviewInput);
+     el.importReviewPrograms?.addEventListener("change", handleImportReviewInput);
++    el.importReviewPrograms?.addEventListener("focusout", handleImportReviewFocusOut);
+     el.importReviewPrograms?.addEventListener("pointerover", handlePassengerPreviewEnter);
+     el.importReviewPrograms?.addEventListener("pointerout", handlePassengerPreviewLeave);
+     el.importReviewPrograms?.addEventListener("focusin", handlePassengerPreviewFocusIn);
+@@ -5965,12 +5967,32 @@
+     return JSON.parse(JSON.stringify(value ?? null));
+   }
+ 
++  function importReviewRowCount(review) {
++    if (typeof review?.rowsCount === "number" && Number.isFinite(review.rowsCount)) {
++      return Math.max(0, review.rowsCount);
++    }
++    return Array.isArray(review?.rows) ? review.rows.length : 0;
++  }
++
++  function cloneImportReviewForGlobalHistory(review) {
++    if (!review) return null;
++    return {
++      fileName: review.fileName || "",
++      rowsCount: importReviewRowCount(review),
++      programs: cloneGlobalHistoryValue(review.programs || []),
++      selectedProgramacao: review.selectedProgramacao || "",
++      selectedTrechoKey: review.selectedTrechoKey || "",
++      editingTrechoKey: review.editingTrechoKey || "",
++      createdAt: review.createdAt || "",
++      history: { undo: [], redo: [] }
++    };
++  }
++
+   function createGlobalHistorySnapshot() {
+     captureObsState();
+     const draft = createDraftSnapshot();
+     draft.updatedAt = "";
+-    const importReview = cloneGlobalHistoryValue(state.importReview);
+-    if (importReview?.history) importReview.history = { undo: [], redo: [] };
++    const importReview = cloneImportReviewForGlobalHistory(state.importReview);
+     return {
+       draft,
+       importReview,
+@@ -8564,6 +8586,7 @@
+     return {
+       fileName,
+       rows: normalizedRows,
++      rowsCount: normalizedRows.length,
+       programs,
+       history: { undo: [], redo: [] },
+       createdAt: new Date().toISOString()
+@@ -8750,6 +8773,19 @@
+     return false;
+   }
+ 
++  function captureImportReviewHistoryForEditSession(target, label) {
++    if (!target) return;
++    if (target.dataset.importHistoryCaptured === "1") return;
++    captureImportReviewHistory(label);
++    target.dataset.importHistoryCaptured = "1";
++  }
++
++  function handleImportReviewFocusOut(event) {
++    const target = event.target;
++    if (!target?.dataset?.importHistoryCaptured) return;
++    delete target.dataset.importHistoryCaptured;
++  }
++
+   function shouldHandleImportHistoryShortcut(event) {
+     if (event.altKey) return false;
+     const key = String(event.key || "").toLowerCase();
+@@ -8914,6 +8950,37 @@
+     };
+   }
+ 
++  function collectImportReviewRenderMetrics(programs) {
++    const statuses = importReviewStatuses();
++    const trechos = [];
++    const counts = {
++      all: 0,
++      validated: 0,
++      pending: 0,
++      ignored: 0,
++      duplicated: 0
++    };
++    (programs || []).forEach((program) => {
++      (program?.trechos || []).forEach((trecho) => {
++        trechos.push(trecho);
++        counts.all += 1;
++        const status = normalizeImportedReviewStatus(trecho);
++        if (status === statuses.CONFIRMED || status === statuses.SAVED) {
++          counts.validated += 1;
++        } else if (status === statuses.IGNORED) {
++          counts.ignored += 1;
++        } else {
++          counts.pending += 1;
++        }
++        if (trecho.duplicatedRecordIds?.length) counts.duplicated += 1;
++      });
++    });
++    return {
++      trechos,
++      counts
++    };
++  }
++
+   async function resolveImportedPassengerMatches(programs) {
+     const cache = new Map();
+     const importClient = getImportClient();
+@@ -9123,18 +9190,14 @@
+     renderGlobalImportHistoryControls();
+     const review = state.importReview;
+     const importedPrograms = review?.programs || [];
+-    const trechos = importedPrograms.flatMap((program) => program.trechos || []);
+-    const pendingPrograms = getImportProgramsForReview(importedPrograms);
+-    const pendingTrechos = pendingPrograms.flatMap((program) => program.trechos || []);
+-    const validatedTrechos = getValidatedImportTrechos(importedPrograms);
+-    const ignoredTrechos = getIgnoredImportTrechos(importedPrograms);
++    const metrics = collectImportReviewRenderMetrics(importedPrograms);
++    const trechos = metrics.trechos;
+     const activeFilter = normalizeImportReviewFilter(state.importReviewFilter);
+     state.importReviewFilter = activeFilter;
+     const visiblePrograms = getImportProgramsByReviewFilter(importedPrograms, activeFilter);
+     const reviewState = summarizeCurrentImportTrechos(trechos);
+-    const duplicatedTrechos = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
+-    const hasImportedRows = Array.isArray(review?.rows) && review.rows.length > 0;
+-    const hasImportData = importedPrograms.length > 0 && hasImportedRows;
++    const rowCount = importReviewRowCount(review);
++    const hasImportData = importedPrograms.length > 0 && rowCount > 0;
+     if (!el.importReviewPrograms) return;
+ 
+     if (!hasImportData) {
+@@ -9151,19 +9214,19 @@
+     const summary = [];
+ 
+     if (hasImportData) {
+-      summary.push(`${review.rows.length} linha(s)`);
++      summary.push(`${rowCount} linha(s)`);
+       summary.push(`${review.programs.length} PG(s)`);
+-      summary.push(`${trechos.length} trecho(s)`);
++      summary.push(`${metrics.counts.all} trecho(s)`);
+       summary.push(`${reviewState.counts.confirmed} confirmado(s)`);
+       summary.push(`${reviewState.counts.pending} pendente(s)`);
+       summary.push(`${reviewState.counts.blocked} bloqueado(s)`);
+       summary.push(`${reviewState.counts.ignored} ignorado(s)`);
+       summary.push(`Cliente: ${importClient?.label || CONFIG.importDefaults.clienteLabel}`);
+       renderImportReviewFilters({
+-        all: trechos.length,
+-        validated: validatedTrechos.length,
+-        pending: pendingTrechos.length,
+-        ignored: ignoredTrechos.length
++        all: metrics.counts.all,
++        validated: metrics.counts.validated,
++        pending: metrics.counts.pending,
++        ignored: metrics.counts.ignored
+       }, activeFilter);
+       renderImportGlobalIssues(trechos);
+     } else {
+@@ -9172,7 +9235,7 @@
+       if (el.importReviewIssues) el.importReviewIssues.hidden = true;
+     }
+     summary.push(`Arquivo: ${review.fileName}.`);
+-    if (duplicatedTrechos.length) summary.push(`${duplicatedTrechos.length} serviços repetidos.`);
++    if (metrics.counts.duplicated) summary.push(`${metrics.counts.duplicated} serviços repetidos.`);
+     el.importReviewSummary.textContent = summary.join("  ");
+ 
+     el.importReviewPrograms.replaceChildren();
+@@ -9226,27 +9289,36 @@
+ 
+   function sortImportProgramsByServiceDateTime(programs) {
+     return [...(programs || [])]
+-      .map((program) => ({
+-        ...program,
+-        trechos: sortImportedTrechosByServiceDateTime(program?.trechos || [])
+-      }))
+-      .sort((a, b) => compareImportProgramsByFirstServiceDateTime(a, b));
++      .map((program) => {
++        const sortedTrechos = sortImportedTrechosByServiceDateTime(program?.trechos || []);
++        return {
++          program: {
++            ...program,
++            trechos: sortedTrechos
++          },
++          firstServiceTimestamp: importedTrechoServiceTimestamp(sortedTrechos[0])
++        };
++      })
++      .sort((a, b) => compareImportProgramsByFirstServiceDateTime(
++        a.program,
++        b.program,
++        a.firstServiceTimestamp,
++        b.firstServiceTimestamp
++      ))
++      .map((entry) => entry.program);
+   }
+ 
+   function sortImportedTrechosByServiceDateTime(trechos) {
+     return [...(trechos || [])].sort((a, b) => compareImportedTrechosByServiceDateTime(a, b));
+   }
+ 
+-  function compareImportProgramsByFirstServiceDateTime(programA, programB) {
+-    const firstA = importProgramFirstServiceTimestamp(programA);
+-    const firstB = importProgramFirstServiceTimestamp(programB);
++  function compareImportProgramsByFirstServiceDateTime(programA, programB, firstA = importProgramFirstServiceTimestamp(programA), firstB = importProgramFirstServiceTimestamp(programB)) {
+     if (firstA !== firstB) return firstA - firstB;
+     return String(programA?.programacao || "").localeCompare(String(programB?.programacao || ""), "pt-BR");
+   }
+ 
+   function importProgramFirstServiceTimestamp(program) {
+-    const firstTrecho = sortImportedTrechosByServiceDateTime(program?.trechos || [])[0];
+-    return importedTrechoServiceTimestamp(firstTrecho);
++    return importedTrechoServiceTimestamp((program?.trechos || [])[0]);
+   }
+ 
+   function compareImportedTrechosByServiceDateTime(trechoA, trechoB) {
+@@ -9257,10 +9329,15 @@
+   }
+ 
+   function importedTrechoServiceTimestamp(trecho) {
++    if (!trecho) return Number.POSITIVE_INFINITY;
++    const cacheKey = `${trecho.dataIso || ""}|${trecho.horario || ""}`;
++    const cached = importedTrechoTimestampCache.get(trecho);
++    if (cached?.key === cacheKey) return cached.value;
+     const localDateTime = importedTrechoDateTimeLocal(trecho);
+     const parsed = parseDateTimeInputValue(localDateTime);
+-    if (parsed) return parsed.getTime();
+-    return Number.POSITIVE_INFINITY;
++    const value = parsed ? parsed.getTime() : Number.POSITIVE_INFINITY;
++    importedTrechoTimestampCache.set(trecho, { key: cacheKey, value });
++    return value;
+   }
+ 
+   function isValidatedImportedTrecho(trecho) {
+

@@ -1,0 +1,170 @@
+diff --git a/app.js b/app.js
+index 536da9b..a0e5b28 100644
+--- a/app.js
++++ b/app.js
+@@ -506,0 +512 @@
++  const importedTrechoTimestampCache = new WeakMap();
+@@ -1101,0 +1113 @@
++    el.importReviewPrograms?.addEventListener("focusout", handleImportReviewFocusOut);
+@@ -5967,0 +5986,21 @@
++  function importReviewRowCount(review) {
++    if (typeof review?.rowsCount === "number" && Number.isFinite(review.rowsCount)) {
++      return Math.max(0, review.rowsCount);
++    }
++    return Array.isArray(review?.rows) ? review.rows.length : 0;
++  }
++
++  function cloneImportReviewForGlobalHistory(review) {
++    if (!review) return null;
++    return {
++      fileName: review.fileName || "",
++      rowsCount: importReviewRowCount(review),
++      programs: cloneGlobalHistoryValue(review.programs || []),
++      selectedProgramacao: review.selectedProgramacao || "",
++      selectedTrechoKey: review.selectedTrechoKey || "",
++      editingTrechoKey: review.editingTrechoKey || "",
++      createdAt: review.createdAt || "",
++      history: { undo: [], redo: [] }
++    };
++  }
++
+@@ -5972,2 +6011 @@
+-    const importReview = cloneGlobalHistoryValue(state.importReview);
+-    if (importReview?.history) importReview.history = { undo: [], redo: [] };
++    const importReview = cloneImportReviewForGlobalHistory(state.importReview);
+@@ -8566,0 +8617 @@
++      rowsCount: normalizedRows.length,
+@@ -8752,0 +8804,13 @@
++  function captureImportReviewHistoryForEditSession(target, label) {
++    if (!target) return;
++    if (target.dataset.importHistoryCaptured === "1") return;
++    captureImportReviewHistory(label);
++    target.dataset.importHistoryCaptured = "1";
++  }
++
++  function handleImportReviewFocusOut(event) {
++    const target = event.target;
++    if (!target?.dataset?.importHistoryCaptured) return;
++    delete target.dataset.importHistoryCaptured;
++  }
++
+@@ -8916,0 +8981,31 @@
++  function collectImportReviewRenderMetrics(programs) {
++    const statuses = importReviewStatuses();
++    const trechos = [];
++    const counts = {
++      all: 0,
++      validated: 0,
++      pending: 0,
++      ignored: 0,
++      duplicated: 0
++    };
++    (programs || []).forEach((program) => {
++      (program?.trechos || []).forEach((trecho) => {
++        trechos.push(trecho);
++        counts.all += 1;
++        const status = normalizeImportedReviewStatus(trecho);
++        if (status === statuses.CONFIRMED || status === statuses.SAVED) {
++          counts.validated += 1;
++        } else if (status === statuses.IGNORED) {
++          counts.ignored += 1;
++        } else {
++          counts.pending += 1;
++        }
++        if (trecho.duplicatedRecordIds?.length) counts.duplicated += 1;
++      });
++    });
++    return {
++      trechos,
++      counts
++    };
++  }
++
+@@ -9126,5 +9221,2 @@
+-    const trechos = importedPrograms.flatMap((program) => program.trechos || []);
+-    const pendingPrograms = getImportProgramsForReview(importedPrograms);
+-    const pendingTrechos = pendingPrograms.flatMap((program) => program.trechos || []);
+-    const validatedTrechos = getValidatedImportTrechos(importedPrograms);
+-    const ignoredTrechos = getIgnoredImportTrechos(importedPrograms);
++    const metrics = collectImportReviewRenderMetrics(importedPrograms);
++    const trechos = metrics.trechos;
+@@ -9135,3 +9227,2 @@
+-    const duplicatedTrechos = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
+-    const hasImportedRows = Array.isArray(review?.rows) && review.rows.length > 0;
+-    const hasImportData = importedPrograms.length > 0 && hasImportedRows;
++    const rowCount = importReviewRowCount(review);
++    const hasImportData = importedPrograms.length > 0 && rowCount > 0;
+@@ -9154 +9245 @@
+-      summary.push(`${review.rows.length} linha(s)`);
++      summary.push(`${rowCount} linha(s)`);
+@@ -9156 +9247 @@
+-      summary.push(`${trechos.length} trecho(s)`);
++      summary.push(`${metrics.counts.all} trecho(s)`);
+@@ -9163,4 +9254,4 @@
+-        all: trechos.length,
+-        validated: validatedTrechos.length,
+-        pending: pendingTrechos.length,
+-        ignored: ignoredTrechos.length
++        all: metrics.counts.all,
++        validated: metrics.counts.validated,
++        pending: metrics.counts.pending,
++        ignored: metrics.counts.ignored
+@@ -9175 +9266 @@
+-    if (duplicatedTrechos.length) summary.push(`${duplicatedTrechos.length} serviços repetidos.`);
++    if (metrics.counts.duplicated) summary.push(`${metrics.counts.duplicated} serviços repetidos.`);
+@@ -9229,5 +9320,17 @@
+-      .map((program) => ({
+-        ...program,
+-        trechos: sortImportedTrechosByServiceDateTime(program?.trechos || [])
+-      }))
+-      .sort((a, b) => compareImportProgramsByFirstServiceDateTime(a, b));
++      .map((program) => {
++        const sortedTrechos = sortImportedTrechosByServiceDateTime(program?.trechos || []);
++        return {
++          program: {
++            ...program,
++            trechos: sortedTrechos
++          },
++          firstServiceTimestamp: importedTrechoServiceTimestamp(sortedTrechos[0])
++        };
++      })
++      .sort((a, b) => compareImportProgramsByFirstServiceDateTime(
++        a.program,
++        b.program,
++        a.firstServiceTimestamp,
++        b.firstServiceTimestamp
++      ))
++      .map((entry) => entry.program);
+@@ -9240,3 +9343 @@
+-  function compareImportProgramsByFirstServiceDateTime(programA, programB) {
+-    const firstA = importProgramFirstServiceTimestamp(programA);
+-    const firstB = importProgramFirstServiceTimestamp(programB);
++  function compareImportProgramsByFirstServiceDateTime(programA, programB, firstA = importProgramFirstServiceTimestamp(programA), firstB = importProgramFirstServiceTimestamp(programB)) {
+@@ -9248,2 +9349 @@
+-    const firstTrecho = sortImportedTrechosByServiceDateTime(program?.trechos || [])[0];
+-    return importedTrechoServiceTimestamp(firstTrecho);
++    return importedTrechoServiceTimestamp((program?.trechos || [])[0]);
+@@ -9259,0 +9360,4 @@
++    if (!trecho) return Number.POSITIVE_INFINITY;
++    const cacheKey = `${trecho.dataIso || ""}|${trecho.horario || ""}`;
++    const cached = importedTrechoTimestampCache.get(trecho);
++    if (cached?.key === cacheKey) return cached.value;
+@@ -9262,2 +9366,3 @@
+-    if (parsed) return parsed.getTime();
+-    return Number.POSITIVE_INFINITY;
++    const value = parsed ? parsed.getTime() : Number.POSITIVE_INFINITY;
++    importedTrechoTimestampCache.set(trecho, { key: cacheKey, value });
++    return value;
+@@ -11391 +11496 @@
+-      captureImportReviewHistory("Editar observação do serviço");
++      captureImportReviewHistoryForEditSession(event.target, "Editar observação do serviço");
+@@ -11402 +11507 @@
+-      captureImportReviewHistory("Editar passageiro do serviço");
++      captureImportReviewHistoryForEditSession(event.target, "Editar passageiro do serviço");
+@@ -11452 +11557,5 @@
+-    captureImportReviewHistory("Editar campo do serviço");
++    if (event.type === "input" && isTextEditingTarget(event.target)) {
++      captureImportReviewHistoryForEditSession(event.target, "Editar campo do serviço");
++    } else {
++      captureImportReviewHistory("Editar campo do serviço");
++    }

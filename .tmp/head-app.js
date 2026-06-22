@@ -7,11 +7,8 @@
       passageiro: "cr40f_bancodedados",
       cliente: "cr40f_clientes1",
       funcionario: "cr40f_funcionarios",
-      veiculo: "cr40f_veiculos",
-      trocaCarro: "cr40f_trocasdecarro",
       servicoPassageiro: "cr40f_servicosporpassageiro",
       financeiro: "cr40f_financeiro",
-      posseVeiculo: "new_possedeveiculo",
       log: "new_appmotoristaslog"
     },
     entitySets: {
@@ -19,11 +16,8 @@
       passageiro: "cr40f_bancodedadoses",
       cliente: "cr40f_clientes1s",
       funcionario: "cr40f_funcionarioses",
-      veiculo: "cr40f_veiculoses",
-      trocaCarro: "cr40f_trocasdecarros",
       servicoPassageiro: "cr40f_servicosporpassageiros",
-      financeiro: "cr40f_financeiros",
-      posseVeiculo: "new_possedeveiculos"
+      financeiro: "cr40f_financeiros"
     },
     fields: {
       reserva: {
@@ -46,7 +40,6 @@
         paxView: "cr40f_passageirosetelefonedecontato",
         trajeto: "cr40f_trajeto",
         cotacao: "cr40f_cotao",
-        valorReceber: "cr40f_valor_a_receber",
         receber: "cr40f_receber",
         cr: "cr40f_cr",
         formaPagamento: "cr40f_formadepagamento",
@@ -67,7 +60,6 @@
         idioma: "cr40f_idioma",
         departamento: "cr40f_departamento",
         cadastro: "cr40f_datadecadastro",
-        ultimoServico: "cr40f_datadoultimoservico",
         classificacao: "cr40f_classificacao",
         status: "cr40f_status",
         tipoVeiculo: "new_tipodoveiculo",
@@ -81,24 +73,6 @@
         id: "cr40f_funcionariosid",
         nome: "cr40f_nomecompleto",
         apelido: "new_apelido"
-      },
-      veiculo: {
-        id: "cr40f_veiculosid",
-        modelo: "cr40f_modelo",
-        cor: "cr40f_cor",
-        placa: "cr40f_placa"
-      },
-      trocaCarro: {
-        id: "cr40f_trocasdecarroid",
-        dataHoraTroca: "cr40f_dataehorariodatroca",
-        inicioJanela: "cr40f_iniciodajaneladetroca",
-        fimJanela: "cr40f_fimdajaneladetroca",
-        statusTroca: "cr40f_statusdatroca",
-        motorista1: "_cr40f_motorista1_value",
-        motorista2: "_cr40f_motorista2_value",
-        veiculo1: "_cr40f_veiculo1antesdatroca_value",
-        veiculo2: "_cr40f_veiculo2antesdatroca_value",
-        tipoTroca: "new_tipodetroca"
       },
       servicoPassageiro: {
         id: "cr40f_servicosporpassageiroid",
@@ -255,8 +229,7 @@
         { value: 202410002, label: "Pix" }
       ],
       bdStatus: [
-        { value: 202410000, label: "Ativo" },
-        { value: 202410001, label: "Inativo" }
+        { value: 202410001, label: "Ativo" }
       ],
       bdClassificacao: [
         { value: 202410000, label: "Passageiro Frequente" },
@@ -344,12 +317,10 @@
     tipoServico: $("tipoServico"),
     tipoVeiculo: $("tipoVeiculo"),
     motorista: $("motorista"),
-    motoristaVeiculoAtual: $("motoristaVeiculoAtual"),
     trajeto: $("trajeto"),
     observacao: $("observacao"),
     receber: $("receber"),
     cotacao: $("cotacao"),
-    valorReceber: $("valorReceber"),
     op: $("op"),
     opWrap: $("opWrap"),
     formaPagamento: $("formaPagamento"),
@@ -363,12 +334,12 @@
     passengerPickerSearch: $("passengerPickerSearch"),
     passengerPickerResults: $("passengerPickerResults"),
     passengerPickerClose: $("passengerPickerClose"),
-    passengerPickerCreateShortcut: $("passengerPickerCreateShortcut"),
     passengerPickerCancel: $("passengerPickerCancel"),
     customAddressWrap: $("customAddressWrap"),
     enderecoPersonalizado: $("enderecoPersonalizado"),
     destino: $("destino"),
     bdNome: $("bdNome"),
+    bdTelefonePais: $("bdTelefonePais"),
     bdTelefone: $("bdTelefone"),
     bdEndereco: $("bdEndereco"),
     bdEmail: $("bdEmail"),
@@ -452,10 +423,6 @@
     passageiros: [],
     clientes: [],
     motoristas: [],
-    motoristaVeiculoAtualPorId: {},
-    motoristaVeiculoAtualVeiculoIdPorId: {},
-    trocasCarro: [],
-    veiculoResumoPorId: {},
     ordensPagamento: [],
     relacoes: [],
     passengerSelectionRecency: [],
@@ -537,7 +504,6 @@
   let activePassengerPhotoHoverZoom = null;
   const passengerPhotoImageCache = new Map();
   const importPassengerCreateLocks = new Map();
-  const importedTrechoTimestampCache = new WeakMap();
   const IMPORT_REVIEW_HISTORY_LIMIT = 80;
   const GLOBAL_HISTORY_LIMIT = 80;
   let isRestoringImportHistory = false;
@@ -961,11 +927,6 @@
     return true;
   }
 
-  function shouldOpenCustomSelectOnFocus(select) {
-    if (shouldKeepCustomSelectClosedOnFocus(select)) return false;
-    return shouldAutofocusSearchInputs();
-  }
-
   function isMobilePassengerPreviewDisabled() {
     try {
       const coarsePointer = window.matchMedia?.("(pointer: coarse)")?.matches;
@@ -1138,7 +1099,6 @@
     el.importReviewPrograms?.addEventListener("keydown", handleImportReviewKeyboardNavigation);
     el.importReviewPrograms?.addEventListener("input", handleImportReviewInput);
     el.importReviewPrograms?.addEventListener("change", handleImportReviewInput);
-    el.importReviewPrograms?.addEventListener("focusout", handleImportReviewFocusOut);
     el.importReviewPrograms?.addEventListener("pointerover", handlePassengerPreviewEnter);
     el.importReviewPrograms?.addEventListener("pointerout", handlePassengerPreviewLeave);
     el.importReviewPrograms?.addEventListener("focusin", handlePassengerPreviewFocusIn);
@@ -1257,7 +1217,6 @@
     el.passengerRows?.addEventListener("focusin", handlePassengerPreviewFocusIn);
     el.passengerRows?.addEventListener("focusout", handlePassengerPreviewFocusOut);
     el.passengerPickerClose?.addEventListener("click", closePassengerPicker);
-    el.passengerPickerCreateShortcut?.addEventListener("click", openPassengerCreateShortcut);
     el.passengerPickerCancel?.addEventListener("click", closePassengerPicker);
     el.passengerPickerOverlay?.addEventListener("click", (event) => {
       if (event.target === el.passengerPickerOverlay) {
@@ -1277,7 +1236,6 @@
       applyStatusFaturamentoDefault();
       renderStatusFaturamento();
     });
-    el.motorista?.addEventListener("change", renderMotoristaVehicleHint);
     el.destino?.addEventListener("input", syncReturnDefaults);
     el.retornoEndereco?.addEventListener("input", () => {
       el.retornoEndereco.dataset.auto = "0";
@@ -1389,12 +1347,12 @@
   }
 
   function bindInputFormatters() {
+    initializePhoneCountrySelect();
     bindPhoneInput(el.bdTelefone);
     bindFormattedInput(el.bdEmail, normalizeEmail);
     bindFormattedInput(el.bdCr, normalizeCodeValue);
     bindFormattedInput(el.cr, normalizeCodeValue);
     bindCurrencyInput(el.cotacao);
-    bindCurrencyInput(el.valorReceber);
     document.querySelectorAll("input[id*='cpf' i], input[name*='cpf' i]").forEach((input) => {
       bindFormattedInput(input, formatCpf);
       input.addEventListener("blur", () => {
@@ -1408,16 +1366,51 @@
     el.bdEmail?.addEventListener("blur", () => validateEmailControl(el.bdEmail, { tab: "bd" }));
   }
 
+  function initializePhoneCountrySelect() {
+    if (!el.bdTelefonePais || el.bdTelefonePais.dataset.phoneCountriesReady === "1") return;
+    el.bdTelefonePais.dataset.phoneCountriesReady = "1";
+    el.bdTelefonePais.innerHTML = "";
+    PHONE_COUNTRY_OPTIONS.forEach((country) => {
+      const option = document.createElement("option");
+      option.value = country.code;
+      option.dataset.iso = country.iso;
+      option.dataset.flag = country.flag || countryFlagFromIso(country.iso);
+      option.dataset.flagImage = country.flagImage || "";
+      option.dataset.name = country.name;
+      option.dataset.search = `${country.name} ${country.iso} +${country.code}`;
+      option.textContent = `${option.dataset.flag} ${country.name} +${country.code}`;
+      option.title = country.name;
+      el.bdTelefonePais.appendChild(option);
+    });
+    el.bdTelefonePais.value = "55";
+    if (el.bdTelefone) el.bdTelefone.placeholder = "+55 11 99999-9999";
+    el.bdTelefonePais.addEventListener("change", () => {
+      applyPhoneCountrySelection(el.bdTelefone, selectedPhoneCountryCode());
+      refreshCustomSelect(el.bdTelefonePais);
+    });
+  }
+
   function bindPhoneInput(input) {
     if (!input || input.dataset.phoneReady === "1") return;
     input.dataset.phoneReady = "1";
     input.addEventListener("input", () => {
-      const next = formatPhoneNumber(input.value);
+      const previousCountryCode = selectedPhoneCountryCode();
+      const parsed = parsePhoneNumberForInput(input.value, previousCountryCode, {
+        manualCountry: input.dataset.phoneCountryManual === "1"
+      });
+      const next = parsed.formatted;
       if (input.value !== next) input.value = next;
-      clearFieldValidation(input);
+      if (parsed.countryCode && parsed.countryCode !== previousCountryCode) {
+        delete input.dataset.phoneCountryManual;
+      }
+      syncPhoneCountryFromParsed(parsed, { refreshDisplay: true });
+      updatePhoneCountryHint(input, parsed);
     });
     input.addEventListener("blur", () => {
-      input.value = formatPhoneNumber(input.value);
+      const parsed = parsePhoneNumberForInput(input.value, selectedPhoneCountryCode(), {
+        manualCountry: input.dataset.phoneCountryManual === "1"
+      });
+      input.value = parsed.formatted;
       validatePhoneControl(input);
     });
   }
@@ -1473,6 +1466,9 @@
 
     const triggerText = document.createElement("span");
     triggerText.className = "custom-select-value";
+    if (select.dataset.selectVariant === "phone-country") {
+      triggerText.classList.add("custom-select-value--phone-country");
+    }
 
     const clearButton = document.createElement("span");
     clearButton.role = "button";
@@ -1498,7 +1494,7 @@
     const searchInput = document.createElement("input");
     searchInput.type = "text";
     searchInput.className = "custom-select-search";
-    searchInput.placeholder = "Pesquisar";
+    searchInput.placeholder = select.dataset.selectVariant === "phone-country" ? "Buscar país" : "Pesquisar";
     searchInput.autocomplete = "off";
     searchInput.spellcheck = false;
     searchInput.tabIndex = -1;
@@ -1559,7 +1555,7 @@
 
     trigger?.addEventListener("focus", () => {
       if (state.suppressOpenOnFocus) return;
-      if (select.disabled || !shouldOpenCustomSelectOnFocus(select)) return;
+      if (select.disabled || shouldKeepCustomSelectClosedOnFocus(select)) return;
       openCustomSelect(select, { focusSearch: true, focusTrigger: false });
     });
 
@@ -1653,7 +1649,11 @@
       || options[0];
 
     setCustomSelectTriggerDisplay(triggerText, selectedOption, nativeSelect);
-    trigger.removeAttribute("title");
+    if (nativeSelect.dataset.selectVariant === "phone-country" && selectedOption) {
+      trigger.title = `${selectedOption.dataset.name || selectedOption.textContent} +${selectedOption.value}`;
+    } else {
+      trigger.removeAttribute("title");
+    }
     triggerText.classList.toggle("is-placeholder", !selectedOption || selectedOption.value === "");
     if (clearButton) {
       clearButton.hidden = !isCustomSelectClearable(nativeSelect);
@@ -1853,6 +1853,7 @@
 
   function isCustomSelectClearable(select) {
     if (!select || select.disabled || select.required || select.getAttribute("aria-required") === "true") return false;
+    if (select.dataset.selectVariant === "phone-country") return false;
     if (select.closest(".status-select")) return false;
     if (!select.value) return false;
     return Array.from(select.options || []).some((option) => option.value === "");
@@ -1968,7 +1969,7 @@
     const viewportRight = viewportLeft + viewportWidth;
     const safeInset = 8;
     const availableWidth = Math.max(120, viewportWidth - safeInset * 2);
-    const minWidth = 140;
+    const minWidth = state.select?.dataset?.selectVariant === "phone-country" ? 280 : 140;
     const desiredWidth = Math.max(minWidth, Math.ceil(rect.width || state.trigger.offsetWidth || 120));
     const width = Math.max(120, Math.min(availableWidth, desiredWidth));
     const maxHeight = Math.min(260, Math.max(120, Math.floor(viewportHeight * 0.42)));
@@ -2112,20 +2113,12 @@
     }
 
     const f = CONFIG.fields;
-    const [clientes, passageiros, motoristas, ops, possesVeiculo, veiculos, trocasCarro] = await Promise.all([
+    const [clientes, passageiros, motoristas, ops] = await Promise.all([
       retrieveAll(CONFIG.entities.cliente, `?$select=${f.cliente.id},${f.cliente.nome}&$orderby=${f.cliente.nome} asc&$top=5000`),
       retrieveAll(CONFIG.entities.passageiro, `?$select=${passengerSelectFields()}&$orderby=${f.passageiro.nome} asc&$top=${INITIAL_PASSENGER_LOOKUP_LIMIT}`),
       retrieveAll(CONFIG.entities.funcionario, `?$select=${f.funcionario.id},${f.funcionario.nome},${f.funcionario.apelido}&$orderby=${f.funcionario.apelido} asc,${f.funcionario.nome} asc&$top=5000`),
-      retrieveAll(CONFIG.entities.financeiro, `?$select=${f.financeiro.id},${f.financeiro.label},createdon&$orderby=createdon desc&$top=500`),
-      loadMotoristaCurrentVehicles(),
-      loadVehicleCatalog(),
-      loadTrocasCarro()
+      retrieveAll(CONFIG.entities.financeiro, `?$select=${f.financeiro.id},${f.financeiro.label},createdon&$orderby=createdon desc&$top=500`)
     ]);
-    state.veiculoResumoPorId = mapVehicleSummariesById(veiculos);
-    const currentVehicleState = mapMotoristaCurrentVehicles(possesVeiculo);
-    state.motoristaVeiculoAtualPorId = currentVehicleState.labelsByDriver;
-    state.motoristaVeiculoAtualVeiculoIdPorId = currentVehicleState.vehicleIdsByDriver;
-    state.trocasCarro = mapTrocasCarro(trocasCarro);
 
     state.passageiros = uniquePassengersById(passageiros.map(mapPassageiro))
       .sort((a, b) => (a.label || "").localeCompare(b.label || "", "pt-BR"));
@@ -2137,8 +2130,7 @@
       id: r[f.funcionario.id],
       label: r[f.funcionario.apelido] || r[f.funcionario.nome] || "(motorista)",
       nomeCompleto: r[f.funcionario.nome] || "",
-      search: [r[f.funcionario.apelido], r[f.funcionario.nome]].filter(Boolean).join(" "),
-      veiculoAtualLabel: state.motoristaVeiculoAtualPorId[cleanGuid(r[f.funcionario.id]).toLowerCase()] || ""
+      search: [r[f.funcionario.apelido], r[f.funcionario.nome]].filter(Boolean).join(" ")
     })));
     state.ordensPagamento = ops.map((r) => ({
       id: r[f.financeiro.id],
@@ -2162,7 +2154,6 @@
       f.idioma,
       f.cargo,
       f.nascimento,
-      f.ultimoServico,
       f.departamento,
       f.tipoVeiculo,
       f.fotoUrl,
@@ -2204,133 +2195,6 @@
       `?$select=${passengerSelectFields()}&$filter=${filters.join(" or ")}&$orderby=${f.nome} asc&$top=${limit}`
     );
     return mergePassengerRecords(rows.map(mapPassageiro));
-  }
-
-  async function loadMotoristaCurrentVehicles() {
-    if (!state.xrm || state.mockMode) return [];
-    return retrieveAll(
-      CONFIG.entities.posseVeiculo,
-      "?$select=_new_motorista_value,_new_veiculo_value,new_iniciodaposse,new_fimdaposse,statecode,modifiedon&$filter=statecode eq 0&$orderby=new_iniciodaposse desc,modifiedon desc&$top=5000"
-    );
-  }
-
-  async function loadVehicleCatalog() {
-    if (!state.xrm || state.mockMode) return [];
-    const f = CONFIG.fields.veiculo;
-    return retrieveAll(
-      CONFIG.entities.veiculo,
-      `?$select=${f.id},${f.modelo},${f.cor},${f.placa}&$top=5000`
-    );
-  }
-
-  async function loadTrocasCarro() {
-    if (!state.xrm || state.mockMode) return [];
-    const f = CONFIG.fields.trocaCarro;
-    return retrieveAll(
-      CONFIG.entities.trocaCarro,
-      `?$select=${f.id},${f.dataHoraTroca},${f.inicioJanela},${f.fimJanela},${f.statusTroca},${f.tipoTroca},${f.motorista1},${f.motorista2},${f.veiculo1},${f.veiculo2},statecode,modifiedon&$filter=statecode eq 0 and ${f.statusTroca} ne 202410002&$orderby=${f.dataHoraTroca} asc,${f.inicioJanela} asc,modifiedon asc&$top=5000`
-    );
-  }
-
-  function mapVehicleSummariesById(vehicles) {
-    return Object.fromEntries((vehicles || []).map((vehicle) => [
-      cleanGuid(vehicle[CONFIG.fields.veiculo.id]).toLowerCase(),
-      formatVehicleSummary(vehicle)
-    ]));
-  }
-
-  function mapMotoristaCurrentVehicles(rows) {
-    const labelsByDriver = {};
-    const vehicleIdsByDriver = {};
-    (rows || []).forEach((row) => {
-      const motoristaId = cleanGuid(row._new_motorista_value).toLowerCase();
-      const veiculoId = cleanGuid(row._new_veiculo_value).toLowerCase();
-      const veiculoLabel = state.veiculoResumoPorId[veiculoId] || "";
-      if (!motoristaId || !veiculoLabel) return;
-      if (!labelsByDriver[motoristaId] || row.new_fimdaposse === null || row.new_fimdaposse === undefined) {
-        labelsByDriver[motoristaId] = veiculoLabel;
-        vehicleIdsByDriver[motoristaId] = veiculoId;
-      }
-    });
-    return { labelsByDriver, vehicleIdsByDriver };
-  }
-
-  function mapTrocasCarro(rows) {
-    const f = CONFIG.fields.trocaCarro;
-    return (rows || [])
-      .map((row) => ({
-        id: cleanGuid(row[f.id]),
-        motorista1: cleanGuid(row[f.motorista1]).toLowerCase(),
-        motorista2: cleanGuid(row[f.motorista2]).toLowerCase(),
-        veiculo1: cleanGuid(row[f.veiculo1]).toLowerCase(),
-        veiculo2: cleanGuid(row[f.veiculo2]).toLowerCase(),
-        status: Number(row[f.statusTroca] ?? ""),
-        tipo: Number(row[f.tipoTroca] ?? ""),
-        effectiveAt: row[f.dataHoraTroca] || row[f.inicioJanela] || "",
-        startWindow: row[f.inicioJanela] || "",
-        endWindow: row[f.fimJanela] || ""
-      }))
-      .filter((row) => row.effectiveAt)
-      .sort((a, b) => String(a.effectiveAt).localeCompare(String(b.effectiveAt)));
-  }
-
-  function formatVehicleSummary(vehicle) {
-    if (!vehicle) return "";
-    const f = CONFIG.fields.veiculo;
-    const modelo = String(vehicle[f.modelo] || "").trim();
-    const cor = String(vehicle[f.cor] || "").trim();
-    const placa = String(vehicle[f.placa] || "").trim();
-    const modeloCor = [modelo, cor].filter(Boolean).join(" ");
-    if (modeloCor && placa) return `${modeloCor} - ${placa}`;
-    return modeloCor || placa;
-  }
-
-  function currentMotoristaVehicleLabel() {
-    const motoristaId = cleanGuid(el.motorista?.value || "").toLowerCase();
-    if (!motoristaId) return "";
-    const serviceDateTime = combineDateTime(el.saidaData?.value, el.saidaHora?.value, el.saidaMinuto?.value);
-    return predictedMotoristaVehicleLabel(motoristaId, serviceDateTime);
-  }
-
-  function predictedMotoristaVehicleLabel(motoristaId, serviceDateTime) {
-    if (!motoristaId) return "";
-    let veiculoId = state.motoristaVeiculoAtualVeiculoIdPorId[motoristaId] || "";
-    if (!serviceDateTime || !(serviceDateTime instanceof Date) || Number.isNaN(serviceDateTime.getTime())) {
-      return state.veiculoResumoPorId[veiculoId] || state.motoristaVeiculoAtualPorId[motoristaId] || "";
-    }
-    state.trocasCarro.forEach((troca) => {
-      const effectiveAt = parseDateTimeInputValue(normalizeDateTimeRangeValue(troca.effectiveAt));
-      if (!effectiveAt || effectiveAt > serviceDateTime) return;
-      veiculoId = applyTrocaToMotoristaVehicle(motoristaId, veiculoId, troca);
-    });
-    return state.veiculoResumoPorId[veiculoId] || "";
-  }
-
-  function applyTrocaToMotoristaVehicle(motoristaId, currentVehicleId, troca) {
-    if (!troca || troca.status === 202410002) return currentVehicleId;
-    if (troca.tipo === 100000000) {
-      if (troca.motorista1 && sameId(troca.motorista1, motoristaId)) return troca.veiculo2 || "";
-      if (troca.motorista2 && sameId(troca.motorista2, motoristaId)) return troca.veiculo1 || "";
-      return currentVehicleId;
-    }
-    if (troca.tipo === 100000001) {
-      if (troca.motorista1 && sameId(troca.motorista1, motoristaId)) return "";
-      if (troca.motorista2 && sameId(troca.motorista2, motoristaId)) return "";
-      return currentVehicleId;
-    }
-    if (troca.tipo === 100000002) {
-      if (troca.motorista1 && sameId(troca.motorista1, motoristaId)) return troca.veiculo1 || currentVehicleId;
-      if (troca.motorista2 && sameId(troca.motorista2, motoristaId)) return troca.veiculo2 || currentVehicleId;
-      return currentVehicleId;
-    }
-    return currentVehicleId;
-  }
-
-  function renderMotoristaVehicleHint() {
-    if (!el.motoristaVeiculoAtual) return;
-    const label = currentMotoristaVehicleLabel();
-    el.motoristaVeiculoAtual.hidden = !label;
-    el.motoristaVeiculoAtual.textContent = label;
   }
 
   function buildPassengerServerSearchFilter(search, fields) {
@@ -2415,6 +2279,12 @@
     if (option.value === "" && select?.dataset?.placeholderLabel) {
       return select.dataset.placeholderLabel;
     }
+    if (option.dataset?.flag && option.dataset?.name) {
+      if (select?.dataset?.selectVariant === "phone-country") {
+        return `${option.dataset.flag} +${option.value}`;
+      }
+      return `${option.dataset.flag} ${option.dataset.name} +${option.value}`;
+    }
     return option.textContent.trim();
   }
 
@@ -2429,6 +2299,25 @@
       button.append(name, subtitle);
       return;
     }
+    if (option.dataset?.flag && option.dataset?.name) {
+      const main = document.createElement("span");
+      main.className = "custom-select-option-main";
+      const flag = createCountryFlagNode(option);
+      const name = document.createElement("span");
+      name.className = "custom-select-option-name";
+      name.textContent = option.dataset.name;
+      const code = document.createElement("span");
+      code.className = "custom-select-option-code";
+      code.textContent = `+${option.value}`;
+      main.append(flag, name);
+      button.append(main, code);
+      const check = document.createElement("span");
+      check.className = "custom-select-option-check";
+      check.setAttribute("aria-hidden", "true");
+      check.textContent = "?";
+      button.append(check);
+      return;
+    }
     button.textContent = option.textContent;
   }
 
@@ -2438,7 +2327,39 @@
       triggerText.textContent = "Selecione";
       return;
     }
+    if (select?.dataset?.selectVariant === "phone-country") {
+      const flagNode = createCountryFlagNode(option);
+      triggerText.append(flagNode);
+      return;
+    }
     triggerText.textContent = getCustomSelectDisplayText(option, select) || "Selecione";
+  }
+
+  function createCountryFlagNode(option = null) {
+    const flag = option?.dataset?.flag || "";
+    if (!option?.dataset?.flagImage) {
+      const fallback = document.createElement("span");
+      fallback.className = "custom-select-option-flag custom-select-option-flag--emoji";
+      fallback.textContent = flag || "";
+      return fallback;
+    }
+
+    const wrapper = document.createElement("span");
+    wrapper.className = "custom-select-option-flag";
+    const img = document.createElement("img");
+    img.className = "country-flag-image";
+    img.src = option.dataset.flagImage;
+    img.loading = "lazy";
+    img.decoding = "async";
+    img.referrerPolicy = "no-referrer";
+    img.alt = "";
+    img.onerror = () => {
+      wrapper.className = "custom-select-option-flag custom-select-option-flag--emoji";
+      wrapper.textContent = flag || "";
+      wrapper.querySelector("img")?.remove();
+    };
+    wrapper.appendChild(img);
+    return wrapper;
   }
 
   function normalizeEmail(value) {
@@ -2469,53 +2390,435 @@
       .join(" ");
   }
 
-  const PHONE_MAX_LENGTH = 32;
-
-  function sanitizePhoneText(value) {
-    return String(value || "")
-      .replace(/[^\d+\-()./ #*xX]/g, "")
-      .replace(/\s+/g, " ")
-      .trim()
-      .slice(0, PHONE_MAX_LENGTH);
+  function countryFlagFromIso(isoValue) {
+    return String(isoValue || "")
+      .split(/\s+/)
+      .filter(Boolean)
+      .map((iso) => iso
+        .trim()
+        .toUpperCase()
+        .slice(0, 2)
+        .replace(/[A-Z]/g, (char) => String.fromCodePoint(127397 + char.charCodeAt(0))))
+      .join(" ");
   }
+
+  function countryFlagImageFromIso(isoValue) {
+    const iso = String(isoValue || "").trim().split(/\s+/)[0] || "";
+    if (!iso) return "";
+    return `https://flagcdn.com/24x18/${iso.toLowerCase()}.png`;
+  }
+
+  const PHONE_COUNTRY_OPTIONS = [
+    { iso: "BR", code: "55", name: "Brasil" },
+    { iso: "US CA", code: "1", name: "EUA / Canadá" },
+    { iso: "PT", code: "351", name: "Portugal" },
+    { iso: "AR", code: "54", name: "Argentina" },
+    { iso: "CL", code: "56", name: "Chile" },
+    { iso: "CO", code: "57", name: "Colômbia" },
+    { iso: "MX", code: "52", name: "México" },
+    { iso: "GB", code: "44", name: "Reino Unido" },
+    { iso: "ES", code: "34", name: "Espanha" },
+    { iso: "FR", code: "33", name: "França" },
+    { iso: "IT", code: "39", name: "Itália" },
+    { iso: "DE", code: "49", name: "Alemanha" },
+    { iso: "JP", code: "81", name: "Japão" },
+    { iso: "CN", code: "86", name: "China" },
+    { iso: "IN", code: "91", name: "Índia" },
+    { iso: "AE", code: "971", name: "Emirados Árabes" },
+    { iso: "ZA", code: "27", name: "África do Sul" },
+    { iso: "AL", code: "355", name: "Albânia" },
+    { iso: "SA", code: "966", name: "Arábia Saudita" },
+    { iso: "DZ", code: "213", name: "Argélia" },
+    { iso: "AU", code: "61", name: "Austrália" },
+    { iso: "AT", code: "43", name: "Áustria" },
+    { iso: "BH", code: "973", name: "Bahrein" },
+    { iso: "BE", code: "32", name: "Bélgica" },
+    { iso: "BO", code: "591", name: "Bolívia" },
+    { iso: "BG", code: "359", name: "Bulgária" },
+    { iso: "QA", code: "974", name: "Catar" },
+    { iso: "SG", code: "65", name: "Singapura" },
+    { iso: "KR", code: "82", name: "Coreia do Sul" },
+    { iso: "CR", code: "506", name: "Costa Rica" },
+    { iso: "CU", code: "53", name: "Cuba" },
+    { iso: "DK", code: "45", name: "Dinamarca" },
+    { iso: "EC", code: "593", name: "Equador" },
+    { iso: "EG", code: "20", name: "Egito" },
+    { iso: "SV", code: "503", name: "El Salvador" },
+    { iso: "SK", code: "421", name: "Eslováquia" },
+    { iso: "SI", code: "386", name: "Eslovênia" },
+    { iso: "FI", code: "358", name: "Finlândia" },
+    { iso: "GR", code: "30", name: "Grécia" },
+    { iso: "GT", code: "502", name: "Guatemala" },
+    { iso: "NL", code: "31", name: "Países Baixos" },
+    { iso: "HN", code: "504", name: "Honduras" },
+    { iso: "HK", code: "852", name: "Hong Kong" },
+    { iso: "HU", code: "36", name: "Hungria" },
+    { iso: "ID", code: "62", name: "Indonésia" },
+    { iso: "IE", code: "353", name: "Irlanda" },
+    { iso: "IL", code: "972", name: "Israel" },
+    { iso: "LU", code: "352", name: "Luxemburgo" },
+    { iso: "MA", code: "212", name: "Marrocos" },
+    { iso: "NO", code: "47", name: "Noruega" },
+    { iso: "NZ", code: "64", name: "Nova Zelândia" },
+    { iso: "PA", code: "507", name: "Panamá" },
+    { iso: "PY", code: "595", name: "Paraguai" },
+    { iso: "PE", code: "51", name: "Peru" },
+    { iso: "PL", code: "48", name: "Polônia" },
+    { iso: "CZ", code: "420", name: "República Tcheca" },
+    { iso: "RO", code: "40", name: "Romênia" },
+    { iso: "RU KZ", code: "7", name: "Rússia / Cazaquistão" },
+    { iso: "SE", code: "46", name: "Suécia" },
+    { iso: "CH", code: "41", name: "Suíça" },
+    { iso: "TH", code: "66", name: "Tailândia" },
+    { iso: "TW", code: "886", name: "Taiwan" },
+    { iso: "TR", code: "90", name: "Turquia" },
+    { iso: "UA", code: "380", name: "Ucrânia" },
+    { iso: "UY", code: "598", name: "Uruguai" },
+    { iso: "VE", code: "58", name: "Venezuela" },
+    { iso: "VN", code: "84", name: "Vietnã" }
+  ].map((country) => ({
+    ...country,
+    flag: countryFlagFromIso(country.iso),
+    flagImage: countryFlagImageFromIso(country.iso)
+  }));
+
+  const PHONE_COUNTRY_CODES = Array.from(
+    new Map(PHONE_COUNTRY_OPTIONS.map((country) => [country.code, country.name])).entries()
+  ).sort((a, b) => b[0].length - a[0].length);
+  const PHONE_COUNTRY_FORMATS = {
+    1: { max: 10, min: 10, groups: [3, 3, 4], template: "us" },
+    33: { max: 9, min: 9, groups: [1, 2, 2, 2, 2] },
+    34: { max: 9, min: 9, groups: [3, 3, 3] },
+    39: { max: 10, min: 6, groups: [3, 3, 4] },
+    44: { max: 10, min: 10, groups: [4, 3, 3] },
+    49: { max: 11, min: 7, groups: [3, 4, 4] },
+    52: { max: 10, min: 10, groups: [2, 4, 4] },
+    54: { max: 10, min: 10, groups: [2, 4, 4] },
+    55: { max: 11, min: 10, template: "br" },
+    56: { max: 9, min: 9, groups: [1, 4, 4] },
+    57: { max: 10, min: 10, groups: [3, 3, 4] },
+    81: { max: 10, min: 10, groups: [2, 4, 4] },
+    86: { max: 11, min: 11, groups: [3, 4, 4] },
+    91: { max: 10, min: 10, groups: [5, 5] },
+    351: { max: 9, min: 9, groups: [3, 3, 3] },
+    971: { max: 9, min: 8, groups: [2, 3, 4] }
+  };
 
   function formatPhoneNumber(value) {
-    return sanitizePhoneText(value);
+    const parsed = parsePhoneNumber(value);
+    return parsed.formatted;
   }
 
-  function parsePhoneNumber(value) {
-    const formatted = formatPhoneNumber(value);
-    const digits = onlyDigits(formatted);
-    if (!formatted) return emptyPhoneResult();
+  function formatPhoneNumberForCountry(value, countryCode) {
+    const parsed = parsePhoneNumberForSelectedCountry(value, countryCode);
+    return parsed.formatted;
+  }
+
+  function parsePhoneNumber(value, preferredCountryCode = "") {
+    const original = String(value || "").trim();
+    if (!original) return emptyPhoneResult();
+
+    const normalized = original
+      .replace(/[^\d+]/g, "")
+      .replace(/(?!^)\+/g, "");
+    const hasExplicitPlus = normalized.startsWith("+");
+    let digits = onlyDigits(normalized);
+    if (!digits) return emptyPhoneResult();
+    if (!hasExplicitPlus && digits.startsWith("00") && digits.length > 4) {
+      digits = digits.slice(2);
+    }
+    digits = digits.slice(0, 15);
+
+    const selectedCountryCode = String(preferredCountryCode || "").trim();
+    const explicitInternational = hasExplicitPlus || original.startsWith("00") || (!selectedCountryCode && digits.length > 11 && !digits.startsWith("0"));
+    if (!explicitInternational && selectedCountryCode && selectedCountryCode !== "55") {
+      const selectedFormat = PHONE_COUNTRY_FORMATS[selectedCountryCode];
+      let nationalDigits = digits;
+      if (nationalDigits.startsWith(selectedCountryCode)) {
+        const withoutDuplicatedDdi = normalizeNationalForCountry(selectedCountryCode, nationalDigits.slice(selectedCountryCode.length));
+        if (isValidInternationalPhone(selectedCountryCode, withoutDuplicatedDdi) || nationalDigits.length > (selectedFormat?.max || phoneNationalMaxLength(selectedCountryCode))) {
+          nationalDigits = withoutDuplicatedDdi;
+        }
+      }
+      nationalDigits = normalizeNationalForCountry(selectedCountryCode, nationalDigits);
+      const country = getPhoneCountryByCode(selectedCountryCode);
+      const formatted = `+${selectedCountryCode}${nationalDigits ? ` ${formatInternationalNationalNumber(selectedCountryCode, nationalDigits)}` : ""}`;
+      const isValid = isValidInternationalPhone(selectedCountryCode, nationalDigits);
+      return {
+        formatted,
+        e164: isValid ? `+${selectedCountryCode}${nationalDigits}` : "",
+        digits: `${selectedCountryCode}${nationalDigits}`.slice(0, 15),
+        countryCode: selectedCountryCode,
+        countryName: country?.name || country?.[1] || "DDI selecionado",
+        national: nationalDigits,
+        isInternational: true,
+        isValid,
+        message: isValid ? "" : "Telefone deve ter entre 4 e 14 digitos depois do DDI."
+      };
+    }
+
+    if (!explicitInternational) {
+      const nationalDigits = normalizeNationalForCountry("55", digits);
+      const formatted = formatBrazilianPhone(nationalDigits);
+      const isValid = isValidBrazilianPhone(nationalDigits);
+      return {
+        formatted,
+        e164: isValid ? `+55${nationalDigits}` : "",
+        digits: nationalDigits,
+        countryCode: "55",
+        countryName: "Brasil",
+        national: nationalDigits,
+        isInternational: false,
+        isValid,
+        message: isValid ? "" : "Telefone brasileiro deve ter DDD e 10 ou 11 digitos."
+      };
+    }
+
+    const country = detectPhoneCountry(digits);
+    const countryCode = country?.code || country?.[0] || "";
+    const countryName = country?.name || country?.[1] || "DDI nao identificado";
+    const national = countryCode ? normalizeNationalForCountry(countryCode, digits.slice(countryCode.length)) : digits;
+    const fullDigits = countryCode ? `${countryCode}${national}`.slice(0, 15) : digits;
+    const formatted = countryCode
+      ? `+${countryCode}${national ? ` ${formatInternationalNationalNumber(countryCode, national)}` : ""}`
+      : `+${groupDigits(digits)}`;
+    const isValid = !!countryCode && isValidInternationalPhone(countryCode, national);
     return {
       formatted,
-      e164: "",
-      digits,
-      countryCode: "",
-      countryName: "",
-      national: digits,
-      isInternational: false,
-      isValid: true,
-      message: ""
-    };
+      e164: isValid ? `+${fullDigits}` : "",
+      digits: fullDigits,
+      countryCode,
+      countryName,
+      national,
+      isInternational: true,
+      isValid,
+      message: !countryCode
+        ? "DDI nao identificado. Use formato internacional com codigo do pais."
+        : countryCode === "55" && !isValidBrazilianPhone(national)
+          ? "Telefone brasileiro deve ter DDD e 10 ou 11 digitos."
+          : "Telefone deve ter entre 8 e 15 digitos no formato internacional."
+      };
   }
 
-  function parsePhoneNumberForInput(value) {
-    return parsePhoneNumber(value);
+  function parsePhoneNumberForInput(value, preferredCountryCode = "", options = {}) {
+    const preferred = parsePhoneNumber(value, preferredCountryCode);
+    const normalized = String(value || "").trim();
+    const digits = onlyDigits(normalized);
+    const explicitInternational = normalized.startsWith("+") || normalized.startsWith("00");
+    const plainInternational = digits.length > 11 && !digits.startsWith("0");
+    const detected = parsePhoneNumber(value, "");
+    const preferredCode = String(preferredCountryCode || "55");
+
+    if (!detected?.countryCode) return preferred;
+    if (detected.countryCode === preferredCode) return detected;
+    if (explicitInternational) return detected;
+    if (!options.manualCountry && plainInternational && detected.isValid) return detected;
+    return preferred;
   }
 
-  function parsePhoneNumberForSelectedCountry(value) {
-    return parsePhoneNumber(value);
+  function parsePhoneNumberForSelectedCountry(value, countryCode) {
+    const selectedCountryCode = String(countryCode || "55");
+    const nationalDigits = normalizeNationalForCountry(
+      selectedCountryCode,
+      phoneNationalDigitsForCountrySelection(value, selectedCountryCode)
+    );
+    return parsePhoneNumber(nationalDigits, selectedCountryCode);
   }
 
-  function phoneStorageValue(value) {
-    return sanitizePhoneText(value);
+  function phoneStorageValue(value, preferredCountryCode = undefined) {
+    const countryCode = preferredCountryCode === undefined ? selectedPhoneCountryCode() : preferredCountryCode;
+    const parsed = parsePhoneNumberForInput(value, countryCode);
+    return parsed.isValid && parsed.e164 ? parsed.e164 : String(value || "").trim();
+  }
+
+  function phonePlaceholderForCountry(countryCode) {
+    const code = String(countryCode || "55");
+    if (code === "55") return "+55 11 99999-9999";
+    return `+${code}`;
+  }
+
+  function applyPhoneCountrySelection(input, countryCode) {
+    if (!input) return;
+    input.dataset.phoneCountryManual = "1";
+    input.placeholder = phonePlaceholderForCountry(countryCode);
+    const parsed = parsePhoneNumberForSelectedCountry(input.value, countryCode);
+    input.value = parsed.formatted;
+    updatePhoneCountryHint(input, parsed);
+    if (!parsed.digits) {
+      clearFieldValidation(input);
+      return;
+    }
+    if (parsed.isValid) {
+      clearFieldValidation(input);
+      return;
+    }
+    markFieldInvalid(input, parsed.message || "Telefone invalido.");
   }
 
   function resetPhoneControl() {
+    if (el.bdTelefonePais) {
+      el.bdTelefonePais.value = "55";
+      refreshCustomSelect(el.bdTelefonePais);
+    }
     if (el.bdTelefone) {
       el.bdTelefone.value = "";
+      el.bdTelefone.placeholder = phonePlaceholderForCountry("55");
+      delete el.bdTelefone.dataset.phoneCountry;
+      delete el.bdTelefone.dataset.phoneCountryManual;
     }
+  }
+
+  function phoneNationalDigitsForCountrySelection(value, selectedCountryCode = "") {
+    const original = String(value || "").trim();
+    let digits = onlyDigits(original);
+    if (!digits) return "";
+    if (!original.startsWith("+") && digits.startsWith("00") && digits.length > 4) {
+      digits = digits.slice(2);
+    }
+
+    const detected = detectPhoneCountry(digits);
+    if ((original.startsWith("+") || original.startsWith("00")) && detected?.code) {
+      return digits.slice(detected.code.length);
+    }
+
+    const selectedCode = String(selectedCountryCode || "");
+    if (selectedCode && digits.startsWith(selectedCode)) {
+      const withoutSelectedCode = digits.slice(selectedCode.length);
+      if (isValidInternationalPhone(selectedCode, normalizeNationalForCountry(selectedCode, withoutSelectedCode))) {
+        return withoutSelectedCode;
+      }
+    }
+
+    if (detected?.code && detected.code !== selectedCode && digits.length > 11) {
+      return digits.slice(detected.code.length);
+    }
+
+    return digits;
+  }
+
+  function normalizeNationalForCountry(countryCode, nationalValue) {
+    const code = String(countryCode || "");
+    let national = onlyDigits(nationalValue).slice(0, phoneNationalMaxLength(code));
+    if (code === "55") {
+      if (national.length === 12 && national.startsWith("0")) return national.slice(1);
+      if ([13, 14].includes(national.length) && national.startsWith("0")) return national.slice(3);
+      return national;
+    }
+    if (code && code !== "39" && national.startsWith("0")) {
+      const withoutTrunk = national.slice(1);
+      if (isValidInternationalPhone(code, withoutTrunk)) return withoutTrunk;
+    }
+    return national;
+  }
+
+  function phoneNationalMaxLength(countryCode) {
+    return Math.max(4, 15 - String(countryCode || "").length);
+  }
+
+  function formatBrazilianPhone(digitsValue) {
+    const digits = onlyDigits(digitsValue).slice(0, phoneNationalMaxLength("55"));
+    if (digits.length <= 2) return digits;
+    const ddd = digits.slice(0, 2);
+    const number = digits.slice(2);
+    if (number.length <= 4) return `(${ddd}) ${number}`;
+    if (number.length <= 8) return `(${ddd}) ${number.slice(0, 4)}-${number.slice(4)}`;
+    const formatted = `(${ddd}) ${number.slice(0, 5)}-${number.slice(5, 9)}`;
+    const extra = number.slice(9);
+    return extra ? `${formatted} ${extra}` : formatted;
+  }
+
+  function formatInternationalNationalNumber(countryCode, nationalValue) {
+    const format = PHONE_COUNTRY_FORMATS[String(countryCode)];
+    const national = onlyDigits(nationalValue).slice(0, phoneNationalMaxLength(countryCode));
+    if (!national) return "";
+    if (format?.template === "br") return formatBrazilianPhone(national);
+    if (format?.template === "us") return formatGroupedPhone(national, format.groups, { parenthesizeFirst: national.length > 3 });
+    if (format?.groups) return formatGroupedPhone(national, format.groups);
+    return groupDigits(national);
+  }
+
+  function formatGroupedPhone(digitsValue, groups, options = {}) {
+    const digits = onlyDigits(digitsValue);
+    const parts = [];
+    let cursor = 0;
+    groups.forEach((size) => {
+      if (cursor >= digits.length) return;
+      parts.push(digits.slice(cursor, cursor + size));
+      cursor += size;
+    });
+    if (cursor < digits.length) parts.push(digits.slice(cursor));
+    if (options.parenthesizeFirst && parts[0]) {
+      if (parts.length === 1) return `(${parts[0]}`;
+      const rest = parts.slice(1).join("-");
+      return `(${parts[0]}) ${rest}`;
+    }
+    return parts.join(" ");
+  }
+
+  function groupDigits(value) {
+    const digits = onlyDigits(value);
+    if (digits.length <= 4) return digits;
+    const groups = [];
+    let remaining = digits;
+    while (remaining.length > 4) {
+      const size = remaining.length > 10 ? 3 : remaining.length > 7 ? 3 : remaining.length > 4 ? 4 : remaining.length;
+      groups.push(remaining.slice(0, size));
+      remaining = remaining.slice(size);
+    }
+    if (remaining) groups.push(remaining);
+    return groups.join(" ");
+  }
+
+  function detectPhoneCountry(digitsValue) {
+    const digits = onlyDigits(digitsValue);
+    const option = PHONE_COUNTRY_OPTIONS.find((country) => digits.startsWith(country.code));
+    if (option) return option;
+    const fallback = PHONE_COUNTRY_CODES.find(([code]) => digits.startsWith(code));
+    return fallback ? { code: fallback[0], name: fallback[1] } : null;
+  }
+
+  function getPhoneCountryByCode(code) {
+    const normalized = String(code || "");
+    const option = PHONE_COUNTRY_OPTIONS.find((country) => country.code === normalized);
+    if (option) return option;
+    const fallback = PHONE_COUNTRY_CODES.find(([countryCode]) => countryCode === normalized);
+    return fallback ? { code: fallback[0], name: fallback[1] } : null;
+  }
+
+  function selectedPhoneCountryCode() {
+    return el.bdTelefonePais?.value || "55";
+  }
+
+  function syncPhoneCountryFromParsed(parsed, { refreshDisplay = false } = {}) {
+    if (!el.bdTelefonePais || !parsed?.countryCode) return;
+    if ([...el.bdTelefonePais.options].some((option) => option.value === parsed.countryCode)) {
+      const previousCode = el.bdTelefonePais.value;
+      el.bdTelefonePais.value = parsed.countryCode;
+      if (el.bdTelefone) el.bdTelefone.placeholder = phonePlaceholderForCountry(parsed.countryCode);
+      if (refreshDisplay && previousCode !== el.bdTelefonePais.value && el.bdTelefonePais.dataset.customSelectReady === "1") {
+        refreshCustomSelect(el.bdTelefonePais);
+      }
+    }
+  }
+
+  function isValidInternationalPhone(countryCode, nationalValue) {
+    const national = onlyDigits(nationalValue);
+    if (countryCode === "55") return isValidBrazilianPhone(national);
+    const format = PHONE_COUNTRY_FORMATS[String(countryCode)];
+    if (format) {
+      return national.length >= format.min && national.length <= format.max && !/^(\d)\1+$/.test(national);
+    }
+    return national.length >= 4 && national.length <= Math.max(4, 15 - String(countryCode).length) && !/^(\d)\1+$/.test(national);
+  }
+
+  function isValidBrazilianPhone(value) {
+    const digits = onlyDigits(value);
+    if (![10, 11].includes(digits.length)) return false;
+    const ddd = Number(digits.slice(0, 2));
+    if (ddd < 11 || ddd > 99) return false;
+    const local = digits.slice(2);
+    if (/^(\d)\1+$/.test(local)) return false;
+    return true;
   }
 
   function emptyPhoneResult() {
@@ -3206,7 +3509,6 @@
       idioma: record[f.idioma] || "",
       cargo: record[f.cargo] || "",
       nascimento: record[f.nascimento] || "",
-      ultimoServico: record[f.ultimoServico] || "",
       departamento: record[f.departamento] || "",
       tipoVeiculo: record[f.tipoVeiculo] || "",
       fotoUrl: normalizePassengerPhotoUrl(record[f.fotoUrl]),
@@ -3269,7 +3571,6 @@
       f.paxView,
       f.trajeto,
       f.cotacao,
-      f.valorReceber,
       f.receber,
       f.cr,
       f.formaPagamento,
@@ -3363,7 +3664,6 @@
     el.trajeto.value = r[f.trajeto] || "";
     el.destino.value = r[f.destino] || "";
     el.cotacao.value = formatCurrencyDisplayValue(r[f.cotacao] ?? "");
-    el.valorReceber.value = formatCurrencyDisplayValue(r[f.valorReceber] ?? "");
     el.cr.value = normalizeCodeValue(r[f.cr] || "");
     el.receber.checked = !!r[f.receber];
     setFieldValue(el.receberRetorno, false);
@@ -3400,7 +3700,6 @@
     renderChoiceSelect(el.bdCargo, state.options.bdCargo);
     renderChoiceSelect(el.bdTipoVeiculo, state.options.bdTipoVeiculo);
     hydrateForm();
-    renderMotoristaVehicleHint();
     renderScheduleDrafts();
     renderPassengers();
     renderTabBadges();
@@ -3460,7 +3759,6 @@
       }
       refreshCustomSelect(select);
     }
-    if (select === el.motorista) renderMotoristaVehicleHint();
   }
 
   function getPassengerById(passengerId) {
@@ -3740,7 +4038,7 @@
     const value = field.key === "telefone" ? formatPhoneNumber(rawValue) : rawValue;
     control.classList.add("passenger-edit-control");
     control.dataset.passengerEditControl = field.key;
-    control.dataset.savedValue = field.key === "telefone" ? phoneStorageValue(rawValue) : value;
+    control.dataset.savedValue = field.key === "telefone" ? phoneStorageValue(rawValue, "") : value;
     if (field.kind !== "photo") control.value = value;
     return control;
   }
@@ -4364,7 +4662,7 @@
   function readPassengerEditControlValue(control, field) {
     if (!control) return "";
     if (field.kind === "text" || field.kind === "textarea") {
-      if (field.key === "telefone") return phoneStorageValue(control.value);
+      if (field.key === "telefone") return phoneStorageValue(control.value, "");
       if (field.key === "email") return normalizeEmail(control.value);
       if (field.key === "cr" || field.key === "centroCusto") return normalizeCodeValue(control.value);
       if (field.key === "label" || field.key === "nome") return normalizePassengerDisplayName(control.value);
@@ -5455,13 +5753,8 @@
     if (target?.closest?.("#passengerEditOverlay")) return;
 
     clearFieldValidation(target);
-    captureObsState({
-      includeDerivedPassengerPreferences: !(event.type === "input" && isTextEditingTarget(target))
-    });
+    captureObsState();
     markActivationDraftEdited(target);
-    if (target === el.motorista || target === el.saidaData || target === el.saidaHora || target === el.saidaMinuto) {
-      renderMotoristaVehicleHint();
-    }
     renderTabBadges();
     renderRiskPanel();
     markDraftDirty({ touchCommon: !isActivationGuardField(target) });
@@ -5672,34 +5965,12 @@
     return JSON.parse(JSON.stringify(value ?? null));
   }
 
-  function importReviewRowCount(review) {
-    if (typeof review?.rowsCount === "number" && Number.isFinite(review.rowsCount)) {
-      return Math.max(0, review.rowsCount);
-    }
-    return Array.isArray(review?.rows) ? review.rows.length : 0;
-  }
-
-  function cloneImportReviewForGlobalHistory(review) {
-    if (!review) return null;
-    return {
-      fileName: review.fileName || "",
-      rowsCount: importReviewRowCount(review),
-      programs: cloneGlobalHistoryValue(review.programs || []),
-      selectedProgramacao: review.selectedProgramacao || "",
-      selectedTrechoKey: review.selectedTrechoKey || "",
-      editingTrechoKey: review.editingTrechoKey || "",
-      createdAt: review.createdAt || "",
-      history: { undo: [], redo: [] }
-    };
-  }
-
-  function createGlobalHistorySnapshot(options = {}) {
-    captureObsState({
-      includeDerivedPassengerPreferences: options.includeDerivedPassengerPreferences !== false
-    });
+  function createGlobalHistorySnapshot() {
+    captureObsState();
     const draft = createDraftSnapshot();
     draft.updatedAt = "";
-    const importReview = cloneImportReviewForGlobalHistory(state.importReview);
+    const importReview = cloneGlobalHistoryValue(state.importReview);
+    if (importReview?.history) importReview.history = { undo: [], redo: [] };
     return {
       draft,
       importReview,
@@ -5728,11 +5999,11 @@
     );
   }
 
-  function captureGlobalHistoryBeforeMutation(label = "Alteração", options = {}) {
+  function captureGlobalHistoryBeforeMutation(label = "Alteração") {
     if (!globalHistoryCanTrack()) return;
     state.globalHistory.pending = {
       label,
-      snapshot: createGlobalHistorySnapshot(options)
+      snapshot: createGlobalHistorySnapshot()
     };
   }
 
@@ -5740,18 +6011,13 @@
     if (!globalHistoryCanTrack()) return;
     const target = event.target;
     if (!shouldTrackGlobalHistoryTarget(target)) return;
-    const isTextTarget = isTextEditingTarget(target);
-    if (event.type === "pointerdown" && isTextTarget) return;
     if (event.type === "keydown") {
-      if (!isGlobalHistoryMutationKey(event) || !isTextTarget) return;
+      if (!isGlobalHistoryMutationKey(event) || !isTextEditingTarget(target)) return;
       if (state.globalHistory.pending?.textTarget === target) return;
     }
-    if (event.type === "focusin" && !isTextTarget) return;
-    captureGlobalHistoryBeforeMutation(
-      globalHistoryLabelFromTarget(target),
-      isTextTarget ? { includeDerivedPassengerPreferences: false } : {}
-    );
-    if (isTextTarget) state.globalHistory.pending.textTarget = target;
+    if (event.type === "focusin" && !isTextEditingTarget(target)) return;
+    captureGlobalHistoryBeforeMutation(globalHistoryLabelFromTarget(target));
+    if (isTextEditingTarget(target)) state.globalHistory.pending.textTarget = target;
   }
 
   function isGlobalHistoryMutationKey(event) {
@@ -5876,7 +6142,6 @@
         observacao: el.observacao.value,
         receber: el.receber.checked,
         cotacao: el.cotacao.value,
-        valorReceber: el.valorReceber.value,
         op: el.op.value,
         formaPagamento: el.formaPagamento.value,
         cr: el.cr.value,
@@ -5946,7 +6211,6 @@
       setFieldValue(el.trajeto, fields.trajeto);
       setFieldValue(el.receber, fields.receber);
       setFieldValue(el.cotacao, formatCurrencyDisplayValue(fields.cotacao));
-      setFieldValue(el.valorReceber, formatCurrencyDisplayValue(fields.valorReceber));
       setSelectValue(el.op, fields.op || "");
       setSelectValue(el.formaPagamento, fields.formaPagamento || "");
       setFieldValue(el.cr, fields.cr);
@@ -6021,7 +6285,6 @@
     setFieldValue(el.trajeto, fields.trajeto);
     setFieldValue(el.receber, fields.receber);
     setFieldValue(el.cotacao, formatCurrencyDisplayValue(fields.cotacao));
-    setFieldValue(el.valorReceber, formatCurrencyDisplayValue(fields.valorReceber));
     setSelectValue(el.op, fields.op || "");
     setSelectValue(el.formaPagamento, fields.formaPagamento || "");
     setFieldValue(el.cr, fields.cr);
@@ -6663,15 +6926,6 @@
         syncLegacyTimePartsFromDateTime(el.retornoData, el.retornoHora, el.retornoMinuto);
       }
     }
-  }
-
-  function openPassengerCreateShortcut() {
-    closePassengerPicker();
-    setTab("bd");
-    requestAnimationFrame(() => {
-      el.bdNome?.focus();
-      el.bdNome?.select?.();
-    });
   }
 
   function syncReturnDefaults() {
@@ -7400,7 +7654,12 @@
   async function createPassenger() {
     clearValidationStates();
     el.bdNome.value = normalizePassengerDisplayName(el.bdNome.value);
-    el.bdTelefone.value = formatPhoneNumber(el.bdTelefone.value);
+    const parsedPhone = parsePhoneNumberForInput(el.bdTelefone.value, selectedPhoneCountryCode(), {
+      manualCountry: el.bdTelefone?.dataset.phoneCountryManual === "1"
+    });
+    el.bdTelefone.value = parsedPhone.formatted;
+    syncPhoneCountryFromParsed(parsedPhone, { refreshDisplay: true });
+    updatePhoneCountryHint(el.bdTelefone, parsedPhone);
     el.bdEmail.value = normalizeEmail(el.bdEmail.value);
     el.bdCr.value = normalizeCodeValue(el.bdCr.value);
     const required = [
@@ -7444,7 +7703,7 @@
     try {
       const payload = {
         [CONFIG.fields.passageiro.nome]: el.bdNome.value.trim(),
-        [CONFIG.fields.passageiro.telefone]: phoneStorageValue(el.bdTelefone.value),
+        [CONFIG.fields.passageiro.telefone]: phoneStorageValue(el.bdTelefone.value, selectedPhoneCountryCode()),
         [CONFIG.fields.passageiro.enderecoSaida]: el.bdEndereco.value.trim(),
         [CONFIG.fields.passageiro.preferencias]: el.bdPreferencias.value.trim(),
         [CONFIG.fields.passageiro.email]: el.bdEmail.value.trim(),
@@ -8305,7 +8564,6 @@
     return {
       fileName,
       rows: normalizedRows,
-      rowsCount: normalizedRows.length,
       programs,
       history: { undo: [], redo: [] },
       createdAt: new Date().toISOString()
@@ -8342,9 +8600,9 @@
     return JSON.stringify(a || null) === JSON.stringify(b || null);
   }
 
-  function captureImportReviewHistory(label = "Alteração", options = {}) {
+  function captureImportReviewHistory(label = "Alteração") {
     if (!state.importReview || isRestoringImportHistory) return;
-    captureGlobalHistoryBeforeMutation(label, options);
+    captureGlobalHistoryBeforeMutation(label);
     window.setTimeout(() => commitGlobalHistoryChange(label), 0);
     const history = importReviewHistory();
     const snapshot = createImportReviewSnapshot();
@@ -8490,19 +8748,6 @@
     const tag = String(target.tagName || "").toUpperCase();
     if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
     return false;
-  }
-
-  function captureImportReviewHistoryForEditSession(target, label) {
-    if (!target) return;
-    if (target.dataset.importHistoryCaptured === "1") return;
-    captureImportReviewHistory(label, { includeDerivedPassengerPreferences: false });
-    target.dataset.importHistoryCaptured = "1";
-  }
-
-  function handleImportReviewFocusOut(event) {
-    const target = event.target;
-    if (!target?.dataset?.importHistoryCaptured) return;
-    delete target.dataset.importHistoryCaptured;
   }
 
   function shouldHandleImportHistoryShortcut(event) {
@@ -8666,37 +8911,6 @@
       saveableTrechos,
       canScheduleConfirmed,
       blockedReason: canScheduleConfirmed ? "" : (counts.pending ? `${counts.pending} trecho(s) pendente(s) de revisão.` : "Nenhum trecho confirmado para agendar.")
-    };
-  }
-
-  function collectImportReviewRenderMetrics(programs) {
-    const statuses = importReviewStatuses();
-    const trechos = [];
-    const counts = {
-      all: 0,
-      validated: 0,
-      pending: 0,
-      ignored: 0,
-      duplicated: 0
-    };
-    (programs || []).forEach((program) => {
-      (program?.trechos || []).forEach((trecho) => {
-        trechos.push(trecho);
-        counts.all += 1;
-        const status = normalizeImportedReviewStatus(trecho);
-        if (status === statuses.CONFIRMED || status === statuses.SAVED) {
-          counts.validated += 1;
-        } else if (status === statuses.IGNORED) {
-          counts.ignored += 1;
-        } else {
-          counts.pending += 1;
-        }
-        if (trecho.duplicatedRecordIds?.length) counts.duplicated += 1;
-      });
-    });
-    return {
-      trechos,
-      counts
     };
   }
 
@@ -8909,14 +9123,18 @@
     renderGlobalImportHistoryControls();
     const review = state.importReview;
     const importedPrograms = review?.programs || [];
-    const metrics = collectImportReviewRenderMetrics(importedPrograms);
-    const trechos = metrics.trechos;
+    const trechos = importedPrograms.flatMap((program) => program.trechos || []);
+    const pendingPrograms = getImportProgramsForReview(importedPrograms);
+    const pendingTrechos = pendingPrograms.flatMap((program) => program.trechos || []);
+    const validatedTrechos = getValidatedImportTrechos(importedPrograms);
+    const ignoredTrechos = getIgnoredImportTrechos(importedPrograms);
     const activeFilter = normalizeImportReviewFilter(state.importReviewFilter);
     state.importReviewFilter = activeFilter;
     const visiblePrograms = getImportProgramsByReviewFilter(importedPrograms, activeFilter);
     const reviewState = summarizeCurrentImportTrechos(trechos);
-    const rowCount = importReviewRowCount(review);
-    const hasImportData = importedPrograms.length > 0 && rowCount > 0;
+    const duplicatedTrechos = trechos.filter((trecho) => trecho.duplicatedRecordIds?.length);
+    const hasImportedRows = Array.isArray(review?.rows) && review.rows.length > 0;
+    const hasImportData = importedPrograms.length > 0 && hasImportedRows;
     if (!el.importReviewPrograms) return;
 
     if (!hasImportData) {
@@ -8933,19 +9151,19 @@
     const summary = [];
 
     if (hasImportData) {
-      summary.push(`${rowCount} linha(s)`);
+      summary.push(`${review.rows.length} linha(s)`);
       summary.push(`${review.programs.length} PG(s)`);
-      summary.push(`${metrics.counts.all} trecho(s)`);
+      summary.push(`${trechos.length} trecho(s)`);
       summary.push(`${reviewState.counts.confirmed} confirmado(s)`);
       summary.push(`${reviewState.counts.pending} pendente(s)`);
       summary.push(`${reviewState.counts.blocked} bloqueado(s)`);
       summary.push(`${reviewState.counts.ignored} ignorado(s)`);
       summary.push(`Cliente: ${importClient?.label || CONFIG.importDefaults.clienteLabel}`);
       renderImportReviewFilters({
-        all: metrics.counts.all,
-        validated: metrics.counts.validated,
-        pending: metrics.counts.pending,
-        ignored: metrics.counts.ignored
+        all: trechos.length,
+        validated: validatedTrechos.length,
+        pending: pendingTrechos.length,
+        ignored: ignoredTrechos.length
       }, activeFilter);
       renderImportGlobalIssues(trechos);
     } else {
@@ -8954,7 +9172,7 @@
       if (el.importReviewIssues) el.importReviewIssues.hidden = true;
     }
     summary.push(`Arquivo: ${review.fileName}.`);
-    if (metrics.counts.duplicated) summary.push(`${metrics.counts.duplicated} serviços repetidos.`);
+    if (duplicatedTrechos.length) summary.push(`${duplicatedTrechos.length} serviços repetidos.`);
     el.importReviewSummary.textContent = summary.join("  ");
 
     el.importReviewPrograms.replaceChildren();
@@ -9008,36 +9226,27 @@
 
   function sortImportProgramsByServiceDateTime(programs) {
     return [...(programs || [])]
-      .map((program) => {
-        const sortedTrechos = sortImportedTrechosByServiceDateTime(program?.trechos || []);
-        return {
-          program: {
-            ...program,
-            trechos: sortedTrechos
-          },
-          firstServiceTimestamp: importedTrechoServiceTimestamp(sortedTrechos[0])
-        };
-      })
-      .sort((a, b) => compareImportProgramsByFirstServiceDateTime(
-        a.program,
-        b.program,
-        a.firstServiceTimestamp,
-        b.firstServiceTimestamp
-      ))
-      .map((entry) => entry.program);
+      .map((program) => ({
+        ...program,
+        trechos: sortImportedTrechosByServiceDateTime(program?.trechos || [])
+      }))
+      .sort((a, b) => compareImportProgramsByFirstServiceDateTime(a, b));
   }
 
   function sortImportedTrechosByServiceDateTime(trechos) {
     return [...(trechos || [])].sort((a, b) => compareImportedTrechosByServiceDateTime(a, b));
   }
 
-  function compareImportProgramsByFirstServiceDateTime(programA, programB, firstA = importProgramFirstServiceTimestamp(programA), firstB = importProgramFirstServiceTimestamp(programB)) {
+  function compareImportProgramsByFirstServiceDateTime(programA, programB) {
+    const firstA = importProgramFirstServiceTimestamp(programA);
+    const firstB = importProgramFirstServiceTimestamp(programB);
     if (firstA !== firstB) return firstA - firstB;
     return String(programA?.programacao || "").localeCompare(String(programB?.programacao || ""), "pt-BR");
   }
 
   function importProgramFirstServiceTimestamp(program) {
-    return importedTrechoServiceTimestamp((program?.trechos || [])[0]);
+    const firstTrecho = sortImportedTrechosByServiceDateTime(program?.trechos || [])[0];
+    return importedTrechoServiceTimestamp(firstTrecho);
   }
 
   function compareImportedTrechosByServiceDateTime(trechoA, trechoB) {
@@ -9048,15 +9257,10 @@
   }
 
   function importedTrechoServiceTimestamp(trecho) {
-    if (!trecho) return Number.POSITIVE_INFINITY;
-    const cacheKey = `${trecho.dataIso || ""}|${trecho.horario || ""}`;
-    const cached = importedTrechoTimestampCache.get(trecho);
-    if (cached?.key === cacheKey) return cached.value;
     const localDateTime = importedTrechoDateTimeLocal(trecho);
     const parsed = parseDateTimeInputValue(localDateTime);
-    const value = parsed ? parsed.getTime() : Number.POSITIVE_INFINITY;
-    importedTrechoTimestampCache.set(trecho, { key: cacheKey, value });
-    return value;
+    if (parsed) return parsed.getTime();
+    return Number.POSITIVE_INFINITY;
   }
 
   function isValidatedImportedTrecho(trecho) {
@@ -9096,7 +9300,7 @@
     const hasAddressDraft = (snapshot?.enderecoRascunho || []).some((item) => hasText(item?.endereco));
     const hasLookupDraft = hasText(fields.cliente) || hasText(fields.solicitante) || hasText(fields.motorista);
     return hasPassengers || hasAddressDraft || hasLookupDraft || hasText(fields.trajeto) || hasText(fields.destino) || hasText(fields.observacao)
-      || hasText(fields.tipoServico) || hasText(fields.tipoVeiculo) || hasText(fields.formaPagamento) || hasText(fields.cr) || hasText(fields.cotacao) || hasText(fields.valorReceber);
+      || hasText(fields.tipoServico) || hasText(fields.tipoVeiculo) || hasText(fields.formaPagamento) || hasText(fields.cr) || hasText(fields.cotacao);
   }
 
   function renderImportReviewFilters(counts, activeFilter) {
@@ -9901,7 +10105,7 @@
   function importedTrechoWindowLabel(trecho) {
     const saida = trecho?.horario || "--:--";
     const retorno = trecho?.retornoPrevistoHorario || "";
-    if (retorno && retorno !== saida) return `${saida} → ${retorno}`;
+    if (retorno && retorno !== saida) return `${saida} ? ${retorno}`;
     return saida;
   }
 
@@ -10133,7 +10337,7 @@
   function importedDefaultInternalObservation(trecho) {
     if (!trecho?.programacao) return "";
     if (isSplitImportedTrecho(trecho)) return `Serviço criado por Split na PG: ${trecho.programacao}.`;
-    return String(trecho.programacao || "").trim();
+    return `Importado via XLSX. PG: ${trecho.programacao}. ST: ${(trecho.solicitacoes || []).join(", ") || "-"}.`;
   }
 
   function composeImportedTrechoPreferencias(trecho) {
@@ -11184,7 +11388,7 @@
       const obs = ensureImportedObservationState(trecho);
       const current = obs.current || "motorista";
       if (String(obs[current] ?? "") === String(event.target.value ?? "")) return;
-      captureImportReviewHistoryForEditSession(event.target, "Editar observação do serviço");
+      captureImportReviewHistory("Editar observação do serviço");
       markImportedReviewPending(trecho);
       obs[current] = event.target.value;
       syncImportedObservationFields(trecho);
@@ -11195,7 +11399,7 @@
       const passenger = trecho.passageiros[Number(passengerRow.dataset.passengerIndex)];
       if (!passenger) return;
       if (String(passenger[passengerField] ?? "") === String(event.target.value ?? "")) return;
-      captureImportReviewHistoryForEditSession(event.target, "Editar passageiro do serviço");
+      captureImportReviewHistory("Editar passageiro do serviço");
       markImportedReviewPending(trecho);
       passenger[passengerField] = event.target.value;
       if (["nome", "telefone", "email"].includes(passengerField)) {
@@ -11245,11 +11449,7 @@
             ? resolveImportedOperationStatusValue(trecho)
           : String(trecho[field] ?? "");
     if (String(currentValue ?? "") === String(value ?? "")) return;
-    if (event.type === "input" && isTextEditingTarget(event.target)) {
-      captureImportReviewHistoryForEditSession(event.target, "Editar campo do serviço");
-    } else {
-      captureImportReviewHistory("Editar campo do serviço");
-    }
+    captureImportReviewHistory("Editar campo do serviço");
     markImportedReviewPending(trecho);
     if (field === "dataHora") {
       trecho.dataIso = datePartFromInputValue(value);
@@ -11346,7 +11546,6 @@
       const saved = await saveReserva(payload);
       createdReservaId = saved.id;
       await replacePassengerRelations(saved.id, context.colOrdemPassageiros, context, true);
-      await updatePassengersLastServiceDate(context.colOrdemPassageiros, context.dataHoraPrincipal);
       window.XlsxImportCore?.markImportedTrechoSaved?.(trecho, saved.id);
       if (!window.XlsxImportCore?.markImportedTrechoSaved) {
         trecho.savedRecordId = saved.id;
@@ -11597,10 +11796,9 @@
     const promise = (async () => {
       const payload = {
         [CONFIG.fields.passageiro.nome]: normalizePassengerDisplayName(person.nome),
-        [CONFIG.fields.passageiro.telefone]: phoneStorageValue(person.telefone || ""),
+        [CONFIG.fields.passageiro.telefone]: phoneStorageValue(person.telefone || "", "55"),
         [CONFIG.fields.passageiro.email]: normalizeEmail(person.email || "")
       };
-      setChoice(payload, CONFIG.fields.passageiro.status, getActivePassengerStatusValue());
       bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, importClient.id);
 
       let created;
@@ -11626,8 +11824,6 @@
         endereco: "",
         preferencias: "",
         cr: "",
-        status: getActivePassengerStatusValue(),
-        ultimoServico: "",
         clienteId: importClient.id,
         clienteLabel: importClient.label
       };
@@ -11693,7 +11889,16 @@
   function importedTrechoCr(trecho) {
     if (!trecho) return "";
     if (String(trecho.importedServiceCr || "").trim()) return String(trecho.importedServiceCr).trim();
-    const value = String(trecho.programacao || "").trim();
+    const seen = new Set();
+    const value = ((trecho.linhasImportadas || []).length ? trecho.linhasImportadas : (trecho.passageiros || []))
+      .map((passenger) => String(passenger.centroCusto || "").trim())
+      .filter((centroCusto) => {
+        const key = normalize(centroCusto);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .join(" / ");
     trecho.importedServiceCr = value;
     return value;
   }
@@ -12049,13 +12254,6 @@
     return Array.from(new Set(timestamps)).sort((a, b) => a - b);
   }
 
-  function maxServiceResultDate(results) {
-    return (results || [])
-      .map((item) => item?.data)
-      .filter((date) => date && !Number.isNaN(date.getTime?.()))
-      .sort((a, b) => b.getTime() - a.getTime())[0] || null;
-  }
-
   function resolveActivationGuard(action) {
     const drafts = [...(state.activationGuardDrafts || [])];
     const context = state.pendingSaveContext || buildSaveContext();
@@ -12126,7 +12324,6 @@
         addSaveLog("success", "Edição salva", state.recordId);
       }
 
-      await updatePassengersLastServiceDate(context.colOrdemPassageiros, maxServiceResultDate(results));
       const total = results.length;
       const message = state.isNew
         ? (total === 1 ? "Serviço criado com sucesso" : `${total} serviços criados com sucesso!`)
@@ -12146,17 +12343,11 @@
     }
   }
 
-  function captureObsState(options = {}) {
-    const config = {
-      includeDerivedPassengerPreferences: true,
-      ...options
-    };
+  function captureObsState() {
     state.obs[state.obsAtual] = el.observacao.value;
     state.obsRet[state.retObsAtual] = el.retornoObservacao.value;
-    if (!config.includeDerivedPassengerPreferences) return;
-    const preferencias = composePreferencias();
-    state.obs.passageiro = preferencias;
-    state.obsRet.passageiro = preferencias;
+    state.obs.passageiro = composePreferencias();
+    state.obsRet.passageiro = composePreferencias();
   }
 
   function buildSaveContext() {
@@ -12285,7 +12476,6 @@
       [f.trajeto]: isReturn ? invertTrajeto(context.trajeto) : trajeto,
       [f.paxView]: context.passageirosTelefones,
       [f.cotacao]: parseNumber(el.cotacao.value),
-      [f.valorReceber]: parseNumber(el.valorReceber.value),
       [f.receber]: resolveReceberPayloadValue(context, kind, dataHora),
       [f.cr]: normalizeCodeValue(el.cr.value)
     };
@@ -12475,67 +12665,6 @@
     )));
   }
 
-  async function updatePassengersLastServiceDate(passengers, serviceDate) {
-    const dateOnly = dateOnlyValue(serviceDate);
-    if (!dateOnly) return;
-    const uniquePassengers = uniquePassengerRelationItems(passengers);
-    if (!uniquePassengers.length) return;
-    await Promise.all(uniquePassengers.map((item) => updatePassengerLastServiceDate(item.guid, dateOnly)));
-  }
-
-  async function updatePassengerLastServiceDate(passengerId, dateOnly) {
-    const cleanPassengerId = cleanGuid(passengerId);
-    if (!cleanPassengerId || !dateOnly) return;
-    const passenger = getPassengerById(cleanPassengerId);
-    const existingDate = state.xrm && !state.mockMode
-      ? await retrievePassengerLastServiceDate(cleanPassengerId, passenger?.ultimoServico || "")
-      : passenger?.ultimoServico || "";
-    if (!shouldReplaceLastServiceDate(existingDate, dateOnly)) return;
-
-    if (state.xrm && !state.mockMode) {
-      await state.xrm.WebApi.updateRecord(CONFIG.entities.passageiro, cleanPassengerId, {
-        [CONFIG.fields.passageiro.ultimoServico]: dateOnly
-      });
-    }
-    const index = state.passageiros.findIndex((item) => sameId(item.id, cleanPassengerId));
-    if (index >= 0) {
-      state.passageiros[index] = { ...state.passageiros[index], ultimoServico: dateOnly };
-      persistMockPassengerRecord(state.passageiros[index]);
-    }
-  }
-
-  async function retrievePassengerLastServiceDate(passengerId, fallback = "") {
-    try {
-      const record = await state.xrm.WebApi.retrieveRecord(
-        CONFIG.entities.passageiro,
-        passengerId,
-        `?$select=${CONFIG.fields.passageiro.ultimoServico}`
-      );
-      return record[CONFIG.fields.passageiro.ultimoServico] || fallback || "";
-    } catch (error) {
-      console.warn("Falha ao consultar Data do Último Serviço do passageiro.", error);
-      return fallback || "";
-    }
-  }
-
-  function shouldReplaceLastServiceDate(existingDate, nextDate) {
-    if (!nextDate) return false;
-    if (!existingDate) return true;
-    const existing = parseDateInputValue(existingDate);
-    const next = parseDateInputValue(nextDate);
-    if (!next) return false;
-    if (!existing) return true;
-    return next.getTime() > existing.getTime();
-  }
-
-  function dateOnlyValue(date) {
-    if (!date || Number.isNaN(date.getTime?.())) return "";
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  }
-
   function setChoice(payload, field, value) {
     if (value === "" || value === null || value === undefined) return;
     const numeric = Number(value);
@@ -12562,7 +12691,6 @@
       el.trajeto,
       el.observacao,
       el.cotacao,
-      el.valorReceber,
       el.cr,
       el.destino,
       el.retornoEndereco,
@@ -12755,19 +12883,16 @@
     if (!select) return;
     if (!select.options) {
       select.value = value ?? fallback ?? "";
-      if (select === el.motorista) renderMotoristaVehicleHint();
       return;
     }
     const stringValue = value === null || value === undefined ? "" : String(value);
     if (stringValue && [...select.options].some((option) => option.value === stringValue)) {
       select.value = stringValue;
       refreshCustomSelect(select);
-      if (select === el.motorista) renderMotoristaVehicleHint();
       return;
     }
     select.value = fallback && [...select.options].some((option) => option.value === String(fallback)) ? String(fallback) : "";
     refreshCustomSelect(select);
-    if (select === el.motorista) renderMotoristaVehicleHint();
   }
 
   function focusInvalidField(message) {
@@ -13369,10 +13494,35 @@
       clearFieldValidation(input);
       return true;
     }
-    const parsed = parsePhoneNumber(input.value);
+    const previousCountryCode = input === el.bdTelefone ? selectedPhoneCountryCode() : "";
+    const parsed = input === el.bdTelefone
+      ? parsePhoneNumberForInput(input.value, previousCountryCode, {
+        manualCountry: input.dataset.phoneCountryManual === "1"
+      })
+      : parsePhoneNumber(input.value);
     input.value = parsed.formatted;
-    clearFieldValidation(input);
-    return true;
+    if (input === el.bdTelefone && parsed.countryCode && parsed.countryCode !== previousCountryCode) {
+      delete input.dataset.phoneCountryManual;
+    }
+    syncPhoneCountryFromParsed(parsed, { refreshDisplay: input === el.bdTelefone });
+    updatePhoneCountryHint(input, parsed);
+    if (parsed.isValid) {
+      clearFieldValidation(input);
+      return true;
+    }
+    revealInvalidField(input, parsed.message || "Telefone invalido.", options);
+    return false;
+  }
+
+  function updatePhoneCountryHint(input, parsed = null) {
+    if (!input) return;
+    const result = parsed || parsePhoneNumber(input.value, input === el.bdTelefone ? selectedPhoneCountryCode() : "");
+    if (!result.digits) {
+      delete input.dataset.phoneCountry;
+      return;
+    }
+    input.dataset.phoneCountry = result.countryName || "";
+    syncPhoneCountryFromParsed(result, { refreshDisplay: input === el.bdTelefone });
   }
 
   function toDateInput(date) {
@@ -14378,3 +14528,4 @@
     toast(error.message || "Falha ao iniciar formulário.", "error", 9000);
   });
 })();
+

@@ -1,0 +1,13 @@
+diff --git a/app.js b/app.js
+index cd751fe..fa8f9f3 100644
+--- a/app.js
++++ b/app.js
+@@ -11465,7 +11465,7 @@
+       const obs = ensureImportedObservationState(trecho);
+       const current = obs.current || "motorista";
+       if (String(obs[current] ?? "") === String(event.target.value ?? "")) return;
+-      captureImportReviewHistory("Editar observação do serviço");
++      captureImportReviewHistoryForEditSession(event.target, "Editar observação do serviço");
+       markImportedReviewPending(trecho);
+       obs[current] = event.target.value;
+       syncImportedObservationFields(trecho);

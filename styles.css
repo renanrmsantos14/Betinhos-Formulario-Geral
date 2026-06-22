@@ -319,6 +319,28 @@ h3 {
   line-height: 1.2;
 }
 
+.field-inline-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.field-inline-value {
+  display: inline-flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 2px 8px;
+  border: 1px solid rgba(59, 130, 246, 0.16);
+  border-radius: 999px;
+  background: rgba(239, 246, 255, 0.92);
+  color: #1d4ed8;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
 .topbar .record-id span {
   color: #64748b;
 }
@@ -774,6 +796,13 @@ h3 {
   color: var(--accent-strong);
 }
 
+.activation-head .return-receive-head {
+  flex: 0 0 auto;
+  min-width: 164px;
+  min-height: 44px;
+  margin-left: 0;
+}
+
 .panel-stack {
   display: grid;
   gap: 8px;
@@ -1199,7 +1228,7 @@ h3 {
   min-width: min(100%, 300px);
 }
 
-.database-passenger-grid .field:has(.phone-field) {
+.database-passenger-grid .field:has(#bdTelefone) {
   flex: 1 1 260px;
   min-width: min(100%, 240px);
 }
@@ -1433,7 +1462,6 @@ h3 {
 .field.is-invalid input,
 .field.is-invalid textarea,
 .field.is-invalid select,
-.field.is-invalid .phone-field,
 .field.is-invalid .custom-select-trigger,
 .passenger-row.is-invalid .passenger-address,
 .custom-select-trigger[aria-invalid="true"] {
@@ -1596,18 +1624,6 @@ h3 {
   font-weight: 400;
   line-height: 1.25;
   letter-spacing: 0;
-}
-
-.custom-select-value--phone-country {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.custom-select--phone-country .custom-select-value {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
 }
 
 .custom-select-value.is-placeholder {
@@ -1891,164 +1907,14 @@ textarea.is-touch-resizing,
 }
 
 /* ==========================================================================
-   CONTROLES ESPECIAIS (SELECT CUSTOMIZADO, TELEFONE, MOEDA, DATA/HORA)
+   CONTROLES ESPECIAIS (SELECT CUSTOMIZADO, MOEDA, DATA/HORA)
    ========================================================================== */
-
-.phone-field {
-  display: grid;
-  position: relative;
-  grid-template-columns: 58px minmax(0, 1fr);
-  align-items: center;
-  gap: 0;
-  min-height: var(--field-control-height);
-  height: var(--field-control-height);
-  overflow: hidden;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-xs);
-  background: #ffffff;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
-  transition:
-    border-color 150ms var(--ease-out),
-    box-shadow 150ms var(--ease-out),
-    background-color 150ms var(--ease-out),
-    transform 150ms var(--ease-out);
-}
 
 .field input {
   height: var(--field-control-height);
   max-height: var(--field-control-height);
 }
 
-.phone-field input,
-.phone-field .custom-select-trigger {
-  min-height: var(--field-control-height);
-  height: var(--field-control-height);
-  max-height: var(--field-control-height);
-  border: 0;
-  border-radius: 0;
-  box-shadow: none;
-  background: transparent;
-}
-
-.phone-field .custom-select {
-  min-width: 0;
-  height: 100%;
-  border-right: 1px solid var(--line);
-}
-
-.phone-field .custom-select-trigger {
-  height: 100%;
-  justify-content: center;
-  gap: 4px;
-  padding: 7px 8px;
-  background: #ffffff;
-}
-
-.phone-field .custom-select-value {
-  color: var(--text);
-  font-size: 14px;
-  font-weight: 760;
-  line-height: 1;
-}
-
-.custom-select--phone-country .custom-select-trigger {
-  border-color: transparent;
-  box-shadow: none;
-}
-
-.custom-select--phone-country .custom-select-trigger:hover,
-.custom-select--phone-country.is-open .custom-select-trigger {
-  background: var(--surface-soft);
-  border-color: transparent;
-}
-
-.custom-select-panel--phone-country {
-  padding: 8px 0;
-  overflow: hidden;
-  border-color: color-mix(in srgb, var(--line) 76%, var(--accent));
-  border-radius: 10px;
-  box-shadow:
-    0 18px 36px rgb(15 23 42 / 0.12),
-    0 2px 10px rgb(15 23 42 / 0.06);
-}
-
-.custom-select-panel--phone-country::before {
-  content: "⌕";
-  position: absolute;
-  left: 19px;
-  top: 19px;
-  z-index: 1;
-  color: var(--text-soft);
-  font-size: 15px;
-  line-height: 1;
-  pointer-events: none;
-}
-
-.custom-select-panel--phone-country .custom-select-search {
-  width: calc(100% - 16px);
-  min-height: 38px;
-  margin: 0 8px 6px;
-  padding-left: 32px;
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
-  background: #ffffff;
-  font-weight: 700;
-  box-shadow: none;
-}
-
-.custom-select-panel--phone-country .custom-select-search:focus-visible {
-  border-color: var(--line);
-  box-shadow: none;
-}
-
-.custom-select-panel--phone-country .custom-select-options {
-  max-height: 218px;
-  overflow: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgb(148 163 184 / 0.45) transparent;
-}
-
-.custom-select-option--phone-country {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 18px;
-  align-items: center;
-  gap: 10px;
-  min-height: 36px;
-  padding: 7px 12px;
-  border-top: 0;
-}
-
-.custom-select-option-main {
-  min-width: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.custom-select-option-flag {
-  width: 20px;
-  flex: 0 0 20px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  min-width: 20px;
-  min-height: 15px;
-  line-height: 1;
-}
-
-.custom-select-option-flag--emoji {
-  font-size: 14px;
-  line-height: 1;
-}
-
-.country-flag-image {
-  width: 18px;
-  height: 13px;
-  border-radius: 2px;
-  object-fit: cover;
-}
 
 .custom-select-option-name {
   min-width: 0;
@@ -2060,51 +1926,6 @@ textarea.is-touch-resizing,
   white-space: nowrap;
 }
 
-.custom-select-option-code {
-  flex: 0 0 auto;
-  border: 0;
-  background: transparent;
-  color: var(--text-soft);
-  font-size: 11px;
-  font-weight: 850;
-  line-height: 1;
-  padding: 0;
-}
-
-.custom-select-option-check {
-  display: inline-grid;
-  width: 18px;
-  place-items: center;
-  color: transparent;
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.custom-select-option--phone-country.is-active .custom-select-option-check {
-  color: var(--accent);
-}
-
-.phone-field input {
-  height: var(--field-control-height);
-  padding: 7px 9px;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-.phone-field input::placeholder {
-  color: var(--text-soft);
-}
-
-.phone-field:focus-within .custom-select-trigger {
-  border-color: transparent;
-}
-
-.phone-field:focus-within {
-  border-color: var(--accent);
-  box-shadow: var(--shadow-focus);
-  transform: translateY(-1px);
-}
-
 .field-hint:not(:empty) {
   color: var(--muted);
   font-weight: 700;
@@ -2112,11 +1933,6 @@ textarea.is-touch-resizing,
 
 .field.is-invalid .field-hint {
   color: var(--danger);
-}
-
-.phone-country-select:focus {
-  border-color: var(--accent);
-  box-shadow: var(--shadow-focus);
 }
 
 .currency-field {
@@ -3435,6 +3251,13 @@ textarea.is-touch-resizing,
   min-width: 0;
 }
 
+.passenger-picker-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
 .passenger-picker-eyebrow {
   display: block;
   font-size: 11px;
@@ -3484,6 +3307,19 @@ textarea.is-touch-resizing,
   background: var(--surface-soft);
   color: var(--text);
   outline: none;
+}
+
+.passenger-picker-icon-action--accent {
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--line));
+  background: color-mix(in srgb, var(--accent) 9%, #ffffff);
+  color: var(--accent);
+}
+
+.passenger-picker-icon-action--accent:hover,
+.passenger-picker-icon-action--accent:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 48%, var(--line));
+  background: color-mix(in srgb, var(--accent) 14%, #ffffff);
+  color: color-mix(in srgb, var(--accent) 82%, #0f172a);
 }
 
 .passenger-picker-icon-action:active,
@@ -7788,7 +7624,7 @@ body.is-import-dragging .import-drop-overlay {
   }
 
   #saveButton::before {
-    content: "💾";
+    content: "ðŸ’¾";
     font-size: 16px;
     font-weight: 900;
     line-height: 1;
@@ -8096,7 +7932,7 @@ body.is-import-dragging .import-drop-overlay {
     top: 0;
     z-index: 7;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: center;
     gap: 6px;
     margin-bottom: 4px;
@@ -8104,14 +7940,24 @@ body.is-import-dragging .import-drop-overlay {
     background: linear-gradient(180deg, var(--surface) 78%, rgb(255 255 255 / 0));
   }
 
+  .activation-head .activation-title {
+    grid-column: 1 / -1;
+  }
+
   .activation-head .activation-switch {
     justify-self: end;
     align-self: center;
-    width: 146px;
-    min-width: 146px;
+    width: 100%;
+    min-width: 0;
     min-height: 40px;
     padding: 6px 7px;
     white-space: nowrap;
+  }
+
+  .activation-head .return-receive-head {
+    justify-self: stretch;
+    align-self: center;
+    min-width: 0;
   }
 
   .activation-title h2 {
@@ -8245,10 +8091,6 @@ body.is-import-dragging .import-drop-overlay {
   .span-2,
   .passenger-row .address-cell {
     grid-column: auto;
-  }
-
-  .phone-field {
-    grid-template-columns: 54px minmax(0, 1fr);
   }
 
   .passenger-row {
@@ -8538,10 +8380,6 @@ body.is-import-dragging .import-drop-overlay {
     max-width: 100%;
   }
 
-  .phone-field {
-    grid-template-columns: 52px minmax(0, 1fr);
-  }
-
   .passenger-picker-dialog {
     width: calc(100vw - 10px);
   }
@@ -8566,3 +8404,4 @@ textarea,
 .passenger-picker-field input {
   font-size: 14px;
 }
+
