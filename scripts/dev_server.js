@@ -4,8 +4,10 @@ const path = require("node:path");
 const { URL } = require("node:url");
 
 const root = path.resolve(__dirname, "..");
-const port = Number(process.env.PORT || 4000);
 const host = process.env.HOST || "127.0.0.1";
+const portArgIndex = process.argv.indexOf("--port");
+const portArg = portArgIndex >= 0 ? process.argv[portArgIndex + 1] : "";
+const port = Number(portArg || process.env.PORT || 4000);
 const liveReloadEnabled = process.argv.includes("--watch") || process.argv.includes("--reload");
 const liveReloadPath = "/__dev_reload";
 const liveReloadClients = new Set();
@@ -171,7 +173,9 @@ server.on("error", (error) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`Servidor local: http://${host}:${port}`);
+  const address = server.address();
+  const activePort = typeof address === "object" && address ? address.port : port;
+  console.log(`Servidor local: http://${host}:${activePort}`);
   if (liveReloadEnabled) {
     console.log("Live reload: ativo");
   }

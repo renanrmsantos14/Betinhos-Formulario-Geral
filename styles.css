@@ -7624,7 +7624,7 @@ body.is-import-dragging .import-drop-overlay {
   }
 
   #saveButton::before {
-    content: "ðŸ’¾";
+    content: "\1F4BE";
     font-size: 16px;
     font-weight: 900;
     line-height: 1;

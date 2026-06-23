@@ -1,6 +1,6 @@
 {
   "scripts": {
-    "dev": "node scripts/dev_server.js --port 4000 --watch",
+    "dev": "node scripts/dev_server.js --port 0 --watch",
     "start": "node scripts/dev_server.js --port 4000",
     "build": "node scripts/build_webresource.js",
     "wr": "node scripts/build_webresource.js --no-version",
