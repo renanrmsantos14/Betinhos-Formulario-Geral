@@ -418,6 +418,12 @@ includes(html, "id=\"valorReceber\"", "formulario deve expor campo Valor a receb
 includes(html, "id=\"returnReceiveScopeOverlay\"", "repetir ida e retorno deve perguntar escopo do receber retorno");
 includes(app, "resolveReceberPayloadValue", "payload deve separar receber da ida e do retorno");
 includes(app, "valorReceber: \"cr40f_valor_a_receber\"", "formulario deve mapear campo Valor a receber");
+includes(app, "origemVeiculo: \"new_origemveiculo\"", "formulario deve mapear Origem do Veiculo da Geral");
+includes(app, "veiculo: \"cr40f_veiculo\"", "formulario deve mapear lookup Veiculo da Geral");
+includes(app, "veiculo: \"cr40f_Veiculo\"", "formulario deve usar nav property do lookup Veiculo");
+includes(app, "setChoice(payload, f.origemVeiculo, state.vehicleOriginManual ? 100000001 : 100000000)", "payload manual deve marcar Origem do Veiculo Manual");
+includes(app, "setChoice(payload, CONFIG.fields.reserva.origemVeiculo, 100000000)", "payload automatico deve marcar Origem do Veiculo Automatico");
+includes(app, "if (state.vehicleOriginManual) return;", "sync automatico nao deve sobrescrever veiculo manual");
 includes(app, "[f.valorReceber]: parseNumber(el.valorReceber.value)", "payload deve salvar Valor a receber como money");
 includes(app, "shouldAskReturnReceiveScope", "salvar deve perguntar se receber retorno vale para todos ou ultimo");
 includes(app, "receberRetornoUltimoTimestamp", "escopo apenas ultimo deve marcar somente o ultimo retorno");

@@ -51,7 +51,9 @@
         cr: "cr40f_cr",
         formaPagamento: "cr40f_formadepagamento",
         idTenaris: "cr40f_idtenaris",
-        idExterno: "new_idexterno"
+        idExterno: "new_idexterno",
+        veiculo: "cr40f_veiculo",
+        origemVeiculo: "new_origemveiculo"
       },
       passageiro: {
         id: "cr40f_bancodedadosid",
@@ -151,6 +153,7 @@
       cliente: "cr40f_Cliente",
       solicitante: "cr40f_Solicitante",
       motorista: "cr40f_Motorista",
+      veiculo: "cr40f_Veiculo",
       financeiro: "cr40f_Financeiro",
       servicoGeral: "cr40f_Geral",
       servicoBancoDados: "cr40f_BancodeDados"
@@ -174,7 +177,7 @@
   const BRAND_LOGO_WEBRESOURCE = "cr40f_LogoBetinhosB";
   const MAX_FREQUENT_SERVICE_DAYS = 90;
   const MAX_FREQUENT_SERVICE_RECORDS = 120;
-  const IMPORT_SAVE_CONCURRENCY = 3;
+  const IMPORT_SAVE_CONCURRENCY = 1;
   const INITIAL_PASSENGER_LOOKUP_LIMIT = 5000;
   const PASSENGER_PHOTO_FLOW_URL_DEV = "https://25a2ab78cf07ee41a124457aa2c29a.ea.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/293ac35160b04517814dba9cd65367e5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=_LO4SdhQdi2DjpGBp9kBqAXxBDRw5QgaKYmzf1hvXxs";
   const PASSENGER_PHOTO_FLOW_URL_PROD = "https://6847878f5a6fe08baed6d7119975e3.e1.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a0a24686b4d04443b83b6f281ca0fede/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=PT75nHGbRYJ78_oudaGod_rpV_z3_1FDnklPYsQT3Ek";
@@ -344,6 +347,7 @@
     tipoServico: $("tipoServico"),
     tipoVeiculo: $("tipoVeiculo"),
     motorista: $("motorista"),
+    veiculo: $("veiculo"),
     motoristaVeiculoAtual: $("motoristaVeiculoAtual"),
     trajeto: $("trajeto"),
     observacao: $("observacao"),
@@ -452,10 +456,12 @@
     passageiros: [],
     clientes: [],
     motoristas: [],
+    veiculos: [],
     motoristaVeiculoAtualPorId: {},
     motoristaVeiculoAtualVeiculoIdPorId: {},
     trocasCarro: [],
     veiculoResumoPorId: {},
+    vehicleOriginManual: false,
     ordensPagamento: [],
     relacoes: [],
     passengerSelectionRecency: [],
@@ -1277,7 +1283,11 @@
       applyStatusFaturamentoDefault();
       renderStatusFaturamento();
     });
-    el.motorista?.addEventListener("change", renderMotoristaVehicleHint);
+    el.motorista?.addEventListener("change", () => {
+      renderMotoristaVehicleHint();
+      syncAutomaticVehicleFromMotorista();
+    });
+    el.veiculo?.addEventListener("change", markVehicleManual);
     el.destino?.addEventListener("input", syncReturnDefaults);
     el.retornoEndereco?.addEventListener("input", () => {
       el.retornoEndereco.dataset.auto = "0";
@@ -1297,6 +1307,8 @@
       syncLegacyTimePartsFromDateTime(el.saidaData, el.saidaHora, el.saidaMinuto);
       syncRepeatDefaultDates();
       syncReturnDefaults();
+      renderMotoristaVehicleHint();
+      syncAutomaticVehicleFromMotorista();
     });
     el.retornoData?.addEventListener("change", () => {
       syncLegacyTimePartsFromDateTime(el.retornoData, el.retornoHora, el.retornoMinuto);
@@ -2140,6 +2152,10 @@
       search: [r[f.funcionario.apelido], r[f.funcionario.nome]].filter(Boolean).join(" "),
       veiculoAtualLabel: state.motoristaVeiculoAtualPorId[cleanGuid(r[f.funcionario.id]).toLowerCase()] || ""
     })));
+    state.veiculos = sortByLabel(veiculos.map((r) => ({
+      id: r[f.veiculo.id],
+      label: formatVehicleSummary(r) || "(veículo)"
+    })));
     state.ordensPagamento = ops.map((r) => ({
       id: r[f.financeiro.id],
       label: r[f.financeiro.label] || r[f.financeiro.id]
@@ -2286,24 +2302,34 @@
   }
 
   function currentMotoristaVehicleLabel() {
+    const veiculoId = currentMotoristaVehicleId();
+    return veiculoId ? state.veiculoResumoPorId[veiculoId] || "" : "";
+  }
+
+  function currentMotoristaVehicleId() {
     const motoristaId = cleanGuid(el.motorista?.value || "").toLowerCase();
     if (!motoristaId) return "";
     const serviceDateTime = combineDateTime(el.saidaData?.value, el.saidaHora?.value, el.saidaMinuto?.value);
-    return predictedMotoristaVehicleLabel(motoristaId, serviceDateTime);
+    return predictedMotoristaVehicleId(motoristaId, serviceDateTime);
   }
 
   function predictedMotoristaVehicleLabel(motoristaId, serviceDateTime) {
+    const veiculoId = predictedMotoristaVehicleId(motoristaId, serviceDateTime);
+    return veiculoId ? state.veiculoResumoPorId[veiculoId] || "" : "";
+  }
+
+  function predictedMotoristaVehicleId(motoristaId, serviceDateTime) {
     if (!motoristaId) return "";
     let veiculoId = state.motoristaVeiculoAtualVeiculoIdPorId[motoristaId] || "";
     if (!serviceDateTime || !(serviceDateTime instanceof Date) || Number.isNaN(serviceDateTime.getTime())) {
-      return state.veiculoResumoPorId[veiculoId] || state.motoristaVeiculoAtualPorId[motoristaId] || "";
+      return veiculoId;
     }
     state.trocasCarro.forEach((troca) => {
       const effectiveAt = parseDateTimeInputValue(normalizeDateTimeRangeValue(troca.effectiveAt));
       if (!effectiveAt || effectiveAt > serviceDateTime) return;
       veiculoId = applyTrocaToMotoristaVehicle(motoristaId, veiculoId, troca);
     });
-    return state.veiculoResumoPorId[veiculoId] || "";
+    return veiculoId;
   }
 
   function applyTrocaToMotoristaVehicle(motoristaId, currentVehicleId, troca) {
@@ -2331,6 +2357,15 @@
     const label = currentMotoristaVehicleLabel();
     el.motoristaVeiculoAtual.hidden = !label;
     el.motoristaVeiculoAtual.textContent = label;
+  }
+
+  function markVehicleManual() {
+    state.vehicleOriginManual = true;
+  }
+
+  function syncAutomaticVehicleFromMotorista() {
+    if (state.vehicleOriginManual) return;
+    setSelectValue(el.veiculo, currentMotoristaVehicleId());
   }
 
   function buildPassengerServerSearchFilter(search, fields) {
@@ -3273,9 +3308,11 @@
       f.receber,
       f.cr,
       f.formaPagamento,
+      f.origemVeiculo,
       "_cr40f_cliente_value",
       "_cr40f_solicitante_value",
       "_cr40f_motorista_value",
+      "_cr40f_veiculo_value",
       "_cr40f_financeiro_value"
     ].join(",");
 
@@ -3358,7 +3395,10 @@
     setSelectValue(el.cliente, r._cr40f_cliente_value);
     setSelectValue(el.solicitante, r._cr40f_solicitante_value);
     setSelectValue(el.motorista, r._cr40f_motorista_value);
+    setSelectValue(el.veiculo, r._cr40f_veiculo_value);
     setSelectValue(el.op, r._cr40f_financeiro_value);
+    state.vehicleOriginManual = Number(r[f.origemVeiculo]) === 100000001;
+    syncAutomaticVehicleFromMotorista();
 
     el.trajeto.value = r[f.trajeto] || "";
     el.destino.value = r[f.destino] || "";
@@ -3393,6 +3433,7 @@
     renderLookupSelect(el.bdCliente, sortByLabel(state.clientes));
     renderLookupSelect(el.solicitante, state.passageiros);
     renderLookupSelect(el.motorista, sortByLabel(state.motoristas));
+    renderLookupSelect(el.veiculo, state.veiculos);
     renderLookupSelect(el.op, state.ordensPagamento);
     renderChoiceSelect(el.bdClassificacao, state.options.bdClassificacao);
     renderChoiceSelect(el.bdSexo, state.options.bdSexo);
@@ -5872,6 +5913,8 @@
         tipoServico: el.tipoServico.value,
         tipoVeiculo: el.tipoVeiculo.value,
         motorista: el.motorista.value,
+        veiculo: el.veiculo.value,
+        vehicleOriginManual: state.vehicleOriginManual,
         trajeto: el.trajeto.value,
         observacao: el.observacao.value,
         receber: el.receber.checked,
@@ -5943,6 +5986,8 @@
       setSelectValue(el.tipoServico, fields.tipoServico || "");
       setSelectValue(el.tipoVeiculo, fields.tipoVeiculo || "");
       setSelectValue(el.motorista, fields.motorista || "");
+      setSelectValue(el.veiculo, fields.veiculo || "");
+      state.vehicleOriginManual = !!fields.vehicleOriginManual;
       setFieldValue(el.trajeto, fields.trajeto);
       setFieldValue(el.receber, fields.receber);
       setFieldValue(el.cotacao, formatCurrencyDisplayValue(fields.cotacao));
@@ -6018,6 +6063,8 @@
     setSelectValue(el.tipoServico, fields.tipoServico || "");
     setSelectValue(el.tipoVeiculo, fields.tipoVeiculo || "");
     setSelectValue(el.motorista, fields.motorista || "");
+    setSelectValue(el.veiculo, fields.veiculo || "");
+    state.vehicleOriginManual = !!fields.vehicleOriginManual;
     setFieldValue(el.trajeto, fields.trajeto);
     setFieldValue(el.receber, fields.receber);
     setFieldValue(el.cotacao, formatCurrencyDisplayValue(fields.cotacao));
@@ -11673,7 +11720,9 @@
     bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, context.importClient.id);
     bindLookup(payload, CONFIG.nav.solicitante, CONFIG.entitySets.passageiro, context.solicitanteRecord?.id || context.colOrdemPassageiros[0]?.guid);
     const motorista = findMotoristaByName(trecho.motoristaNome);
-    bindLookup(payload, CONFIG.nav.motorista, CONFIG.entitySets.funcionario, motorista?.id || el.motorista.value);
+    const motoristaId = motorista?.id || el.motorista.value;
+    bindLookup(payload, CONFIG.nav.motorista, CONFIG.entitySets.funcionario, motoristaId);
+    bindAutomaticVehicleLookup(payload, motoristaId, context.dataHoraPrincipal);
     return payload;
   }
 
@@ -12299,10 +12348,12 @@
     setChoice(payload, f.tipoServico, scheduleOverride ? scheduleOverride.tipoServico : el.tipoServico.value);
     setChoice(payload, f.tipoVeiculo, scheduleOverride ? scheduleOverride.tipoVeiculo : el.tipoVeiculo.value);
     setChoice(payload, f.formaPagamento, el.formaPagamento.value);
+    setChoice(payload, f.origemVeiculo, state.vehicleOriginManual ? 100000001 : 100000000);
 
     bindLookup(payload, CONFIG.nav.cliente, CONFIG.entitySets.cliente, el.cliente.value);
     bindLookup(payload, CONFIG.nav.solicitante, CONFIG.entitySets.passageiro, el.solicitante.value);
     bindLookup(payload, CONFIG.nav.motorista, CONFIG.entitySets.funcionario, scheduleOverride ? scheduleOverride.motorista : el.motorista.value);
+    bindReservaVehicleLookup(payload, scheduleOverride ? scheduleOverride.motorista : el.motorista.value, dataHora);
     bindLookup(payload, CONFIG.nav.financeiro, CONFIG.entitySets.financeiro, el.op.value);
     return payload;
   }
@@ -12545,6 +12596,26 @@
   function bindLookup(payload, navName, entitySet, id) {
     if (!id) return;
     payload[`${navName}@odata.bind`] = `/${entitySet}(${cleanGuid(id)})`;
+  }
+
+  function clearLookup(payload, navName) {
+    payload[`${navName}@odata.bind`] = null;
+  }
+
+  function bindAutomaticVehicleLookup(payload, motoristaId, dataHora) {
+    const veiculoId = predictedMotoristaVehicleId(cleanGuid(motoristaId).toLowerCase(), dataHora);
+    setChoice(payload, CONFIG.fields.reserva.origemVeiculo, 100000000);
+    if (veiculoId) bindLookup(payload, CONFIG.nav.veiculo, CONFIG.entitySets.veiculo, veiculoId);
+  }
+
+  function bindReservaVehicleLookup(payload, motoristaId, dataHora) {
+    if (state.vehicleOriginManual) {
+      setChoice(payload, CONFIG.fields.reserva.origemVeiculo, 100000001);
+      if (el.veiculo.value) bindLookup(payload, CONFIG.nav.veiculo, CONFIG.entitySets.veiculo, el.veiculo.value);
+      else clearLookup(payload, CONFIG.nav.veiculo);
+      return;
+    }
+    bindAutomaticVehicleLookup(payload, motoristaId, dataHora);
   }
 
   function resetAfterSuccess() {

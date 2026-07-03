@@ -33,6 +33,12 @@ assert.ok(html.includes('id="xlsxLibrarySource" type="application/x-formulario-v
 assert.ok(html.includes("new_idexterno"), "bundle deve conter o campo externo PG");
 assert.ok(html.includes("id=\"valorReceber\""), "bundle deve conter campo Valor a receber");
 assert.ok(html.includes("cr40f_valor_a_receber"), "bundle deve conter mapping do campo Valor a receber");
+assert.ok(html.includes("origemVeiculo: \"new_origemveiculo\""), "bundle deve mapear Origem do Veiculo da Geral");
+assert.ok(html.includes("veiculo: \"cr40f_veiculo\""), "bundle deve mapear lookup Veiculo da Geral");
+assert.ok(html.includes("veiculo: \"cr40f_Veiculo\""), "bundle deve usar nav property do lookup Veiculo");
+assert.ok(html.includes("setChoice(payload, f.origemVeiculo, state.vehicleOriginManual ? 100000001 : 100000000)"), "bundle deve marcar Manual quando usuario escolhe veiculo");
+assert.ok(html.includes("setChoice(payload, CONFIG.fields.reserva.origemVeiculo, 100000000)"), "bundle deve marcar Automatico no preenchimento automatico");
+assert.ok(html.includes("if (state.vehicleOriginManual) return;"), "bundle nao deve sobrescrever veiculo manual por regra automatica");
 assert.ok(html.includes("split-trecho"), "bundle deve expor acao Split na revisao de importacao");
 assert.ok(html.includes("importedTrechoReturnDateTimeLocal"), "bundle deve editar horario previsto de retorno importado");
 assert.ok(!html.includes("import-decision-panel"), "bundle nao deve conter painel de decisao operacional da PG");
