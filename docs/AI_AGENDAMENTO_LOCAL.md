@@ -1,5 +1,9 @@
 # Agendamento IA local — DEV
 
+## Metadados confirmados
+
+O Web Resource `new_formulario_geral.html` está na `Solução Padrão`. A tabela criada pelo conector DEV ficou com o nome lógico `cr40f_solicitacaoiaagendamento` e foi conferida via `describe`, incluindo os lookups reais para `cr40f_clientes1`, `cr40f_bancodedados` e `cr40f_reservadeveiculos`. O conector aplica o publisher padrão `cr40f`; portanto, antes de uma publicação futura, o componente deve ser incluído na solução do formulário pelo maker/PAC para manter o ALM da solução. Nenhuma alteração foi feita em PROD.
+
 ## Fluxo
 
 O Codex Desktop executa a cada 15 minutos um prompt que chama `node scripts/ai_schedule_worker.mjs pull`. A pasta do Outlook deve ser preenchida manualmente. O resultado contém apenas assunto, remetente, recebimento, corpo normalizado e o sinalizador de anexos; anexos não são lidos.
