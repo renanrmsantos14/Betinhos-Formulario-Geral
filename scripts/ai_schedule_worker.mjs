@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { listFolderMessages, sendMail } from "./outlook_graph.mjs";
 import { buildDraftRecords, normalizeEmailBody, readJsonFile } from "./ai_schedule_core.mjs";
@@ -10,6 +10,17 @@ function stableMessageId(message) {
   return String(message?.id || message?.internetMessageId || "").trim();
 }
 
+async function writeMessageIfChanged(filePath, message) {
+  const serialized = JSON.stringify(message, null, 2);
+  try {
+    const previous = JSON.parse(await readFile(filePath, "utf8"));
+    if (JSON.stringify(previous) === JSON.stringify(message)) return;
+  } catch {
+    // Arquivo ausente ou inválido: substituir pela mensagem normalizada.
+  }
+  await writeFile(filePath, serialized, "utf8");
+}
+
 export async function pullMessages() {
   const result = await listFolderMessages(process.env.OUTLOOK_FOLDER_ID, process.env.AI_MESSAGE_TOP || 25);
   const messages = (result.value || []).map((message) => ({
@@ -18,7 +29,7 @@ export async function pullMessages() {
     body: { contentType: "text", content: normalizeEmailBody(message.body?.content || message.bodyPreview || "") }
   }));
   await mkdir(localRoot, { recursive: true });
-  await Promise.all(messages.filter((message) => message.id).map((message) => writeFile(path.join(localRoot, `${encodeURIComponent(message.id)}.json`), JSON.stringify(message, null, 2), "utf8")));
+  await Promise.all(messages.filter((message) => message.id).map((message) => writeMessageIfChanged(path.join(localRoot, `${encodeURIComponent(message.id)}.json`), message)));
   return messages;
 }
 
