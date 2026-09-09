@@ -37,6 +37,15 @@ function assertDraftTable(target = {}) {
   return draftTable(target);
 }
 
+// Dataverse Web API uses the entity set (collection) name, which can differ
+// from the logical table name.  The current publisher convention is plural-
+// by-suffix, but allow an explicit value whenever metadata reports another
+// collection name.
+function draftEntitySet(target = {}) {
+  const table = assertDraftTable(target);
+  return String(target.entitySet || process.env.AI_DRAFT_ENTITY_SET || `${table}s`).trim();
+}
+
 async function dataverseToken(baseUrl, targetName = "dataverse") {
   const cacheKey = `dataverse-${String(targetName).toLowerCase().replace(/[^a-z0-9_-]/g, "-")}`;
   return getDelegatedAccessToken({ scope: `${baseUrl}/user_impersonation`, cacheKey, tenantEnv: "OUTLOOK_TENANT_ID", clientEnv: "OUTLOOK_CLIENT_ID" });
@@ -57,7 +66,7 @@ export function draftTargets() {
   const raw = process.env.AI_DRAFT_TARGETS_JSON;
   if (!raw) {
     const url = required("DATAVERSE_URL");
-    return [{ name: "Dataverse", url, table: draftTable(), fields: draftFields(), statusValues: draftStatusValues() }];
+    return [{ name: "Dataverse", url, table: draftTable(), entitySet: draftEntitySet(), fields: draftFields(), statusValues: draftStatusValues() }];
   }
   let targets;
   try { targets = JSON.parse(raw); } catch { throw new Error("AI_DRAFT_TARGETS_JSON inválido."); }
@@ -68,12 +77,13 @@ export function draftTargets() {
     const name = String(value.name || `Dataverse ${index + 1}`).trim();
     if (!url) throw new Error(`URL ausente no destino ${name}.`);
     const table = assertDraftTable(value);
-    return { ...value, name, url, table, fields: targetFields(value), statusValues: targetStatusValues(value) };
+    return { ...value, name, url, table, entitySet: draftEntitySet(value), fields: targetFields(value), statusValues: targetStatusValues(value) };
   });
 }
 
 export async function upsertDraft(record, target = {}) {
   const table = assertDraftTable(target);
+  const entitySet = draftEntitySet(target);
   const fields = targetFields(target);
   const statusValues = targetStatusValues(target);
   const baseUrl = String(target.url || required("DATAVERSE_URL")).replace(/\/$/, "");
@@ -81,7 +91,7 @@ export async function upsertDraft(record, target = {}) {
   const headers = { authorization: `Bearer ${token}`, "content-type": "application/json", Accept: "application/json" };
   const stableValue = String(record.messageId || "").replace(/'/g, "''");
   const lookupFields = [fields.id || fields.stableMessageId, fields.status].filter(Boolean).join(",");
-  const lookupUrl = `${baseUrl}/api/data/v9.2/${table}?$select=${encodeURIComponent(lookupFields)}&$filter=${encodeURIComponent(`${fields.stableMessageId} eq '${stableValue}' and ${fields.ordinal} eq ${Number(record.ordinal) || 0}`)}`;
+  const lookupUrl = `${baseUrl}/api/data/v9.2/${entitySet}?$select=${encodeURIComponent(lookupFields)}&$filter=${encodeURIComponent(`${fields.stableMessageId} eq '${stableValue}' and ${fields.ordinal} eq ${Number(record.ordinal) || 0}`)}`;
   const existingResponse = await fetch(lookupUrl, { headers });
   if (!existingResponse.ok) throw new Error(`Dataverse respondeu ${existingResponse.status} na busca de idempotência.`);
   const existing = await existingResponse.json();
@@ -107,7 +117,7 @@ export async function upsertDraft(record, target = {}) {
   put("extractorVersion", record.extractorVersion);
   put("hasAttachments", record.hasAttachments);
   put("processedAt", record.processedAt);
-  const response = await fetch(entityId ? `${baseUrl}/api/data/v9.2/${table}(${entityId})` : `${baseUrl}/api/data/v9.2/${table}`, {
+  const response = await fetch(entityId ? `${baseUrl}/api/data/v9.2/${entitySet}(${entityId})` : `${baseUrl}/api/data/v9.2/${entitySet}`, {
     method: entityId ? "PATCH" : "POST",
     headers,
     body: JSON.stringify(payload)
