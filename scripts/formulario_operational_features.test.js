@@ -182,6 +182,17 @@ const htmlIds = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => mat
     assert.ok(htmlIds.has(id), `Binding JS sem elemento no HTML: #${id}`);
   });
 
+includes(html, "class=\"ai-draft-workspace\"", "workspace C3 deve separar extração e fonte");
+includes(html, "id=\"aiDraftSourceEmailTab\"", "aba de e-mail original deve existir");
+includes(html, "id=\"aiDraftSourceAlertsTab\"", "aba de alertas deve existir");
+includes(html, "id=\"aiDraftApproveHint\"", "aprovação deve expor motivo de bloqueio");
+includes(app, "function aiDraftReadiness", "prontidão da aprovação deve ter cálculo único");
+includes(app, "el.aiDraftApprove.disabled = !readiness.ready", "aprovação deve bloquear visualmente pendências");
+includes(app, "Texto original removido conforme política de retenção", "corpo expirado deve ter fallback explícito");
+includes(css, ".ai-draft-workspace", "layout C3 deve ter workspace próprio");
+includes(css, "@container (max-width:1080px)", "workspace deve responder à largura do Web Resource");
+includes(css, ".ai-draft-source", "fonte do e-mail deve ter painel próprio");
+
 includes(app, "{ value: 202410005, label: \"Pendente\" }", "fallback real de Status de Faturamento");
 includes(app, "{ value: 202410000, label: \"Cartao de credito\" }", "fallback real de Forma de Pagamento");
 includes(app, "{ value: 202410000, label: \"Guarulhos\" }", "fallback real de Tipo do Servico");
@@ -440,12 +451,12 @@ includes(app, "function syncActivationSwitchLabels()", "switch de ativacao deve 
 includes(app, "text.textContent = input.checked ? \"Ativado\" : \"Desativado\";", "switch desligado deve mostrar Desativado");
 const mobileActivationHeadRule = extractCssRule(css, "  .section-head.inline.activation-head {");
 includes(mobileActivationHeadRule, "position: sticky;", "mobile deve fixar cabecalho de ativacao no topo");
-includes(mobileActivationHeadRule, "grid-template-columns: minmax(0, 1fr) auto auto;", "mobile deve manter titulo, ativacao e receber no cabecalho");
+includes(mobileActivationHeadRule, "grid-template-columns: repeat(2, minmax(0, 1fr));", "mobile deve distribuir ativacao e receber em duas colunas");
 includes(mobileActivationHeadRule, "align-items: center;", "mobile deve centralizar titulo com botao de ativacao");
 includes(mobileActivationHeadRule, "padding: 0 2px 3px 0;", "mobile deve reduzir padding do bloco de ativacao");
 const mobileActivationSwitchRule = extractCssRule(css, "  .activation-head .activation-switch {");
 includes(mobileActivationSwitchRule, "justify-self: end;", "mobile deve fixar botao de ativacao no canto superior direito");
-includes(mobileActivationSwitchRule, "width: 146px;", "mobile deve manter largura fixa para Ativado e Desativado");
+includes(mobileActivationSwitchRule, "width: 100%;", "mobile deve ocupar a coluna com o botao de ativacao");
 includes(mobileActivationSwitchRule, "padding: 6px 7px;", "mobile deve reduzir padding do botao de ativacao");
 const returnDateTimeFieldRule = extractCssRule(css, "#tab-panel-return .field.datetime-field,");
 includes(returnDateTimeFieldRule, "flex: 1 1 min(100%, var(--datetime-field-width));", "data de retorno deve crescer quando sobrar espaco");
@@ -515,6 +526,13 @@ includes(app, "idExterno: \"new_idexterno\"", "campo externo PG no payload da re
 const importedReservaTenarisIdFieldFn = extractFunction(app, "importedReservaTenarisIdField");
 includes(importedReservaTenarisIdFieldFn, "return CONFIG.fields.reserva.idExterno;", "PG importada deve usar campo texto new_idexterno");
 excludes(importedReservaTenarisIdFieldFn, "idTenaris", "PG importada nao deve usar cr40f_idtenaris inteiro");
+includes(app, "splitGroupId", "Split deve manter grupo temporario compartilhado");
+includes(app, "source.splitRole = \"outbound\"", "Split deve identificar trecho de ida");
+includes(app, "splitRole: \"return\"", "Split deve identificar trecho de retorno");
+includes(app, "function isAuthorizedImportedSplitSibling", "mesma PG so pode ser liberada para irmao Split autorizado");
+includes(app, "findExistingImportedReservasByProgramacao", "validacao de PG deve consultar todos os registros existentes");
+excludes(app, "?$select=${select}&$filter=${filter}&$top=1", "validacao de PG nao deve limitar ao primeiro registro");
+includes(app, "Split vinculado", "cards do Split devem exibir selo de vinculo");
 includes(app, "importDefaults:", "configuracao padrao de importacao");
 includes(app, "clienteLabel: \"Embraer\"", "cliente padrao Embraer para importacao");
 includes(app, "function getImportClient", "resolucao do cliente padrao Embraer");
@@ -585,7 +603,7 @@ excludes(app, "async function applyImportedTrechoToForm", "servico importado nao
 includes(app, "async function checkImportedProgramDuplicates", "checagem de duplicidade por servico importado");
 includes(app, "function scoreImportedTrechoDuplicate", "pontuacao de duplicidade por horario/trajeto/endereco/passageiros");
 includes(app, "possibleDuplicateMatches", "alerta de servico parecido sem bloquear automaticamente");
-includes(app, "await findExistingImportedReservaByProgramacao(trecho.programacao)", "salvamento importado deve revalidar PG antes de criar reserva");
+includes(app, "await findExistingImportedReservasByProgramacao(trecho.programacao)", "salvamento importado deve revalidar todos os registros da PG antes de criar reserva");
 includes(app, "markImportedTrechoAsDuplicate(trecho, existingReserva", "salvamento importado deve bloquear PG existente antes do create");
 includes(app, "if (isDataverseDuplicateKeyError(error))", "erro Dataverse de chave duplicada deve ter tratamento especifico");
 includes(app, "const existing = await findImportedExistingPerson(person);", "duplicidade de passageiro importado deve tentar vincular cadastro existente");

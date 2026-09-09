@@ -281,19 +281,45 @@
         <div id="importReviewPrograms" class="import-review-programs"></div>
       </section>
       <section id="tab-panel-ai" class="panel ai-review-panel" data-panel="ai" aria-labelledby="aiReviewTitle" hidden>
-        <div class="panel-header">
+        <div class="panel-header ai-review-header">
           <div><p class="eyebrow">Automação local</p><h2 id="aiReviewTitle">Solicitações IA</h2><p id="aiDraftSummary" class="muted">Revise os trechos extraídos do Outlook antes de criar a reserva.</p></div>
           <button id="aiDraftRefresh" class="button button-secondary" type="button">Atualizar</button>
         </div>
+        <div class="ai-review-toolbar" role="search" aria-label="Filtros de solicitações IA">
+          <label class="field ai-filter-search"><span>Buscar</span><input id="aiDraftSearch" type="search" placeholder="Assunto, remetente, cliente ou passageiro" autocomplete="off"></label>
+          <label class="field ai-filter-status"><span>Status</span><select id="aiDraftStatusFilter"><option value="active">Pendentes, bloqueadas e erros</option><option value="Pendente">Pendentes</option><option value="Bloqueado">Bloqueadas</option><option value="Erro">Erros</option><option value="Pronto">Prontas</option><option value="Agendado">Agendadas</option><option value="Descartado">Descartadas</option><option value="all">Todas</option></select></label>
+          <span id="aiDraftEnvironment" class="ai-environment-badge" aria-live="polite"></span><button id="aiDraftSeed" class="button button-secondary" type="button" hidden>Restaurar exemplos</button>
+        </div>
         <div id="aiDraftSetup" class="notice" hidden></div>
         <div class="ai-review-grid">
-          <div id="aiDraftList" class="ai-draft-list" aria-live="polite"></div>
+          <aside class="ai-draft-list-pane" aria-label="Fila de solicitações IA">
+            <div id="aiDraftList" class="ai-draft-list" aria-live="polite"></div>
+          </aside>
           <article id="aiDraftDetail" class="ai-draft-detail" hidden>
             <div class="ai-draft-detail-head"><div><p id="aiDraftMeta" class="eyebrow"></p><h3 id="aiDraftTitle"></h3></div><span id="aiDraftStatus" class="status-pill"></span></div>
-            <p id="aiDraftWarnings" class="notice notice-warning" hidden></p>
-            <dl id="aiDraftFields" class="ai-draft-fields"></dl>
-            <details><summary>Texto original</summary><pre id="aiDraftBody" class="ai-draft-body"></pre></details>
-            <div class="ai-draft-actions"><button id="aiDraftDiscard" class="button button-secondary" type="button">Descartar trecho</button><button id="aiDraftApprove" class="button button-primary" type="button">Aprovar e agendar</button></div>
+            <div class="ai-draft-workspace">
+              <section class="ai-draft-extracted" aria-labelledby="aiDraftExtractedTitle">
+                <div class="ai-subsection-head"><h4 id="aiDraftExtractedTitle">Dados extraídos</h4><span id="aiDraftReadiness" class="ai-readiness" aria-live="polite"></span></div>
+                <dl id="aiDraftFields" class="ai-draft-fields"></dl>
+                <div id="aiDraftCandidates" class="ai-draft-candidates" hidden></div>
+                <p id="aiDraftWarnings" class="notice notice-warning" hidden></p>
+              </section>
+              <aside class="ai-draft-source" aria-label="Fonte e alertas da solicitação">
+                <div class="ai-source-tabs" role="tablist" aria-label="Detalhes da solicitação">
+                  <button id="aiDraftSourceEmailTab" class="ai-source-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="aiDraftSourceEmailPanel" data-ai-source-tab="email">E-mail original</button>
+                  <button id="aiDraftSourceAlertsTab" class="ai-source-tab" type="button" role="tab" aria-selected="false" aria-controls="aiDraftSourceAlertsPanel" data-ai-source-tab="alerts">Alertas <span id="aiDraftAlertCount" class="ai-alert-count" hidden>0</span></button>
+                </div>
+                <section id="aiDraftSourceEmailPanel" class="ai-source-panel" role="tabpanel" aria-labelledby="aiDraftSourceEmailTab">
+                  <div id="aiDraftSourceMeta" class="ai-source-meta"></div>
+                  <pre id="aiDraftBody" class="ai-draft-body"></pre>
+                  <p id="aiDraftAttachmentNote" class="ai-attachment-note" hidden></p>
+                </section>
+                <section id="aiDraftSourceAlertsPanel" class="ai-source-panel" role="tabpanel" aria-labelledby="aiDraftSourceAlertsTab" hidden>
+                  <div id="aiDraftAlertList" class="ai-alert-list"></div>
+                </section>
+              </aside>
+            </div>
+            <div class="ai-draft-actions"><button id="aiDraftDiscard" class="button button-secondary" type="button">Descartar trecho</button><button id="aiDraftOpenForm" class="button button-secondary" type="button">Abrir no formulário</button><button id="aiDraftResume" class="button button-secondary" type="button" hidden>Retomar</button><span id="aiDraftApproveHint" class="ai-approve-hint" aria-live="polite"></span><button id="aiDraftApprove" class="button button-primary" type="button">Aprovar e agendar</button></div>
           </article>
         </div>
       </section>
@@ -482,7 +508,7 @@
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.5.1</span>
+        <span>v</span><span id="codeVersionText">1.11.1</span>
       </footer>
     </main>
 
@@ -695,11 +721,18 @@
         legJson: "cr40f_trechojson",
         status: "cr40f_status",
         warnings: "cr40f_alertas",
+        missingFields: "cr40f_camposfaltantes",
+        reviewJson: "cr40f_revisaojson",
+        reviewedAt: "cr40f_revisadoem",
+        reviewedBy: "cr40f_revisadopor",
+        matchCandidates: "cr40f_matchcandidatos",
+        partialIds: "cr40f_idscriadosparcialmente",
         confidence: "cr40f_confianca",
         extractorVersion: "cr40f_versaoextrator",
         hasAttachments: "cr40f_possuianexos",
         processedAt: "cr40f_processadoem"
       },
+      entitySet: "cr40f_solicitacaoiaagendamentos",
       statusValues: {
         pending: 100000000,
         ready: 100000001,

@@ -170,6 +170,8 @@
     if (!configured || typeof configured !== "object" || !configured.entity) return null;
     return {
       entity: String(configured.entity),
+      entitySet: String(configured.entitySet || `${configured.entity}s`),
+      reviewedByBind: String(configured.reviewedByBind || ""),
       fields: configured.fields && typeof configured.fields === "object" ? configured.fields : {},
       statusValues: configured.statusValues && typeof configured.statusValues === "object" ? configured.statusValues : {},
       statusLabels: configured.statusLabels && typeof configured.statusLabels === "object" ? configured.statusLabels : {}
@@ -177,6 +179,7 @@
   })();
   const QUERY_MOCK_MODE = (URL_PARAMS.get("mock") === "1" || URL_PARAMS.get("mockData") === "1");
   const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
+  const MOCK_AI_DRAFTS_KEY = "formulario_geral_mock_ai_drafts_v2";
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
   const APP_ERROR_LOG_QUEUE_KEY = "formulario_geral_error_log_queue_v1";
   const APP_ERROR_LOG_MAX_QUEUE = 30;
@@ -187,8 +190,8 @@
   const BRAND_LOGO_WEBRESOURCE = "cr40f_LogoBetinhosB";
   const MAX_FREQUENT_SERVICE_DAYS = 90;
   const MAX_FREQUENT_SERVICE_RECORDS = 120;
-  const IMPORT_SAVE_CONCURRENCY = 1;
   const INITIAL_PASSENGER_LOOKUP_LIMIT = 5000;
+  const AI_DRAFT_OPTIONAL_KEYS = new Set(["missingFields", "reviewJson", "reviewedAt", "reviewedBy", "matchCandidates", "partialIds"]);
   const PASSENGER_PHOTO_FLOW_URL_DEV = "https://25a2ab78cf07ee41a124457aa2c29a.ea.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/293ac35160b04517814dba9cd65367e5/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=_LO4SdhQdi2DjpGBp9kBqAXxBDRw5QgaKYmzf1hvXxs";
   const PASSENGER_PHOTO_FLOW_URL_PROD = "https://6847878f5a6fe08baed6d7119975e3.e1.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/a0a24686b4d04443b83b6f281ca0fede/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=PT75nHGbRYJ78_oudaGod_rpV_z3_1FDnklPYsQT3Ek";
   const PASSENGER_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
@@ -453,6 +456,10 @@
     aiDraftSummary: $("aiDraftSummary"),
     aiDraftSetup: $("aiDraftSetup"),
     aiDraftRefresh: $("aiDraftRefresh"),
+    aiDraftSearch: $("aiDraftSearch"),
+    aiDraftStatusFilter: $("aiDraftStatusFilter"),
+    aiDraftEnvironment: $("aiDraftEnvironment"),
+    aiDraftSeed: $("aiDraftSeed"),
     aiDraftList: $("aiDraftList"),
     aiDraftDetail: $("aiDraftDetail"),
     aiDraftMeta: $("aiDraftMeta"),
@@ -460,8 +467,21 @@
     aiDraftStatus: $("aiDraftStatus"),
     aiDraftWarnings: $("aiDraftWarnings"),
     aiDraftFields: $("aiDraftFields"),
+    aiDraftCandidates: $("aiDraftCandidates"),
+    aiDraftReadiness: $("aiDraftReadiness"),
     aiDraftBody: $("aiDraftBody"),
+    aiDraftSourceMeta: $("aiDraftSourceMeta"),
+    aiDraftAttachmentNote: $("aiDraftAttachmentNote"),
+    aiDraftSourceEmailTab: $("aiDraftSourceEmailTab"),
+    aiDraftSourceAlertsTab: $("aiDraftSourceAlertsTab"),
+    aiDraftSourceEmailPanel: $("aiDraftSourceEmailPanel"),
+    aiDraftSourceAlertsPanel: $("aiDraftSourceAlertsPanel"),
+    aiDraftAlertCount: $("aiDraftAlertCount"),
+    aiDraftAlertList: $("aiDraftAlertList"),
+    aiDraftApproveHint: $("aiDraftApproveHint"),
     aiDraftApprove: $("aiDraftApprove"),
+    aiDraftOpenForm: $("aiDraftOpenForm"),
+    aiDraftResume: $("aiDraftResume"),
     aiDraftDiscard: $("aiDraftDiscard"),
     tabBd: $("tabBd"),
     tabReturn: $("tabReturn"),
@@ -518,7 +538,12 @@
     importReviewFilter: "all",
     aiDrafts: [],
     selectedAiDraft: null,
+    aiDraftFilter: "active",
+    aiDraftSearch: "",
+    aiDraftReview: null,
+    aiDraftIdentityOverrides: {},
     aiDraftLoading: false,
+    aiDraftSourceTab: "email",
     saveLog: [],
     draftTimer: null,
     draftRestoring: false,
@@ -1162,8 +1187,16 @@
     el.globalImportHistoryActions?.addEventListener("click", handleGlobalImportHistoryAction);
     el.importXlsxButton?.addEventListener("click", openXlsxImportPicker);
     el.aiDraftRefresh?.addEventListener("click", loadAiDrafts);
+    el.aiDraftSearch?.addEventListener("input", (event) => { state.aiDraftSearch = event.target.value || ""; renderAiDrafts(); });
+    el.aiDraftStatusFilter?.addEventListener("change", (event) => { state.aiDraftFilter = event.target.value || "active"; renderAiDrafts(); });
+    el.aiDraftSeed?.addEventListener("click", seedMockAiDrafts);
     el.aiDraftList?.addEventListener("click", handleAiDraftListClick);
+    el.aiDraftFields?.addEventListener("change", handleAiDraftCandidateChange);
+    el.aiDraftCandidates?.addEventListener("change", handleAiDraftCandidateChange);
+    [el.aiDraftSourceEmailTab, el.aiDraftSourceAlertsTab].forEach((tab) => tab?.addEventListener("click", () => setAiDraftSourceTab(tab.dataset.aiSourceTab)));
     el.aiDraftApprove?.addEventListener("click", approveSelectedAiDraft);
+    el.aiDraftOpenForm?.addEventListener("click", openSelectedAiDraftInForm);
+    el.aiDraftResume?.addEventListener("click", resumeSelectedAiDraft);
     el.aiDraftDiscard?.addEventListener("click", discardSelectedAiDraft);
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
     document.addEventListener("dragenter", handleXlsxImportDragEnter);
@@ -3291,6 +3324,56 @@
     return passenger;
   }
 
+  function buildMockAiDrafts() {
+    const now = new Date();
+    const iso = (minutes) => new Date(now.getTime() - minutes * 60000).toISOString();
+    const extraction = (overrides = {}) => JSON.stringify({ isServiceRequest: true, client: "Cliente Demo", clientId: "cliente-demo", requester: "Maria Souza", requesterId: "pax-1", passengers: [{ id: "pax-1", name: "Maria Souza", phone: "(11) 99999-0000", email: "maria@example.com" }], legs: [], warnings: [], missingFields: [], matchCandidates: {}, confidence: 0.94, extractorVersion: "mock-1.0.0", ...overrides });
+    const leg = (overrides = {}) => JSON.stringify({ ordinal: 1, type: "ida", date: "2026-09-16", time: "09:30", origin: "Av. Paulista, 1000", destination: "Aeroporto de Guarulhos", route: "São Paulo / Guarulhos", notes: "", ...overrides });
+    const row = (id, subject, status, overrides = {}) => ({ cr40f_solicitacaoiaagendamentoid: id, cr40f_identificadormensagem: `mock-message-${id}`, cr40f_conversationid: overrides.conversationId || `mock-conversation-${id}`, cr40f_assunto: subject, cr40f_remetente: overrides.sender || "operacao@betinhos.local", cr40f_recebimento: iso(overrides.minutes ?? 30), cr40f_corponormalizado: overrides.body || "Solicitação de transporte para teste local.", cr40f_extracaojson: overrides.extractionJson ?? extraction(overrides.extraction || {}), cr40f_ordemtrecho: overrides.ordinal || 1, cr40f_tipotrecho: overrides.legType || "ida", cr40f_trechojson: leg(overrides.leg || {}), cr40f_status: status, cr40f_statusname: ({ 100000000: "Pendente", 100000001: "Pronto", 100000002: "Bloqueado", 100000003: "Agendado", 100000004: "Descartado", 100000005: "Erro" })[status], cr40f_alertas: overrides.warnings || "", cr40f_camposfaltantes: overrides.missingFields || "", cr40f_matchcandidatos: overrides.matchCandidates ? JSON.stringify(overrides.matchCandidates) : "", cr40f_idscriadosparcialmente: overrides.partialIds || "", cr40f_confianca: overrides.confidence ?? 0.94, cr40f_versaoextrator: "mock-1.0.0", cr40f_possuianexos: !!overrides.hasAttachments });
+    return [
+      row("mock-pending", "Pedido novo — identidade não confirmada", 100000000, { extraction: { clientId: "", requesterId: "", passengers: [{ name: "Pessoa Nova", phone: "(11) 98888-1111" }], matchCandidates: {} }, warnings: "Cliente e passageiro aguardam confirmação.", minutes: 8 }),
+      row("mock-ready-1", "Transferência executiva — ida e retorno", 100000001, { conversationId: "mock-roundtrip", leg: { date: "2026-09-18", time: "07:00", origin: "J&J São José dos Campos", destination: "GRU" }, minutes: 16 }),
+      row("mock-ready-2", "Transferência executiva — ida e retorno", 100000001, { conversationId: "mock-roundtrip", ordinal: 2, legType: "retorno", leg: { ordinal: 2, type: "retorno", date: "2026-09-20", time: "18:30", origin: "GRU", destination: "J&J São José dos Campos" }, minutes: 16 }),
+      row("mock-ambiguous", "Solicitação com nomes parecidos", 100000002, { extraction: { clientId: "", requesterId: "", passengers: [{ id: "", name: "Carlos", phone: "" }], matchCandidates: { client: [{ id: "cliente-demo", name: "Cliente Demo", score: 3, reasons: ["nome aproximado"] }, { id: "cliente-tenaris", name: "Tenaris", score: 3, reasons: ["nome aproximado"] }], requester: [], passengers: [[{ id: "pax-1", name: "Carlos Mendes", score: 2, reasons: ["nome parcialmente coincidente"] }, { id: "pax-2", name: "Carlos Mendes Filho", score: 2, reasons: ["nome parcialmente coincidente"] }]] } }, warnings: "Correspondência ambígua: confirme os registros.", minutes: 25 }),
+      row("mock-vague", "Data e horário a confirmar", 100000002, { extraction: { legs: [] }, leg: { date: "", time: "", origin: "São Paulo", destination: "Campinas", vagueDate: true, vagueTime: true }, warnings: "Data e horário informados de forma vaga.", minutes: 38 }),
+      row("mock-error", "Falha de sincronização PROD", 100000005, { warnings: "Ambiente PROD: tabela não encontrada (404). DEV não foi interrompido.", minutes: 52 }),
+      row("mock-graph-timeout", "Outlook indisponível", 100000005, { warnings: "Microsoft Graph: timeout ao ler a pasta. Nenhum rascunho novo foi alterado.", body: "Cenário de teste: indisponibilidade temporária do Outlook/Graph.", minutes: 58 }),
+      row("mock-token-expired", "Token expirado", 100000005, { warnings: "Autenticação do Outlook expirada. Reautentique antes da próxima execução.", body: "Cenário de teste: refresh token ausente ou expirado.", minutes: 62 }),
+      row("mock-json-invalid", "Extração inválida", 100000005, { extractionJson: "{ \"isServiceRequest\": true,", warnings: "JSON da extração inválido; o trecho precisa ser reprocessado.", minutes: 66 }),
+      row("mock-partial", "Criação parcial — retomar", 100000005, { warnings: "Reserva criada, mas uma relação de passageiro falhou. Retomar usa os IDs já criados.", partialIds: JSON.stringify({ reservationId: "mock-reserva-parcial-001", relationIds: [] }), minutes: 68 }),
+      row("mock-attachments", "Pedido com anexo não analisado", 100000001, { hasAttachments: true, warnings: "Há anexo neste e-mail; o MVP não interpreta anexos.", body: "Solicitação de transporte. [Anexo presente — não analisado]", minutes: 72 }),
+      row("mock-relative-date", "Data relativa resolvida", 100000001, { leg: { date: "2026-09-10", time: "14:00", origin: "Hotel Unique", destination: "GRU", notes: "‘Amanhã’ resolvido pelo recebimento em America/Sao_Paulo." }, body: "Pode ser amanhã às 14h, do Hotel Unique para GRU.", minutes: 75 }),
+      row("mock-multi-1", "Vários serviços no mesmo e-mail", 100000001, { conversationId: "mock-multi-service", ordinal: 1, leg: { date: "2026-09-22", time: "08:00", origin: "Congonhas", destination: "Escritório Faria Lima" }, minutes: 80 }),
+      row("mock-multi-2", "Vários serviços no mesmo e-mail", 100000001, { conversationId: "mock-multi-service", ordinal: 2, legType: "ida", leg: { ordinal: 2, date: "2026-09-23", time: "08:00", origin: "Congonhas", destination: "Escritório Faria Lima" }, minutes: 80 }),
+      row("mock-multi-3", "Vários serviços no mesmo e-mail", 100000001, { conversationId: "mock-multi-service", ordinal: 3, legType: "retorno", leg: { ordinal: 3, type: "retorno", date: "2026-09-23", time: "18:00", origin: "Escritório Faria Lima", destination: "Congonhas" }, minutes: 80 }),
+      row("mock-scheduled", "Já agendado — somente leitura", 100000003, { minutes: 70 }),
+      row("mock-discarded", "Descartado pelo operador", 100000004, { minutes: 90 })
+    ];
+  }
+
+  function getMockAiDrafts() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(MOCK_AI_DRAFTS_KEY) || "null");
+      return Array.isArray(parsed) && parsed.length ? parsed : buildMockAiDrafts();
+    } catch { return buildMockAiDrafts(); }
+  }
+
+  function setMockAiDrafts(rows) { localStorage.setItem(MOCK_AI_DRAFTS_KEY, JSON.stringify(rows)); }
+
+  function seedMockAiDrafts() {
+    setMockAiDrafts(buildMockAiDrafts());
+    state.aiDrafts = getMockAiDrafts();
+    state.selectedAiDraft = null;
+    renderAiDrafts();
+    toast("Exemplos de solicitações IA restaurados.", "success");
+  }
+
+  function updateMockAiDraftStatus(draft, status, extra = {}) {
+    const rows = getMockAiDrafts().map((row) => aiDraftId(row) === aiDraftId(draft) ? { ...row, cr40f_status: status, cr40f_statusname: ({ 100000000: "Pendente", 100000001: "Pronto", 100000002: "Bloqueado", 100000003: "Agendado", 100000004: "Descartado", 100000005: "Erro" })[status], ...extra } : row);
+    setMockAiDrafts(rows);
+    state.aiDrafts = rows;
+  }
+
   async function retrieveAll(entity, options) {
     if (!state.xrm) return [];
     const rows = [];
@@ -3504,6 +3587,203 @@
     return aiDraftValue(row, "id") || row?.["@odata.etag"] || "";
   }
 
+  function aiDraftEnvironmentLabel() {
+    const url = String(state.xrm?.Utility?.getGlobalContext?.().getClientUrl?.() || "").toLowerCase();
+    if (url.includes("org23b93544")) return "DEV";
+    if (url.includes("orgf261ae8e")) return "PROD";
+    return url ? "ambiente atual" : "local";
+  }
+
+  function parseAiDraftJson(row, key) {
+    try { return JSON.parse(aiDraftValue(row, key) || "{}"); } catch { return {}; }
+  }
+
+  function aiDraftExtractionForRow(row) {
+    const extraction = parseAiDraftJson(row, "extractionJson");
+    const overrides = state.aiDraftIdentityOverrides[aiDraftId(row)] || {};
+    if (overrides.clientId) extraction.clientId = overrides.clientId;
+    if (overrides.requesterId) extraction.requesterId = overrides.requesterId;
+    extraction.passengers = (extraction.passengers || []).map((passenger, index) => ({ ...passenger, id: overrides[`passenger:${index}`] || passenger.id || "" }));
+    return extraction;
+  }
+
+  function handleAiDraftCandidateChange(event) {
+    const select = event.target.closest("[data-ai-identity]");
+    const draft = state.selectedAiDraft;
+    if (!select || !draft) return;
+    const key = select.dataset.aiIdentity;
+    const id = select.value || "";
+    const draftKey = aiDraftId(draft);
+    state.aiDraftIdentityOverrides[draftKey] = { ...(state.aiDraftIdentityOverrides[draftKey] || {}), [key]: id };
+    renderAiDraftDetail();
+  }
+
+  function aiDraftCandidateGroups(draft, extraction) {
+    const candidates = extraction.matchCandidates || parseAiDraftJson(draft, "matchCandidates");
+    return {
+      client: Array.isArray(candidates?.client) ? candidates.client : [],
+      requester: Array.isArray(candidates?.requester) ? candidates.requester : [],
+      passengers: Array.isArray(candidates?.passengers) ? candidates.passengers : []
+    };
+  }
+
+  function aiDraftIdentityState(id, name, items) {
+    if (id) return { label: "Confirmado", tone: "confirmed" };
+    if (!name) return { label: "Não informado", tone: "missing" };
+    if (items.length > 1) return { label: "Múltiplos candidatos", tone: "warning" };
+    if (items.length === 1) return { label: "Confirmação pendente", tone: "warning" };
+    return { label: "Não encontrado", tone: "danger" };
+  }
+
+  function appendAiDraftField(label, value, identityKey = "", identityState = null) {
+    const dt = document.createElement("dt");
+    dt.textContent = label;
+    const dd = document.createElement("dd");
+    const valueNode = document.createElement("span");
+    valueNode.className = "ai-field-value";
+    valueNode.textContent = value || "Não informado";
+    dd.appendChild(valueNode);
+    if (identityState) {
+      const stateNode = document.createElement("span");
+      stateNode.className = `ai-field-state ai-field-state--${identityState.tone}`;
+      stateNode.textContent = identityState.label;
+      dd.appendChild(stateNode);
+    }
+    if (identityKey) {
+      const slot = document.createElement("span");
+      slot.className = "ai-inline-candidate-slot";
+      slot.dataset.aiIdentitySlot = identityKey;
+      dd.appendChild(slot);
+    }
+    el.aiDraftFields.append(dt, dd);
+  }
+
+  function renderAiDraftCandidates(draft, extraction) {
+    if (!el.aiDraftCandidates || !el.aiDraftFields) return;
+    const candidates = aiDraftCandidateGroups(draft, extraction);
+    const overrides = state.aiDraftIdentityOverrides[aiDraftId(draft)] || {};
+    el.aiDraftCandidates.replaceChildren();
+    const add = (key, items, fallbackId) => {
+      if (!Array.isArray(items) || items.length === 0) return;
+      const slot = el.aiDraftFields.querySelector(`[data-ai-identity-slot="${key}"]`);
+      if (!slot) return;
+      const label = document.createElement("label");
+      label.className = "ai-inline-candidate";
+      const caption = document.createElement("span");
+      caption.textContent = items.length > 1 ? "Escolha o registro correto" : "Confirme a sugestão";
+      const select = document.createElement("select");
+      select.dataset.aiIdentity = key;
+      select.setAttribute("aria-label", caption.textContent);
+      const empty = document.createElement("option");
+      empty.value = "";
+      empty.textContent = "Selecionar registro";
+      select.appendChild(empty);
+      items.forEach((item) => {
+        const option = document.createElement("option");
+        option.value = item.id || "";
+        option.textContent = `${item.name || "Registro"}${item.reasons?.length ? ` — ${item.reasons.join(", ")}` : ""}`;
+        select.appendChild(option);
+      });
+      select.value = overrides[key] || fallbackId || "";
+      label.append(caption, select);
+      slot.appendChild(label);
+    };
+    add("clientId", candidates.client, extraction.clientId);
+    add("requesterId", candidates.requester, extraction.requesterId);
+    candidates.passengers.forEach((items, index) => add(`passenger:${index}`, items, extraction.passengers?.[index]?.id));
+    el.aiDraftCandidates.hidden = true;
+  }
+
+  function aiDraftReadiness(draft, extraction, leg) {
+    const reasons = [];
+    const status = aiDraftStatusLabel(draft);
+    if (!aiDraftId(draft)) reasons.push("Rascunho sem identificador");
+    if (!["Pendente", "Pronto"].includes(status)) reasons.push(`Status ${status.toLowerCase()}`);
+    if (!extraction.clientId) reasons.push("confirme o cliente");
+    if (!extraction.requesterId) reasons.push("confirme o solicitante");
+    if (!(extraction.passengers || []).length) reasons.push("informe ao menos um passageiro");
+    if ((extraction.passengers || []).some((passenger) => !passenger?.id)) reasons.push("confirme todos os passageiros");
+    if (!leg.date) reasons.push("informe a data");
+    if (!leg.time) reasons.push("informe o horário");
+    if (!leg.origin) reasons.push("informe a origem");
+    if (!leg.destination) reasons.push("informe o destino");
+    return { ready: reasons.length === 0, reasons };
+  }
+
+  function renderAiDraftAlerts(draft, extraction) {
+    if (!el.aiDraftAlertList) return;
+    const alerts = [];
+    const warningText = aiDraftValue(draft, "warnings");
+    if (warningText) alerts.push(...String(warningText).split(/\r?\n|;\s*/).map((item) => item.trim()).filter(Boolean));
+    const missingFields = extraction.missingFields || String(aiDraftValue(draft, "missingFields") || "").split(",").map((item) => item.trim()).filter(Boolean);
+    missingFields.forEach((field) => alerts.push(`Campo faltante: ${field}`));
+    const candidates = aiDraftCandidateGroups(draft, extraction);
+    if (candidates.client.length > 1) alerts.push("Cliente com múltiplos candidatos.");
+    if (candidates.requester.length > 1) alerts.push("Solicitante com múltiplos candidatos.");
+    candidates.passengers.forEach((items, index) => { if (items.length > 1) alerts.push(`Passageiro ${index + 1} com múltiplos candidatos.`); });
+    const partial = aiDraftValue(draft, "partialIds");
+    if (partial) alerts.push("Criação parcial registrada. Use Retomar para continuar sem duplicar.");
+    el.aiDraftAlertList.replaceChildren();
+    if (!alerts.length) {
+      const empty = document.createElement("p");
+      empty.className = "muted";
+      empty.textContent = "Nenhum alerta para esta solicitação.";
+      el.aiDraftAlertList.appendChild(empty);
+    } else {
+      alerts.forEach((message) => {
+        const item = document.createElement("p");
+        item.className = "ai-alert-item";
+        item.textContent = message;
+        el.aiDraftAlertList.appendChild(item);
+      });
+    }
+    el.aiDraftAlertCount.hidden = !alerts.length;
+    el.aiDraftAlertCount.textContent = String(alerts.length);
+  }
+
+  function setAiDraftSourceTab(tab) {
+    state.aiDraftSourceTab = tab === "alerts" ? "alerts" : "email";
+    const isEmail = state.aiDraftSourceTab === "email";
+    [el.aiDraftSourceEmailTab, el.aiDraftSourceAlertsTab].forEach((button) => {
+      if (!button) return;
+      const active = isEmail === (button.dataset.aiSourceTab === "email");
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
+    if (el.aiDraftSourceEmailPanel) el.aiDraftSourceEmailPanel.hidden = !isEmail;
+    if (el.aiDraftSourceAlertsPanel) el.aiDraftSourceAlertsPanel.hidden = isEmail;
+  }
+
+  function aiDraftSearchText(row) {
+    const extraction = parseAiDraftJson(row, "extractionJson");
+    const leg = parseAiDraftJson(row, "legJson");
+    return normalize([
+      aiDraftValue(row, "subject"), aiDraftValue(row, "sender"), extraction.client,
+      extraction.requester, ...(extraction.passengers || []).map((item) => item?.name || item),
+      leg.origin, leg.destination, leg.route
+    ].filter(Boolean).join(" "));
+  }
+
+  function aiDraftVisibleRows() {
+    const filter = state.aiDraftFilter || "active";
+    const search = normalize(state.aiDraftSearch || "");
+    return (state.aiDrafts || []).filter((row) => {
+      const status = aiDraftStatusLabel(row);
+      const statusMatch = filter === "all" || (filter === "active" ? ["Pendente", "Bloqueado", "Erro"].includes(status) : status === filter);
+      return statusMatch && (!search || aiDraftSearchText(row).includes(search));
+    });
+  }
+
+  function groupAiDraftRows(rows) {
+    const groups = new Map();
+    rows.forEach((row) => {
+      const key = aiDraftValue(row, "conversationId") || aiDraftValue(row, "stableMessageId") || aiDraftId(row);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(row);
+    });
+    return [...groups.values()].sort((left, right) => String(aiDraftValue(right[0], "receivedAt") || "").localeCompare(String(aiDraftValue(left[0], "receivedAt") || "")));
+  }
+
   async function loadAiDrafts() {
     if (!el.aiDraftList) return;
     const config = aiDraftConfig();
@@ -3514,12 +3794,20 @@
       el.aiDraftDetail.hidden = true;
       return;
     }
-    if (!state.xrm || state.mockMode) {
+    if (state.mockMode) {
+      if (el.aiDraftEnvironment) el.aiDraftEnvironment.textContent = "Ambiente: local mock";
+      if (el.aiDraftSeed) el.aiDraftSeed.hidden = false;
+      state.aiDrafts = getMockAiDrafts();
+      renderAiDrafts();
+      return;
+    }
+    if (!state.xrm) {
       el.aiDraftSetup.hidden = false;
       el.aiDraftSetup.textContent = "Solicitações IA ficam disponíveis quando o Web Resource estiver aberto dentro do Dataverse.";
       return;
     }
-    const select = [...new Set(Object.values(config.fields).filter((value) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(String(value))))].join(",");
+    if (el.aiDraftEnvironment) el.aiDraftEnvironment.textContent = `Ambiente: ${aiDraftEnvironmentLabel()}`;
+    const select = [...new Set(Object.entries(config.fields).filter(([key]) => !AI_DRAFT_OPTIONAL_KEYS.has(key)).map(([, value]) => value).filter((value) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(String(value))))].join(",");
     state.aiDraftLoading = true;
     try {
       const result = await state.xrm.WebApi.retrieveMultipleRecords(config.entity, `?$select=${select}&$orderby=createdon desc&$top=100`);
@@ -3536,21 +3824,36 @@
 
   function renderAiDrafts() {
     if (!el.aiDraftList) return;
-    const drafts = state.aiDrafts || [];
-    el.aiDraftSummary.textContent = drafts.length ? `${drafts.length} trecho(s) recebido(s). Aprovação individual, sem criação automática.` : "Nenhuma solicitação pendente.";
+    const drafts = aiDraftVisibleRows();
+    const total = (state.aiDrafts || []).length;
+    if (state.selectedAiDraft && !drafts.some((row) => aiDraftId(row) === aiDraftId(state.selectedAiDraft))) state.selectedAiDraft = null;
+    el.aiDraftSummary.textContent = drafts.length ? `${drafts.length} trecho(s) em ${groupAiDraftRows(drafts).length} solicitação(ões). Aprovação individual, sem criação automática.` : (total ? "Nenhum item corresponde ao filtro." : "Nenhuma solicitação pendente.");
     el.aiDraftList.replaceChildren();
     if (!state.selectedAiDraft && el.aiDraftDetail) el.aiDraftDetail.hidden = true;
-    drafts.forEach((draft) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = `ai-draft-item${state.selectedAiDraft && aiDraftId(state.selectedAiDraft) === aiDraftId(draft) ? " is-selected" : ""}`;
-      button.dataset.aiDraftId = aiDraftId(draft);
-      const title = document.createElement("strong");
-      title.textContent = aiDraftValue(draft, "subject") || "Solicitação sem assunto";
-      const meta = document.createElement("span");
-      meta.textContent = `${aiDraftValue(draft, "legType") || "Trecho"} · ${aiDraftStatusLabel(draft)}`;
-      button.append(title, meta);
-      el.aiDraftList.appendChild(button);
+    groupAiDraftRows(drafts).forEach((group) => {
+      const section = document.createElement("section");
+      section.className = "ai-draft-group";
+      const heading = document.createElement("h3");
+      heading.className = "ai-draft-group-title";
+      heading.textContent = aiDraftValue(group[0], "subject") || "Solicitação sem assunto";
+      const meta = document.createElement("p");
+      meta.className = "muted";
+      meta.textContent = `${aiDraftValue(group[0], "sender") || "Remetente não informado"} · ${group.length} trecho(s)`;
+      section.append(heading, meta);
+      group.sort((left, right) => Number(aiDraftValue(left, "ordinal") || 0) - Number(aiDraftValue(right, "ordinal") || 0)).forEach((draft) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `ai-draft-item${state.selectedAiDraft && aiDraftId(state.selectedAiDraft) === aiDraftId(draft) ? " is-selected" : ""}`;
+        button.dataset.aiDraftId = aiDraftId(draft);
+        const title = document.createElement("strong");
+        const leg = parseAiDraftJson(draft, "legJson");
+        title.textContent = `${aiDraftValue(draft, "legType") || "Trecho"} · ${leg.origin || "origem?"} → ${leg.destination || "destino?"}`;
+        const itemMeta = document.createElement("span");
+        itemMeta.textContent = aiDraftStatusLabel(draft);
+        button.append(title, itemMeta);
+        section.appendChild(button);
+      });
+      el.aiDraftList.appendChild(section);
     });
     if (state.selectedAiDraft) renderAiDraftDetail();
   }
@@ -3559,6 +3862,7 @@
     const item = event.target.closest("[data-ai-draft-id]");
     if (!item) return;
     state.selectedAiDraft = state.aiDrafts.find((draft) => aiDraftId(draft) === item.dataset.aiDraftId) || null;
+    state.aiDraftSourceTab = "email";
     renderAiDrafts();
   }
 
@@ -3569,41 +3873,53 @@
     el.aiDraftTitle.textContent = aiDraftValue(draft, "subject") || "Solicitação sem assunto";
     el.aiDraftMeta.textContent = [aiDraftValue(draft, "sender"), aiDraftValue(draft, "receivedAt")].filter(Boolean).join(" · ");
     el.aiDraftStatus.textContent = aiDraftStatusLabel(draft);
-    const warnings = aiDraftValue(draft, "warnings");
-    el.aiDraftWarnings.hidden = !warnings;
-    el.aiDraftWarnings.textContent = warnings || "";
-    el.aiDraftBody.textContent = aiDraftValue(draft, "body") || "Texto original não retido.";
-    let leg = {};
-    try { leg = JSON.parse(aiDraftValue(draft, "legJson") || "{}"); } catch { leg = {}; }
-    let extraction = {};
-    try { extraction = JSON.parse(aiDraftValue(draft, "extractionJson") || "{}"); } catch { extraction = {}; }
-    const rows = [["Cliente", extraction.client || "Não informado"], ["Solicitante", extraction.requester || "Não informado"], ["Saída", `${leg.date || "sem data"} ${leg.time || ""}`], ["Rota", `${leg.origin || "?"} → ${leg.destination || "?"}`], ["Passageiros", (extraction.passengers || []).map((item) => item.name || item).join(", ") || "Não informado"]];
-    el.aiDraftFields.replaceChildren(...rows.flatMap(([label, value]) => { const dt = document.createElement("dt"); dt.textContent = label; const dd = document.createElement("dd"); dd.textContent = value; return [dt, dd]; }));
+    const leg = parseAiDraftJson(draft, "legJson");
+    const extraction = aiDraftExtractionForRow(draft);
+    const candidates = aiDraftCandidateGroups(draft, extraction);
+    const confidence = Number(aiDraftValue(draft, "confidence"));
+    el.aiDraftFields.replaceChildren();
+    const clientState = aiDraftIdentityState(extraction.clientId, extraction.client, candidates.client);
+    const requesterState = aiDraftIdentityState(extraction.requesterId, extraction.requester, candidates.requester);
+    appendAiDraftField("Cliente", extraction.client, "clientId", clientState);
+    appendAiDraftField("Solicitante", extraction.requester, "requesterId", requesterState);
+    (extraction.passengers || []).forEach((passenger, index) => {
+      const items = candidates.passengers[index] || [];
+      const passengerState = aiDraftIdentityState(passenger?.id, passenger?.name, items);
+      appendAiDraftField(`Passageiro${(extraction.passengers || []).length > 1 ? ` ${index + 1}` : ""}`, passenger?.name, `passenger:${index}`, passengerState);
+    });
+    appendAiDraftField("Data e hora", [leg.date, leg.time].filter(Boolean).join(" · "));
+    appendAiDraftField("Origem", leg.origin);
+    appendAiDraftField("Destino", leg.destination);
+    appendAiDraftField("Tipo do trecho", aiDraftValue(draft, "legType") || leg.type);
+    appendAiDraftField("Confiança", Number.isFinite(confidence) && confidence > 0 ? `${Math.round((confidence <= 1 ? confidence : confidence / 100) * 100)}% (informativa)` : "Não informada");
+    renderAiDraftCandidates(draft, extraction);
+    const readiness = aiDraftReadiness(draft, extraction, leg);
+    el.aiDraftReadiness.textContent = readiness.ready ? "Pronto para agendar" : `${readiness.reasons.length} pendência(s)`;
+    el.aiDraftReadiness.className = `ai-readiness ${readiness.ready ? "is-ready" : "is-blocked"}`;
+    el.aiDraftWarnings.hidden = !aiDraftValue(draft, "warnings");
+    el.aiDraftWarnings.textContent = aiDraftValue(draft, "warnings") || "";
+    if (el.aiDraftSourceMeta) el.aiDraftSourceMeta.textContent = [aiDraftValue(draft, "sender") ? `De: ${aiDraftValue(draft, "sender")}` : "", aiDraftValue(draft, "subject") ? `Assunto: ${aiDraftValue(draft, "subject")}` : ""].filter(Boolean).join("\n");
+    if (el.aiDraftBody) el.aiDraftBody.textContent = aiDraftValue(draft, "body") || "Texto original removido conforme política de retenção.";
+    if (el.aiDraftAttachmentNote) {
+      el.aiDraftAttachmentNote.hidden = !aiDraftValue(draft, "hasAttachments");
+      el.aiDraftAttachmentNote.textContent = aiDraftValue(draft, "hasAttachments") ? "Anexos presentes — não analisados no MVP." : "";
+    }
+    renderAiDraftAlerts(draft, extraction);
+    setAiDraftSourceTab(state.aiDraftSourceTab);
     const status = aiDraftStatusLabel(draft);
-    el.aiDraftApprove.disabled = !["Pronto", "Pendente"].includes(status) || !aiDraftId(draft);
+    el.aiDraftApprove.disabled = !readiness.ready;
+    el.aiDraftApproveHint.textContent = readiness.ready ? "" : `Aprovação bloqueada: ${readiness.reasons.slice(0, 2).join("; ")}.`;
     el.aiDraftDiscard.disabled = ["Agendado", "Descartado"].includes(status) || !aiDraftId(draft);
+    el.aiDraftOpenForm.disabled = ["Agendado", "Descartado"].includes(status) || !aiDraftId(draft);
+    const hasPartialIds = !!aiDraftValue(draft, "partialIds") || !!draft?.cr40f_idscriadosparcialmente;
+    el.aiDraftResume.hidden = status !== "Erro" || !hasPartialIds;
   }
 
   function parseAiLeg(draft) {
     try { return JSON.parse(aiDraftValue(draft, "legJson") || "{}"); } catch { return {}; }
   }
 
-  async function approveSelectedAiDraft() {
-    const draft = state.selectedAiDraft;
-    if (!draft || !aiDraftConfig() || !state.xrm || !state.isNew) {
-      toast("Abra um formulário novo no Dataverse para aprovar uma solicitação IA.", "error");
-      return;
-    }
-    let extraction;
-    try { extraction = JSON.parse(aiDraftValue(draft, "extractionJson") || "{}"); } catch { toast("JSON da extração inválido.", "error"); return; }
-    const leg = parseAiLeg(draft);
-    if (!extraction.clientId || !extraction.requesterId || !(extraction.passengers || []).every((item) => item?.id)) {
-      toast("Aprovação bloqueada: cliente, solicitante e passageiros precisam estar confirmados no Dataverse.", "error", 8000);
-      return;
-    }
-    await ensurePassengersByIds(extraction.passengers.map((item) => item.id));
-    const missing = extraction.passengers.filter((item) => !getPassengerById(item.id));
-    if (missing.length) { toast("Aprovação bloqueada: passageiro não encontrado.", "error"); return; }
+  function applyAiDraftToForm(draft, extraction, leg) {
     setSelectValue(el.cliente, extraction.clientId);
     setSelectValue(el.solicitante, extraction.requesterId);
     setFieldValue(el.saidaData, leg.date || "");
@@ -3616,15 +3932,65 @@
     setFieldValue(el.destino, leg.destination || "");
     setFieldValue(el.observacao, [extraction.observations, leg.notes].filter(Boolean).join("\n"));
     state.enderecoPersonalizadoAtivo = true;
-    state.selectedPassengers = extraction.passengers.map((item, index) => ({ rowKey: nextPassengerRowKey(), ordem: index + 1, passageiro: getPassengerById(item.id), guid: item.id, telefone: getPassengerById(item.id)?.telefone || "", enderecoEditado: "" }));
+    state.selectedPassengers = (extraction.passengers || []).filter((item) => item?.id).map((item, index) => ({ rowKey: nextPassengerRowKey(), ordem: index + 1, passageiro: getPassengerById(item.id), guid: item.id, telefone: getPassengerById(item.id)?.telefone || "", enderecoEditado: "" }));
     setSelectValue(el.statusOperacao, 202410004);
     renderPassengers();
     clearValidationStates();
+    state.aiDraftReview = { draftId: aiDraftId(draft), extraction, leg, openedAt: new Date().toISOString() };
+  }
+
+  async function saveAiDraftReview(draft) {
+    const config = aiDraftConfig();
+    if (!config?.fields?.reviewJson || !state.xrm || !draft || !state.aiDraftReview) return;
+    const context = state.xrm.Utility.getGlobalContext?.();
+    const userId = String(context?.userSettings?.userId || "").replace(/[{}]/g, "");
+    const payload = { sourceExtractionVersion: aiDraftValue(draft, "extractorVersion") || "", clientId: el.cliente?.value || "", requesterId: el.solicitante?.value || "", passengers: (state.selectedPassengers || []).map((item) => item.guid).filter(Boolean), legs: [{ ...state.aiDraftReview.leg, date: el.saidaData?.value || state.aiDraftReview.leg.date, time: `${el.saidaHora?.value || ""}:${el.saidaMinuto?.value || ""}`, origin: el.enderecoPersonalizado?.value || state.aiDraftReview.leg.origin, destination: el.destino?.value || state.aiDraftReview.leg.destination }], editedFields: ["cliente", "solicitante", "passageiros", "data", "hora", "rota", "observacao"], reviewedAt: new Date().toISOString(), reviewedBy: userId };
+    const update = { [config.fields.reviewJson]: JSON.stringify(payload) };
+    if (config.fields.reviewedAt) update[config.fields.reviewedAt] = payload.reviewedAt;
+    if (config.reviewedByBind && userId) update[`${config.reviewedByBind}@odata.bind`] = `/systemusers(${userId})`;
+    try {
+      await state.xrm.WebApi.updateRecord(config.entity, aiDraftId(draft), update);
+    } catch (error) {
+      console.warn("Não foi possível salvar a revisão do rascunho IA; a extração original foi preservada.", error);
+      toast("Revisão local aplicada. O campo de auditoria ainda não está publicado neste ambiente.", "warning", 7000);
+    }
+  }
+
+  async function openSelectedAiDraftInForm() {
+    const draft = state.selectedAiDraft;
+    if (!draft || !aiDraftConfig() || (!state.xrm && !state.mockMode) || !state.isNew) { toast("Abra um formulário novo no Dataverse para revisar uma solicitação IA.", "error"); return; }
+    const extraction = aiDraftExtractionForRow(draft);
+    const leg = parseAiDraftJson(draft, "legJson");
+    await ensurePassengersByIds((extraction.passengers || []).map((item) => item.id));
+    applyAiDraftToForm(draft, extraction, leg);
+    setTab("details");
+    toast("Solicitação carregada no formulário. Revise e depois aprove.", "success", 6000);
+  }
+
+  async function approveSelectedAiDraft() {
+    const draft = state.selectedAiDraft;
+    if (!draft || !aiDraftConfig() || (!state.xrm && !state.mockMode) || !state.isNew) {
+      toast("Abra um formulário novo no Dataverse para aprovar uma solicitação IA.", "error");
+      return;
+    }
+    let extraction;
+    try { extraction = aiDraftExtractionForRow(draft); } catch { toast("JSON da extração inválido.", "error"); return; }
+    const leg = parseAiLeg(draft);
+    if (!extraction.clientId || !extraction.requesterId || !(extraction.passengers || []).every((item) => item?.id)) {
+      toast("Aprovação bloqueada: cliente, solicitante e passageiros precisam estar confirmados no Dataverse.", "error", 8000);
+      return;
+    }
+    await ensurePassengersByIds(extraction.passengers.map((item) => item.id));
+    const missing = extraction.passengers.filter((item) => !getPassengerById(item.id));
+    if (missing.length) { toast("Aprovação bloqueada: passageiro não encontrado.", "error"); return; }
+    if (!state.aiDraftReview || state.aiDraftReview.draftId !== aiDraftId(draft)) applyAiDraftToForm(draft, extraction, leg);
+    await saveAiDraftReview(draft);
     const before = state.lastSuccessVoucher;
     await saveForm();
     if (state.lastSuccessVoucher && state.lastSuccessVoucher !== before) {
       const field = aiDraftConfig().fields.status;
-      await state.xrm.WebApi.updateRecord(aiDraftConfig().entity, aiDraftId(draft), { [field]: aiDraftConfig().statusValues?.scheduled ?? "Agendado" });
+      if (state.mockMode) updateMockAiDraftStatus(draft, aiDraftConfig().statusValues?.scheduled ?? 100000003, { cr40f_reservacriada: state.recordId || "" });
+      else await state.xrm.WebApi.updateRecord(aiDraftConfig().entity, aiDraftId(draft), { [field]: aiDraftConfig().statusValues?.scheduled ?? 100000003 });
       await loadAiDrafts();
       toast("Trecho aprovado e reserva criada com status Solicitado.", "success");
     }
@@ -3633,10 +3999,25 @@
   async function discardSelectedAiDraft() {
     const draft = state.selectedAiDraft;
     const config = aiDraftConfig();
-    if (!draft || !config || !state.xrm) return;
+    if (!draft || !config || (!state.xrm && !state.mockMode)) return;
     const field = config.fields.status;
-    await state.xrm.WebApi.updateRecord(config.entity, aiDraftId(draft), { [field]: config.statusValues?.discarded ?? "Descartado" });
+    if (state.mockMode) updateMockAiDraftStatus(draft, config.statusValues?.discarded ?? 100000004);
+    else await state.xrm.WebApi.updateRecord(config.entity, aiDraftId(draft), { [field]: config.statusValues?.discarded ?? 100000004 });
     await loadAiDrafts();
+  }
+
+  async function markAiDraftFailure(error) {
+    const config = aiDraftConfig();
+    const draft = state.selectedAiDraft;
+    if (!config?.fields?.status || !draft || (!state.xrm && !state.mockMode) || !aiDraftId(draft)) return;
+    const update = { [config.fields.status]: config.statusValues?.error ?? 100000005 };
+    if (config.fields.partialIds) update[config.fields.partialIds] = JSON.stringify({ reservationId: state.recordId || "", saveLog: state.saveLog || [], error: error?.message || "Erro desconhecido" });
+    try { if (state.mockMode) updateMockAiDraftStatus(draft, config.statusValues?.error ?? 100000005, { cr40f_idscriadosparcialmente: update[config.fields.partialIds] || "" }); else await state.xrm.WebApi.updateRecord(config.entity, aiDraftId(draft), update); } catch (updateError) { console.warn("Falha ao registrar erro do rascunho IA", updateError); }
+  }
+
+  async function resumeSelectedAiDraft() {
+    await openSelectedAiDraftInForm();
+    if (state.selectedAiDraft) await approveSelectedAiDraft();
   }
 
   function renderStatusFaturamento() {
@@ -9574,7 +9955,7 @@
   }
 
   function isSplitImportedTrecho(trecho) {
-    return trecho?.originStatus === "Split" || trecho?.importOrigin === "split";
+    return !!trecho?.splitGroupId || trecho?.originStatus === "Split" || trecho?.importOrigin === "split";
   }
 
   function isDraftImportedTrecho(trecho) {
@@ -9633,12 +10014,41 @@
     return clone;
   }
 
+  function importedSplitGroupMembers(trecho) {
+    const splitGroupId = String(trecho?.splitGroupId || "").trim();
+    if (!splitGroupId) return [];
+    return collectImportedTrechos(state.importReview).filter((item) => String(item?.splitGroupId || "").trim() === splitGroupId);
+  }
+
+  function isCompleteImportedSplitGroup(trecho) {
+    const members = importedSplitGroupMembers(trecho);
+    if (members.length !== 2) return false;
+    const roles = new Set(members.map((item) => item?.splitRole).filter(Boolean));
+    return roles.size === 2 && roles.has("outbound") && roles.has("return")
+      && members.every((item) => item.programacao === trecho.programacao);
+  }
+
+  function isAuthorizedImportedSplitSibling(trecho, candidate) {
+    if (!isCompleteImportedSplitGroup(trecho)) return false;
+    const sibling = importedSplitGroupMembers(trecho).find((item) => item !== trecho && item.splitRole !== trecho.splitRole);
+    return !!sibling?.savedRecordId
+      && sameId(candidate?.recordId || candidate?.id, sibling.savedRecordId);
+  }
+
+  function importedSplitGroupPendingMembers(trecho) {
+    return importedSplitGroupMembers(trecho).filter((item) => normalizeImportedReviewStatus(item) !== importReviewStatuses().SAVED);
+  }
+
   function createLocalSplitImportedTrecho(program, source) {
+    const splitKey = nextSplitImportedTrechoKey(program);
+    const splitGroupId = String(source?.splitGroupId || `${program?.programacao || source?.programacao || ""}|split-group|${splitKey.split("|").pop()}`);
     source.retornoPrevistoDataIso = "";
     source.retornoPrevistoHorario = "";
+    source.splitGroupId = splitGroupId;
+    source.splitRole = "outbound";
     applyImportedOperationalDecision(source, importOperationalDecisions().SPLIT);
     markImportedReviewPending(source);
-    const key = nextSplitImportedTrechoKey(program);
+    const key = splitKey;
     const clone = {
       key,
       programacao: program?.programacao || source?.programacao || "",
@@ -9680,6 +10090,8 @@
       reviewBlockReason: "",
       savedRecordId: "",
       duplicatedRecordIds: [],
+      splitGroupId,
+      splitRole: "return",
       importOrigin: "split",
       originStatus: "Split",
       operationalMode: "split-return",
@@ -9965,10 +10377,12 @@
     card.className = "import-trecho";
     card.classList.toggle("is-saved", !!trecho.savedRecordId);
     const isDuplicated = !!trecho.duplicatedRecordIds?.length;
+    const isSplitLinked = isCompleteImportedSplitGroup(trecho);
     const reviewStatus = normalizeImportedReviewStatus(trecho);
     const isEditing = !!options.editable && !isDuplicated;
     addClassIfPresent(card, `is-${reviewStatus || ""}`);
     card.classList.toggle("is-duplicated", isDuplicated);
+    card.classList.toggle("is-split-linked", isSplitLinked);
     card.classList.toggle("is-editing", isEditing);
     card.classList.toggle("is-locked", !isEditing);
     card.dataset.programacao = program.programacao;
@@ -9989,6 +10403,13 @@
     badge.className = `import-badge ${reviewMeta.tone}`;
     badge.textContent = reviewMeta.label;
     head.append(title, badge);
+    if (isSplitLinked) {
+      const splitBadge = document.createElement("span");
+      splitBadge.className = "import-badge manual";
+      splitBadge.textContent = "Split vinculado";
+      splitBadge.setAttribute("aria-label", "Split vinculado: ida e retorno pertencem ao mesmo grupo de salvamento");
+      head.appendChild(splitBadge);
+    }
 
     const duplicateLock = buildImportDuplicateLockNotice(trecho);
 
@@ -11307,7 +11728,11 @@
       return;
     }
     if (action.dataset.importAction === "save-trecho") {
-      saveImportedTrecho(trecho);
+      if (isSplitImportedTrecho(trecho)) {
+        saveImportedSplitGroup(trecho);
+      } else {
+        saveImportedTrecho(trecho);
+      }
       return;
     }
     if (action.dataset.importAction === "add-import-passenger") {
@@ -11571,7 +11996,19 @@
       toast("Serviço repetido provável. A importação não cria outro registro com horário, trajeto, endereço, destino e passageiros parecidos.", "error", 9000);
       return null;
     }
-    const existingReserva = await findExistingImportedReservaByProgramacao(trecho.programacao);
+    if (isSplitImportedTrecho(trecho)) {
+      const pendingMembers = importedSplitGroupPendingMembers(trecho);
+      if (!isCompleteImportedSplitGroup(trecho)) {
+        toast("Split incompleto. Ida e retorno precisam permanecer vinculados.", "warning", 8000);
+        return null;
+      }
+      if (pendingMembers.some((item) => normalizeImportedReviewStatus(item) !== importReviewStatuses().CONFIRMED || importedTrechoIssues(item).length)) {
+        toast("Valide ida e retorno do Split antes de salvar.", "warning", 8000);
+        return null;
+      }
+    }
+    const existingReservas = await findExistingImportedReservasByProgramacao(trecho.programacao);
+    const existingReserva = existingReservas.find((candidate) => !isAuthorizedImportedSplitSibling(trecho, candidate)) || null;
     if (existingReserva) {
       markImportedTrechoAsDuplicate(trecho, existingReserva, "Serviço ignorado automaticamente: já existe serviço com esta PG (ID Tenaris) no Dataverse.");
       toast("Serviço já existe no Dataverse. A importação bloqueou a criação duplicada.", "error", 9000);
@@ -11603,7 +12040,8 @@
     } catch (error) {
       console.error(error);
       if (isDataverseDuplicateKeyError(error)) {
-        const duplicate = await findExistingImportedReservaByProgramacao(trecho.programacao);
+        const duplicates = await findExistingImportedReservasByProgramacao(trecho.programacao);
+        const duplicate = duplicates.find((candidate) => !isAuthorizedImportedSplitSibling(trecho, candidate)) || null;
         if (duplicate) {
           markImportedTrechoAsDuplicate(trecho, duplicate, "Serviço ignorado automaticamente: o Dataverse recusou criação duplicada desta PG.");
           renderImportReview();
@@ -11623,19 +12061,49 @@
     }
   }
 
-  async function findExistingImportedReservaByProgramacao(programacao) {
+  async function saveImportedSplitGroup(trecho) {
+    const pending = importedSplitGroupPendingMembers(trecho);
+    if (!isCompleteImportedSplitGroup(trecho)) {
+      toast("Split incompleto. Ida e retorno precisam permanecer vinculados.", "warning", 8000);
+      return;
+    }
+    if (pending.some((item) => normalizeImportedReviewStatus(item) !== importReviewStatuses().CONFIRMED || importedTrechoIssues(item).length)) {
+      toast("Valide ida e retorno do Split antes de salvar.", "warning", 8000);
+      return;
+    }
+    setLoading(true);
+    try {
+      const results = await runImportedSaveQueue(pending);
+      const failedCount = results.filter((result) => !result).length;
+      if (failedCount) {
+        toast("Split parcialmente salvo. Corrija o trecho que falhou e tente novamente.", "warning", 9000);
+      } else {
+        showSuccess("Split salvo: ida e retorno agendados.");
+      }
+      renderImportReview();
+      renderTabBadges();
+    } catch (error) {
+      console.error(error);
+      toast(error.message || "Falha ao salvar Split.", "error", 9000);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function findExistingImportedReservasByProgramacao(programacao) {
     const id = String(programacao || "").trim();
-    if (!id) return null;
+    if (!id) return [];
     const f = CONFIG.fields.reserva;
     const idField = importedReservaTenarisIdField();
     if (!state.xrm || state.mockMode) {
-      const row = getMockDb().reservas.find((item) => String(item[idField] || item[f.idExterno] || item.programacao || "") === id);
-      return row ? importedDuplicateCandidateFromReserva(row) : null;
+      return getMockDb().reservas
+        .filter((item) => String(item[idField] || item[f.idExterno] || item.programacao || "") === id)
+        .map(importedDuplicateCandidateFromReserva);
     }
     const select = [f.id, idField, f.idExterno, f.dataSaida, f.trajeto, f.enderecoView, f.destino, f.paxView].join(",");
     const filter = `${idField} eq '${escapeODataString(id)}'`;
-    const rows = await retrieveAll(CONFIG.entities.reserva, `?$select=${select}&$filter=${filter}&$top=1`);
-    return rows.length ? importedDuplicateCandidateFromReserva(rows[0]) : null;
+    const rows = await retrieveAll(CONFIG.entities.reserva, `?$select=${select}&$filter=${filter}`);
+    return rows.map(importedDuplicateCandidateFromReserva);
   }
 
   function markImportedTrechoAsDuplicate(trecho, duplicate, reason) {
@@ -12126,19 +12594,31 @@
 
   async function runImportedSaveQueue(trechos) {
     const results = new Array(trechos.length).fill(null);
-    let nextIndex = 0;
-    const workerCount = Math.min(IMPORT_SAVE_CONCURRENCY, trechos.length);
-    const workers = Array.from({ length: workerCount }, async () => {
-      while (nextIndex < trechos.length) {
-        const index = nextIndex;
-        nextIndex += 1;
-        results[index] = await saveImportedTrecho(trechos[index], {
-          silentSuccess: true,
-          skipLoading: true
-        });
+    const processed = new Set();
+    for (let index = 0; index < trechos.length; index += 1) {
+      if (processed.has(index)) continue;
+      const current = trechos[index];
+      if (isCompleteImportedSplitGroup(current)) {
+        const group = importedSplitGroupPendingMembers(current)
+          .filter((member) => trechos.includes(member))
+          .sort((left, right) => (left.splitRole === "outbound" ? -1 : right.splitRole === "outbound" ? 1 : 0));
+        for (const member of group) {
+          const memberIndex = trechos.indexOf(member);
+          processed.add(memberIndex);
+          results[memberIndex] = await saveImportedTrecho(member, {
+            silentSuccess: true,
+            skipLoading: true
+          });
+          if (!results[memberIndex]) break;
+        }
+        continue;
       }
-    });
-    await Promise.all(workers);
+      processed.add(index);
+      results[index] = await saveImportedTrecho(current, {
+        silentSuccess: true,
+        skipLoading: true
+      });
+    }
     return results;
   }
 
@@ -12167,7 +12647,7 @@
     }
 
     state.pendingSaveContext = context;
-    openReviewBeforeSave(context);
+      return openReviewBeforeSave(context);
   }
 
   function collectInactiveActivationDrafts() {
@@ -12382,6 +12862,7 @@
     } catch (error) {
       console.error(error);
       addSaveLog("error", "Falha no salvamento", error.message || "Erro desconhecido.");
+      await markAiDraftFailure(error);
       toast(error.message || "Falha ao salvar formulário.", "error", 9000);
     } finally {
       setLoading(false);
