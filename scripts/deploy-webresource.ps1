@@ -8,9 +8,11 @@ param(
 
   [string] $FilePath = "webresource.html",
 
-  [string] $TenantId = "organizations",
+  [string] $TenantId = "",
 
-  [string] $ClientId = "51f81489-12ee-4a9e-aaae-a2591f45987d",
+  [string] $ClientId = "",
+
+  [string] $EntityLogicalName = "cr40f_solicitacaoiaagendamento",
 
   [switch] $SkipBuild,
 
@@ -32,6 +34,14 @@ function Escape-ODataString([string] $Value) {
 
 $root = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $root
+
+if ([string]::IsNullOrWhiteSpace($TenantId)) {
+  $TenantId = if ($env:OUTLOOK_TENANT_ID) { $env:OUTLOOK_TENANT_ID } else { "organizations" }
+}
+
+if ([string]::IsNullOrWhiteSpace($ClientId)) {
+  $ClientId = if ($env:OUTLOOK_CLIENT_ID) { $env:OUTLOOK_CLIENT_ID } else { "51f81489-12ee-4a9e-aaae-a2591f45987d" }
+}
 
 $environmentBaseUrl = $EnvironmentUrl.TrimEnd("/")
 $resolvedFilePath = Resolve-Path $FilePath
@@ -94,6 +104,23 @@ $headers = @{
 }
 
 $apiBaseUrl = "$environmentBaseUrl/api/data/v9.2"
+
+if (-not [string]::IsNullOrWhiteSpace($EntityLogicalName)) {
+  $escapedEntityName = Escape-ODataString $EntityLogicalName
+  $entityMetadataUrl = "$apiBaseUrl/EntityDefinitions(LogicalName='$escapedEntityName')?`$select=MetadataId,LogicalName"
+  Write-Step "validate entity $EntityLogicalName"
+  try {
+    $entityMetadata = Invoke-RestMethod -Method Get -Uri $entityMetadataUrl -Headers $headers
+  }
+  catch {
+    throw "Entidade Dataverse nao encontrada ou sem acesso no ambiente: $EntityLogicalName"
+  }
+
+  if (-not $entityMetadata.LogicalName) {
+    throw "Entidade Dataverse nao encontrada ou sem acesso no ambiente: $EntityLogicalName"
+  }
+}
+
 if ([string]::IsNullOrWhiteSpace($WebResourceName)) {
   Write-Step "lookup html webresource contendo '$SearchText'"
   $lookupUrl = "$apiBaseUrl/webresourceset?`$select=webresourceid,name,displayname,webresourcetype&`$filter=webresourcetype eq 1"
@@ -152,7 +179,13 @@ Invoke-RestMethod `
   -Body $patchBody | Out-Null
 
 if (-not $NoPublish) {
-  $publishXml = "<importexportxml><webresources><webresource>$webResourceId</webresource></webresources></importexportxml>"
+  $escapedWebResourceId = [System.Security.SecurityElement]::Escape([string] $webResourceId)
+  $publishSections = "<webresources><webresource>$escapedWebResourceId</webresource></webresources>"
+  if (-not [string]::IsNullOrWhiteSpace($EntityLogicalName)) {
+    $escapedEntityName = [System.Security.SecurityElement]::Escape([string] $EntityLogicalName)
+    $publishSections += "<entities><entity>$escapedEntityName</entity></entities>"
+  }
+  $publishXml = "<importexportxml>$publishSections</importexportxml>"
   $publishBody = @{
     ParameterXml = $publishXml
   } | ConvertTo-Json -Depth 4
