@@ -2,7 +2,7 @@
 
 ## Metadados confirmados
 
-O Web Resource `new_formulario_geral.html` está na `Solução Padrão`. A tabela criada pelo conector DEV ficou com o nome lógico `cr40f_solicitacaoiaagendamento` e foi conferida via `describe`, incluindo os lookups reais para `cr40f_clientes1`, `cr40f_bancodedados` e `cr40f_reservadeveiculos`. O conector aplica o publisher padrão `cr40f`; portanto, antes de uma publicação futura, o componente deve ser incluído na solução do formulário pelo maker/PAC para manter o ALM da solução. Nenhuma alteração foi feita em PROD.
+O Web Resource `new_formulario_geral.html` está na `Solução Padrão` e na solução `AppBetinhos`. A tabela criada no DEV tem o nome lógico `cr40f_solicitacaoiaagendamento` e foi conferida via `describe`, incluindo os lookups reais para `cr40f_clientes1`, `cr40f_bancodedados` e `cr40f_reservadeveiculos`. O componente foi adicionado à solução `AppBetinhos` pelo PAC; o prefixo lógico da tabela permanece `cr40f`, definido pelo publisher padrão do ambiente. Nenhuma alteração foi feita em PROD.
 
 ## Fluxo
 
