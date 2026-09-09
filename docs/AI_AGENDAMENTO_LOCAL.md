@@ -19,8 +19,8 @@ $env:OUTLOOK_FOLDER_ID = "<folder-id>"
 $env:AI_DRAFT_TABLE = "cr40f_solicitacaoiaagendamento"
 $env:AI_DRAFT_FIELDS_JSON = '{"id":"cr40f_solicitacaoiaagendamentoid","stableMessageId":"cr40f_identificadormensagem","conversationId":"cr40f_conversationid","subject":"cr40f_assunto","sender":"cr40f_remetente","receivedAt":"cr40f_recebimento","body":"cr40f_corponormalizado","extractionJson":"cr40f_extracaojson","ordinal":"cr40f_ordemtrecho","legType":"cr40f_tipotrecho","legJson":"cr40f_trechojson","status":"cr40f_status","warnings":"cr40f_alertas","confidence":"cr40f_confianca","extractorVersion":"cr40f_versaoextrator","hasAttachments":"cr40f_possuianexos","processedAt":"cr40f_processadoem"}'
 $env:AI_DRAFT_STATUS_VALUES_JSON = '{"Pendente":100000000,"Pronto":100000001,"Bloqueado":100000002,"Agendado":100000003,"Descartado":100000004,"Erro":100000005}'
-$env:AI_DRAFT_TARGETS_JSON = '[{"name":"DEV","url":"https://org23b93544.crm2.dynamics.com","table":"cr40f_solicitacaoiaagendamento"},{"name":"PROD","url":"https://<org-prod>.crm.dynamics.com","table":"cr40f_solicitacaoiaagendamento"}]'
-$env:AI_ALERT_EMAIL_TO = "<operador@dominio.com>"
+$env:AI_DRAFT_TARGETS_JSON = '[{"name":"DEV","url":"https://org23b93544.crm2.dynamics.com","table":"cr40f_solicitacaoiaagendamento"},{"name":"PROD","url":"https://orgf261ae8e.crm2.dynamics.com","table":"cr40f_solicitacaoiaagendamento"}]'
+$env:AI_ALERT_EMAIL_TO = "noreply@betinhos.onmicrosoft.com"
 ```
 
 O primeiro uso abre o device-code do Entra ID. O refresh token é salvo em `%LOCALAPPDATA%\Betinhos\formulario-geral\*-token.xml` com DPAPI do Windows. Escopos: Outlook `Mail.Read` para leitura e `Mail.Send` para alertas; Dataverse `user_impersonation`. Nenhum token é escrito em Git, prompt, log ou URL. Cada destino é tentado separadamente; falha no PROD gera e-mail com o ambiente e não interrompe o DEV.
