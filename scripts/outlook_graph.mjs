@@ -109,6 +109,25 @@ export async function listFolderMessages(folderId, top = 25) {
   return graphRequest(resource, { headers: { Prefer: 'IdType="ImmutableId"' } });
 }
 
+export async function sendMail({ to, subject, body }) {
+  const recipients = String(to || "").split(/[;,]/).map((address) => address.trim()).filter(Boolean);
+  if (!recipients.length) throw new Error("AI_ALERT_EMAIL_TO ausente.");
+  const token = await getDelegatedAccessToken({ scope: "Mail.Send", cacheKey: "outlook-mail-send" });
+  const response = await fetch(`${GRAPH_ROOT}/me/sendMail`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify({
+      message: {
+        subject: String(subject || "Alerta de integração Dataverse"),
+        body: { contentType: "Text", content: String(body || "") },
+        toRecipients: recipients.map((address) => ({ emailAddress: { address } }))
+      },
+      saveToSentItems: true
+    })
+  });
+  if (!response.ok) throw new Error(`Microsoft Graph respondeu ${response.status} ao enviar alerta.`);
+}
+
 if (process.argv[1]?.endsWith("outlook_graph.mjs")) {
   const command = process.argv[2] || "folders";
   const result = command === "messages" ? await listFolderMessages(process.env.OUTLOOK_FOLDER_ID) : await listMailFolders();

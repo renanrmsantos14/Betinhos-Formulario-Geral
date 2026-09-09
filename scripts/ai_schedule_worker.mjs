@@ -1,8 +1,8 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { listFolderMessages } from "./outlook_graph.mjs";
+import { listFolderMessages, sendMail } from "./outlook_graph.mjs";
 import { buildDraftRecords, normalizeEmailBody, readJsonFile } from "./ai_schedule_core.mjs";
-import { prepareDrafts, upsertDraft } from "./dataverse_ai_drafts.mjs";
+import { draftTargets, prepareDrafts, upsertDraft } from "./dataverse_ai_drafts.mjs";
 
 const localRoot = path.resolve(process.env.AI_LOCAL_DATA_DIR || "data/local/ai-scheduling");
 
@@ -25,9 +25,47 @@ export async function pullMessages() {
 export async function processMessage(messageFile, extractionFile) {
   const [message, extraction] = await Promise.all([readJsonFile(messageFile), readJsonFile(extractionFile)]);
   const drafts = prepareDrafts(message, extraction);
+  const targets = draftTargets();
   const ids = [];
-  for (const draft of drafts) ids.push(await upsertDraft(draft));
-  return { messageId: stableMessageId(message), drafts: drafts.length, ids };
+  const errors = [];
+  for (const draft of drafts) {
+    for (const target of targets) {
+      try {
+        ids.push({ environment: target.name, id: await upsertDraft(draft, target) });
+      } catch (error) {
+        errors.push({ environment: target.name, message: safeErrorMessage(error) });
+      }
+    }
+  }
+  if (errors.length) await notifyTargetErrors(message, errors);
+  return { messageId: stableMessageId(message), drafts: drafts.length, ids, errors };
+}
+
+function safeErrorMessage(error) {
+  return String(error?.message || error || "Erro desconhecido")
+    .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
+    .replace(/(token|secret|password|sig)=([^&\s]+)/gi, "$1=[redacted]")
+    .slice(0, 500);
+}
+
+async function notifyTargetErrors(message, errors) {
+  const recipient = process.env.AI_ALERT_EMAIL_TO;
+  if (!recipient) return;
+  const subject = `Alerta agendamento IA — falha Dataverse (${errors.map((item) => item.environment).join(", ")})`;
+  const lines = [
+    "A automação de agendamento IA encontrou falha ao gravar rascunhos.",
+    `Mensagem: ${stableMessageId(message) || "sem identificador"}`,
+    `Assunto: ${String(message?.subject || "sem assunto").slice(0, 200)}`,
+    "",
+    ...errors.map((item) => `Ambiente ${item.environment}: ${item.message}`),
+    "",
+    "O processamento dos demais ambientes não foi interrompido."
+  ];
+  try {
+    await sendMail({ to: recipient, subject, body: lines.join("\n") });
+  } catch (error) {
+    console.error(`Falha ao enviar alerta de ambiente: ${safeErrorMessage(error)}`);
+  }
 }
 
 if (process.argv[1]?.endsWith("ai_schedule_worker.mjs")) {

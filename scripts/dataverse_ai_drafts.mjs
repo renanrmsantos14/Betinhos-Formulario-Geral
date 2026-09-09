@@ -7,8 +7,8 @@ function required(name) {
   return value.replace(/\/$/, "");
 }
 
-function draftTable() {
-  return process.env.AI_DRAFT_TABLE || "";
+function draftTable(target = {}) {
+  return target.table || process.env.AI_DRAFT_TABLE || "";
 }
 
 function draftFields() {
@@ -32,22 +32,52 @@ function draftStatusValues() {
   }
 }
 
-function assertDraftTable() {
-  if (!draftTable()) throw new Error("AI_DRAFT_TABLE ausente. Configure o nome lógico criado na solução do Dataverse.");
-  return draftTable();
+function assertDraftTable(target = {}) {
+  if (!draftTable(target)) throw new Error("AI_DRAFT_TABLE ausente. Configure o nome lógico criado na solução do Dataverse.");
+  return draftTable(target);
 }
 
-async function dataverseToken() {
-  const baseUrl = required("DATAVERSE_URL");
-  return getDelegatedAccessToken({ scope: `${baseUrl}/user_impersonation`, cacheKey: "dataverse", tenantEnv: "OUTLOOK_TENANT_ID", clientEnv: "OUTLOOK_CLIENT_ID" });
+async function dataverseToken(baseUrl, targetName = "dataverse") {
+  const cacheKey = `dataverse-${String(targetName).toLowerCase().replace(/[^a-z0-9_-]/g, "-")}`;
+  return getDelegatedAccessToken({ scope: `${baseUrl}/user_impersonation`, cacheKey, tenantEnv: "OUTLOOK_TENANT_ID", clientEnv: "OUTLOOK_CLIENT_ID" });
 }
 
-export async function upsertDraft(record) {
-  const table = assertDraftTable();
-  const fields = draftFields();
-  const statusValues = draftStatusValues();
-  const baseUrl = required("DATAVERSE_URL");
-  const token = await dataverseToken();
+function targetFields(target = {}) {
+  if (!target.fields) return draftFields();
+  const requiredFields = ["id", "stableMessageId", "ordinal"];
+  for (const field of requiredFields) if (!target.fields[field]) throw new Error(`Campo obrigatório ausente no destino ${target.name || "Dataverse"}: ${field}`);
+  return target.fields;
+}
+
+function targetStatusValues(target = {}) {
+  return target.statusValues && typeof target.statusValues === "object" ? target.statusValues : draftStatusValues();
+}
+
+export function draftTargets() {
+  const raw = process.env.AI_DRAFT_TARGETS_JSON;
+  if (!raw) {
+    const url = required("DATAVERSE_URL");
+    return [{ name: "Dataverse", url, table: draftTable(), fields: draftFields(), statusValues: draftStatusValues() }];
+  }
+  let targets;
+  try { targets = JSON.parse(raw); } catch { throw new Error("AI_DRAFT_TARGETS_JSON inválido."); }
+  if (!Array.isArray(targets) || !targets.length) throw new Error("AI_DRAFT_TARGETS_JSON deve conter pelo menos um destino.");
+  return targets.map((target, index) => {
+    const value = target && typeof target === "object" ? target : {};
+    const url = String(value.url || "").replace(/\/$/, "");
+    const name = String(value.name || `Dataverse ${index + 1}`).trim();
+    if (!url) throw new Error(`URL ausente no destino ${name}.`);
+    const table = assertDraftTable(value);
+    return { ...value, name, url, table, fields: targetFields(value), statusValues: targetStatusValues(value) };
+  });
+}
+
+export async function upsertDraft(record, target = {}) {
+  const table = assertDraftTable(target);
+  const fields = targetFields(target);
+  const statusValues = targetStatusValues(target);
+  const baseUrl = String(target.url || required("DATAVERSE_URL")).replace(/\/$/, "");
+  const token = await dataverseToken(baseUrl, target.name || "dataverse");
   const headers = { authorization: `Bearer ${token}`, "content-type": "application/json", Accept: "application/json" };
   const stableValue = String(record.messageId || "").replace(/'/g, "''");
   const lookupFields = [fields.id || fields.stableMessageId, fields.status].filter(Boolean).join(",");
