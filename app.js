@@ -165,6 +165,11 @@
   };
 
   const URL_PARAMS = new URLSearchParams(window.location.search);
+  const AI_DRAFT_CONFIG = (() => {
+    const configured = window.__FORMULARIO_IA_DRAFT_CONFIG;
+    if (!configured || typeof configured !== "object" || !configured.entity) return null;
+    return { entity: String(configured.entity), fields: configured.fields && typeof configured.fields === "object" ? configured.fields : {} };
+  })();
   const QUERY_MOCK_MODE = (URL_PARAMS.get("mock") === "1" || URL_PARAMS.get("mockData") === "1");
   const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
@@ -439,6 +444,20 @@
     frequenteTipo: $("frequenteTipo"),
     contabilizarFds: $("contabilizarFds"),
     tabImport: $("tabImport"),
+    tabAi: $("tabAi"),
+    aiDraftSummary: $("aiDraftSummary"),
+    aiDraftSetup: $("aiDraftSetup"),
+    aiDraftRefresh: $("aiDraftRefresh"),
+    aiDraftList: $("aiDraftList"),
+    aiDraftDetail: $("aiDraftDetail"),
+    aiDraftMeta: $("aiDraftMeta"),
+    aiDraftTitle: $("aiDraftTitle"),
+    aiDraftStatus: $("aiDraftStatus"),
+    aiDraftWarnings: $("aiDraftWarnings"),
+    aiDraftFields: $("aiDraftFields"),
+    aiDraftBody: $("aiDraftBody"),
+    aiDraftApprove: $("aiDraftApprove"),
+    aiDraftDiscard: $("aiDraftDiscard"),
     tabBd: $("tabBd"),
     tabReturn: $("tabReturn"),
     tabRepeat: $("tabRepeat")
@@ -492,6 +511,9 @@
     lastSuccessVoucher: null,
     importReview: null,
     importReviewFilter: "all",
+    aiDrafts: [],
+    selectedAiDraft: null,
+    aiDraftLoading: false,
     saveLog: [],
     draftTimer: null,
     draftRestoring: false,
@@ -569,6 +591,7 @@
     populateTimeSelects();
     loadPassengerSelectionRecency();
     await loadReferenceData();
+    await loadAiDrafts();
     await loadCurrentRecord();
     hydrateForm();
     renderAll();
@@ -584,7 +607,7 @@
   }
 
   function getXrm() {
-    const scopes = [window, window.parent, window.top, window.opener].filter(Boolean);
+    const scopes = [window.parent, window, window.opener].filter(Boolean);
     for (const scope of scopes) {
       try {
         if (scope.Xrm && scope.Xrm.WebApi) return scope.Xrm;
@@ -1133,6 +1156,10 @@
     el.saveButton?.addEventListener("click", saveForm);
     el.globalImportHistoryActions?.addEventListener("click", handleGlobalImportHistoryAction);
     el.importXlsxButton?.addEventListener("click", openXlsxImportPicker);
+    el.aiDraftRefresh?.addEventListener("click", loadAiDrafts);
+    el.aiDraftList?.addEventListener("click", handleAiDraftListClick);
+    el.aiDraftApprove?.addEventListener("click", approveSelectedAiDraft);
+    el.aiDraftDiscard?.addEventListener("click", discardSelectedAiDraft);
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
     document.addEventListener("dragenter", handleXlsxImportDragEnter);
     document.addEventListener("dragover", handleXlsxImportDragOver);
@@ -3447,6 +3474,155 @@
     renderTabBadges();
     renderImportReview();
     renderGlobalImportHistoryControls();
+    renderAiDrafts();
+  }
+
+  function aiDraftConfig() {
+    return AI_DRAFT_CONFIG;
+  }
+
+  function aiDraftValue(row, key) {
+    const field = aiDraftConfig()?.fields?.[key];
+    return field ? row?.[field] : "";
+  }
+
+  function aiDraftId(row) {
+    return aiDraftValue(row, "id") || row?.["@odata.etag"] || "";
+  }
+
+  async function loadAiDrafts() {
+    if (!el.aiDraftList) return;
+    const config = aiDraftConfig();
+    if (!config) {
+      el.aiDraftSetup.hidden = false;
+      el.aiDraftSetup.textContent = "A aba está pronta. Configure window.__FORMULARIO_IA_DRAFT_CONFIG com a tabela e os campos lógicos criados na solução DEV.";
+      el.aiDraftList.replaceChildren();
+      el.aiDraftDetail.hidden = true;
+      return;
+    }
+    if (!state.xrm || state.mockMode) {
+      el.aiDraftSetup.hidden = false;
+      el.aiDraftSetup.textContent = "Solicitações IA ficam disponíveis quando o Web Resource estiver aberto dentro do Dataverse.";
+      return;
+    }
+    const select = [...new Set(Object.values(config.fields).filter((value) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(String(value))))].join(",");
+    state.aiDraftLoading = true;
+    try {
+      const result = await state.xrm.WebApi.retrieveMultipleRecords(config.entity, `?$select=${select}&$orderby=createdon desc&$top=100`);
+      state.aiDrafts = result.entities || [];
+      renderAiDrafts();
+    } catch (error) {
+      state.aiDrafts = [];
+      el.aiDraftSetup.hidden = false;
+      el.aiDraftSetup.textContent = `Não foi possível carregar solicitações IA: ${error.message || "erro de conexão"}`;
+    } finally {
+      state.aiDraftLoading = false;
+    }
+  }
+
+  function renderAiDrafts() {
+    if (!el.aiDraftList) return;
+    const drafts = state.aiDrafts || [];
+    el.aiDraftSummary.textContent = drafts.length ? `${drafts.length} trecho(s) recebido(s). Aprovação individual, sem criação automática.` : "Nenhuma solicitação pendente.";
+    el.aiDraftList.replaceChildren();
+    if (!state.selectedAiDraft && el.aiDraftDetail) el.aiDraftDetail.hidden = true;
+    drafts.forEach((draft) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `ai-draft-item${state.selectedAiDraft && aiDraftId(state.selectedAiDraft) === aiDraftId(draft) ? " is-selected" : ""}`;
+      button.dataset.aiDraftId = aiDraftId(draft);
+      const title = document.createElement("strong");
+      title.textContent = aiDraftValue(draft, "subject") || "Solicitação sem assunto";
+      const meta = document.createElement("span");
+      meta.textContent = `${aiDraftValue(draft, "legType") || "Trecho"} · ${aiDraftValue(draft, "status") || "Pendente"}`;
+      button.append(title, meta);
+      el.aiDraftList.appendChild(button);
+    });
+    if (state.selectedAiDraft) renderAiDraftDetail();
+  }
+
+  function handleAiDraftListClick(event) {
+    const item = event.target.closest("[data-ai-draft-id]");
+    if (!item) return;
+    state.selectedAiDraft = state.aiDrafts.find((draft) => aiDraftId(draft) === item.dataset.aiDraftId) || null;
+    renderAiDrafts();
+  }
+
+  function renderAiDraftDetail() {
+    const draft = state.selectedAiDraft;
+    if (!draft || !el.aiDraftDetail) return;
+    el.aiDraftDetail.hidden = false;
+    el.aiDraftTitle.textContent = aiDraftValue(draft, "subject") || "Solicitação sem assunto";
+    el.aiDraftMeta.textContent = [aiDraftValue(draft, "sender"), aiDraftValue(draft, "receivedAt")].filter(Boolean).join(" · ");
+    el.aiDraftStatus.textContent = aiDraftValue(draft, "status") || "Pendente";
+    const warnings = aiDraftValue(draft, "warnings");
+    el.aiDraftWarnings.hidden = !warnings;
+    el.aiDraftWarnings.textContent = warnings || "";
+    el.aiDraftBody.textContent = aiDraftValue(draft, "body") || "Texto original não retido.";
+    let leg = {};
+    try { leg = JSON.parse(aiDraftValue(draft, "legJson") || "{}"); } catch { leg = {}; }
+    let extraction = {};
+    try { extraction = JSON.parse(aiDraftValue(draft, "extractionJson") || "{}"); } catch { extraction = {}; }
+    const rows = [["Cliente", extraction.client || "Não informado"], ["Solicitante", extraction.requester || "Não informado"], ["Saída", `${leg.date || "sem data"} ${leg.time || ""}`], ["Rota", `${leg.origin || "?"} → ${leg.destination || "?"}`], ["Passageiros", (extraction.passengers || []).map((item) => item.name || item).join(", ") || "Não informado"]];
+    el.aiDraftFields.replaceChildren(...rows.flatMap(([label, value]) => { const dt = document.createElement("dt"); dt.textContent = label; const dd = document.createElement("dd"); dd.textContent = value; return [dt, dd]; }));
+    const status = String(aiDraftValue(draft, "status") || "");
+    el.aiDraftApprove.disabled = !["Pronto", "Pendente"].includes(status) || !aiDraftId(draft);
+    el.aiDraftDiscard.disabled = ["Agendado", "Descartado"].includes(status) || !aiDraftId(draft);
+  }
+
+  function parseAiLeg(draft) {
+    try { return JSON.parse(aiDraftValue(draft, "legJson") || "{}"); } catch { return {}; }
+  }
+
+  async function approveSelectedAiDraft() {
+    const draft = state.selectedAiDraft;
+    if (!draft || !aiDraftConfig() || !state.xrm || !state.isNew) {
+      toast("Abra um formulário novo no Dataverse para aprovar uma solicitação IA.", "error");
+      return;
+    }
+    let extraction;
+    try { extraction = JSON.parse(aiDraftValue(draft, "extractionJson") || "{}"); } catch { toast("JSON da extração inválido.", "error"); return; }
+    const leg = parseAiLeg(draft);
+    if (!extraction.clientId || !extraction.requesterId || !(extraction.passengers || []).every((item) => item?.id)) {
+      toast("Aprovação bloqueada: cliente, solicitante e passageiros precisam estar confirmados no Dataverse.", "error", 8000);
+      return;
+    }
+    await ensurePassengersByIds(extraction.passengers.map((item) => item.id));
+    const missing = extraction.passengers.filter((item) => !getPassengerById(item.id));
+    if (missing.length) { toast("Aprovação bloqueada: passageiro não encontrado.", "error"); return; }
+    setSelectValue(el.cliente, extraction.clientId);
+    setSelectValue(el.solicitante, extraction.requesterId);
+    setFieldValue(el.saidaData, leg.date || "");
+    const [hour = "", minute = ""] = String(leg.time || "").split(":");
+    setSelectValue(el.saidaHora, hour); setSelectValue(el.saidaMinuto, minute);
+    setSelectValue(el.tipoServico, leg.serviceTypeValue || findOptionValue("tipoServico", leg.serviceType || extraction.serviceType || ""));
+    setSelectValue(el.tipoVeiculo, leg.vehicleTypeValue || findOptionValue("tipoVeiculo", leg.vehicleType || extraction.vehicleType || ""));
+    setFieldValue(el.trajeto, leg.route || `${leg.origin || ""} / ${leg.destination || ""}`);
+    setFieldValue(el.enderecoPersonalizado, leg.origin || "");
+    setFieldValue(el.destino, leg.destination || "");
+    setFieldValue(el.observacao, [extraction.observations, leg.notes].filter(Boolean).join("\n"));
+    state.enderecoPersonalizadoAtivo = true;
+    state.selectedPassengers = extraction.passengers.map((item, index) => ({ rowKey: nextPassengerRowKey(), ordem: index + 1, passageiro: getPassengerById(item.id), guid: item.id, telefone: getPassengerById(item.id)?.telefone || "", enderecoEditado: "" }));
+    setSelectValue(el.statusOperacao, 202410004);
+    renderPassengers();
+    clearValidationStates();
+    const before = state.lastSuccessVoucher;
+    await saveForm();
+    if (state.lastSuccessVoucher && state.lastSuccessVoucher !== before) {
+      const field = aiDraftConfig().fields.status;
+      await state.xrm.WebApi.updateRecord(aiDraftConfig().entity, aiDraftId(draft), { [field]: aiDraftConfig().statusValues?.scheduled ?? "Agendado" });
+      await loadAiDrafts();
+      toast("Trecho aprovado e reserva criada com status Solicitado.", "success");
+    }
+  }
+
+  async function discardSelectedAiDraft() {
+    const draft = state.selectedAiDraft;
+    const config = aiDraftConfig();
+    if (!draft || !config || !state.xrm) return;
+    const field = config.fields.status;
+    await state.xrm.WebApi.updateRecord(config.entity, aiDraftId(draft), { [field]: config.statusValues?.discarded ?? "Descartado" });
+    await loadAiDrafts();
   }
 
   function renderStatusFaturamento() {
@@ -5628,7 +5804,7 @@
   }
 
   function openReviewBeforeSave(context) {
-    performSave();
+    return performSave();
   }
 
   function closeReviewOverlay(clearContext) {
@@ -6224,7 +6400,11 @@
       button.classList.toggle("is-active", isActive);
       button.toggleAttribute("aria-current", isActive);
     });
-    el.panels.forEach((panel) => panel.classList.toggle("is-active", panel.dataset.panel === tab));
+    el.panels.forEach((panel) => {
+      const active = panel.dataset.panel === tab;
+      panel.classList.toggle("is-active", active);
+      panel.hidden = !active;
+    });
     if (tab === "return") syncReturnDefaults();
     updateSaveButtonText();
   }
@@ -11809,13 +11989,12 @@
   async function saveForm() {
     captureObsState();
     if (isImportSaveMode()) {
-      performImportedServicesSave();
-      return;
+      return performImportedServicesSave();
     }
 
     const context = buildSaveContext();
     clearValidationStates();
-    proceedSaveContext(context);
+    return proceedSaveContext(context);
   }
 
   function isImportSaveMode() {
