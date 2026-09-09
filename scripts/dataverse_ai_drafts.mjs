@@ -50,11 +50,15 @@ export async function upsertDraft(record) {
   const token = await dataverseToken();
   const headers = { authorization: `Bearer ${token}`, "content-type": "application/json", Accept: "application/json" };
   const stableValue = String(record.messageId || "").replace(/'/g, "''");
-  const lookupUrl = `${baseUrl}/api/data/v9.2/${table}?$select=${encodeURIComponent(fields.id || fields.stableMessageId)}&$filter=${encodeURIComponent(`${fields.stableMessageId} eq '${stableValue}' and ${fields.ordinal} eq ${Number(record.ordinal) || 0}`)}`;
+  const lookupFields = [fields.id || fields.stableMessageId, fields.status].filter(Boolean).join(",");
+  const lookupUrl = `${baseUrl}/api/data/v9.2/${table}?$select=${encodeURIComponent(lookupFields)}&$filter=${encodeURIComponent(`${fields.stableMessageId} eq '${stableValue}' and ${fields.ordinal} eq ${Number(record.ordinal) || 0}`)}`;
   const existingResponse = await fetch(lookupUrl, { headers });
   if (!existingResponse.ok) throw new Error(`Dataverse respondeu ${existingResponse.status} na busca de idempotência.`);
   const existing = await existingResponse.json();
-  const entityId = existing.value?.[0]?.[fields.id || ""];
+  const existingRow = existing.value?.[0];
+  const entityId = existingRow?.[fields.id || ""];
+  const scheduledValue = Number(statusValues.Agendado ?? statusValues.scheduled);
+  if (entityId && Number.isFinite(scheduledValue) && Number(existingRow?.[fields.status]) === scheduledValue) return entityId;
   const payload = {};
   const put = (name, value) => { if (fields[name] && value !== undefined && value !== null) payload[fields[name]] = value; };
   put("stableMessageId", record.messageId);
