@@ -168,7 +168,12 @@
   const AI_DRAFT_CONFIG = (() => {
     const configured = window.__FORMULARIO_IA_DRAFT_CONFIG;
     if (!configured || typeof configured !== "object" || !configured.entity) return null;
-    return { entity: String(configured.entity), fields: configured.fields && typeof configured.fields === "object" ? configured.fields : {} };
+    return {
+      entity: String(configured.entity),
+      fields: configured.fields && typeof configured.fields === "object" ? configured.fields : {},
+      statusValues: configured.statusValues && typeof configured.statusValues === "object" ? configured.statusValues : {},
+      statusLabels: configured.statusLabels && typeof configured.statusLabels === "object" ? configured.statusLabels : {}
+    };
   })();
   const QUERY_MOCK_MODE = (URL_PARAMS.get("mock") === "1" || URL_PARAMS.get("mockData") === "1");
   const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
@@ -3486,6 +3491,15 @@
     return field ? row?.[field] : "";
   }
 
+  function aiDraftStatusLabel(row) {
+    const field = aiDraftConfig()?.fields?.status;
+    const formatted = field ? row?.[`${field}@OData.Community.Display.V1.FormattedValue`] : "";
+    if (formatted) return formatted;
+    const raw = aiDraftValue(row, "status");
+    const labels = aiDraftConfig()?.statusLabels || {};
+    return labels[String(raw)] || String(raw || "Pendente");
+  }
+
   function aiDraftId(row) {
     return aiDraftValue(row, "id") || row?.["@odata.etag"] || "";
   }
@@ -3534,7 +3548,7 @@
       const title = document.createElement("strong");
       title.textContent = aiDraftValue(draft, "subject") || "Solicitação sem assunto";
       const meta = document.createElement("span");
-      meta.textContent = `${aiDraftValue(draft, "legType") || "Trecho"} · ${aiDraftValue(draft, "status") || "Pendente"}`;
+      meta.textContent = `${aiDraftValue(draft, "legType") || "Trecho"} · ${aiDraftStatusLabel(draft)}`;
       button.append(title, meta);
       el.aiDraftList.appendChild(button);
     });
@@ -3554,7 +3568,7 @@
     el.aiDraftDetail.hidden = false;
     el.aiDraftTitle.textContent = aiDraftValue(draft, "subject") || "Solicitação sem assunto";
     el.aiDraftMeta.textContent = [aiDraftValue(draft, "sender"), aiDraftValue(draft, "receivedAt")].filter(Boolean).join(" · ");
-    el.aiDraftStatus.textContent = aiDraftValue(draft, "status") || "Pendente";
+    el.aiDraftStatus.textContent = aiDraftStatusLabel(draft);
     const warnings = aiDraftValue(draft, "warnings");
     el.aiDraftWarnings.hidden = !warnings;
     el.aiDraftWarnings.textContent = warnings || "";
@@ -3565,7 +3579,7 @@
     try { extraction = JSON.parse(aiDraftValue(draft, "extractionJson") || "{}"); } catch { extraction = {}; }
     const rows = [["Cliente", extraction.client || "Não informado"], ["Solicitante", extraction.requester || "Não informado"], ["Saída", `${leg.date || "sem data"} ${leg.time || ""}`], ["Rota", `${leg.origin || "?"} → ${leg.destination || "?"}`], ["Passageiros", (extraction.passengers || []).map((item) => item.name || item).join(", ") || "Não informado"]];
     el.aiDraftFields.replaceChildren(...rows.flatMap(([label, value]) => { const dt = document.createElement("dt"); dt.textContent = label; const dd = document.createElement("dd"); dd.textContent = value; return [dt, dd]; }));
-    const status = String(aiDraftValue(draft, "status") || "");
+    const status = aiDraftStatusLabel(draft);
     el.aiDraftApprove.disabled = !["Pronto", "Pendente"].includes(status) || !aiDraftId(draft);
     el.aiDraftDiscard.disabled = ["Agendado", "Descartado"].includes(status) || !aiDraftId(draft);
   }

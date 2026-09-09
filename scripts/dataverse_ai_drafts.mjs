@@ -21,6 +21,17 @@ function draftFields() {
   return value;
 }
 
+function draftStatusValues() {
+  const raw = process.env.AI_DRAFT_STATUS_VALUES_JSON;
+  if (!raw) return {};
+  try {
+    const value = JSON.parse(raw);
+    return value && typeof value === "object" ? value : {};
+  } catch {
+    throw new Error("AI_DRAFT_STATUS_VALUES_JSON inválido.");
+  }
+}
+
 function assertDraftTable() {
   if (!draftTable()) throw new Error("AI_DRAFT_TABLE ausente. Configure o nome lógico criado na solução do Dataverse.");
   return draftTable();
@@ -34,6 +45,7 @@ async function dataverseToken() {
 export async function upsertDraft(record) {
   const table = assertDraftTable();
   const fields = draftFields();
+  const statusValues = draftStatusValues();
   const baseUrl = required("DATAVERSE_URL");
   const token = await dataverseToken();
   const headers = { authorization: `Bearer ${token}`, "content-type": "application/json", Accept: "application/json" };
@@ -55,7 +67,7 @@ export async function upsertDraft(record) {
   put("ordinal", record.ordinal);
   put("legType", record.legType);
   put("legJson", record.legJson);
-  put("status", record.status);
+  put("status", statusValues[record.status] ?? record.status);
   put("warnings", record.warnings?.join("\n"));
   put("confidence", record.confidence);
   put("extractorVersion", record.extractorVersion);

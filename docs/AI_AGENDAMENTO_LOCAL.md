@@ -13,8 +13,9 @@ $env:OUTLOOK_TENANT_ID = "<tenant>"
 $env:OUTLOOK_CLIENT_ID = "<app-registration-com-device-code>"
 $env:OUTLOOK_FOLDER_ID = "<folder-id>"
 $env:DATAVERSE_URL = "https://<org>.crm.dynamics.com"
-$env:AI_DRAFT_TABLE = "<nome-logico-gerado-pelo-publisher>"
-$env:AI_DRAFT_FIELDS_JSON = '{"id":"<pk>","stableMessageId":"<campo>","conversationId":"<campo>","subject":"<campo>","sender":"<campo>","receivedAt":"<campo>","body":"<campo>","extractionJson":"<campo>","ordinal":"<campo>","legType":"<campo>","legJson":"<campo>","status":"<campo>","warnings":"<campo>","confidence":"<campo>","extractorVersion":"<campo>","hasAttachments":"<campo>","processedAt":"<campo>"}'
+$env:AI_DRAFT_TABLE = "cr40f_solicitacaoiaagendamento"
+$env:AI_DRAFT_FIELDS_JSON = '{"id":"cr40f_solicitacaoiaagendamentoid","stableMessageId":"cr40f_identificadormensagem","conversationId":"cr40f_conversationid","subject":"cr40f_assunto","sender":"cr40f_remetente","receivedAt":"cr40f_recebimento","body":"cr40f_corponormalizado","extractionJson":"cr40f_extracaojson","ordinal":"cr40f_ordemtrecho","legType":"cr40f_tipotrecho","legJson":"cr40f_trechojson","status":"cr40f_status","warnings":"cr40f_alertas","confidence":"cr40f_confianca","extractorVersion":"cr40f_versaoextrator","hasAttachments":"cr40f_possuianexos","processedAt":"cr40f_processadoem"}'
+$env:AI_DRAFT_STATUS_VALUES_JSON = '{"Pendente":100000000,"Pronto":100000001,"Bloqueado":100000002,"Agendado":100000003,"Descartado":100000004,"Erro":100000005}'
 ```
 
 O primeiro uso abre o device-code do Entra ID. O refresh token é salvo em `%LOCALAPPDATA%\Betinhos\formulario-geral\*-token.xml` com DPAPI do Windows. Escopo Outlook: `Mail.Read`; escopo Dataverse: `user_impersonation`. Nenhum token é escrito em Git, prompt, log ou URL.
@@ -49,7 +50,8 @@ Antes de carregar o Web Resource, a solução deve fornecer a configuração aba
 window.__FORMULARIO_IA_DRAFT_CONFIG = {
   entity: "<nome-logico-da-tabela>",
   fields: { id: "<pk>", stableMessageId: "<campo>", conversationId: "<campo>", subject: "<campo>", sender: "<campo>", receivedAt: "<campo>", body: "<campo>", extractionJson: "<campo>", ordinal: "<campo>", legType: "<campo>", legJson: "<campo>", status: "<campo>", warnings: "<campo>", confidence: "<campo>", extractorVersion: "<campo>", hasAttachments: "<campo>", processedAt: "<campo>" },
-  statusValues: { scheduled: "Agendado", discarded: "Descartado" }
+  statusValues: { scheduled: 100000003, discarded: 100000004 },
+  statusLabels: { "100000000": "Pendente", "100000001": "Pronto", "100000002": "Bloqueado", "100000003": "Agendado", "100000004": "Descartado", "100000005": "Erro" }
 };
 </script>
 ```
