@@ -11,6 +11,24 @@ dns.setDefaultResultOrder("ipv4first");
 const GRAPH_ROOT = "https://graph.microsoft.com/v1.0";
 const AUTH_ROOT = (tenant) => `https://login.microsoftonline.com/${encodeURIComponent(tenant)}/oauth2/v2.0`;
 const tokenDirectory = path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "Betinhos", "formulario-geral");
+const windowsPowerShellModulePath = [
+  path.join(process.env.SystemRoot || "C:\\Windows", "System32", "WindowsPowerShell", "v1.0", "Modules"),
+  path.join(process.env.ProgramFiles || "C:\\Program Files", "WindowsPowerShell", "Modules")
+].join(path.delimiter);
+
+async function fetchWithRetry(url, options, attempts = 4) {
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await fetch(url, options);
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts - 1) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 1000 * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
 
 function required(name) {
   const value = process.env[name];
@@ -22,7 +40,7 @@ async function runPowerShell(args, input = "", environment = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", ...args], {
       windowsHide: true,
-      env: { ...process.env, ...environment }
+      env: { ...process.env, PSModulePath: windowsPowerShellModulePath, ...environment }
     });
     let stdout = "";
     let stderr = "";
@@ -38,14 +56,14 @@ async function runPowerShell(args, input = "", environment = {}) {
 async function protectSecret(value, cacheKey = "outlook") {
   const secretFile = path.join(tokenDirectory, `${cacheKey}-token.xml`);
   await mkdir(path.dirname(secretFile), { recursive: true });
-  const script = "$input | ConvertTo-SecureString -AsPlainText -Force | Export-Clixml -LiteralPath $env:BETINHOS_TOKEN_PATH";
+  const script = "Import-Module Microsoft.PowerShell.Security -ErrorAction Stop; $input | ConvertTo-SecureString -AsPlainText -Force | Export-Clixml -LiteralPath $env:BETINHOS_TOKEN_PATH";
   await runPowerShell(["-Command", script], value, { BETINHOS_TOKEN_PATH: secretFile });
 }
 
 async function unprotectSecret(cacheKey = "outlook") {
   const secretFile = path.join(tokenDirectory, `${cacheKey}-token.xml`);
   try {
-    const script = "$s = Import-Clixml -LiteralPath $env:BETINHOS_TOKEN_PATH; $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s); try { [Runtime.InteropServices.Marshal]::PtrToStringBSTR($b) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }";
+    const script = "Import-Module Microsoft.PowerShell.Security -ErrorAction Stop; $s = Import-Clixml -LiteralPath $env:BETINHOS_TOKEN_PATH; $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s); try { [Runtime.InteropServices.Marshal]::PtrToStringBSTR($b) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }";
     const result = await runPowerShell(["-Command", script], "", { BETINHOS_TOKEN_PATH: secretFile });
     return result.stdout.trim();
   } catch (error) {
@@ -58,7 +76,7 @@ async function deviceToken(scope, cacheKey, tenantName = "OUTLOOK_TENANT_ID", cl
   const tenant = required(tenantName);
   const clientId = required(clientName);
   const root = AUTH_ROOT(tenant);
-  const device = await fetch(`${root}/devicecode`, {
+  const device = await fetchWithRetry(`${root}/devicecode`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ client_id: clientId, scope: `${scope} offline_access` })
@@ -66,7 +84,7 @@ async function deviceToken(scope, cacheKey, tenantName = "OUTLOOK_TENANT_ID", cl
   console.log(device.message);
   while (true) {
     await new Promise((resolve) => setTimeout(resolve, (device.interval || 5) * 1000));
-    const response = await fetch(`${root}/token`, {
+    const response = await fetchWithRetry(`${root}/token`, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({ grant_type: "urn:ietf:params:oauth:grant-type:device_code", client_id: clientId, device_code: device.device_code })
@@ -85,7 +103,7 @@ export async function getDelegatedAccessToken({ scope, cacheKey = "outlook", ten
   const clientId = required(clientEnv);
   const refreshToken = await unprotectSecret(cacheKey);
   if (!refreshToken) return deviceToken(scope, cacheKey, tenantEnv, clientEnv);
-  const response = await fetch(`${AUTH_ROOT(tenant)}/token`, {
+  const response = await fetchWithRetry(`${AUTH_ROOT(tenant)}/token`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ grant_type: "refresh_token", client_id: clientId, refresh_token: refreshToken, scope: `${scope} offline_access` })
@@ -103,8 +121,9 @@ function assertResponse(response) {
 
 export async function graphRequest(resource, options = {}) {
   const token = await getDelegatedAccessToken({ scope: "Mail.Read", cacheKey: "outlook" });
-  const response = await fetch(`${GRAPH_ROOT}${resource}`, { ...options, headers: { authorization: `Bearer ${token}`, ...(options.headers || {}) } });
-  return assertResponse(response).then((value) => value.json());
+  const response = await fetchWithRetry(`${GRAPH_ROOT}${resource}`, { ...options, headers: { authorization: `Bearer ${token}`, ...(options.headers || {}) } });
+  assertResponse(response);
+  return response.json();
 }
 
 export async function listMailFolders() {
@@ -122,7 +141,7 @@ export async function sendMail({ to, subject, body }) {
   const recipients = String(to || "").split(/[;,]/).map((address) => address.trim()).filter(Boolean);
   if (!recipients.length) throw new Error("AI_ALERT_EMAIL_TO ausente.");
   const token = await getDelegatedAccessToken({ scope: "Mail.Send", cacheKey: "outlook-mail-send" });
-  const response = await fetch(`${GRAPH_ROOT}/me/sendMail`, {
+  const response = await fetchWithRetry(`${GRAPH_ROOT}/me/sendMail`, {
     method: "POST",
     headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
     body: JSON.stringify({
