@@ -5,8 +5,8 @@
     "build": "node scripts/build_webresource.js",
     "wr": "node scripts/build_webresource.js --no-version",
     "rw": "node scripts/build_webresource.js --no-version",
-    "deploy:webresource": "powershell -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1",
-    "push": "powershell -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1 -EnvironmentUrl https://org23b93544.crm2.dynamics.com/ -WebResourceName new_formulario_geral.html -DeviceCode",
+    "deploy:webresource": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1",
+    "push": "npm run build && node scripts/deploy_webresource.mjs --environment https://org23b93544.crm2.dynamics.com --webresource new_formulario_geral.html --entity cr40f_solicitacaoiaagendamento",
     "puh": "npm run push"
   }
 }

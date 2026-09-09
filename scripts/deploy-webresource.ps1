@@ -35,6 +35,17 @@ function Escape-ODataString([string] $Value) {
 $root = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $root
 
+$systemRoot = if ($env:SystemRoot) { $env:SystemRoot } else { "C:\\Windows" }
+$programFiles = if ($env:ProgramFiles) { $env:ProgramFiles } else { "C:\\Program Files" }
+$userHome = if ($HOME) { $HOME } else { "" }
+$nativePowerShellModules = @(
+  (Join-Path $systemRoot "System32\\WindowsPowerShell\\v1.0\\Modules"),
+  (Join-Path $programFiles "WindowsPowerShell\\Modules"),
+  (Join-Path $userHome "Documents\\PowerShell\\Modules")
+) | Where-Object { Test-Path $_ } | Select-Object -Unique
+$env:PSModulePath = $nativePowerShellModules -join ";"
+Import-Module Microsoft.PowerShell.Utility -ErrorAction Stop
+
 if ([string]::IsNullOrWhiteSpace($TenantId)) {
   $TenantId = if ($env:OUTLOOK_TENANT_ID) { $env:OUTLOOK_TENANT_ID } else { "organizations" }
 }
