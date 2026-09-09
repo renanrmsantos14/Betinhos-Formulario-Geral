@@ -2,6 +2,12 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
 import { spawn } from "node:child_process";
+import dns from "node:dns";
+
+// Algumas redes Windows anunciam IPv6, mas não roteiam a saída HTTPS do Node.
+// O Graph continua acessível por IPv4; priorizar IPv4 evita timeout no device-code.
+dns.setDefaultResultOrder("ipv4first");
+
 const GRAPH_ROOT = "https://graph.microsoft.com/v1.0";
 const AUTH_ROOT = (tenant) => `https://login.microsoftonline.com/${encodeURIComponent(tenant)}/oauth2/v2.0`;
 const tokenDirectory = path.join(process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local"), "Betinhos", "formulario-geral");
@@ -12,9 +18,12 @@ function required(name) {
   return value;
 }
 
-async function runPowerShell(args, input = "") {
+async function runPowerShell(args, input = "", environment = {}) {
   return new Promise((resolve, reject) => {
-    const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", ...args], { windowsHide: true });
+    const child = spawn("powershell.exe", ["-NoProfile", "-NonInteractive", ...args], {
+      windowsHide: true,
+      env: { ...process.env, ...environment }
+    });
     let stdout = "";
     let stderr = "";
     child.stdout.on("data", (chunk) => { stdout += chunk; });
@@ -29,15 +38,15 @@ async function runPowerShell(args, input = "") {
 async function protectSecret(value, cacheKey = "outlook") {
   const secretFile = path.join(tokenDirectory, `${cacheKey}-token.xml`);
   await mkdir(path.dirname(secretFile), { recursive: true });
-  const script = "$input | ConvertTo-SecureString -AsPlainText -Force | Export-Clixml -LiteralPath $args[0]";
-  await runPowerShell(["-Command", script, secretFile], value);
+  const script = "$input | ConvertTo-SecureString -AsPlainText -Force | Export-Clixml -LiteralPath $env:BETINHOS_TOKEN_PATH";
+  await runPowerShell(["-Command", script], value, { BETINHOS_TOKEN_PATH: secretFile });
 }
 
 async function unprotectSecret(cacheKey = "outlook") {
   const secretFile = path.join(tokenDirectory, `${cacheKey}-token.xml`);
   try {
-    const script = "$s = Import-Clixml -LiteralPath $args[0]; $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s); try { [Runtime.InteropServices.Marshal]::PtrToStringBSTR($b) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }";
-    const result = await runPowerShell(["-Command", script, secretFile]);
+    const script = "$s = Import-Clixml -LiteralPath $env:BETINHOS_TOKEN_PATH; $b = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($s); try { [Runtime.InteropServices.Marshal]::PtrToStringBSTR($b) } finally { [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($b) }";
+    const result = await runPowerShell(["-Command", script], "", { BETINHOS_TOKEN_PATH: secretFile });
     return result.stdout.trim();
   } catch (error) {
     if (error.code === "ENOENT" || error.code === 1) return "";
