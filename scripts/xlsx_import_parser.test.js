@@ -606,6 +606,9 @@ assert.equal(waitTrecho.destino, "ANA - Escritorio A\nBRUNO - Escritorio B", "Sp
 assert.equal(waitTrecho.trajetoCidades, "Sao Paulo / Campinas", "Split deve recalcular trajeto original apenas com a ida");
 assert.equal(splitClone.key, "PGWAIT/1|split|1", "Split deve criar chave estavel na PG");
 assert.equal(splitClone.importOrigin, "split", "Split deve marcar origem tecnica");
+assert.equal(waitTrecho.splitGroupId, splitClone.splitGroupId, "ida e busca do Split devem compartilhar grupo em memoria");
+assert.equal(waitTrecho.splitRole, "outbound", "OS original do Split deve ser marcada como ida");
+assert.equal(splitClone.splitRole, "return", "clone do Split deve ser marcado como retorno");
 assert.equal(splitClone.reviewStatus, IMPORT_REVIEW_STATUSES.PENDING, "Split deve nascer pendente");
 assert.deepEqual(splitClone.solicitacoes, ["ST12"], "Split deve manter no clone apenas STs da busca");
 assert.deepEqual(splitClone.sourceRows, [12], "Split deve manter no clone apenas as linhas de retorno");

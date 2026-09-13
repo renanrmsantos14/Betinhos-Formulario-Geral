@@ -476,13 +476,18 @@
     if (!program || !trecho) return null;
     const splitLines = splitImportedTrechoLines(trecho.linhasImportadas || []);
     if (!splitLines.outboundLines.length || !splitLines.returnLines.length) return null;
+    const splitGroupId = String(trecho.splitGroupId || `${program.programacao}|split-group|${nextSplitImportSequence(program)}`);
     const clone = createSplitImportTrecho(program, trecho, {
       ...options,
-      returnLines: splitLines.returnLines
+      returnLines: splitLines.returnLines,
+      splitGroupId,
+      splitRole: "return"
     });
     if (!clone) return null;
     applyImportedLinesToTrecho(trecho, splitLines.outboundLines, trecho.passageiros || []);
     applyImportOperationalDecision(trecho, IMPORT_OPERATIONAL_DECISIONS.SPLIT);
+    trecho.splitGroupId = splitGroupId;
+    trecho.splitRole = "outbound";
     markImportedTrechoPending(trecho);
     program.trechos = Array.isArray(program.trechos) ? program.trechos : [];
     program.trechos.push(clone);
@@ -585,6 +590,7 @@
   function createSplitImportTrecho(program, source, options = {}) {
     const programacao = String(options.programacao || program?.programacao || source?.programacao || "").trim();
     const key = options.key || `${programacao}|split|${nextSplitImportSequence(program)}`;
+    const splitGroupId = String(options.splitGroupId || source?.splitGroupId || `${programacao}|split-group|${nextSplitImportSequence(program)}`);
     const returnLines = sortImportedLines(options.returnLines || latestImportedLineGroup(source?.linhasImportadas || []));
     const returnLine = returnLines[0] || null;
     return {
@@ -621,6 +627,8 @@
       reviewBlockReason: "",
       savedRecordId: "",
       duplicatedRecordIds: [],
+      splitGroupId,
+      splitRole: options.splitRole || "return",
       importOrigin: "split",
       originStatus: "Split",
       operationalMode: IMPORT_OPERATIONAL_MODES.SPLIT_RETURN,

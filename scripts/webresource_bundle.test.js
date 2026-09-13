@@ -224,12 +224,16 @@ assert.ok(html.includes("function canShowImportedSplitAction"), "bundle deve ter
 assert.ok(html.includes("reviewStatus === statuses.PENDING"), "bundle deve exibir Separar ida/busca apenas em pendentes");
 assert.ok(html.includes("trecho?.operationalMode !== modes.MULTI_PICKUP"), "bundle nao deve exibir Split em multi-coleta");
 assert.ok(html.includes("trecho?.operationalMode !== modes.INDEPENDENT_SERVICES"), "bundle nao deve exibir Split em servicos independentes");
-assert.ok(html.includes("await findExistingImportedReservaByProgramacao(trecho.programacao)"), "bundle deve revalidar PG antes de criar reserva importada");
+assert.ok(html.includes("await findExistingImportedReservasByProgramacao(trecho.programacao)"), "bundle deve revalidar todos os registros da PG antes de criar reserva importada");
 assert.ok(html.includes("markImportedTrechoAsDuplicate(trecho, existingReserva"), "bundle deve bloquear PG existente antes do create");
 assert.ok(html.includes("function isDataverseDuplicateKeyError"), "bundle deve tratar erro de chave duplicada do Dataverse");
 assert.ok(html.includes("function findImportedExistingPersonFromDuplicateError"), "bundle deve reaproveitar passageiro quando Dataverse retorna chave duplicada");
 assert.ok(html.includes("function extractDuplicatePassengerId"), "bundle deve extrair ID do passageiro duplicado do erro Dataverse");
 assert.ok(html.includes("findImportedExistingPerson(person)\n              || await findImportedExistingPersonFromDuplicateError(person, error)"), "bundle deve tentar fallback robusto no erro de passageiro duplicado");
+assert.ok(html.includes("function saveImportedSplitGroup"), "bundle deve salvar Split como grupo");
+assert.ok(html.includes("Valide ida e retorno do Split antes de salvar."), "bundle deve exigir validacao conjunta do Split");
+assert.ok(html.includes("Split parcialmente salvo. Corrija o trecho que falhou e tente novamente."), "bundle deve permitir retry apos falha parcial do Split");
+assert.ok(html.includes("Split vinculado"), "bundle deve mostrar selo do grupo Split autorizado");
 assert.ok(html.includes("ultimoServico: \"cr40f_datadoultimoservico\""), "bundle deve mapear Data do Ultimo Servico do passageiro");
 assert.ok(html.includes("setChoice(payload, CONFIG.fields.passageiro.status, getActivePassengerStatusValue())"), "bundle deve criar passageiro importado com status Ativo");
 assert.ok(html.includes("function updatePassengersLastServiceDate"), "bundle deve atualizar Data do Ultimo Servico apos salvar servico");

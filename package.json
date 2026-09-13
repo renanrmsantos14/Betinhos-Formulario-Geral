@@ -7,6 +7,7 @@
     "rw": "node scripts/build_webresource.js --no-version",
     "deploy:webresource": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1",
     "push": "npm run build && node scripts/deploy_webresource.mjs --environment https://org23b93544.crm2.dynamics.com --webresource new_formulario_geral.html --entity cr40f_solicitacaoiaagendamento",
-    "puh": "npm run push"
+    "puh": "npm run push",
+    "test:ai": "node scripts/ai_schedule_core.test.mjs && node scripts/dataverse_identity_match.test.mjs"
   }
 }

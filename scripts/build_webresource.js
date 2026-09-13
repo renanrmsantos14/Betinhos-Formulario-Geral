@@ -59,8 +59,10 @@ const placeholders = {
 
 html = html
   .replace(/<link rel="stylesheet" href="styles\.css">\s*/u, placeholders.css)
-  .replace(/\s*<script src="vendor\/xlsx\.full\.min\.js"><\/script>/u, `\n  ${placeholders.sheetjs}`)
-  .replace(/\s*<script src="scripts\/xlsx_import_core\.js"><\/script>/u, placeholders.core)
+  .replace(
+    /\s*<script src="scripts\/xlsx_import_core\.js"><\/script>/u,
+    `\n  ${placeholders.sheetjs}\n  ${placeholders.core}`
+  )
   .replace(/\s*<script src="app\.js"><\/script>/u, placeholders.app);
 
 for (const [name, marker] of Object.entries(placeholders)) {

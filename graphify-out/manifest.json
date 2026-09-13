@@ -1,7 +1,7 @@
 {
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\app.js": {
-    "mtime": 1783086339.0193677,
-    "ast_hash": "51743af90d51cce5b64b307f9075eaba",
+    "mtime": 1788993734.4522357,
+    "ast_hash": "03a9dfec27c34f785f9fa49617d5168d",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\model_driven_formulario_geral_command.js": {
@@ -80,8 +80,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\build_webresource.js": {
-    "mtime": 1781114240.6401825,
-    "ast_hash": "6d3c20c938122d63ed621cf1df2216b2",
+    "mtime": 1787755618.9162734,
+    "ast_hash": "c0b091defb2222a1e74646a0bbb616b3",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\coletar_metadata_dataverse_console.js": {
@@ -90,8 +90,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\formulario_operational_features.test.js": {
-    "mtime": 1783085984.9670703,
-    "ast_hash": "cadef4e60e2a4060e900486149d7fa7a",
+    "mtime": 1788993960.4905596,
+    "ast_hash": "150fd0a6493c9690f9909196c561303d",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\model_driven_command.test.js": {
@@ -110,18 +110,18 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\webresource_bundle.test.js": {
-    "mtime": 1783085986.0751498,
-    "ast_hash": "74d0e8d6f590423885d242ee69782e9f",
+    "mtime": 1787752810.4035738,
+    "ast_hash": "a40fcbd54c01536bd82040872f7f7ccc",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\xlsx_import_core.js": {
-    "mtime": 1780081052.50655,
-    "ast_hash": "e82b2ea287b3c30c646ddef4869bb526",
+    "mtime": 1787752364.5493162,
+    "ast_hash": "f596c7ddae2ee99ce8defd1a3c31d9e4",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\xlsx_import_parser.test.js": {
-    "mtime": 1780081032.728716,
-    "ast_hash": "d23838e3d44e0ac6da9914025e8c592c",
+    "mtime": 1787752570.8609147,
+    "ast_hash": "ca3b669f7e2ed67a44f6b36b22f6c418",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\vendor\\xlsx.full.min.js": {
@@ -155,8 +155,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\index.html": {
-    "mtime": 1783086252.3417194,
-    "ast_hash": "5057cd031f3e37509039ff53ee286a49",
+    "mtime": 1788995209.3345366,
+    "ast_hash": "8eb6bad0dd285ed8c618cc19ea41b940",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\MODEL_DRIVEN_WEBRESOURCE.md": {
@@ -170,8 +170,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\webresource.html": {
-    "mtime": 1783086362.7075825,
-    "ast_hash": "d9acc3022dbd50224522bca67755f8f6",
+    "mtime": 1788995209.3792505,
+    "ast_hash": "50cb16ac37d279b8ab9ce624fd4f38da",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.playwright-cli\\page-2026-05-20T19-31-49-541Z.yml": {
@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\package.json": {
-    "mtime": 1783077922.4261227,
-    "ast_hash": "79b175f6ac2aa872e644e02ba7fc8c7d",
+    "mtime": 1788982286.7810452,
+    "ast_hash": "6687deffabf46da3cad1862f88553be8",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.vscode\\tasks.json": {
@@ -220,8 +220,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\version.json": {
-    "mtime": 1783086252.3386314,
-    "ast_hash": "c382b7fdbed71e1c04fc234606aede98",
+    "mtime": 1788995209.3310351,
+    "ast_hash": "c21ac61d2be1ba7923c3d14e9fab636b",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\update_code_version.js": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\deploy-webresource.ps1": {
-    "mtime": 1781114263.030211,
-    "ast_hash": "d768e119f6f058982999a1c3bf472edf",
+    "mtime": 1788977617.6257765,
+    "ast_hash": "02f27e8c986d473a5d601d898ed8519f",
     "semantic_hash": ""
   },
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\diagnose-locale.ps1": {
@@ -292,6 +292,116 @@
   "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.tmp\\app-index-base.js": {
     "mtime": 1782146332.4143791,
     "ast_hash": "34ab7a413367edc9305e12a72225090b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\skill-observations\\cross-cutting-principles.md": {
+    "mtime": 1788974200.6744273,
+    "ast_hash": "65511a7999d85ae7eb04b1ea449b8c54",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\skill-observations\\last-review-date.txt": {
+    "mtime": 1788974204.1786544,
+    "ast_hash": "dd34e94b95abf02e177b48f0366099d9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\skill-observations\\log.md": {
+    "mtime": 1788974197.3818998,
+    "ast_hash": "c0188954614c9e0e53ff4eccd32eec26",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\ai_schedule_core.mjs": {
+    "mtime": 1788982009.5594983,
+    "ast_hash": "a47550246157e70f264cf9f0cc32036b",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\ai_schedule_core.test.mjs": {
+    "mtime": 1788970858.5187294,
+    "ast_hash": "ac269a54639a5cf05bc3254b56d0f2f1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\ai_schedule_worker.mjs": {
+    "mtime": 1788981975.8276036,
+    "ast_hash": "975868bd1e6013ea6c6a13ce600d2028",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\dataverse_ai_drafts.mjs": {
+    "mtime": 1788982027.2105324,
+    "ast_hash": "c58d02622c990ab51e22da0c5911428a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\outlook_graph.mjs": {
+    "mtime": 1788976648.0014298,
+    "ast_hash": "eb99073ed71d21ca5c440b2c1c66f043",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\docs\\AI_AGENDAMENTO_LOCAL.md": {
+    "mtime": 1788983634.9975233,
+    "ast_hash": "6386d230e23ec03d66b7b2695ec12648",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\data\\local\\ai-scheduling\\AAkALgAAAAAAHYQDEapmEc2byACqAC-EWg0AqStCtRxKmU2Say67wvA4zAAB-pMWPwAA.json": {
+    "mtime": 1788977297.8239021,
+    "ast_hash": "2f62eb0e590c9578f2e70093ddd47d38",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\deploy_webresource.mjs": {
+    "mtime": 1788977730.1257112,
+    "ast_hash": "45704043003e3976ad5f9ee769a79cf6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\data\\local\\ai-scheduling\\AAkALgAAAAAAHYQDEapmEc2byACqAC-EWg0AqStCtRxKmU2Say67wvA4zAAB-pMWPwAA.extraction.json": {
+    "mtime": 1788978192.0556107,
+    "ast_hash": "9b619ba71b5eb7e22629a1dc4aab7c8a",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\dataverse_identity_match.mjs": {
+    "mtime": 1788982503.426551,
+    "ast_hash": "b160c07eec311ba3df8bc426cadbf4b1",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\scripts\\dataverse_identity_match.test.mjs": {
+    "mtime": 1788982338.0206234,
+    "ast_hash": "a5ca61711efd410a3e6b3fc6290d8df0",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.playwright-cli\\page-2026-09-09T22-48-16-270Z.yml": {
+    "mtime": 1788994096.2773824,
+    "ast_hash": "d05de451ad3b5b55c79f118eb178dd50",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.playwright-cli\\page-2026-09-09T22-49-14-438Z.yml": {
+    "mtime": 1788994154.4406672,
+    "ast_hash": "291d9456c782f91e5945d139b7a836e6",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.playwright-cli\\page-2026-09-09T22-49-30-209Z.yml": {
+    "mtime": 1788994170.2110534,
+    "ast_hash": "cbb98ad8d6bbf1885d65d15d98ef91a5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.playwright-cli\\page-2026-09-09T22-49-50-763Z.yml": {
+    "mtime": 1788994190.76674,
+    "ast_hash": "2e0e2f834ac67854150dd644ba03afa8",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.playwright-cli\\page-2026-09-09T22-50-08-413Z.yml": {
+    "mtime": 1788994208.416131,
+    "ast_hash": "f2da0467f7982145968a53be0522b9e9",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.playwright-cli\\page-2026-09-09T22-50-34-656Z.yml": {
+    "mtime": 1788994234.6589882,
+    "ast_hash": "2f41d0456d8ad144ad24fe04cd9740b5",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.playwright-cli\\page-2026-09-09T22-51-12-843Z.yml": {
+    "mtime": 1788994272.8489811,
+    "ast_hash": "0b6e32362e20c8f31d77caa9de75d733",
+    "semantic_hash": ""
+  },
+  "C:\\Users\\mendo\\Desktop\\vscode\\Tela Formul\u00e1rio Geral\\.playwright-cli\\page-2026-09-09T22-54-07-942Z.yml": {
+    "mtime": 1788994448.1001158,
+    "ast_hash": "9b34364865b44da77fd9fe088d2dfe96",
     "semantic_hash": ""
   }
 }

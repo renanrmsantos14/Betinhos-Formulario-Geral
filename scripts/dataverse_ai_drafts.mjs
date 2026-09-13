@@ -108,6 +108,8 @@ export async function upsertDraft(record, target = {}) {
   put("receivedAt", record.receivedAt);
   put("body", record.body);
   put("extractionJson", record.extractionJson);
+  put("matchCandidates", record.matchCandidates);
+  put("missingFields", record.missingFields);
   put("ordinal", record.ordinal);
   put("legType", record.legType);
   put("legJson", record.legJson);

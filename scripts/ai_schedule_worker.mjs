@@ -3,6 +3,7 @@ import path from "node:path";
 import { listFolderMessages, sendMail } from "./outlook_graph.mjs";
 import { buildDraftRecords, normalizeEmailBody, readJsonFile } from "./ai_schedule_core.mjs";
 import { draftTargets, prepareDrafts, upsertDraft } from "./dataverse_ai_drafts.mjs";
+import { resolveExtractionIdentities } from "./dataverse_identity_match.mjs";
 
 const localRoot = path.resolve(process.env.AI_LOCAL_DATA_DIR || "data/local/ai-scheduling");
 
@@ -35,12 +36,21 @@ export async function pullMessages() {
 
 export async function processMessage(messageFile, extractionFile) {
   const [message, extraction] = await Promise.all([readJsonFile(messageFile), readJsonFile(extractionFile)]);
-  const drafts = prepareDrafts(message, extraction);
   const targets = draftTargets();
   const ids = [];
   const errors = [];
-  for (const draft of drafts) {
-    for (const target of targets) {
+  let draftCount = 0;
+  for (const target of targets) {
+    let targetExtraction;
+    try {
+      targetExtraction = await resolveExtractionIdentities(extraction, target);
+    } catch (error) {
+      errors.push({ environment: target.name, message: safeErrorMessage(error) });
+      continue;
+    }
+    const drafts = prepareDrafts(message, targetExtraction);
+    draftCount = Math.max(draftCount, drafts.length);
+    for (const draft of drafts) {
       try {
         ids.push({ environment: target.name, id: await upsertDraft(draft, target) });
       } catch (error) {
@@ -49,7 +59,7 @@ export async function processMessage(messageFile, extractionFile) {
     }
   }
   if (errors.length) await notifyTargetErrors(message, errors);
-  return { messageId: stableMessageId(message), drafts: drafts.length, ids, errors };
+  return { messageId: stableMessageId(message), drafts: draftCount, ids, errors };
 }
 
 function safeErrorMessage(error) {

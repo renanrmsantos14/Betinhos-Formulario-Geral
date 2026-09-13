@@ -37,8 +37,11 @@ export function normalizeExtraction(input) {
     isServiceRequest: source.isServiceRequest !== false,
     client: String(source.client || "").trim(),
     clientId: String(source.clientId || "").trim(),
+    clientEmail: String(source.clientEmail || "").trim(),
     requester: String(source.requester || "").trim(),
     requesterId: String(source.requesterId || "").trim(),
+    requesterEmail: String(source.requesterEmail || "").trim(),
+    requesterPhone: String(source.requesterPhone || "").trim(),
     serviceType: String(source.serviceType || "").trim(),
     vehicleType: String(source.vehicleType || "").trim(),
     passengers: Array.isArray(source.passengers) ? source.passengers.map((passenger) => typeof passenger === "string" ? { name: passenger } : ({ ...passenger, id: String(passenger?.id || "").trim(), name: String(passenger?.name || passenger?.fullName || "").trim() })) : [],
@@ -65,6 +68,7 @@ export function normalizeExtraction(input) {
     observations: String(source.observations || "").trim(),
     missingFields,
     warnings,
+    matchCandidates: source.matchCandidates && typeof source.matchCandidates === "object" ? source.matchCandidates : {},
     confidence: Number.isFinite(Number(source.confidence)) ? Number(source.confidence) : null,
     extractorVersion: String(source.extractorVersion || "1.0.0")
   };
@@ -99,6 +103,8 @@ export function buildDraftRecords({ message, extraction, receivedAt = message?.r
     receivedAt: receivedAt || null,
     body: normalizeText(message?.body?.content || message?.bodyPreview || "", 12000),
     extractionJson: JSON.stringify(normalized),
+    matchCandidates: JSON.stringify(normalized.matchCandidates || {}),
+    missingFields: [...normalized.missingFields, ...checked.errors].join("\n"),
     warnings: [...normalized.warnings, ...checked.errors],
     confidence: normalized.confidence,
     extractorVersion: normalized.extractorVersion,
