@@ -26,6 +26,8 @@ node scripts/validate_ai_schedule_manifest.mjs `
   --metadata C:\caminho\metadata-AppBetinhos.json
 ```
 
+Substitua `C:\caminho\metadata-AppBetinhos.json` pelo caminho real do JSON baixado pelo coletor; o texto acima é somente um exemplo.
+
 O comando falha se ainda houver placeholders, tabela/coluna ausente, tipo incompatível, lookup sem alvo da sessão ou `entitySetName` divergente. A saída `ok: true` é pré-requisito para continuar a configuração manual dos fluxos.
 
 ## Fluxo 1 — Interpretar sessão

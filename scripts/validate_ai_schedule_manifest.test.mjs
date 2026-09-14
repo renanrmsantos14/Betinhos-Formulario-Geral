@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -34,5 +35,12 @@ const metadata = {
   ]
 };
 assert.deepEqual(validateManifest(resolved, metadata), { ok: true, errors: [] });
+
+const cli = spawnSync(process.execPath, [
+  path.join(root, "scripts", "validate_ai_schedule_manifest.mjs"),
+  "--metadata", path.join(root, "arquivo-inexistente-metadata.json")
+], { encoding: "utf8" });
+assert.equal(cli.status, 1);
+assert.match(cli.stdout, /arquivo de metadata não encontrado/);
 
 console.log("validate_ai_schedule_manifest.test: ok");

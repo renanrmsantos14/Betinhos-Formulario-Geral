@@ -34,7 +34,7 @@ Antes de importar ou ativar qualquer fluxo, valide o manifesto contra a exporta�
 node scripts/validate_ai_schedule_manifest.mjs --manifest docs/power-platform/ai_schedule_solution_manifest.json --metadata C:\caminho\metadata-AppBetinhos.json
 ```
 
-O comando deve retornar `ok: true`. Enquanto houver publisher, Connection Reference, Choice, lookup ou chave alternativa pendentes, ele falha deliberadamente para impedir uma publicação incompleta.
+`C:\caminho\metadata-AppBetinhos.json` é apenas um exemplo: substitua pelo caminho real do arquivo baixado (normalmente em Downloads). O comando deve retornar `ok: true`. Enquanto houver publisher, Connection Reference, Choice, lookup ou chave alternativa pendentes, ele falha deliberadamente para impedir uma publicação incompleta.
 
 Criar dois fluxos na solução DEV:
 

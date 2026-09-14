@@ -129,9 +129,22 @@ function argument(name) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const manifestPath = path.resolve(argument("--manifest") || DEFAULT_MANIFEST);
   const metadataPath = argument("--metadata") ? path.resolve(argument("--metadata")) : "";
-  const manifest = readJson(manifestPath);
-  const metadata = metadataPath ? readJson(metadataPath) : null;
-  const result = validateManifest(manifest, metadata);
+  let result;
+  try {
+    if (!fs.existsSync(manifestPath)) throw new Error(`manifesto não encontrado: ${manifestPath}.`);
+    if (metadataPath && !fs.existsSync(metadataPath)) {
+      result = {
+        ok: false,
+        errors: [`arquivo de metadata não encontrado: ${metadataPath}. Execute scripts/coletar_metadata_dataverse_console.js no ambiente DEV e informe o caminho real do JSON baixado.`]
+      };
+    } else {
+      const manifest = readJson(manifestPath);
+      const metadata = metadataPath ? readJson(metadataPath) : null;
+      result = validateManifest(manifest, metadata);
+    }
+  } catch (error) {
+    result = { ok: false, errors: [error.message || "não foi possível ler os arquivos de configuração."] };
+  }
   console.log(JSON.stringify({ manifest: manifestPath, metadata: metadataPath || null, ...result }, null, 2));
   if (!result.ok) process.exitCode = 1;
 }
