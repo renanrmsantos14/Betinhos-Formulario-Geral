@@ -87,7 +87,7 @@ function Ensure-Boolean([string]$Entity, [string]$SchemaName, [string]$DisplayNa
 }
 function Ensure-DateTime([string]$Entity, [string]$SchemaName, [string]$DisplayName) {
   $logical = $SchemaName.ToLowerInvariant(); if (Get-Attribute $Entity $logical) { return }
-  MetadataPost "$apiBaseUrl/EntityDefinitions(LogicalName='$Entity')/Attributes" @{ "@odata.type" = "Microsoft.Dynamics.CRM.DateTimeAttributeMetadata"; SchemaName = $SchemaName; DisplayName = Label $DisplayName; RequiredLevel = @{ Value = "None" }; Format = "DateAndTime"; DateTimeBehavior = "UserLocal" } "$Entity.$logical"
+  MetadataPost "$apiBaseUrl/EntityDefinitions(LogicalName='$Entity')/Attributes" @{ "@odata.type" = "Microsoft.Dynamics.CRM.DateTimeAttributeMetadata"; SchemaName = $SchemaName; DisplayName = Label $DisplayName; RequiredLevel = @{ Value = "None" }; Format = "DateAndTime"; DateTimeBehavior = @{ Value = "UserLocal" } } "$Entity.$logical"
 }
 function Ensure-Choice([string]$Entity, [string]$SchemaName, [string]$DisplayName, $Options) {
   $logical = $SchemaName.ToLowerInvariant(); if (Get-Attribute $Entity $logical) { return }
