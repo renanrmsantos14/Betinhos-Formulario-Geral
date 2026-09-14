@@ -4008,7 +4008,16 @@
       createdReservationIds: parseJson(read("createdReservationIds"), row.createdReservationIds || []),
       error: read("error")
     }) : null;
-    return normalized || { id: aiConversationEntityId(row), status: "DRAFT", messages, proposal };
+    if (!normalized) return { id: aiConversationEntityId(row), status: "DRAFT", messages, proposal };
+    const resolvedProposal = aiConversationResolveLocalProposal(normalized.proposal || {});
+    const resolvedValidation = core.validateProposal(resolvedProposal);
+    return {
+      ...normalized,
+      proposal: resolvedValidation.normalized,
+      missing: resolvedValidation.missing,
+      warnings: resolvedValidation.warnings,
+      ready: resolvedValidation.ready
+    };
   }
 
   function aiConversationIdentityByLabel(collection, label) {

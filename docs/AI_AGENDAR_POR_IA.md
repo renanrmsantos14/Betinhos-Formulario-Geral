@@ -77,7 +77,9 @@ O comando `npm run push` segue o padrão do Tela Planner e executa, em ordem:
 5. publicação idempotente de `new_formulario_geral.html` na solution `AppBetinhos`;
 6. criação/atualização e ativação dos dois Flows via `/api/data/v9.2/workflows`.
 
-O alvo é fixo no ambiente DEV `org23b93544`. O script recusa URLs de outros ambientes. Configure uma vez as Connection References reais:
+O alvo é fixo no ambiente DEV `org23b93544`. O script recusa URLs de outros ambientes. Se o connector ainda não existir, faça o bootstrap uma vez com `scripts\provision-deepseek-connector.ps1`; depois crie a conexão DeepSeek com a API key e uma Connection Reference dentro da solução. Connection References são o vínculo entre o Flow e a conexão real, não o segredo em si. A partir daí, `npm run push` executa todo o ciclo.
+
+Configure uma vez as Connection References reais:
 
 ```powershell
 $env:AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE = "<logical-name-da-connection-reference-dataverse>"

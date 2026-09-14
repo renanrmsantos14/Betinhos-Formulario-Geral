@@ -75,6 +75,13 @@ function Read-Definition([string] $Path) {
   if ($definition.actions.PSObject.Properties.Name -contains "Parse_Proposal") {
     if ($definition.actions.Parse_Proposal.inputs.schema -eq "__AI_SCHEDULE_SCHEMA_JSON__") { $definition.actions.Parse_Proposal.inputs.schema = $schemaObject }
   }
+  if ($definition.actions.PSObject.Properties.Name -contains "Parse_Primary") {
+    if ($definition.actions.Parse_Primary.inputs.schema -eq "__AI_SCHEDULE_SCHEMA_JSON__") { $definition.actions.Parse_Primary.inputs.schema = $schemaObject }
+  }
+  if ($definition.actions.PSObject.Properties.Name -contains "Use_Fallback_On_Low_Confidence") {
+    $fallbackAction = $definition.actions.Use_Fallback_On_Low_Confidence.actions.Call_DeepSeek_Fallback_Low_Confidence
+    if ($fallbackAction.inputs.parameters.body.text.format.schema -eq "__AI_SCHEDULE_SCHEMA_JSON__") { $fallbackAction.inputs.parameters.body.text.format.schema = $schemaObject }
+  }
   return $definition
 }
 

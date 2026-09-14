@@ -1,6 +1,6 @@
 # Artefato DEV — fluxos Power Automate
 
-Este documento é o contrato de implementação dos fluxos solution-aware. Ele é intencionalmente parametrizado: não inventa nomes de Choice, publisher, Connection Reference ou campos de reserva que não foram confirmados no ambiente. O operador deve preencher o manifesto após exportar a metadata real.
+Este documento é o contrato de implementação dos fluxos solution-aware. O provisionador do repositório cria/atualiza o schema e injeta os valores de ambiente; o operador ainda precisa fornecer as Connection References reais e validar a conexão do Custom Connector DeepSeek.
 
 ## Manifesto de configuração
 
@@ -16,7 +16,7 @@ Para obter a evidência inicial, abra o Model-driven App no ambiente DEV e cole 
 | Choice de status da sessão | placeholders no `index.html` | valores reais DEV |
 | URL do connector | `POST /responses` | Custom Connector importado |
 
-Não executar o fluxo enquanto qualquer item pendente estiver sem evidência.
+O `npm run push` cria os itens de schema pendentes no DEV. A validação com metadata exportada continua sendo um gate opcional para confirmar nomes lógicos e tipos depois da publicação.
 
 Validação automatizada antes da importação/ativação:
 
@@ -89,8 +89,8 @@ Nome sugerido: `Betinhos - IA - Gravar reservas confirmadas`.
    - consultar a chave alternativa `sessionId + ordinal`;
    - se reserva já existir, reutilizar o ID;
    - se identidade não tiver ID, retornar `WAITING_USER` e proposta de cadastro; nunca criar pessoa silenciosamente;
-   - criar reserva usando o mesmo mapeamento de `saveReserva`/pipeline existente;
-   - criar relações de passageiros;
+   - criar reserva usando o mesmo mapeamento de campos de `saveReserva`;
+   - criar relações em `cr40f_servicosporpassageiros` para cada passageiro;
    - gravar imediatamente o ID na sessão.
 5. Não aplicar regras específicas da importação XLSX, PG ou ID Tenaris.
 6. Em erro:

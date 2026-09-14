@@ -22,7 +22,7 @@
         },
               "authentication": "@parameters('$authentication')"
               },
-              "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
+              "runtimeConfiguration": { "concurrency": { "runs": 1 } }
     }
   },
   "actions": {
@@ -33,12 +33,34 @@
     "Compose_Proposal": {
       "type": "Compose",
       "runAfter": { "Initialize_ReservationIds": [ "Succeeded" ] },
-      "inputs": "@json(triggerOutputs()?['body/cr40f_propostajson'])"
+      "inputs": "@json(triggerOutputs()?['body/cr40f_propostajson'])",
+      "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
+    },
+    "Filter_Invalid_Passengers": {
+      "type": "Query",
+      "runAfter": { "Compose_Proposal": [ "Succeeded" ] },
+      "inputs": {
+        "from": "@outputs('Compose_Proposal')?['passengers']",
+        "where": "@empty(item()?['id'])"
+      }
+    },
+    "Filter_Invalid_Services": {
+      "type": "Query",
+      "runAfter": { "Compose_Proposal": [ "Succeeded" ] },
+      "inputs": {
+        "from": "@outputs('Compose_Proposal')?['services']",
+        "where": "@or(empty(item()?['date']), empty(item()?['time']), empty(item()?['origin']), empty(item()?['destination']), empty(item()?['serviceType']?['value']), empty(item()?['vehicleType']?['value']))"
+      }
+    },
+    "Validate_Confirmed_Proposal": {
+      "type": "Compose",
+      "runAfter": { "Filter_Invalid_Passengers": [ "Succeeded" ], "Filter_Invalid_Services": [ "Succeeded" ] },
+      "inputs": "@and(equals(outputs('Compose_Proposal')?['intent'], 'schedule'), not(empty(outputs('Compose_Proposal')?['client']?['id'])), not(empty(outputs('Compose_Proposal')?['requester']?['id'])), greater(length(outputs('Compose_Proposal')?['passengers']), 0), equals(length(body('Filter_Invalid_Passengers')), 0), greater(length(outputs('Compose_Proposal')?['services']), 0), equals(length(body('Filter_Invalid_Services')), 0))"
     },
     "For_each_service": {
       "type": "Foreach",
-      "runAfter": { "Compose_Proposal": [ "Succeeded" ] },
-      "foreach": "@outputs('Compose_Proposal')?['services']",
+      "runAfter": { "Validate_Confirmed_Proposal": [ "Succeeded" ] },
+      "foreach": "@if(equals(outputs('Validate_Confirmed_Proposal'), true), outputs('Compose_Proposal')?['services'], createArray())",
       "actions": {
         "Find_existing_reservation": {
           "type": "OpenApiConnection",
@@ -96,6 +118,32 @@
               "type": "AppendToArrayVariable",
               "runAfter": { "Create_reservation": [ "Succeeded" ] },
               "inputs": { "name": "ReservationIds", "value": "@outputs('Create_reservation')?['body/cr40f_reservadeveculosid']" }
+            },
+            "For_each_passenger_relation": {
+              "type": "Foreach",
+              "runAfter": { "Create_reservation": [ "Succeeded" ] },
+              "foreach": "@outputs('Compose_Proposal')?['passengers']",
+              "runtimeConfiguration": { "concurrency": { "repetitions": 1 } },
+              "actions": {
+                "Create_passenger_relation": {
+                  "type": "OpenApiConnection",
+                  "inputs": {
+                    "parameters": {
+                      "entityName": "cr40f_servicosporpassageiros",
+                      "item/cr40f_ordemdeselecao": "@coalesce(items('For_each_passenger_relation')?['ordinal'], 1)",
+                      "item/cr40f_Geral@odata.bind": "@concat('/cr40f_reservadeveculoses(', outputs('Create_reservation')?['body/cr40f_reservadeveculosid'], ')')",
+                      "item/cr40f_BancodeDados@odata.bind": "@concat('/cr40f_bancodedadoses(', items('For_each_passenger_relation')?['id'], ')')"
+                    },
+                    "host": {
+                      "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                      "operationId": "CreateRecord",
+                      "connectionName": "shared_commondataserviceforapps"
+                    },
+                    "authentication": "@parameters('$authentication')"
+                  },
+                  "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
+                }
+              }
             }
           },
           "else": {
@@ -116,10 +164,11 @@
         "parameters": {
           "entityName": "cr40f_conversaiaagendamentos",
           "recordId": "@triggerOutputs()?['body/cr40f_conversaiaagendamentoid']",
-          "item/cr40f_status": 100000006,
+          "item/cr40f_status": "@if(equals(outputs('Validate_Confirmed_Proposal'), true), 100000006, 100000007)",
           "item/cr40f_reservascriadas": "@string(variables('ReservationIds'))",
           "item/cr40f_confirmacaosolicitada": false,
-          "item/cr40f_versaoconfirmada": "@int(triggerOutputs()?['body/cr40f_versaoentrada'])"
+          "item/cr40f_versaoconfirmada": "@int(triggerOutputs()?['body/cr40f_versaoentrada'])",
+          "item/cr40f_erro": "@if(equals(outputs('Validate_Confirmed_Proposal'), true), '', 'Confirmação rejeitada: proposta mudou ou contém campos, IDs ou Choices inválidos. Retorne à conversa e revise os dados.')"
         },
         "host": {
           "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
