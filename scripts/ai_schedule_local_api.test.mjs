@@ -77,6 +77,34 @@ const invalidJsonResult = await handleAiScheduleApi({ message: "JSON quebrado na
 assert.equal(invalidJsonResult.status, 200);
 assert.deepEqual(invalidJsonCalls, ["deepseek-v4-flash", "deepseek-v4-pro"]);
 
+for (const transientStatus of [429, 503]) {
+  const transientCalls = [];
+  const transientResult = await handleAiScheduleApi({ message: `Falha transitória ${transientStatus}` }, {
+    apiKey: "test-key",
+    endpoint: "https://api.deepseek.com/responses",
+    fetchImpl: async (_url, options) => {
+      transientCalls.push(JSON.parse(options.body).model);
+      if (transientCalls.length === 1) return { ok: false, status: transientStatus, json: async () => ({}) };
+      return { ok: true, status: 200, json: async () => ({ output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify(proposal) }] }] }) };
+    }
+  });
+  assert.equal(transientResult.status, 200);
+  assert.deepEqual(transientCalls, ["deepseek-v4-flash", "deepseek-v4-pro"]);
+  assert.equal(transientResult.body.attempts, 2);
+}
+
+const permanentCalls = [];
+const permanentResult = await handleAiScheduleApi({ message: "Falha de validação" }, {
+  apiKey: "test-key",
+  endpoint: "https://api.deepseek.com/responses",
+  fetchImpl: async (_url, options) => {
+    permanentCalls.push(JSON.parse(options.body).model);
+    return { ok: false, status: 400, json: async () => ({}) };
+  }
+});
+assert.equal(permanentResult.status, 502);
+assert.deepEqual(permanentCalls, ["deepseek-v4-flash"]);
+
 const missingKey = await handleAiScheduleApi({ message: "teste" }, { apiKey: "" });
 assert.equal(missingKey.status, 503);
 assert.match(missingKey.body.error, /DEEPSEEK_API_KEY/);
