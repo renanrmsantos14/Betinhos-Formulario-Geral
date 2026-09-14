@@ -4043,6 +4043,16 @@
       : { ...option, value: null, id: "", name: label, label };
   }
 
+  function aiConversationChoiceHint(collection, message) {
+    const needle = normalize(message);
+    if (!needle) return null;
+    const matches = (collection || []).filter((item) => {
+      const label = normalize(item.label);
+      return label && needle.includes(label);
+    });
+    return matches.length === 1 ? { value: matches[0].value, id: String(matches[0].value), name: matches[0].label, label: matches[0].label } : null;
+  }
+
   function aiConversationResolveLocalIdentity(collection, identity) {
     if (!identity) return identity;
     const label = identity.name || identity.label || "";
@@ -4052,7 +4062,7 @@
       : { ...identity, id: "", name: label };
   }
 
-  function aiConversationResolveLocalProposal(proposal) {
+  function aiConversationResolveLocalProposal(proposal, message = "") {
     const core = aiConversationCore();
     const normalized = core ? core.normalizeProposal(proposal || {}) : (proposal || {});
     return {
@@ -4062,10 +4072,23 @@
       passengers: (normalized.passengers || []).map((passenger) => aiConversationResolveLocalIdentity(state.passageiros, passenger)),
       services: (normalized.services || []).map((service) => ({
         ...service,
-        serviceType: aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType),
-        vehicleType: aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)
+        serviceType: aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType)?.value
+          ? aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType)
+          : aiConversationChoiceHint(state.options.tipoServico, message) || aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType),
+        vehicleType: aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)?.value
+          ? aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)
+          : aiConversationChoiceHint(state.options.tipoVeiculo, message) || aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)
       }))
     };
+  }
+
+  function aiConversationChoiceCandidates(collection, message) {
+    const needle = normalize(message);
+    if (!needle) return [];
+    return (collection || []).filter((item) => {
+      const label = normalize(item.label);
+      return label && needle.includes(label);
+    }).map((item) => item.label).filter(Boolean).slice(0, 5);
   }
 
   function localSaoPauloDate(offsetDays = 0) {
@@ -4296,14 +4319,14 @@
           previousProposal: current.proposal || {},
           messages,
           referenceData: {
-            serviceTypes: (state.options.tipoServico || []).map((item) => item.label).filter(Boolean),
-            vehicleTypes: (state.options.tipoVeiculo || []).map((item) => item.label).filter(Boolean)
+            serviceTypeCandidates: aiConversationChoiceCandidates(state.options.tipoServico, message),
+            vehicleTypeCandidates: aiConversationChoiceCandidates(state.options.tipoVeiculo, message)
           }
         })
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || `Proxy local retornou HTTP ${response.status}.`);
-      const proposal = aiConversationResolveLocalProposal(body.proposal || body);
+      const proposal = aiConversationResolveLocalProposal(body.proposal || body, message);
       const validation = AI_CONVERSATION_CORE.validateProposal(proposal);
       const assistant = proposal.assistantMessage || (validation.ready ? "Entendi a solicitação. Confira a proposta e confirme para agendar." : proposal.question || aiConversationFirstQuestion(validation.missing));
       const next = {

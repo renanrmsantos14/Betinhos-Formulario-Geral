@@ -27,7 +27,7 @@ const proposal = {
 const calls = [];
 const result = await handleAiScheduleApi({
   message: "Agendar amanhã às 08:30 de São Paulo para GRU",
-  referenceData: { serviceTypes: ["Guarulhos", "São Paulo"], vehicleTypes: ["Executivo", "Van"] }
+  referenceData: { serviceTypeCandidates: ["Guarulhos", "São Paulo"], vehicleTypeCandidates: ["Executivo", "Van"] }
 }, {
   apiKey: "test-key",
   endpoint: "https://api.deepseek.com/responses",
@@ -46,6 +46,7 @@ assert.equal(calls[0].body.reasoning.effort, "none");
 assert.equal(calls[0].body.store, false);
 assert.match(calls[0].body.instructions, /Tipos de serviço disponíveis: Guarulhos, São Paulo/);
 assert.match(calls[0].body.instructions, /Tipos de veículo disponíveis: Executivo, Van/);
+assert.ok(!calls[0].body.instructions.includes("Tipos de veículo disponíveis: Basico"), "proxy não deve receber lista completa de Choices");
 assert.equal(calls[0].authorization, "Bearer test-key");
 
 const fallbackCalls = [];

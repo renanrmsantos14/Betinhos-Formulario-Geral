@@ -44,8 +44,8 @@ function safeMessages(messages, message) {
 }
 
 function systemPrompt(today, referenceData = {}) {
-  const serviceTypes = Array.isArray(referenceData.serviceTypes) ? referenceData.serviceTypes.map(text).filter(Boolean).slice(0, 100) : [];
-  const vehicleTypes = Array.isArray(referenceData.vehicleTypes) ? referenceData.vehicleTypes.map(text).filter(Boolean).slice(0, 100) : [];
+  const serviceTypes = Array.isArray(referenceData.serviceTypeCandidates) ? referenceData.serviceTypeCandidates.map(text).filter(Boolean).slice(0, 5) : [];
+  const vehicleTypes = Array.isArray(referenceData.vehicleTypeCandidates) ? referenceData.vehicleTypeCandidates.map(text).filter(Boolean).slice(0, 5) : [];
   const catalog = [
     serviceTypes.length ? `Tipos de serviço disponíveis: ${serviceTypes.join(", ")}.` : "",
     vehicleTypes.length ? `Tipos de veículo disponíveis: ${vehicleTypes.join(", ")}.` : ""
