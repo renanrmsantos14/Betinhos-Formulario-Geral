@@ -55,12 +55,27 @@ function Replace-Token([string] $Text, [string] $Token, [string] $Value) {
 }
 function Read-Definition([string] $Path) {
   $text = Get-Content -LiteralPath $Path -Raw -Encoding UTF8
+  $schemaPath = Join-Path $root "docs\power-platform\ai_schedule_proposal.schema.json"
+  if (-not (Test-Path -LiteralPath $schemaPath -PathType Leaf)) { throw "Schema da proposta não encontrado: $schemaPath" }
+  $schemaObject = Get-Content -LiteralPath $schemaPath -Raw -Encoding UTF8 | ConvertFrom-Json
   $text = Replace-Token $text "__DV_CONNECTION_REF__" $DataverseConnectionReferenceLogicalName
   $text = Replace-Token $text "__DEEPSEEK_CONNECTION_REF__" $DeepSeekConnectionReferenceLogicalName
   $text = Replace-Token $text "__DEEPSEEK_API_NAME__" $DeepSeekApiName
   $text = Replace-Token $text "__DEEPSEEK_OPERATION_ID__" $DeepSeekOperationId
-  if ($text -match "__[_A-Z0-9]+__|PREENCHER") { throw "Ainda existem placeholders na definição $Path." }
-  try { return ($text | ConvertFrom-Json -ErrorAction Stop) } catch { throw "JSON inválido em $Path`: $($_.Exception.Message)" }
+  if (($text -replace "__AI_SCHEDULE_SCHEMA_JSON__", "") -match "__[_A-Z0-9]+__|PREENCHER") { throw "Ainda existem placeholders na definição $Path." }
+  try { $definition = $text | ConvertFrom-Json -ErrorAction Stop } catch { throw "JSON inválido em $Path`: $($_.Exception.Message)" }
+  if ($definition.actions.PSObject.Properties.Name -contains "Call_DeepSeek") {
+    $schemaSlot = $definition.actions.Call_DeepSeek.inputs.parameters.body.text.format.schema
+    if ($schemaSlot -eq "__AI_SCHEDULE_SCHEMA_JSON__") { $definition.actions.Call_DeepSeek.inputs.parameters.body.text.format.schema = $schemaObject }
+  }
+  if ($definition.actions.PSObject.Properties.Name -contains "Call_DeepSeek_Fallback") {
+    $schemaSlot = $definition.actions.Call_DeepSeek_Fallback.inputs.parameters.body.text.format.schema
+    if ($schemaSlot -eq "__AI_SCHEDULE_SCHEMA_JSON__") { $definition.actions.Call_DeepSeek_Fallback.inputs.parameters.body.text.format.schema = $schemaObject }
+  }
+  if ($definition.actions.PSObject.Properties.Name -contains "Parse_Proposal") {
+    if ($definition.actions.Parse_Proposal.inputs.schema -eq "__AI_SCHEDULE_SCHEMA_JSON__") { $definition.actions.Parse_Proposal.inputs.schema = $schemaObject }
+  }
+  return $definition
 }
 
 $definitionObjects = @($definitions | ForEach-Object { @{ Name = $_.Name; Definition = Read-Definition $_.File } })
