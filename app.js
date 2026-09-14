@@ -4043,7 +4043,16 @@
       : { ...option, value: null, id: "", name: label, label };
   }
 
-  function aiConversationChoiceHint(collection, message) {
+  function aiConversationChoiceHasContext(message, history, kind) {
+    const current = normalize(message);
+    const context = normalize([...(history || []).map((item) => item?.content || ""), message].join("\n"));
+    if (/(?:^|[.;,]\s*)e\s+[a-z]/i.test(current)) return true;
+    if (kind === "vehicle") return /veiculo|carro|van|blindado|tipo\s+de\s+veiculo/i.test(context);
+    return /servico|transfer|trecho|tipo\s+de\s+servico/i.test(context);
+  }
+
+  function aiConversationChoiceHint(collection, message, history, kind) {
+    if (!aiConversationChoiceHasContext(message, history, kind)) return null;
     const needle = normalize(message);
     if (!needle) return null;
     const matches = (collection || []).filter((item) => {
@@ -4062,7 +4071,7 @@
       : { ...identity, id: "", name: label };
   }
 
-  function aiConversationResolveLocalProposal(proposal, message = "") {
+  function aiConversationResolveLocalProposal(proposal, message = "", history = []) {
     const core = aiConversationCore();
     const normalized = core ? core.normalizeProposal(proposal || {}) : (proposal || {});
     return {
@@ -4074,15 +4083,16 @@
         ...service,
         serviceType: aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType)?.value
           ? aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType)
-          : aiConversationChoiceHint(state.options.tipoServico, message) || aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType),
+          : aiConversationChoiceHint(state.options.tipoServico, message, history, "service") || aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType),
         vehicleType: aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)?.value
           ? aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)
-          : aiConversationChoiceHint(state.options.tipoVeiculo, message) || aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)
+          : aiConversationChoiceHint(state.options.tipoVeiculo, message, history, "vehicle") || aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)
       }))
     };
   }
 
-  function aiConversationChoiceCandidates(collection, message) {
+  function aiConversationChoiceCandidates(collection, message, history, kind) {
+    if (!aiConversationChoiceHasContext(message, history, kind)) return [];
     const needle = normalize(message);
     if (!needle) return [];
     return (collection || []).filter((item) => {
@@ -4319,14 +4329,14 @@
           previousProposal: current.proposal || {},
           messages,
           referenceData: {
-            serviceTypeCandidates: aiConversationChoiceCandidates(state.options.tipoServico, message),
-            vehicleTypeCandidates: aiConversationChoiceCandidates(state.options.tipoVeiculo, message)
+            serviceTypeCandidates: aiConversationChoiceCandidates(state.options.tipoServico, message, current.messages, "service"),
+            vehicleTypeCandidates: aiConversationChoiceCandidates(state.options.tipoVeiculo, message, current.messages, "vehicle")
           }
         })
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || `Proxy local retornou HTTP ${response.status}.`);
-      const proposal = aiConversationResolveLocalProposal(body.proposal || body, message);
+      const proposal = aiConversationResolveLocalProposal(body.proposal || body, message, current.messages);
       const validation = AI_CONVERSATION_CORE.validateProposal(proposal);
       const assistant = proposal.assistantMessage || (validation.ready ? "Entendi a solicitação. Confira a proposta e confirme para agendar." : proposal.question || aiConversationFirstQuestion(validation.missing));
       const next = {
