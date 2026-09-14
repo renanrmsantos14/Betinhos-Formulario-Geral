@@ -7,6 +7,7 @@ param(
   [switch] $NoPublish,
   [switch] $WhatIf,
   [switch] $RequireManifest,
+  [switch] $ProvisionPlatform,
   [switch] $ProvisionFlows,
   [string] $DataverseConnectionReferenceLogicalName = "",
   [string] $DeepSeekConnectionReferenceLogicalName = "",
@@ -25,6 +26,7 @@ if ($PSVersionTable.PSEdition -eq "Core" -or $PSHOME -like "*codex-runtimes*") {
   if ($WhatIf) { $forward += "-WhatIf" }
   if ($RequireManifest) { $forward += "-RequireManifest" }
   if ($ProvisionFlows) { $forward += "-ProvisionFlows" }
+  if ($ProvisionPlatform) { $forward += "-ProvisionPlatform" }
   if ($DataverseConnectionReferenceLogicalName) { $forward += @("-DataverseConnectionReferenceLogicalName", $DataverseConnectionReferenceLogicalName) }
   if ($DeepSeekConnectionReferenceLogicalName) { $forward += @("-DeepSeekConnectionReferenceLogicalName", $DeepSeekConnectionReferenceLogicalName) }
   if ($DeepSeekApiName) { $forward += @("-DeepSeekApiName", $DeepSeekApiName) }
@@ -64,6 +66,25 @@ elseif ($RequireManifest) {
 }
 else {
   Step "manifesto externo não validado (use -MetadataPath para habilitar o gate)"
+}
+
+if ($ProvisionPlatform) {
+  if ([string]::IsNullOrWhiteSpace($DataverseConnectionReferenceLogicalName)) { $DataverseConnectionReferenceLogicalName = $env:AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE }
+  if ([string]::IsNullOrWhiteSpace($DeepSeekConnectionReferenceLogicalName)) { $DeepSeekConnectionReferenceLogicalName = $env:AI_SCHEDULE_DEEPSEEK_CONNECTION_REFERENCE }
+  if ([string]::IsNullOrWhiteSpace($DataverseConnectionReferenceLogicalName) -or [string]::IsNullOrWhiteSpace($DeepSeekConnectionReferenceLogicalName)) {
+    throw "Para o push completo, defina AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE e AI_SCHEDULE_DEEPSEEK_CONNECTION_REFERENCE."
+  }
+  Step "provisionamento idempotente do schema Dataverse da agenda IA"
+  $schemaScript = Join-Path $PSScriptRoot "provision-ai-schedule-schema.ps1"
+  $schemaParams = @{ EnvironmentUrl = $EnvironmentUrl; TenantId = $TenantId; ClientId = $ClientId; DeviceCode = $DeviceCode; WhatIf = $WhatIf }
+  & $schemaScript @schemaParams
+  Assert-Exit "provisionamento do schema"
+
+  Step "criação/atualização do Custom Connector DeepSeek"
+  $connectorScript = Join-Path $PSScriptRoot "provision-deepseek-connector.ps1"
+  & $connectorScript -EnvironmentUrl $EnvironmentUrl -SolutionUniqueName "AppBetinhos" -WhatIf:$WhatIf
+  Assert-Exit "provisionamento do connector"
+  $ProvisionFlows = $true
 }
 
 Step "publicação idempotente do WebResource na solution AppBetinhos"

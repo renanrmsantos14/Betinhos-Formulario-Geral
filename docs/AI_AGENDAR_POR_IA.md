@@ -72,16 +72,26 @@ O comando `npm run push` segue o padrão do Tela Planner e executa, em ordem:
 
 1. `npm run test:ai`;
 2. `npm run build` (atualiza `webresource.html`);
-3. publicação idempotente de `new_formulario_geral.html` na solution `AppBetinhos` (cria se não existir, atualiza se existir e publica o WebResource e a entidade de solicitações).
+3. criação/atualização do schema Dataverse da agenda IA;
+4. criação/atualização do Custom Connector `Betinhos DeepSeek` via `pac connector`;
+5. publicação idempotente de `new_formulario_geral.html` na solution `AppBetinhos`;
+6. criação/atualização e ativação dos dois Flows via `/api/data/v9.2/workflows`.
 
-O alvo é fixo no ambiente DEV `org23b93544`. O script recusa URLs de outros ambientes. Para validar o manifesto antes do push, use `-MetadataPath`:
+O alvo é fixo no ambiente DEV `org23b93544`. O script recusa URLs de outros ambientes. Configure uma vez as Connection References reais:
+
+```powershell
+$env:AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE = "<logical-name-da-connection-reference-dataverse>"
+$env:AI_SCHEDULE_DEEPSEEK_CONNECTION_REFERENCE = "<logical-name-da-connection-reference-deepseek>"
+```
+
+Para validar o manifesto antes do push, use `-MetadataPath`:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\push-dev.ps1 -DeviceCode -MetadataPath C:\Users\mendo\Downloads\metadata-AppBetinhos-2026-09-14T19-18-58-216Z.json
 ```
 
-Para conferir o encadeamento sem autenticar nem alterar o Dataverse, use `-WhatIf`. O provisionador compatível com o padrão do Tela Planner está em `scripts/provision-ai-schedule-flows.ps1`: ele lê duas definições JSON, substitui as Connection References, cria/atualiza os workflows via Web API, desativa versões duplicadas e ativa somente a versão corrente. Execute com `-ProvisionFlows` depois de adicionar `power-platform/flows/ai_schedule_interpret.json` e `power-platform/flows/ai_schedule_schedule.json` e informar as Connection References reais. O script falha se os arquivos ou referências ainda forem placeholders.
+Para conferir o encadeamento sem autenticar nem alterar o Dataverse, use `npm run push -- -WhatIf` (com as duas variáveis acima). O connector ainda exige que a conexão com a API key seja criada/validada no Power Platform; a chave não é lida do `.env.local` nem gravada no Git.
 
 ## Pendências externas
 
-Ainda é necessário criar/publicar a tabela de sessão, os campos adicionais da reserva e o Custom Connector na solution DEV. Após isso, adicione as duas definições JSON, rode `npm run push -- -ProvisionFlows -DeviceCode` e valide o voucher em DEV antes de autorizar produção.
+O primeiro push completo cria/publica a tabela de sessão, os campos adicionais da reserva, o connector e os dois Flows. Depois, valide a conexão do connector, execute um caso anonimizado e confira o voucher em DEV antes de autorizar produção.

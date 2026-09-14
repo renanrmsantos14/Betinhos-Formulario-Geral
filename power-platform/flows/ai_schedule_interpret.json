@@ -1,0 +1,78 @@
+{
+  "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "$authentication": { "defaultValue": {}, "type": "SecureObject" },
+    "$connections": { "defaultValue": {}, "type": "Object" }
+  },
+  "triggers": {
+    "When_a_session_is_waiting_ai": {
+      "type": "OpenApiConnectionWebhook",
+      "inputs": {
+        "parameters": {
+          "subscriptionRequest/message": 1,
+          "subscriptionRequest/entityname": "cr40f_conversaiaagendamento",
+          "subscriptionRequest/scope": 4,
+          "subscriptionRequest/filterexpression": "cr40f_status eq 100000001"
+        },
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+          "operationId": "SubscribeWebhookTrigger",
+          "connectionName": "shared_commondataserviceforapps"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  },
+  "actions": {
+    "Compose_Input": {
+      "type": "Compose",
+      "inputs": "@triggerOutputs()?['body/cr40f_textooriginal']"
+    },
+    "Call_DeepSeek": {
+      "type": "OpenApiConnection",
+      "runAfter": { "Compose_Input": [ "Succeeded" ] },
+      "inputs": {
+        "parameters": {
+          "body": {
+            "model": "deepseek-v4-flash",
+            "input": "@outputs('Compose_Input')",
+            "thinking": { "type": "disabled" },
+            "store": false
+          }
+        },
+        "host": {
+          "apiId": "__DEEPSEEK_API_NAME__",
+          "operationId": "__DEEPSEEK_OPERATION_ID__",
+          "connectionName": "shared_betinhosdeepseek"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    },
+    "Compose_Proposal": {
+      "type": "Compose",
+      "runAfter": { "Call_DeepSeek": [ "Succeeded" ] },
+      "inputs": "@coalesce(outputs('Call_DeepSeek')?['body/output'][0]?['content'][0]?['text'], string(outputs('Call_DeepSeek')?['body']))"
+    },
+    "Update_Session": {
+      "type": "OpenApiConnection",
+      "runAfter": { "Compose_Proposal": [ "Succeeded" ] },
+      "inputs": {
+        "parameters": {
+          "entityName": "cr40f_conversaiaagendamentos",
+          "recordId": "@triggerOutputs()?['body/cr40f_conversaiaagendamentoid']",
+          "item/cr40f_propostajson": "@outputs('Compose_Proposal')",
+          "item/cr40f_versaoprocessada": "@int(triggerOutputs()?['body/cr40f_versaoentrada'])",
+          "item/cr40f_status": 100000002,
+          "item/cr40f_confirmacaosolicitada": false
+        },
+        "host": {
+          "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+          "operationId": "UpdateOnlyRecord",
+          "connectionName": "shared_commondataserviceforapps"
+        },
+        "authentication": "@parameters('$authentication')"
+      }
+    }
+  }
+}
