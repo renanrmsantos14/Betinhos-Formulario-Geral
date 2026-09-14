@@ -51,6 +51,17 @@ Troque SOLUTION_UNIQUE_NAME se a solucao alvo nao for AppBetinhos.
   const solution = solutionResult.value?.[0];
   if (!solution) throw new Error(`Solucao nao encontrada: ${SOLUTION_UNIQUE_NAME}`);
 
+  let publisher = null;
+  try {
+    const solutionDetails = await api(`solutions(${solution.solutionid})?$select=_publisherid_value`);
+    const publisherId = solutionDetails?._publisherid_value;
+    if (publisherId) {
+      publisher = await api(`publishers(${publisherId})?$select=publisherid,uniquename,friendlyname,customizationprefix`);
+    }
+  } catch (error) {
+    publisher = { error: error.message };
+  }
+
   const components = await apiAll(
     `solutioncomponents?$select=componenttype,objectid&$filter=_solutionid_value eq ${solution.solutionid} and (componenttype eq 1 or componenttype eq 9)`
   );
@@ -125,7 +136,7 @@ Troque SOLUTION_UNIQUE_NAME se a solucao alvo nao for AppBetinhos.
   const output = {
     generatedAt: new Date().toISOString(),
     orgUrl: clientUrl,
-    solution,
+    solution: { ...solution, publisher },
     tables,
     globalOptionSets
   };
