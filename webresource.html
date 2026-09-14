@@ -14998,6 +14998,48 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     return match ? { value: match.value, name: match.label } : null;
   }
 
+  // O modelo sugere rótulos; somente o catálogo carregado no app pode fornecer
+  // os valores reais de choice/lookup. IDs recebidos da IA nunca são aceitos
+  // sem correspondência local exata.
+  function aiConversationResolveLocalChoice(collection, option) {
+    if (!option) return option;
+    const label = option.name || option.label || "";
+    const rawValue = option.value ?? option.id;
+    const match = (collection || []).find((item) => {
+      const sameValue = rawValue !== null && rawValue !== undefined && rawValue !== ""
+        && String(item.value) === String(rawValue);
+      return sameValue || normalize(item.label) === normalize(label);
+    });
+    return match
+      ? { value: match.value, id: String(match.value), name: match.label, label: match.label }
+      : { ...option, value: null, id: "", name: label, label };
+  }
+
+  function aiConversationResolveLocalIdentity(collection, identity) {
+    if (!identity) return identity;
+    const label = identity.name || identity.label || "";
+    const match = (collection || []).find((item) => normalize(item.label || item.nome || item.name) === normalize(label));
+    return match
+      ? { ...identity, id: match.id || match.guid || "", name: match.label || match.nome || match.name || label }
+      : { ...identity, id: "", name: label };
+  }
+
+  function aiConversationResolveLocalProposal(proposal) {
+    const core = aiConversationCore();
+    const normalized = core ? core.normalizeProposal(proposal || {}) : (proposal || {});
+    return {
+      ...normalized,
+      client: aiConversationResolveLocalIdentity(state.clientes, normalized.client),
+      requester: aiConversationResolveLocalIdentity(state.passageiros, normalized.requester),
+      passengers: (normalized.passengers || []).map((passenger) => aiConversationResolveLocalIdentity(state.passageiros, passenger)),
+      services: (normalized.services || []).map((service) => ({
+        ...service,
+        serviceType: aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType),
+        vehicleType: aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)
+      }))
+    };
+  }
+
   function localSaoPauloDate(offsetDays = 0) {
     const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" })
       .formatToParts(new Date()).reduce((acc, item) => ({ ...acc, [item.type]: item.value }), {});
@@ -15225,7 +15267,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || `Proxy local retornou HTTP ${response.status}.`);
-      const proposal = AI_CONVERSATION_CORE.normalizeProposal(body.proposal || body);
+      const proposal = aiConversationResolveLocalProposal(body.proposal || body);
       const validation = AI_CONVERSATION_CORE.validateProposal(proposal);
       const assistant = proposal.assistantMessage || (validation.ready ? "Entendi a solicitação. Confira a proposta e confirme para agendar." : proposal.question || aiConversationFirstQuestion(validation.missing));
       const next = {
