@@ -10,7 +10,7 @@ const manifest = JSON.parse(fs.readFileSync(path.join(root, "docs", "power-platf
 
 const unresolved = validateManifest(manifest);
 assert.equal(unresolved.ok, false);
-assert.ok(unresolved.errors.some((error) => error.includes("PREENCHER_SOLUCAO_DEV")));
+assert.ok(unresolved.errors.some((error) => error.includes("PREENCHER_PUBLISHER")));
 
 const resolved = {
   solution: { name: "BetinhosDEV", publisher: "BetinhosPublisher", environment: "DEV" },
@@ -19,7 +19,7 @@ const resolved = {
     columns: [{ logicalName: "cr40f_status", type: "Choice" }, { logicalName: "cr40f_versaoentrada", type: "WholeNumber" }]
   },
   reservationTable: {
-    logicalName: "cr40f_reservadeveiculos",
+    logicalName: "cr40f_reservadeveculos",
     requiredAdditions: [
       { logicalName: "cr40f_conversaoiaagendamento", type: "Lookup", target: "cr40f_conversaiaagendamento" },
       { logicalName: "cr40f_iaordinalservico", type: "WholeNumber" }

@@ -2,7 +2,7 @@
 
 ## Metadados confirmados
 
-O Web Resource `new_formulario_geral.html` está na `Solução Padrão` e na solução `AppBetinhos`. A tabela criada no DEV tem o nome lógico `cr40f_solicitacaoiaagendamento` e foi conferida via `describe`, incluindo os lookups reais para `cr40f_clientes1`, `cr40f_bancodedados` e `cr40f_reservadeveiculos`. O componente foi adicionado à solução `AppBetinhos` pelo PAC; o prefixo lógico da tabela permanece `cr40f`, definido pelo publisher padrão do ambiente. Nenhuma alteração foi feita em PROD.
+O Web Resource `new_formulario_geral.html` está na `Solução Padrão` e na solução `AppBetinhos`. A tabela criada no DEV tem o nome lógico `cr40f_solicitacaoiaagendamento` e foi conferida via `describe`, incluindo os lookups reais para `cr40f_clientes1`, `cr40f_bancodedados` e `cr40f_reservadeveculos`. O componente foi adicionado à solução `AppBetinhos` pelo PAC; o prefixo lógico da tabela permanece `cr40f`, definido pelo publisher padrão do ambiente. Nenhuma alteração foi feita em PROD.
 
 A coleção Web API é `cr40f_solicitacaoiaagendamentos`. A fila da UI lê somente o ambiente atual e usa `parent.Xrm`/`window.Xrm`; a automação local replica rascunhos para DEV e PROD de forma independente.
 

@@ -9,7 +9,7 @@ Para obter a evidência inicial, abra o Model-driven App no ambiente DEV e cole 
 | Parâmetro | Valor inicial | Evidência necessária |
 |---|---|---|
 | Tabela de sessão | `cr40f_conversaiaagendamento` | tabela publicada na solução DEV |
-| Tabela de reserva | `cr40f_reservadeveiculos` | metadata já usada pelo Web Resource |
+| Tabela de reserva | `cr40f_reservadeveculos` | metadata DEV exportada |
 | Campo de lookup reserva → sessão | pendente | Lookup real criado na reserva |
 | Chave alternativa da reserva | pendente | chave `sessionId + ordinal` publicada |
 | Connection Reference DeepSeek | pendente | referência criada na solução |

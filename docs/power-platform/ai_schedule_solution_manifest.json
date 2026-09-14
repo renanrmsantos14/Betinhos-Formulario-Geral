@@ -1,6 +1,6 @@
 {
   "solution": {
-    "name": "PREENCHER_SOLUCAO_DEV",
+    "name": "AppBetinhos",
     "publisher": "PREENCHER_PUBLISHER",
     "environment": "DEV",
     "status": "requires_metadata_resolution"
@@ -31,7 +31,7 @@
     ]
   },
   "reservationTable": {
-    "logicalName": "cr40f_reservadeveiculos",
+    "logicalName": "cr40f_reservadeveculos",
     "requiredAdditions": [
       { "logicalName": "cr40f_conversaoiaagendamento", "type": "Lookup", "target": "cr40f_conversaiaagendamento" },
       { "logicalName": "cr40f_iaordinalservico", "type": "WholeNumber" },
