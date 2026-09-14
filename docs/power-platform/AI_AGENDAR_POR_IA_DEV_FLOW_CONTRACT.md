@@ -16,6 +16,16 @@ Este documento é o contrato de implementação dos fluxos solution-aware. Ele �
 
 Não executar o fluxo enquanto qualquer item pendente estiver sem evidência.
 
+Validação automatizada antes da importação/ativação:
+
+```powershell
+node scripts/validate_ai_schedule_manifest.mjs `
+  --manifest docs/power-platform/ai_schedule_solution_manifest.json `
+  --metadata C:\caminho\metadata-AppBetinhos.json
+```
+
+O comando falha se ainda houver placeholders, tabela/coluna ausente, tipo incompatível, lookup sem alvo da sessão ou `entitySetName` divergente. A saída `ok: true` é pré-requisito para continuar a configuração manual dos fluxos.
+
 ## Fluxo 1 — Interpretar sessão
 
 Nome sugerido: `Betinhos - IA - Interpretar conversa`.

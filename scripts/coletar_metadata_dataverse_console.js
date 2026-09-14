@@ -5,7 +5,7 @@ Troque SOLUTION_UNIQUE_NAME se a solucao alvo nao for AppBetinhos.
 */
 (async () => {
   const SOLUTION_UNIQUE_NAME = "AppBetinhos";
-  const X = window.Xrm || window.parent?.Xrm || window.top?.Xrm;
+  const X = window.parent?.Xrm || window.Xrm;
   if (!X?.Utility) throw new Error("Xrm nao encontrado. Rode dentro do Model-driven App.");
 
   const clientUrl = X.Utility.getGlobalContext().getClientUrl();
