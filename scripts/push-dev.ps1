@@ -19,7 +19,7 @@ param(
 try { [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false) } catch { }
 
 # O MSAL.PS precisa do Windows PowerShell 5.1 nesta máquina.
-if ($PSVersionTable.PSEdition -eq "Core" -or $PSHOME -like "*codex-runtimes*") {
+if ($PSVersionTable.PSEdition -eq "Core") {
   $windowsPowerShell = Join-Path $env:WINDIR "System32\WindowsPowerShell\v1.0\powershell.exe"
   $forward = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $PSCommandPath, "-EnvironmentUrl", $EnvironmentUrl, "-TenantId", $TenantId)
   if ($ClientId) { $forward += @("-ClientId", $ClientId) }
@@ -41,6 +41,16 @@ if ($PSVersionTable.PSEdition -eq "Core" -or $PSHOME -like "*codex-runtimes*") {
 
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
+# npm/Codex pode colocar módulos PowerShell Core antes dos módulos Desktop.
+# Priorize os diretórios Windows PowerShell para o MSAL.PS, preservando o
+# restante do ambiente (incluindo proxy e cache de autenticação).
+$desktopModuleRoots = @(
+  (Join-Path $env:USERPROFILE "Documents\WindowsPowerShell\Modules"),
+  (Join-Path $env:ProgramFiles "WindowsPowerShell\Modules"),
+  (Join-Path $env:WINDIR "System32\WindowsPowerShell\v1.0\Modules")
+)
+$env:PSModulePath = (($desktopModuleRoots + @($env:PSModulePath -split ';')) | Select-Object -Unique) -join ';'
+
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Set-Location $root
 

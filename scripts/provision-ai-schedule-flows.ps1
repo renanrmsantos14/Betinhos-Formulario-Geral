@@ -112,9 +112,25 @@ $headers = @{
 }
 $apiBaseUrl = "$environmentBaseUrl/api/data/v9.2"
 function Invoke-Dataverse([string] $Uri, [string] $Method = "Get", [string] $Body = $null) {
-  $request = @{ Uri = $Uri; Headers = $headers; Method = $Method; ErrorAction = "Stop" }
+  try {
+    if ($Method.ToUpperInvariant() -in @("GET", "HEAD") -and [string]::IsNullOrWhiteSpace($Body)) {
+      return Invoke-RestMethod -Uri $Uri -Headers @{ Authorization = $headers.Authorization; Accept = "application/json" } -Method $Method -ErrorAction Stop
+    }
+  # Windows PowerShell rejeita Content-Type em GET/HEAD sem conteúdo.
+  $requestHeaders = @{} + $headers
+  if ([string]::IsNullOrWhiteSpace($Body) -and $Method.ToUpperInvariant() -in @("GET", "HEAD")) {
+    $requestHeaders.Remove("Content-Type")
+    $requestHeaders.Remove("Prefer")
+  }
+  $request = @{ Uri = $Uri; Headers = $requestHeaders; Method = $Method; ErrorAction = "Stop" }
   if ($null -ne $Body) { $request.Body = $Body }
-  return Invoke-RestMethod @request
+    return Invoke-RestMethod @request
+  } catch {
+    if ($_.ErrorDetails.Message -match "ConnectionAuthorizationFailed") {
+      throw "A conexão usada pela Connection Reference não está autorizada para o usuário do push. Compartilhe a conexão DeepSeek com esse usuário ou crie uma nova conexão em Power Apps > Conexões e vincule-a à referência '$DeepSeekConnectionReferenceLogicalName'. Detalhe: $($_.ErrorDetails.Message)"
+    }
+    throw
+  }
 }
 
 function Ensure-ConnectionReference([string] $LogicalName, [string] $Role) {

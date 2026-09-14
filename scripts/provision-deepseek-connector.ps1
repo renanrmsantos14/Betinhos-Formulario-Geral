@@ -21,7 +21,7 @@ if ($EnvironmentUrl.TrimEnd("/") -notmatch "org23b93544\.crm2\.dynamics\.com$") 
 if ($WhatIf) { Step "dry-run: criaria ou atualizaria o connector Betinhos DeepSeek na solution $SolutionUniqueName"; exit 0 }
 
 $args = @("connector", "create", "--settings-file", $settings, "--solution-unique-name", $SolutionUniqueName)
-if ($ConnectorId) { $args = @("connector", "update", "--connector-id", $ConnectorId, "--settings-file", $settings, "--solution-unique-name", $SolutionUniqueName) }
+if ($ConnectorId) { $args = @("connector", "update", "--environment", $EnvironmentUrl, "--connector-id", $ConnectorId, "--api-definition-file", $definition, "--api-properties-file", $properties, "--solution-unique-name", $SolutionUniqueName) }
 Step "publicando definição OpenAPI do connector Betinhos DeepSeek"
 $pacOutput = @(& pac @args 2>&1)
 $pacExitCode = $LASTEXITCODE

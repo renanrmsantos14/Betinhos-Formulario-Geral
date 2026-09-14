@@ -9,6 +9,7 @@ const schema = await readFile(new URL("./provision-ai-schedule-schema.ps1", impo
 
 assert.match(packageJson.scripts.push, /-ProvisionPlatform/);
 assert.match(push, /Import-EnvFile "\.env\.local"/);
+assert.doesNotMatch(push, /\$PSHOME -like "\*codex-runtimes\*"/);
 assert.match(push, /provisionamento idempotente do schema Dataverse/);
 assert.match(push, /criação\/atualização do Custom Connector DeepSeek/);
 assert.match(push, /AI_SCHEDULE_DEEPSEEK_CONNECTOR_ID/);
@@ -19,6 +20,8 @@ assert.match(flows, /Ensure-ConnectionReference/);
 assert.match(flows, /connectionreferences\?/);
 assert.match(connector, /pacOutput/);
 assert.doesNotMatch(connector, /"--environment", \$EnvironmentUrl, "--settings-file"/);
+assert.match(connector, /"--connector-id", \$ConnectorId, "--api-definition-file"/);
+assert.doesNotMatch(connector, /"--connector-id", \$ConnectorId, "--settings-file"/);
 assert.match(schema, /DateTimeBehavior = @\{ Value = "UserLocal" \}/);
 
 console.log("push_dev_contract.test: ok");
