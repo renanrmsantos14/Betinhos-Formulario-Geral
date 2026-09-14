@@ -117,6 +117,18 @@ function Invoke-Dataverse([string] $Uri, [string] $Method = "Get", [string] $Bod
   return Invoke-RestMethod @request
 }
 
+function Ensure-ConnectionReference([string] $LogicalName, [string] $Role) {
+  $escaped = Escape-OData $LogicalName
+  $rows = @((Invoke-Dataverse "$apiBaseUrl/connectionreferences?`$select=connectionreferenceid,connectionreferencelogicalname&`$filter=connectionreferencelogicalname eq '$escaped'").value)
+  if ($rows.Count -ne 1) {
+    throw "Connection Reference $Role '$LogicalName' não encontrada no DEV. Crie-a dentro da solution AppBetinhos e vincule a conexão real antes de executar npm run push."
+  }
+  Write-Step "Connection Reference $Role validada: $LogicalName"
+}
+
+Ensure-ConnectionReference $DataverseConnectionReferenceLogicalName "Dataverse"
+Ensure-ConnectionReference $DeepSeekConnectionReferenceLogicalName "DeepSeek"
+
 function Ensure-Workflow([string] $Name, $Definition) {
   $filter = Escape-OData $Name
   $rows = @((Invoke-Dataverse "$apiBaseUrl/workflows?`$select=workflowid,name,statecode,statuscode,modifiedon&`$filter=name eq '$filter'&`$orderby=modifiedon desc").value)

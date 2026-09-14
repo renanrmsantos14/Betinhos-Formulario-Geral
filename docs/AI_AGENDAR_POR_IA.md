@@ -97,7 +97,7 @@ Para validar o manifesto antes do push, use `-MetadataPath`:
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\push-dev.ps1 -DeviceCode -MetadataPath C:\Users\mendo\Downloads\metadata-AppBetinhos-2026-09-14T19-18-58-216Z.json
 ```
 
-Para conferir o encadeamento sem autenticar nem alterar o Dataverse, use `npm run push -- -WhatIf` (com as duas variáveis acima). O connector ainda exige que a conexão com a API key seja criada/validada no Power Platform; a chave não é lida do `.env.local` nem gravada no Git.
+Para conferir o encadeamento sem autenticar nem alterar o Dataverse, use `npm run push -- -WhatIf` (com as duas variáveis acima). No push real, o provisionador consulta `connectionreferences` no DEV e bloqueia antes dos flows se alguma referência não existir. O connector ainda exige que a conexão com a API key seja criada/validada no Power Platform; a chave não é lida do `.env.local` nem gravada no Git.
 
 ## Pendências externas
 
