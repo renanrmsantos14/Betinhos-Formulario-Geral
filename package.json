@@ -8,6 +8,6 @@
     "deploy:webresource": "C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe -ExecutionPolicy Bypass -File scripts/deploy-webresource.ps1",
     "push": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\\push-dev.ps1 -DeviceCode -ProvisionPlatform",
     "puh": "npm run push",
-    "test:ai": "node scripts/ai_schedule_core.test.mjs && node scripts/dataverse_identity_match.test.mjs && node scripts/ai_schedule_conversation.test.mjs && node scripts/ai_schedule_local_api.test.mjs && node scripts/ai_schedule_flow_contract.test.mjs && node scripts/validate_ai_schedule_manifest.test.mjs"
+    "test:ai": "node scripts/ai_schedule_core.test.mjs && node scripts/dataverse_identity_match.test.mjs && node scripts/ai_schedule_conversation.test.mjs && node scripts/ai_schedule_local_api.test.mjs && node scripts/ai_schedule_flow_contract.test.mjs && node scripts/push_dev_contract.test.mjs && node scripts/validate_ai_schedule_manifest.test.mjs"
   }
 }

@@ -79,11 +79,14 @@ O comando `npm run push` segue o padrão do Tela Planner e executa, em ordem:
 
 O alvo é fixo no ambiente DEV `org23b93544`. O script recusa URLs de outros ambientes. Se o connector ainda não existir, faça o bootstrap uma vez com `scripts\provision-deepseek-connector.ps1`; depois crie a conexão DeepSeek com a API key e uma Connection Reference dentro da solução. Connection References são o vínculo entre o Flow e a conexão real, não o segredo em si. A partir daí, `npm run push` executa todo o ciclo.
 
-Configure uma vez as Connection References reais:
+Configure uma vez as Connection References reais em `.env.local` (copie `.env.example`). O `npm run push` carrega esse arquivo automaticamente; não precisa mais exportar variáveis a cada terminal:
 
 ```powershell
-$env:AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE = "<logical-name-da-connection-reference-dataverse>"
-$env:AI_SCHEDULE_DEEPSEEK_CONNECTION_REFERENCE = "<logical-name-da-connection-reference-deepseek>"
+Copy-Item .env.example .env.local
+# edite .env.local e preencha:
+AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE=<logical-name-da-connection-reference-dataverse>
+AI_SCHEDULE_DEEPSEEK_CONNECTION_REFERENCE=<logical-name-da-connection-reference-deepseek>
+npm run push
 ```
 
 Para validar o manifesto antes do push, use `-MetadataPath`:

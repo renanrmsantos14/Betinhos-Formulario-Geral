@@ -42,6 +42,26 @@ Set-StrictMode -Version Latest
 $root = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Set-Location $root
 
+function Import-EnvFile([string] $FileName) {
+  $path = Join-Path $root $FileName
+  if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { return }
+  foreach ($line in (Get-Content -LiteralPath $path -Encoding UTF8)) {
+    if ($line -match '^\s*#' -or $line -notmatch '^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$') { continue }
+    $name = $Matches[1]
+    $value = $Matches[2].Trim()
+    if ($value.Length -ge 2 -and (($value.StartsWith('"') -and $value.EndsWith('"')) -or ($value.StartsWith("'") -and $value.EndsWith("'")))) {
+      $value = $value.Substring(1, $value.Length - 2)
+    }
+    if ([string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($name))) {
+      [Environment]::SetEnvironmentVariable($name, $value, 'Process')
+    }
+  }
+}
+
+# Mantém refs e parâmetros locais fora do Git; ambiente já exportado sempre vence.
+Import-EnvFile ".env"
+Import-EnvFile ".env.local"
+
 function Step([string] $Message) { Write-Host "[push-dev] $Message" }
 function Assert-Exit([string] $Label) { if ($LASTEXITCODE -ne 0) { throw "$Label falhou com exit code $LASTEXITCODE." } }
 
@@ -74,7 +94,7 @@ if ($ProvisionPlatform) {
   if ([string]::IsNullOrWhiteSpace($DataverseConnectionReferenceLogicalName)) { $DataverseConnectionReferenceLogicalName = $env:AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE }
   if ([string]::IsNullOrWhiteSpace($DeepSeekConnectionReferenceLogicalName)) { $DeepSeekConnectionReferenceLogicalName = $env:AI_SCHEDULE_DEEPSEEK_CONNECTION_REFERENCE }
   if ([string]::IsNullOrWhiteSpace($DataverseConnectionReferenceLogicalName) -or [string]::IsNullOrWhiteSpace($DeepSeekConnectionReferenceLogicalName)) {
-    throw "Para o push completo, defina AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE e AI_SCHEDULE_DEEPSEEK_CONNECTION_REFERENCE."
+    throw "Push completo bloqueado: faltam Connection References. Defina AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE e AI_SCHEDULE_DEEPSEEK_CONNECTION_REFERENCE em .env.local (arquivo ignorado pelo Git) ou no ambiente do processo. Depois, npm run push executa schema, connector, WebResource e flows sem argumentos extras."
   }
   Step "provisionamento idempotente do schema Dataverse da agenda IA"
   $schemaScript = Join-Path $PSScriptRoot "provision-ai-schedule-schema.ps1"
@@ -106,4 +126,4 @@ if ($ProvisionFlows) {
 
 Step "push concluído: testes, build e WebResource DEV atualizados"
 if ($ProvisionFlows) { Step "flows da agenda IA provisionados e ativados" }
-else { Step "flows/connector DeepSeek não foram provisionados (use -ProvisionFlows após adicionar as definições JSON e Connection References)" }
+else { throw "Push incompleto: o modo atual não provisionou flows. Use npm run push (ele inclui -ProvisionPlatform) ou informe -ProvisionPlatform." }
