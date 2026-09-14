@@ -157,6 +157,70 @@
     return `${idValue(sessionId)}:${Number(version || 0)}`;
   }
 
+  function localReservationId(sessionId, ordinal) {
+    const base = text(sessionId || "session").replace(/[^a-z0-9_-]/gi, "-").slice(0, 80) || "session";
+    return `local-ai-${base}-${Number(ordinal || 1)}`;
+  }
+
+  function localReservationDate(record) {
+    const date = new Date(`${text(record?.date)}T${text(record?.time)}:00-03:00`);
+    return Number.isNaN(date.getTime()) ? null : date;
+  }
+
+  function buildLocalReservationRecords({ session = {}, existingRecords = [], now = new Date() } = {}) {
+    const proposal = normalizeProposal(session.proposal || {});
+    const existingByKey = new Map((Array.isArray(existingRecords) ? existingRecords : [])
+      .filter((record) => record?.idempotencyKey)
+      .map((record) => [String(record.idempotencyKey), record]));
+    return proposal.services.map((service, index) => {
+      const ordinal = Number(service.ordinal || index + 1);
+      const idempotencyKey = `${text(session.id || "local-session")}:${ordinal}`;
+      const existing = existingByKey.get(idempotencyKey);
+      if (existing) return existing;
+      return {
+        id: localReservationId(session.id, ordinal), idempotencyKey, sessionId: text(session.id), ordinal,
+        status: "SIMULATED_SCHEDULED",
+        createdAt: now instanceof Date && !Number.isNaN(now.getTime()) ? now.toISOString() : new Date().toISOString(),
+        date: service.date, time: service.time, timezone: service.timezone,
+        origin: service.origin, destination: service.destination,
+        route: service.route || [service.origin, service.destination].filter(Boolean).join(" / "),
+        serviceType: service.serviceType, vehicleType: service.vehicleType,
+        observations: service.notes || "", client: proposal.client, requester: proposal.requester,
+        passengers: proposal.passengers
+      };
+    });
+  }
+
+  function buildLocalVoucher({ session = {}, reservations = [], now = new Date() } = {}) {
+    const proposal = normalizeProposal(session.proposal || {});
+    const generatedAt = now instanceof Date && !Number.isNaN(now.getTime()) ? now : new Date();
+    const passengers = proposal.passengers.map((passenger) => passenger.name).filter(Boolean);
+    const services = (Array.isArray(reservations) ? reservations : [])
+      .slice().sort((left, right) => Number(left.ordinal || 0) - Number(right.ordinal || 0))
+      .map((record, index) => {
+        const date = localReservationDate(record);
+        return {
+          typeLabel: "Simulação local", shortId: text(record.id).slice(-6).toUpperCase(),
+          scheduledAt: `${text(record.date)} ${text(record.time)}`.trim(), sortTime: date?.getTime?.() || index,
+          serviceType: text(record.serviceType?.label || record.serviceType?.name) || "Não informado",
+          vehicleType: text(record.vehicleType?.label || record.vehicleType?.name) || "A confirmar",
+          requester: proposal.requester?.name || "Não informado", passengerSummary: passengers.join("\n") || "Não informado",
+          route: text(record.route), origin: text(record.origin) || "Não informado",
+          destination: text(record.destination) || "Não informado", note: text(record.observations), order: index + 1
+        };
+      });
+    const pad = (value) => String(value).padStart(2, "0");
+    return {
+      reference: `LOCAL-${generatedAt.getFullYear()}${pad(generatedAt.getMonth() + 1)}${pad(generatedAt.getDate())}-${pad(generatedAt.getHours())}${pad(generatedAt.getMinutes())}-${services.length}`,
+      issuedAtLabel: new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "long", timeStyle: "short" }).format(generatedAt),
+      client: proposal.client?.name || "Não informado", requester: proposal.requester?.name || "Não informado",
+      serviceType: services[0]?.serviceType || "Não informado", vehicleType: services[0]?.vehicleType || "A confirmar",
+      status: "Confirmado (localhost)", operationCode: "", costCenter: "",
+      passengerSummary: passengers.join("\n") || "Não informado", passengerCount: passengers.length,
+      preferenceSummary: proposal.observations || "", services
+    };
+  }
+
   function normalizeSession(session = {}) {
     const proposal = normalizeProposal(session.proposal || session.proposalJson);
     const validation = validateProposal(proposal);
@@ -189,6 +253,8 @@
     nextStatus,
     sessionVersion,
     dedupeKey,
+    buildLocalReservationRecords,
+    buildLocalVoucher,
     normalizeSession
   });
 })(typeof window !== "undefined" ? window : globalThis);

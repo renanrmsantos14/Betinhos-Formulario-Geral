@@ -190,6 +190,7 @@
   const AI_CONVERSATION_CORE = window.AIScheduleConversationCore || null;
   const AI_CONVERSATION_MOCK_KEY = "formulario_geral_mock_ai_conversations_v1";
   const AI_CONVERSATION_LOCAL_KEY = "formulario_geral_local_ai_conversations_v1";
+  const AI_CONVERSATION_LOCAL_RESERVATIONS_KEY = "formulario_geral_local_ai_reservations_v1";
   const AI_CONVERSATION_MAX_INPUT_LENGTH = 12000;
   const QUERY_MOCK_MODE = (URL_PARAMS.get("mock") === "1" || URL_PARAMS.get("mockData") === "1");
   const AI_CONVERSATION_LOCAL_MODE = !QUERY_MOCK_MODE && ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
@@ -3934,6 +3935,27 @@
     try { window.localStorage.setItem(key, JSON.stringify(session)); } catch (_) { /* modo local sem persistencia */ }
   }
 
+  function aiConversationLocalReservationsRead() {
+    try {
+      const value = JSON.parse(window.localStorage.getItem(AI_CONVERSATION_LOCAL_RESERVATIONS_KEY) || "[]");
+      return Array.isArray(value) ? value : [];
+    } catch (_) { return []; }
+  }
+
+  function aiConversationLocalReservationsWrite(records) {
+    try { window.localStorage.setItem(AI_CONVERSATION_LOCAL_RESERVATIONS_KEY, JSON.stringify(records)); } catch (_) { /* modo local sem persistencia */ }
+  }
+
+  function aiConversationCreateLocalReservations(session) {
+    if (!AI_CONVERSATION_CORE?.buildLocalReservationRecords) return [];
+    const existing = aiConversationLocalReservationsRead();
+    const created = AI_CONVERSATION_CORE.buildLocalReservationRecords({ session, existingRecords: existing });
+    const byKey = new Map(existing.map((record) => [record.idempotencyKey, record]));
+    created.forEach((record) => byKey.set(record.idempotencyKey, record));
+    aiConversationLocalReservationsWrite(Array.from(byKey.values()));
+    return created;
+  }
+
   function aiConversationMessage(role, content) {
     return { role, content: String(content || ""), at: new Date().toISOString() };
   }
@@ -4245,7 +4267,7 @@
     el.aiConversationVoucher.hidden = !hasCreatedReservations;
     el.aiConversationResume.hidden = status !== "ERROR" && status !== "PARTIAL";
     el.aiConversationConfirmHint.textContent = status === "SCHEDULED"
-      ? (AI_CONVERSATION_LOCAL_MODE ? "Confirmação registrada no localhost; nenhuma reserva foi criada." : "Reserva(s) criada(s). Abra o voucher no formulário para revisar.")
+      ? (AI_CONVERSATION_LOCAL_MODE ? "Confirmação registrada no localhost; simulação local criada. Abra o voucher para revisar." : "Reserva(s) criada(s). Abra o voucher no formulário para revisar.")
       : "A confirmação libera a criação das reservas.";
   }
 
@@ -4373,17 +4395,20 @@
     state.aiConversationLoading = true;
     renderAiConversation();
     if (AI_CONVERSATION_LOCAL_MODE) {
+      const records = aiConversationCreateLocalReservations(session);
       state.aiConversation = {
         ...session,
         status: "SCHEDULED",
         confirmationRequested: false,
         confirmationVersion: session.inputVersion,
-        messages: [...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar."), aiConversationMessage("assistant", "Confirmação recebida no localhost. Nenhuma reserva foi criada; configure Dataverse/Power Automate DEV para efetivar o agendamento.")]
+        createdReservationIds: records.map((record) => record.id),
+        messages: [...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar."), aiConversationMessage("assistant", "Confirmação recebida no localhost. Simulação local criada; nenhuma reserva real foi gravada no Dataverse.")]
       };
+      state.lastSuccessVoucher = AI_CONVERSATION_CORE.buildLocalVoucher({ session: state.aiConversation, reservations: records });
       aiConversationStoreWrite(state.aiConversation, AI_CONVERSATION_LOCAL_KEY);
       state.aiConversationLoading = false;
       renderAiConversation();
-      toast("Confirmação local registrada. Nenhuma reserva foi criada.", "warning", 7000);
+      toast("Confirmação local registrada. Voucher de simulação disponível.", "warning", 7000);
       return;
     }
     if (state.mockMode) {
@@ -4419,6 +4444,16 @@
   async function openAiConversationVoucher() {
     const session = state.aiConversation;
     const reservationIds = [...new Set((session?.createdReservationIds || []).map(cleanGuid).filter(Boolean))];
+    if (AI_CONVERSATION_LOCAL_MODE) {
+      const records = aiConversationLocalReservationsRead().filter((record) => reservationIds.includes(cleanGuid(record.id)));
+      if (!records.length || !AI_CONVERSATION_CORE?.buildLocalVoucher) {
+        toast("Não há simulação local disponível para esta sessão.", "warning", 7000);
+        return;
+      }
+      state.lastSuccessVoucher = AI_CONVERSATION_CORE.buildLocalVoucher({ session, reservations: records });
+      openSuccessVoucher();
+      return;
+    }
     if (!reservationIds.length || !state.xrm || state.mockMode) {
       toast("O voucher só fica disponível depois que o fluxo DEV registrar as reservas reais.", "warning", 7000);
       return;

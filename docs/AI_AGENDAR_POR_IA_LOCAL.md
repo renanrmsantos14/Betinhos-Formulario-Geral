@@ -11,4 +11,4 @@ O servidor local possui um proxy `POST /api/ai-schedule`. O navegador nunca rece
 
 O modelo primário é `deepseek-v4-flash`; resposta vazia, JSON inválido, erro transitório ou baixa confiança em uma proposta aparentemente completa usam uma única tentativa com `deepseek-v4-pro`. O proxy usa `/responses` com Structured Output (`json_schema`), desativa reasoning e limita a entrada a 12.000 caracteres. Um endpoint compatível com Chat Completions ainda pode ser informado explicitamente em `DEEPSEEK_API_URL`.
 
-Esta etapa liga a interpretação ao DeepSeek. A confirmação no localhost continua sem criar reserva: a gravação real depende da sessão Dataverse e dos fluxos Power Automate DEV descritos em `docs/power-platform/AI_AGENDAR_POR_IA_DEV_FLOW_CONTRACT.md`.
+Esta etapa liga a interpretação ao DeepSeek. No localhost, a confirmação cria uma simulação idempotente em `localStorage` por sessão + ordinal e abre o voucher existente com a marcação `Confirmado (localhost)`. Isso não é uma reserva real. A gravação real depende da sessão Dataverse e dos fluxos Power Automate DEV descritos em `docs/power-platform/AI_AGENDAR_POR_IA_DEV_FLOW_CONTRACT.md`.

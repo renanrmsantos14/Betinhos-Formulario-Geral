@@ -45,6 +45,16 @@ assert.equal(core.isExplicitConfirmation("confirmo", { awaitingConfirmation: tru
 assert.equal(core.dedupeKey("abc", 3), "abc:3");
 assert.equal(core.nextStatus(complete, core.STATUS.SCHEDULED), core.STATUS.SCHEDULED);
 
+const localSession = { id: "local-session-1", proposal: complete.normalized };
+const localRecords = core.buildLocalReservationRecords({ session: localSession, now: new Date("2026-09-14T12:00:00.000Z") });
+assert.equal(localRecords.length, 1);
+assert.equal(localRecords[0].idempotencyKey, "local-session-1:1");
+assert.deepEqual(core.buildLocalReservationRecords({ session: localSession, existingRecords: localRecords }).map((item) => item.id), localRecords.map((item) => item.id));
+const localVoucher = core.buildLocalVoucher({ session: localSession, reservations: localRecords, now: new Date("2026-09-14T12:00:00.000Z") });
+assert.equal(localVoucher.services.length, localRecords.length);
+assert.equal(localVoucher.services[0].shortId, localRecords[0].id.slice(-6).toUpperCase());
+assert.match(localVoucher.status, /localhost/);
+
 const session = core.normalizeSession({ id: "s1", inputVersion: 3, proposal: complete.normalized });
 assert.equal(session.ready, true);
 assert.equal(session.inputVersion, 3);

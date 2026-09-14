@@ -11,6 +11,8 @@ const html = fs.readFileSync(outputPath, "utf8").replace(/\r\n/g, "\n");
 assert.ok(html.includes("<style>"), "CSS deve estar inline");
 assert.ok(html.includes("window.XlsxImportCore"), "core XLSX deve estar inline");
 assert.ok(html.includes("window.AIScheduleConversationCore"), "core de conversa IA deve estar inline");
+assert.ok(html.includes("buildLocalReservationRecords"), "bundle deve conter simulacao local idempotente da conversa IA");
+assert.ok(html.includes("buildLocalVoucher"), "bundle deve conter voucher da simulacao local");
 assert.ok(html.includes("function openXlsxImportPicker"), "app.js deve estar inline");
 assert.ok(html.includes("id=\"tab-panel-import\""), "aba de importacao deve estar no bundle");
 assert.ok(html.includes("id=\"tab-panel-ai-schedule\""), "aba Agendar por IA deve estar no bundle");
