@@ -4,6 +4,8 @@ Este documento é o contrato de implementação dos fluxos solution-aware. Ele �
 
 ## Manifesto de configuração
 
+Para obter a evidência inicial, abra o Model-driven App no ambiente DEV e cole `scripts/coletar_metadata_dataverse_console.js` no console do navegador. O script baixa o JSON de metadata da solução; ele não envia segredo nem conteúdo de atendimento. Use esse arquivo no comando de validação abaixo.
+
 | Parâmetro | Valor inicial | Evidência necessária |
 |---|---|---|
 | Tabela de sessão | `cr40f_conversaiaagendamento` | tabela publicada na solução DEV |
