@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const http = require("node:http");
 const path = require("node:path");
 const { URL } = require("node:url");
+const { handleAiScheduleApi } = require("./ai_schedule_local_api");
 
 const root = path.resolve(__dirname, "..");
 const host = process.env.HOST || "127.0.0.1";
@@ -44,6 +45,31 @@ function send(response, statusCode, body, contentType = "text/plain; charset=utf
     "Content-Type": contentType
   });
   response.end(body);
+}
+
+function sendJson(response, statusCode, body) {
+  send(response, statusCode, JSON.stringify(body), "application/json; charset=utf-8");
+}
+
+function readJsonBody(request, maxBytes = 1024 * 1024) {
+  return new Promise((resolve, reject) => {
+    let total = 0;
+    const chunks = [];
+    request.on("data", (chunk) => {
+      total += chunk.length;
+      if (total > maxBytes) {
+        reject(Object.assign(new Error("Payload excede o limite local."), { statusCode: 413 }));
+        request.destroy();
+        return;
+      }
+      chunks.push(chunk);
+    });
+    request.on("end", () => {
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}")); }
+      catch (_) { reject(Object.assign(new Error("JSON de entrada inválido."), { statusCode: 400 })); }
+    });
+    request.on("error", reject);
+  });
 }
 
 function injectLiveReload(html) {
@@ -96,12 +122,24 @@ function scheduleLiveReload() {
 }
 
 const server = http.createServer((request, response) => {
+  const url = new URL(request.url, `http://${host}:${port}`);
+  if (url.pathname === "/api/ai-schedule") {
+    if (request.method !== "POST") {
+      sendJson(response, 405, { error: "Método não permitido." });
+      return;
+    }
+    void readJsonBody(request).then((payload) => handleAiScheduleApi(payload)).then((result) => {
+      sendJson(response, result.status || 500, result.body || { error: "Resposta local inválida." });
+    }).catch((error) => {
+      sendJson(response, Number(error.statusCode) || 500, { error: error.message || "Erro no proxy local." });
+    });
+    return;
+  }
   if (!["GET", "HEAD"].includes(request.method)) {
     send(response, 405, "Metodo nao permitido");
     return;
   }
 
-  const url = new URL(request.url, `http://${host}:${port}`);
   if (liveReloadEnabled && url.pathname === liveReloadPath) {
     response.writeHead(200, {
       "Cache-Control": "no-store",

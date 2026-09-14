@@ -189,8 +189,11 @@
   })();
   const AI_CONVERSATION_CORE = window.AIScheduleConversationCore || null;
   const AI_CONVERSATION_MOCK_KEY = "formulario_geral_mock_ai_conversations_v1";
+  const AI_CONVERSATION_LOCAL_KEY = "formulario_geral_local_ai_conversations_v1";
   const AI_CONVERSATION_MAX_INPUT_LENGTH = 12000;
   const QUERY_MOCK_MODE = (URL_PARAMS.get("mock") === "1" || URL_PARAMS.get("mockData") === "1");
+  const AI_CONVERSATION_LOCAL_MODE = !QUERY_MOCK_MODE && ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+  const AI_CONVERSATION_LOCAL_ENDPOINT = URL_PARAMS.get("aiEndpoint") || "/api/ai-schedule";
   const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
   const MOCK_AI_DRAFTS_KEY = "formulario_geral_mock_ai_drafts_v2";
   const DRAFT_STORE_KEY = "formulario_geral_draft_v1";
@@ -666,7 +669,7 @@
     setLoading(false);
     focusInitialCommonFormField();
     if (state.mockMode) {
-      toast("Modo local ativo: dados mock gerados para teste completo da experiência.", "warning", 7000);
+      toast(AI_CONVERSATION_LOCAL_MODE ? "Localhost ativo: a aba Agendar por IA usa o proxy DeepSeek." : "Modo local ativo: dados mock gerados para teste completo da experiência.", "warning", 7000);
       return;
     }
   }
@@ -3923,12 +3926,12 @@
     return labels[String(status || "DRAFT").toUpperCase()] || String(status || "Rascunho");
   }
 
-  function aiConversationStoreRead() {
-    try { return JSON.parse(window.localStorage.getItem(AI_CONVERSATION_MOCK_KEY) || "null"); } catch (_) { return null; }
+  function aiConversationStoreRead(key = AI_CONVERSATION_MOCK_KEY) {
+    try { return JSON.parse(window.localStorage.getItem(key) || "null"); } catch (_) { return null; }
   }
 
-  function aiConversationStoreWrite(session) {
-    try { window.localStorage.setItem(AI_CONVERSATION_MOCK_KEY, JSON.stringify(session)); } catch (_) { /* modo local sem persistencia */ }
+  function aiConversationStoreWrite(session, key = AI_CONVERSATION_MOCK_KEY) {
+    try { window.localStorage.setItem(key, JSON.stringify(session)); } catch (_) { /* modo local sem persistencia */ }
   }
 
   function aiConversationMessage(role, content) {
@@ -4105,6 +4108,15 @@
       showAiConversationSetup("Core de conversa não carregado no Web Resource.");
       return;
     }
+    if (AI_CONVERSATION_LOCAL_MODE) {
+      if (el.aiConversationEnvironment) el.aiConversationEnvironment.textContent = "Ambiente: localhost · proxy DeepSeek";
+      state.aiConversation = aiConversationRowToSession(aiConversationStoreRead(AI_CONVERSATION_LOCAL_KEY)) || {
+        id: `local-${Date.now()}`, status: "DRAFT", inputVersion: 0, processedVersion: 0,
+        originalText: "", messages: [{ role: "assistant", content: "Cole a solicitação do cliente para começar. A interpretação será feita pelo DeepSeek no proxy local." }], proposal: {}, missing: ["services"], warnings: [], ready: false
+      };
+      renderAiConversation();
+      return;
+    }
     if (state.mockMode) {
       if (el.aiConversationEnvironment) el.aiConversationEnvironment.textContent = "Ambiente: local demonstrativo";
       state.aiConversation = aiConversationRowToSession(aiConversationStoreRead()) || {
@@ -4190,15 +4202,66 @@
     const hasCreatedReservations = status === "SCHEDULED" && (session.createdReservationIds || []).length > 0;
     el.aiConversationVoucher.hidden = !hasCreatedReservations;
     el.aiConversationResume.hidden = status !== "ERROR" && status !== "PARTIAL";
-    el.aiConversationConfirmHint.textContent = status === "SCHEDULED" ? "Reserva(s) criada(s). Abra o voucher no formulário para revisar." : "A confirmação libera a criação das reservas.";
+    el.aiConversationConfirmHint.textContent = status === "SCHEDULED"
+      ? (AI_CONVERSATION_LOCAL_MODE ? "Confirmação registrada no localhost; nenhuma reserva foi criada." : "Reserva(s) criada(s). Abra o voucher no formulário para revisar.")
+      : "A confirmação libera a criação das reservas.";
   }
 
   function startNewAiConversation() {
     if (state.aiConversationPollingTimer) clearTimeout(state.aiConversationPollingTimer);
-    state.aiConversation = { id: `mock-${Date.now()}`, status: "DRAFT", inputVersion: 0, processedVersion: 0, originalText: "", messages: [{ role: "assistant", content: "Cole a solicitação do cliente para começar." }], proposal: {}, missing: ["services"], warnings: [], ready: false };
+    const local = AI_CONVERSATION_LOCAL_MODE;
+    state.aiConversation = { id: `${local ? "local" : "mock"}-${Date.now()}`, status: "DRAFT", inputVersion: 0, processedVersion: 0, originalText: "", messages: [{ role: "assistant", content: local ? "Cole a solicitação do cliente para começar. A interpretação será feita pelo DeepSeek no proxy local." : "Cole a solicitação do cliente para começar." }], proposal: {}, missing: ["services"], warnings: [], ready: false };
     if (el.aiConversationInput) el.aiConversationInput.value = "";
-    if (state.mockMode) aiConversationStoreWrite(state.aiConversation);
+    if (local) aiConversationStoreWrite(state.aiConversation, AI_CONVERSATION_LOCAL_KEY);
+    else if (state.mockMode) aiConversationStoreWrite(state.aiConversation);
     renderAiConversation();
+  }
+
+  async function submitLocalAiConversationInput(message, current) {
+    const nextVersion = Number(current.inputVersion || 0) + 1;
+    const messages = [...(current.messages || []), aiConversationMessage("user", message)];
+    state.aiConversationLoading = true;
+    state.aiConversation = { ...current, status: "WAITING_AI", inputVersion: nextVersion, messages };
+    renderAiConversation();
+    try {
+      const response = await fetch(AI_CONVERSATION_LOCAL_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ message, previousProposal: current.proposal || {}, messages })
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body.error || `Proxy local retornou HTTP ${response.status}.`);
+      const proposal = AI_CONVERSATION_CORE.normalizeProposal(body.proposal || body);
+      const validation = AI_CONVERSATION_CORE.validateProposal(proposal);
+      const assistant = proposal.assistantMessage || (validation.ready ? "Entendi a solicitação. Confira a proposta e confirme para agendar." : proposal.question || aiConversationFirstQuestion(validation.missing));
+      const next = {
+        ...current,
+        id: current.id || `local-${Date.now()}`,
+        originalText: current.originalText || message,
+        inputVersion: nextVersion,
+        processedVersion: nextVersion,
+        status: validation.ready ? "READY" : "WAITING_USER",
+        confirmationRequested: validation.ready,
+        confirmationVersion: 0,
+        proposal,
+        missing: validation.missing,
+        warnings: validation.warnings,
+        model: body.model || "",
+        attempts: Number(body.attempts || 1),
+        messages: [...messages, aiConversationMessage("assistant", assistant)]
+      };
+      state.aiConversation = next;
+      aiConversationStoreWrite(next, AI_CONVERSATION_LOCAL_KEY);
+      if (el.aiConversationInput) el.aiConversationInput.value = "";
+    } catch (error) {
+      const failed = { ...state.aiConversation, status: "ERROR", error: error.message || "Falha no proxy local.", messages: [...messages, aiConversationMessage("assistant", `Não consegui interpretar agora: ${error.message || "falha no proxy local."}`)] };
+      state.aiConversation = failed;
+      aiConversationStoreWrite(failed, AI_CONVERSATION_LOCAL_KEY);
+      showAiConversationSetup(`DeepSeek local indisponível: ${error.message || "verifique o servidor e DEEPSEEK_API_KEY."}`);
+    } finally {
+      state.aiConversationLoading = false;
+      renderAiConversation();
+    }
   }
 
   async function submitAiConversationInput() {
@@ -4212,6 +4275,10 @@
     const currentValidation = AI_CONVERSATION_CORE?.validateProposal(current.proposal || {});
     if (AI_CONVERSATION_CORE?.isExplicitConfirmation(message, { awaitingConfirmation: current.status === "READY" && currentValidation?.ready === true, confirmationRequested: current.confirmationRequested === true, version: current.inputVersion, confirmedVersion: current.confirmationVersion })) {
       await confirmAiConversation(); return;
+    }
+    if (AI_CONVERSATION_LOCAL_MODE) {
+      await submitLocalAiConversationInput(message, current);
+      return;
     }
     if (state.mockMode) {
       const parsed = parseLocalAiConversationText(message, current.proposal || {});
@@ -4255,6 +4322,20 @@
     if (!session || !validation?.ready) { toast("Ainda há dados obrigatórios pendentes.", "error"); return; }
     state.aiConversationLoading = true;
     renderAiConversation();
+    if (AI_CONVERSATION_LOCAL_MODE) {
+      state.aiConversation = {
+        ...session,
+        status: "SCHEDULED",
+        confirmationRequested: false,
+        confirmationVersion: session.inputVersion,
+        messages: [...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar."), aiConversationMessage("assistant", "Confirmação recebida no localhost. Nenhuma reserva foi criada; configure Dataverse/Power Automate DEV para efetivar o agendamento.")]
+      };
+      aiConversationStoreWrite(state.aiConversation, AI_CONVERSATION_LOCAL_KEY);
+      state.aiConversationLoading = false;
+      renderAiConversation();
+      toast("Confirmação local registrada. Nenhuma reserva foi criada.", "warning", 7000);
+      return;
+    }
     if (state.mockMode) {
       state.aiConversation = { ...session, status: "SCHEDULED", confirmationRequested: false, confirmationVersion: session.inputVersion, messages: [...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar."), aiConversationMessage("assistant", "Simulação local concluída. Nenhum registro foi criado no Dataverse.")] };
       aiConversationStoreWrite(state.aiConversation); renderAiConversation();

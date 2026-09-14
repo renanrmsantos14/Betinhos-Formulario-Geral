@@ -15,6 +15,8 @@ assert.ok(html.includes("function openXlsxImportPicker"), "app.js deve estar inl
 assert.ok(html.includes("id=\"tab-panel-import\""), "aba de importacao deve estar no bundle");
 assert.ok(html.includes("id=\"tab-panel-ai-schedule\""), "aba Agendar por IA deve estar no bundle");
 assert.ok(html.includes("id=\"aiConversationConfirm\""), "bundle deve conter confirmacao humana da conversa IA");
+assert.ok(html.includes("AI_CONVERSATION_LOCAL_ENDPOINT"), "bundle deve conter o endpoint local do proxy DeepSeek");
+assert.ok(html.includes("submitLocalAiConversationInput"), "bundle deve conter o caminho local de interpretacao DeepSeek");
 assert.ok(html.includes("el.tabBd.hidden = false;"), "bundle deve manter Cadastrar Passageiro disponivel em modo edicao");
 assert.ok(html.includes("if ((tab === \"import\" || tab === \"return\" || tab === \"repeat\") && !state.isNew)"), "bundle deve bloquear abas de criacao sem bloquear Cadastrar Passageiro em edicao");
 assert.ok(!html.includes("tab === \"bd\" || tab === \"return\""), "bundle nao deve bloquear aba Cadastrar Passageiro em edicao");

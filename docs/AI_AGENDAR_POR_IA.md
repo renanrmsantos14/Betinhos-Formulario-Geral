@@ -11,7 +11,7 @@ A aba **Agendar por IA** é separada de **Solicitações IA**. Ela mantém uma c
 5. somente `Confirmar e agendar` (ou uma confirmação textual explícita no contexto certo) libera a mutação;
 6. o worker grava os IDs criados, parcialidade ou erro idempotente.
 
-O bundle nunca recebe chave DeepSeek. No modo local (`?mock=1`), a interpretação aceita JSON ou linhas estruturadas somente para teste visual e informa que nenhum registro Dataverse é criado.
+O bundle nunca recebe chave DeepSeek. No localhost sem `?mock=1`, a aba chama o proxy `POST /api/ai-schedule`, que lê `DEEPSEEK_API_KEY` somente no processo Node e devolve a proposta estruturada. No modo `?mock=1`, a interpretação permanece local e determinística para teste visual, sem chamar a API nem criar registro Dataverse. O passo a passo está em `docs/AI_AGENDAR_POR_IA_LOCAL.md`.
 
 ## Tabela de sessão DEV
 
