@@ -20,9 +20,12 @@ foreach ($path in @($settings, $definition, $properties)) { if (-not (Test-Path 
 if ($EnvironmentUrl.TrimEnd("/") -notmatch "org23b93544\.crm2\.dynamics\.com$") { throw "Connector bloqueado: somente ambiente DEV org23b93544." }
 if ($WhatIf) { Step "dry-run: criaria ou atualizaria o connector Betinhos DeepSeek na solution $SolutionUniqueName"; exit 0 }
 
-$args = @("connector", "create", "--environment", $EnvironmentUrl, "--settings-file", $settings, "--solution-unique-name", $SolutionUniqueName)
-if ($ConnectorId) { $args = @("connector", "update", "--environment", $EnvironmentUrl, "--connector-id", $ConnectorId, "--settings-file", $settings, "--solution-unique-name", $SolutionUniqueName) }
+$args = @("connector", "create", "--settings-file", $settings, "--solution-unique-name", $SolutionUniqueName)
+if ($ConnectorId) { $args = @("connector", "update", "--connector-id", $ConnectorId, "--settings-file", $settings, "--solution-unique-name", $SolutionUniqueName) }
 Step "publicando definição OpenAPI do connector Betinhos DeepSeek"
-& pac @args
-if ($LASTEXITCODE -ne 0) { throw "pac connector falhou com exit code $LASTEXITCODE. Se já existir, informe -ConnectorId para atualização." }
+$pacOutput = @(& pac @args 2>&1)
+$pacExitCode = $LASTEXITCODE
+$pacOutput | ForEach-Object { Write-Host $_ }
+$pacText = ($pacOutput -join "`n")
+if ($pacExitCode -ne 0 -or $pacText -match '(?m)^Error:') { throw "pac connector falhou (exit code $pacExitCode). Se já existir, informe -ConnectorId para atualização." }
 Step "connector Betinhos DeepSeek pronto"
