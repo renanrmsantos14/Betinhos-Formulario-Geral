@@ -5,6 +5,8 @@ param(
   [switch] $WhatIf
 )
 
+try { [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false) } catch { }
+
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 function Step([string]$Message) { Write-Host "[provision-deepseek] $Message" }

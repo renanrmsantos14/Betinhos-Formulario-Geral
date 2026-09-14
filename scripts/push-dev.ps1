@@ -15,6 +15,8 @@ param(
   [string] $DeepSeekOperationId = "Responses"
 )
 
+try { [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false) } catch { }
+
 # O MSAL.PS precisa do Windows PowerShell 5.1 nesta máquina.
 if ($PSVersionTable.PSEdition -eq "Core" -or $PSHOME -like "*codex-runtimes*") {
   $windowsPowerShell = Join-Path $env:WINDIR "System32\WindowsPowerShell\v1.0\powershell.exe"

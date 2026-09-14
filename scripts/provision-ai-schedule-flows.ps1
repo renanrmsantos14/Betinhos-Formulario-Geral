@@ -13,6 +13,8 @@ param(
   [switch] $WhatIf
 )
 
+try { [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false) } catch { }
+
 $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
