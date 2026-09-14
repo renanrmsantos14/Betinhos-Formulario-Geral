@@ -189,6 +189,7 @@
   })();
   const AI_CONVERSATION_CORE = window.AIScheduleConversationCore || null;
   const AI_CONVERSATION_MOCK_KEY = "formulario_geral_mock_ai_conversations_v1";
+  const AI_CONVERSATION_MAX_INPUT_LENGTH = 12000;
   const QUERY_MOCK_MODE = (URL_PARAMS.get("mock") === "1" || URL_PARAMS.get("mockData") === "1");
   const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
   const MOCK_AI_DRAFTS_KEY = "formulario_geral_mock_ai_drafts_v2";
@@ -4000,7 +4001,14 @@
     return match ? { value: match.value, name: match.label } : null;
   }
 
-  function parseLocalAiConversationText(rawText) {
+  function localSaoPauloDate(offsetDays = 0) {
+    const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Sao_Paulo", year: "numeric", month: "2-digit", day: "2-digit" })
+      .formatToParts(new Date()).reduce((acc, item) => ({ ...acc, [item.type]: item.value }), {});
+    const date = new Date(Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day) + offsetDays));
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+  }
+
+  function parseLocalAiConversationText(rawText, previousProposal = {}) {
     const core = aiConversationCore();
     if (!core) return { proposal: {}, validation: { ready: false, missing: ["core"], warnings: [] } };
     const raw = String(rawText || "").trim();
@@ -4016,21 +4024,45 @@
       const match = raw.match(new RegExp(`(?:^|\\n)\\s*${key}\\s*:\\s*(.+?)(?=\\n|$)`, "i"));
       return match ? match[1].trim() : "";
     };
+    const previous = core.normalizeProposal(previousProposal || {});
+    const previousService = previous.services?.[0] || {};
     const clientLabel = valueOf("cliente");
     const requesterLabel = valueOf("solicitante");
     const passengerLabel = valueOf("passageiro(?:s)?");
+    const clientFromAnswer = !clientLabel && !previous.client?.id ? aiConversationIdentityByLabel(state.clientes, raw) : null;
+    const requesterFromAnswer = !requesterLabel && !previous.requester?.id ? aiConversationIdentityByLabel(state.passageiros, raw) : null;
+    const passengerFromAnswer = !passengerLabel && !previous.passengers?.some((item) => item?.id) ? aiConversationIdentityByLabel(state.passageiros, raw) : null;
+    const routeMatch = raw.match(/\b([A-Za-zÀ-ÿ]{2,20})\s+(?:para|p\/|→|->)\s+([A-Za-zÀ-ÿ]{2,30})/i);
+    const timeMatch = raw.match(/\b(?:às|as|a)\s*(\d{1,2})(?::(\d{2}))?\s*(?:h|horas)?\b/i) || raw.match(/\b(\d{1,2}:\d{2})\b/);
+    const explicitDate = valueOf("data");
+    const naturalDate = /\bamanh[ãa]\b/i.test(raw) ? localSaoPauloDate(1) : /\bhoje\b/i.test(raw) ? localSaoPauloDate(0) : "";
+    const passengerTail = routeMatch ? raw.slice(routeMatch.index + routeMatch[0].length) : "";
+    const naturalPassengers = passengerTail
+      .split(/[;|]/)
+      .map((part) => part.replace(/^\s*[-–—]\s*/, "").replace(/\s+-\s+(?:\+?[\d ()-]+|indeterminado).*$/i, "").trim())
+      .filter((name) => name.length >= 4 && !/^(?:e|com|para|às|as)$/i.test(name))
+      .map((name) => aiConversationIdentityByLabel(state.passageiros, name) || { name });
+    const nextService = {
+      ...previousService,
+      date: core.normalizeDate(explicitDate) || previousService.date || naturalDate,
+      time: core.normalizeTime(valueOf("hora") || (timeMatch ? (timeMatch[2] ? `${timeMatch[1]}:${timeMatch[2]}` : timeMatch[1]) : "")) || previousService.time,
+      serviceType: aiConversationOptionByLabel(state.options.tipoServico, valueOf("(?:serviço|servico)")) || previousService.serviceType || aiConversationOptionByLabel(state.options.tipoServico, raw),
+      vehicleType: aiConversationOptionByLabel(state.options.tipoVeiculo, valueOf("(?:veículo|veiculo)")) || previousService.vehicleType || aiConversationOptionByLabel(state.options.tipoVeiculo, raw),
+      origin: valueOf("origem") || previousService.origin || routeMatch?.[1] || "",
+      destination: valueOf("destino") || previousService.destination || routeMatch?.[2] || "",
+      route: valueOf("trajeto") || previousService.route || (routeMatch ? `${routeMatch[1]} → ${routeMatch[2]}` : ""),
+      notes: valueOf("(?:observação|observacao)") || previousService.notes || ""
+    };
+    const explicitPassengers = passengerLabel
+      ? passengerLabel.split(/[,;]\s*/).map((item) => aiConversationIdentityByLabel(state.passageiros, item) || { name: item })
+      : [];
     const proposal = {
+      ...previous,
       intent: "schedule",
-      client: aiConversationIdentityByLabel(state.clientes, clientLabel) || { name: clientLabel },
-      requester: aiConversationIdentityByLabel(state.passageiros, requesterLabel) || { name: requesterLabel },
-      passengers: passengerLabel ? passengerLabel.split(/[,;]\\s*/).map((item) => aiConversationIdentityByLabel(state.passageiros, item) || { name: item }) : [],
-      services: [{
-        date: valueOf("data"), time: valueOf("hora"),
-        serviceType: aiConversationOptionByLabel(state.options.tipoServico, valueOf("(?:serviço|servico)")),
-        vehicleType: aiConversationOptionByLabel(state.options.tipoVeiculo, valueOf("(?:veículo|veiculo)")),
-        origin: valueOf("origem"), destination: valueOf("destino"),
-        route: valueOf("trajeto"), notes: valueOf("(?:observação|observacao)")
-      }]
+      client: aiConversationIdentityByLabel(state.clientes, clientLabel) || clientFromAnswer || (clientLabel ? { name: clientLabel } : previous.client),
+      requester: aiConversationIdentityByLabel(state.passageiros, requesterLabel) || requesterFromAnswer || (requesterLabel ? { name: requesterLabel } : previous.requester),
+      passengers: explicitPassengers.length ? explicitPassengers : previous.passengers?.length ? previous.passengers : passengerFromAnswer ? [passengerFromAnswer] : naturalPassengers,
+      services: previous.services?.length ? [nextService, ...previous.services.slice(1)] : [nextService]
     };
     const validation = core.validateProposal(proposal);
     return { proposal, validation };
@@ -4123,6 +4155,13 @@
       el.aiConversationMessages.appendChild(item);
     });
     const validation = aiConversationCore()?.validateProposal(session.proposal || {}) || { ready: false, missing: ["core"], warnings: [] };
+    const assistantMessage = String(validation.normalized?.assistantMessage || "").trim();
+    if (assistantMessage && !(session.messages || []).some((message) => message.role === "assistant" && message.content === assistantMessage)) {
+      const item = document.createElement("div");
+      item.className = "ai-message ai-message-assistant";
+      item.textContent = assistantMessage;
+      el.aiConversationMessages.appendChild(item);
+    }
     el.aiConversationReadiness.textContent = validation.ready ? "Pronto" : `${validation.missing.length} pendência(s)`;
     el.aiConversationReadiness.className = `ai-readiness ${validation.ready ? "is-ready" : "is-blocked"}`;
     el.aiConversationProposalCards.replaceChildren();
@@ -4130,7 +4169,8 @@
     const fields = [
       ["Cliente", proposal.client?.name], ["Solicitante", proposal.requester?.name],
       ["Passageiro(s)", proposal.passengers?.map((item) => item.name).filter(Boolean).join(", ")],
-      ["Serviços", String(proposal.services?.length || 0)]
+      ["Serviços", String(proposal.services?.length || 0)],
+      ["Confiança", Number.isFinite(proposal.confidence) ? `${Math.round(Math.max(0, Math.min(1, proposal.confidence)) * 100)}% (informativa)` : "Não informada"]
     ];
     (proposal.services || []).forEach((service, index) => fields.push([`Serviço ${index + 1}`, [service.date, service.time, service.origin, service.destination].filter(Boolean).join(" · ")]));
     fields.forEach(([label, value]) => {
@@ -4141,7 +4181,8 @@
     });
     const missing = validation.missing || session.missing || [];
     el.aiConversationMissing.hidden = !missing.length;
-    el.aiConversationMissing.textContent = missing.length ? `Falta confirmar: ${missing.join(", ")}.\n${aiConversationFirstQuestion(missing)}` : "";
+    const question = proposal.question || (missing.length ? aiConversationFirstQuestion(missing) : "Confira a proposta e confirme para agendar.");
+    el.aiConversationMissing.textContent = missing.length ? `Falta confirmar: ${missing.join(", ")}.\n${question}` : "";
     el.aiConversationWarnings.hidden = !(validation.warnings || session.warnings || []).length;
     el.aiConversationWarnings.textContent = (validation.warnings || session.warnings || []).join(" ");
     const canConfirm = validation.ready && !["SCHEDULED", "SCHEDULING"].includes(status);
@@ -4163,14 +4204,18 @@
   async function submitAiConversationInput() {
     const message = String(el.aiConversationInput?.value || "").trim();
     if (!message) { toast("Cole a mensagem do cliente antes de interpretar.", "error"); return; }
+    if (message.length > AI_CONVERSATION_MAX_INPUT_LENGTH) {
+      toast(`A mensagem excede o limite de ${AI_CONVERSATION_MAX_INPUT_LENGTH} caracteres.`, "error", 7000);
+      return;
+    }
     const current = state.aiConversation || { id: "", inputVersion: 0, messages: [] };
     const currentValidation = AI_CONVERSATION_CORE?.validateProposal(current.proposal || {});
     if (AI_CONVERSATION_CORE?.isExplicitConfirmation(message, { awaitingConfirmation: current.status === "READY" && currentValidation?.ready === true, confirmationRequested: current.confirmationRequested === true, version: current.inputVersion, confirmedVersion: current.confirmationVersion })) {
       await confirmAiConversation(); return;
     }
     if (state.mockMode) {
-      const parsed = parseLocalAiConversationText(message);
-      const next = { ...current, originalText: message, inputVersion: Number(current.inputVersion || 0) + 1, processedVersion: Number(current.inputVersion || 0) + 1, confirmationRequested: parsed.validation.ready, confirmationVersion: 0, proposal: parsed.validation.normalized, status: parsed.validation.ready ? "READY" : "WAITING_USER", missing: parsed.validation.missing, warnings: parsed.validation.warnings, messages: [...(current.messages || []), aiConversationMessage("user", message), aiConversationMessage("assistant", parsed.validation.ready ? `Entendi a solicitação. Confira a proposta e confirme para agendar.\n\n${aiConversationSummary({ proposal: parsed.validation.normalized })}` : aiConversationFirstQuestion(parsed.validation.missing))] };
+      const parsed = parseLocalAiConversationText(message, current.proposal || {});
+      const next = { ...current, originalText: current.originalText || message, inputVersion: Number(current.inputVersion || 0) + 1, processedVersion: Number(current.inputVersion || 0) + 1, confirmationRequested: parsed.validation.ready, confirmationVersion: 0, proposal: parsed.validation.normalized, status: parsed.validation.ready ? "READY" : "WAITING_USER", missing: parsed.validation.missing, warnings: parsed.validation.warnings, messages: [...(current.messages || []), aiConversationMessage("user", message), aiConversationMessage("assistant", parsed.validation.ready ? `Entendi a solicitação. Confira a proposta e confirme para agendar.\n\n${aiConversationSummary({ proposal: parsed.validation.normalized })}` : aiConversationFirstQuestion(parsed.validation.missing))] };
       state.aiConversation = next;
       aiConversationStoreWrite(next);
       if (el.aiConversationInput) el.aiConversationInput.value = "";
@@ -4183,7 +4228,7 @@
     const messages = [...(current.messages || []), aiConversationMessage("user", message)];
     const payload = {};
     aiConversationPayloadValue(payload, "name", `Agendamento IA ${new Date().toISOString()}`);
-    aiConversationPayloadValue(payload, "originalText", message);
+    aiConversationPayloadValue(payload, "originalText", current.originalText || message);
     aiConversationPayloadValue(payload, "messagesJson", JSON.stringify(messages));
     aiConversationPayloadValue(payload, "inputVersion", nextVersion);
     aiConversationPayloadValue(payload, "confirmationRequested", false);
@@ -4194,7 +4239,7 @@
       const created = current.id && !String(current.id).startsWith("mock-")
         ? await state.xrm.WebApi.updateRecord(config.entity, current.id, payload).then(() => ({ id: current.id }))
         : await state.xrm.WebApi.createRecord(config.entity, payload);
-      state.aiConversation = { ...current, id: cleanGuid(created.id), inputVersion: nextVersion, status: "WAITING_AI", originalText: message, messages };
+      state.aiConversation = { ...current, id: cleanGuid(created.id), inputVersion: nextVersion, status: "WAITING_AI", originalText: current.originalText || message, messages };
       if (el.aiConversationInput) el.aiConversationInput.value = "";
       renderAiConversation();
       scheduleAiConversationPoll(1500);
