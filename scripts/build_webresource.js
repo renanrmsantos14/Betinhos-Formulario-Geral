@@ -48,12 +48,14 @@ if (shouldBumpVersion) write("index.html", html);
 const css = read("styles.css");
 const sheetjs = read("vendor/xlsx.full.min.js");
 const core = read("scripts/xlsx_import_core.js");
+const aiConversationCore = read("scripts/ai_schedule_conversation.js");
 const app = read("app.js");
 
 const placeholders = {
   css: "<!-- INLINE_STYLES_CSS -->",
   sheetjs: "<!-- INLINE_SHEETJS -->",
   core: "<!-- INLINE_XLSX_IMPORT_CORE -->",
+  aiConversationCore: "<!-- INLINE_AI_SCHEDULE_CONVERSATION_CORE -->",
   app: "<!-- INLINE_APP_JS -->"
 };
 
@@ -63,6 +65,7 @@ html = html
     /\s*<script src="scripts\/xlsx_import_core\.js"><\/script>/u,
     `\n  ${placeholders.sheetjs}\n  ${placeholders.core}`
   )
+  .replace(/\s*<script src="scripts\/ai_schedule_conversation\.js"><\/script>/u, `\n  ${placeholders.aiConversationCore}`)
   .replace(/\s*<script src="app\.js"><\/script>/u, placeholders.app);
 
 for (const [name, marker] of Object.entries(placeholders)) {
@@ -75,7 +78,10 @@ html = html
   .replace(placeholders.css, () => `<style>\n${css}\n</style>\n`)
   .replace(placeholders.sheetjs, () => `\n  <script id="xlsxLibrarySource" type="application/x-formulario-vendor">\n${inlineScript(sheetjs)}\n  </script>`)
   .replace(placeholders.core, () => `\n  <script>\n${inlineScript(core)}\n  </script>`)
+  .replace(placeholders.aiConversationCore, () => `\n  <script>\n${inlineScript(aiConversationCore)}\n  </script>`)
   .replace(placeholders.app, () => `\n  <script>\n${inlineScript(app)}\n  </script>`);
+
+html = html.replace(/^[ \t]+$/gm, "");
 
 fs.writeFileSync(path.join(root, "webresource.html"), html, "utf8");
 console.log(`webresource.html gerado | versao ${buildVersion}${shouldBumpVersion ? "" : " (--no-version)"}`);

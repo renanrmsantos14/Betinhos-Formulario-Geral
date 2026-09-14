@@ -8413,3 +8413,30 @@ textarea,
 .ai-draft-actions{position:sticky;bottom:0;z-index:2;background:#fff}
 @container (max-width:760px){.ai-review-toolbar{grid-template-columns:1fr}.ai-review-grid{grid-template-columns:1fr}.ai-draft-list-pane{max-height:240px;padding-bottom:10px;border-bottom:1px solid var(--line)}.ai-draft-detail{padding:12px}.ai-draft-detail-head{align-items:start}.ai-draft-fields{grid-template-columns:1fr}.ai-draft-fields dt{padding-bottom:3px;border-bottom:0}.ai-draft-fields dd{padding-top:0}.ai-draft-actions{align-items:stretch;flex-direction:column}.ai-draft-actions #aiDraftDiscard{margin-right:0}.ai-draft-actions .ai-approve-hint{text-align:left}.ai-draft-actions button{width:100%}}
 @media(max-width:760px){.ai-review-toolbar{grid-template-columns:1fr}.ai-review-grid{grid-template-columns:1fr}.ai-draft-actions{align-items:stretch;flex-direction:column}.ai-draft-actions #aiDraftDiscard{margin-right:0}.ai-draft-actions button{width:100%}}
+
+/* Agendar por IA */
+.ai-conversation-panel{container-type:inline-size}
+.ai-conversation-header{align-items:flex-start;gap:16px}
+.ai-conversation-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.ai-conversation-layout{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(300px,.92fr);gap:16px;min-height:0}
+.ai-conversation-thread,.ai-conversation-proposal{min-width:0;border:1px solid var(--line);border-radius:var(--radius-md);background:#fff;padding:16px}
+.ai-conversation-messages{display:grid;gap:9px;max-height:420px;min-height:110px;overflow:auto;padding:4px 2px 14px}
+.ai-message{max-width:88%;padding:10px 12px;border-radius:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:.82rem;line-height:1.45}
+.ai-message-user{justify-self:end;background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.ai-message-assistant{justify-self:start;background:var(--surface-muted);color:var(--text);border-bottom-left-radius:4px}
+.ai-conversation-input-field{margin-top:4px}
+.ai-conversation-input-field textarea{min-height:138px;resize:vertical}
+.ai-conversation-actions,.ai-conversation-confirm{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.ai-conversation-actions #aiConversationSend{margin-left:auto}
+.ai-proposal-cards{display:grid;gap:8px}
+.ai-proposal-card{display:grid;gap:3px;padding:10px 11px;border:1px solid var(--line);border-radius:var(--radius-sm);background:#fcfcfb}
+.ai-proposal-card strong{font-size:.72rem;color:var(--muted)}
+.ai-proposal-card span{font-size:.84rem;color:var(--text);overflow-wrap:anywhere}
+.ai-conversation-proposal .notice{margin-top:12px;white-space:pre-line}
+.ai-conversation-confirm{border-top:1px solid var(--line);padding-top:12px}
+.ai-conversation-confirm p{flex:1 1 100%;margin:0;font-size:.75rem}
+.ai-conversation-status-waiting_ai{background:var(--warning-soft);color:var(--warning)}
+.ai-conversation-status-scheduled{background:var(--success-soft);color:var(--success)}
+.ai-conversation-status-error,.ai-conversation-status-partial{background:var(--danger-soft);color:var(--danger)}
+@container (max-width:860px){.ai-conversation-layout{grid-template-columns:1fr}.ai-conversation-messages{max-height:300px}}
+@container (max-width:560px){.ai-conversation-header{display:grid}.ai-conversation-head-actions{justify-content:flex-start}.ai-conversation-actions,.ai-conversation-confirm{align-items:stretch;flex-direction:column}.ai-conversation-actions button,.ai-conversation-confirm button{width:100%}.ai-conversation-actions #aiConversationSend{margin-left:0}}

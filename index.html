@@ -95,6 +95,9 @@
       <button class="tab" type="button" data-tab="ai" id="tabAi" aria-label="Solicitações IA">
         <span class="tab-icon" aria-hidden="true">✦</span><span>Solicitações IA</span>
       </button>
+      <button class="tab" type="button" data-tab="ai-schedule" id="tabAiSchedule" aria-label="Agendar por IA">
+        <span class="tab-icon" aria-hidden="true">✦</span><span>Agendar por IA</span>
+      </button>
     </nav>
 
     <main class="content">
@@ -321,6 +324,46 @@
             </div>
             <div class="ai-draft-actions"><button id="aiDraftDiscard" class="button button-secondary" type="button">Descartar trecho</button><button id="aiDraftOpenForm" class="button button-secondary" type="button">Abrir no formulário</button><button id="aiDraftResume" class="button button-secondary" type="button" hidden>Retomar</button><span id="aiDraftApproveHint" class="ai-approve-hint" aria-live="polite"></span><button id="aiDraftApprove" class="button button-primary" type="button">Aprovar e agendar</button></div>
           </article>
+        </div>
+      </section>
+
+      <section id="tab-panel-ai-schedule" class="panel ai-conversation-panel" data-panel="ai-schedule" aria-labelledby="aiConversationTitle" hidden>
+        <div class="panel-header ai-conversation-header">
+          <div>
+            <p class="eyebrow">Confirmação humana obrigatória</p>
+            <h2 id="aiConversationTitle">Agendar por IA</h2>
+            <p class="muted">Cole a mensagem do cliente. A IA organiza os dados, pergunta o que faltar e só agenda depois da sua confirmação.</p>
+          </div>
+          <div class="ai-conversation-head-actions">
+            <span id="aiConversationEnvironment" class="ai-environment-badge" aria-live="polite"></span>
+            <button id="aiConversationRefresh" class="button button-secondary" type="button">Atualizar</button>
+          </div>
+        </div>
+        <div id="aiConversationSetup" class="notice" hidden></div>
+        <div class="ai-conversation-layout">
+          <section class="ai-conversation-thread" aria-labelledby="aiConversationThreadTitle">
+            <div class="ai-subsection-head"><h3 id="aiConversationThreadTitle">Conversa</h3><span id="aiConversationStatus" class="status-pill" aria-live="polite"></span></div>
+            <div id="aiConversationMessages" class="ai-conversation-messages" aria-live="polite"></div>
+            <label class="field ai-conversation-input-field">
+              <span>Mensagem ou solicitação do cliente</span>
+              <textarea id="aiConversationInput" rows="7" placeholder="Ex.: Cliente: Embraer\nPassageiro: Ana Souza\nData: 2026-09-14\nHora: 08:30\nOrigem: São Paulo\nDestino: GRU\nServiço: 202410000\nVeículo: 202410001"></textarea>
+            </label>
+            <div class="ai-conversation-actions">
+              <button id="aiConversationNew" class="button button-secondary" type="button">Nova conversa</button>
+              <button id="aiConversationSend" class="button button-primary" type="button">Interpretar solicitação</button>
+            </div>
+          </section>
+          <aside class="ai-conversation-proposal" aria-labelledby="aiConversationProposalTitle">
+            <div class="ai-subsection-head"><h3 id="aiConversationProposalTitle">Proposta estruturada</h3><span id="aiConversationReadiness" class="ai-readiness"></span></div>
+            <div id="aiConversationProposalCards" class="ai-proposal-cards"></div>
+            <div id="aiConversationMissing" class="notice notice-warning" hidden></div>
+            <div id="aiConversationWarnings" class="notice" hidden></div>
+            <div class="ai-conversation-confirm">
+              <p id="aiConversationConfirmHint" class="muted">A confirmação libera a criação das reservas.</p>
+              <button id="aiConversationConfirm" class="button button-primary" type="button" disabled>Confirmar e agendar</button>
+              <button id="aiConversationResume" class="button button-secondary" type="button" hidden>Retomar pendência</button>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -750,8 +793,41 @@
         "100000005": "Erro"
       }
     };
+    window.__FORMULARIO_IA_CONVERSATION_CONFIG = {
+      entity: "cr40f_conversaiaagendamento",
+      entitySet: "cr40f_conversaiaagendamentos",
+      fields: {
+        id: "cr40f_conversaiaagendamentoid",
+        name: "cr40f_name",
+        originalText: "cr40f_textooriginal",
+        messagesJson: "cr40f_mensagensjson",
+        proposalJson: "cr40f_propostajson",
+        missingFields: "cr40f_camposfaltantes",
+        warnings: "cr40f_alertas",
+        status: "cr40f_status",
+        inputVersion: "cr40f_versaoentrada",
+        processedVersion: "cr40f_versaoprocessada",
+        model: "cr40f_modelo",
+        attempts: "cr40f_tentativas",
+        error: "cr40f_erro",
+        createdReservationIds: "cr40f_reservascriadas",
+        expiresAt: "cr40f_expiraem"
+      },
+      statusValues: {
+        DRAFT: 100000000,
+        WAITING_AI: 100000001,
+        WAITING_USER: 100000002,
+        READY: 100000003,
+        SCHEDULING: 100000004,
+        PARTIAL: 100000005,
+        SCHEDULED: 100000006,
+        ERROR: 100000007,
+        CANCELLED: 100000008
+      }
+    };
   </script>
   <script src="scripts/xlsx_import_core.js"></script>
+  <script src="scripts/ai_schedule_conversation.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

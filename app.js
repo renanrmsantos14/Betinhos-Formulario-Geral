@@ -177,6 +177,18 @@
       statusLabels: configured.statusLabels && typeof configured.statusLabels === "object" ? configured.statusLabels : {}
     };
   })();
+  const AI_CONVERSATION_CONFIG = (() => {
+    const configured = window.__FORMULARIO_IA_CONVERSATION_CONFIG;
+    if (!configured || typeof configured !== "object" || !configured.entity) return null;
+    return {
+      entity: String(configured.entity),
+      entitySet: String(configured.entitySet || `${configured.entity}s`),
+      fields: configured.fields && typeof configured.fields === "object" ? configured.fields : {},
+      statusValues: configured.statusValues && typeof configured.statusValues === "object" ? configured.statusValues : {}
+    };
+  })();
+  const AI_CONVERSATION_CORE = window.AIScheduleConversationCore || null;
+  const AI_CONVERSATION_MOCK_KEY = "formulario_geral_mock_ai_conversations_v1";
   const QUERY_MOCK_MODE = (URL_PARAMS.get("mock") === "1" || URL_PARAMS.get("mockData") === "1");
   const MOCK_STORE_KEY = "formulario_geral_mock_db_v1";
   const MOCK_AI_DRAFTS_KEY = "formulario_geral_mock_ai_drafts_v2";
@@ -483,6 +495,21 @@
     aiDraftOpenForm: $("aiDraftOpenForm"),
     aiDraftResume: $("aiDraftResume"),
     aiDraftDiscard: $("aiDraftDiscard"),
+    aiConversationEnvironment: $("aiConversationEnvironment"),
+    aiConversationSetup: $("aiConversationSetup"),
+    aiConversationRefresh: $("aiConversationRefresh"),
+    aiConversationStatus: $("aiConversationStatus"),
+    aiConversationMessages: $("aiConversationMessages"),
+    aiConversationInput: $("aiConversationInput"),
+    aiConversationNew: $("aiConversationNew"),
+    aiConversationSend: $("aiConversationSend"),
+    aiConversationReadiness: $("aiConversationReadiness"),
+    aiConversationProposalCards: $("aiConversationProposalCards"),
+    aiConversationMissing: $("aiConversationMissing"),
+    aiConversationWarnings: $("aiConversationWarnings"),
+    aiConversationConfirmHint: $("aiConversationConfirmHint"),
+    aiConversationConfirm: $("aiConversationConfirm"),
+    aiConversationResume: $("aiConversationResume"),
     tabBd: $("tabBd"),
     tabReturn: $("tabReturn"),
     tabRepeat: $("tabRepeat")
@@ -544,6 +571,9 @@
     aiDraftIdentityOverrides: {},
     aiDraftLoading: false,
     aiDraftSourceTab: "email",
+    aiConversation: null,
+    aiConversationLoading: false,
+    aiConversationPollingTimer: null,
     saveLog: [],
     draftTimer: null,
     draftRestoring: false,
@@ -622,6 +652,7 @@
     loadPassengerSelectionRecency();
     await loadReferenceData();
     await loadAiDrafts();
+    await loadAiConversation();
     await loadCurrentRecord();
     hydrateForm();
     renderAll();
@@ -1198,6 +1229,11 @@
     el.aiDraftOpenForm?.addEventListener("click", openSelectedAiDraftInForm);
     el.aiDraftResume?.addEventListener("click", resumeSelectedAiDraft);
     el.aiDraftDiscard?.addEventListener("click", discardSelectedAiDraft);
+    el.aiConversationRefresh?.addEventListener("click", loadAiConversation);
+    el.aiConversationNew?.addEventListener("click", startNewAiConversation);
+    el.aiConversationSend?.addEventListener("click", submitAiConversationInput);
+    el.aiConversationConfirm?.addEventListener("click", confirmAiConversation);
+    el.aiConversationResume?.addEventListener("click", resumeAiConversation);
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
     document.addEventListener("dragenter", handleXlsxImportDragEnter);
     document.addEventListener("dragover", handleXlsxImportDragOver);
@@ -3563,6 +3599,7 @@
     renderImportReview();
     renderGlobalImportHistoryControls();
     renderAiDrafts();
+    renderAiConversation();
   }
 
   function aiDraftConfig() {
@@ -3856,6 +3893,344 @@
       el.aiDraftList.appendChild(section);
     });
     if (state.selectedAiDraft) renderAiDraftDetail();
+  }
+
+  function aiConversationConfig() {
+    return AI_CONVERSATION_CONFIG;
+  }
+
+  function aiConversationCore() {
+    return AI_CONVERSATION_CORE;
+  }
+
+  function aiConversationStatusLabel(status) {
+    const labels = {
+      DRAFT: "Rascunho",
+      WAITING_AI: "Interpretando",
+      WAITING_USER: "Aguardando dados",
+      READY: "Pronto para confirmar",
+      SCHEDULING: "Agendando",
+      PARTIAL: "Agendamento parcial",
+      SCHEDULED: "Agendado",
+      ERROR: "Erro",
+      CANCELLED: "Cancelado"
+    };
+    return labels[String(status || "DRAFT").toUpperCase()] || String(status || "Rascunho");
+  }
+
+  function aiConversationStoreRead() {
+    try { return JSON.parse(window.localStorage.getItem(AI_CONVERSATION_MOCK_KEY) || "null"); } catch (_) { return null; }
+  }
+
+  function aiConversationStoreWrite(session) {
+    try { window.localStorage.setItem(AI_CONVERSATION_MOCK_KEY, JSON.stringify(session)); } catch (_) { /* modo local sem persistencia */ }
+  }
+
+  function aiConversationMessage(role, content) {
+    return { role, content: String(content || ""), at: new Date().toISOString() };
+  }
+
+  function aiConversationField(configKey) {
+    return aiConversationConfig()?.fields?.[configKey] || "";
+  }
+
+  function aiConversationPayloadValue(payload, key, value) {
+    const field = aiConversationField(key);
+    if (field && value !== undefined && value !== null) payload[field] = value;
+  }
+
+  function aiConversationStatusValue(status) {
+    const configured = aiConversationConfig()?.statusValues?.[status];
+    return configured ?? status;
+  }
+
+  function aiConversationStatusFromRow(value) {
+    const config = aiConversationConfig();
+    const raw = value == null ? "" : String(value).toUpperCase();
+    if (Object.prototype.hasOwnProperty.call(config?.statusValues || {}, raw)) return raw;
+    const match = Object.entries(config?.statusValues || {}).find(([, option]) => String(option) === String(value));
+    return match ? match[0] : raw || "DRAFT";
+  }
+
+  function aiConversationEntityId(row) {
+    return cleanGuid(row?.[aiConversationField("id")] || row?.id || row?.cr40f_conversaiaagendamentoid || "");
+  }
+
+  function aiConversationRowToSession(row) {
+    if (!row) return null;
+    const parseJson = (value, fallback) => {
+      try { return value ? JSON.parse(value) : fallback; } catch (_) { return fallback; }
+    };
+    const proposal = parseJson(row[aiConversationField("proposalJson")], {});
+    const messages = parseJson(row[aiConversationField("messagesJson")], []);
+    const core = aiConversationCore();
+    const normalized = core ? core.normalizeSession({
+      id: aiConversationEntityId(row),
+      status: aiConversationStatusFromRow(row[aiConversationField("status")]),
+      inputVersion: row[aiConversationField("inputVersion")],
+      processedVersion: row[aiConversationField("processedVersion")],
+      originalText: row[aiConversationField("originalText")],
+      proposal,
+      messages,
+      createdReservationIds: parseJson(row[aiConversationField("createdReservationIds")], []),
+      error: row[aiConversationField("error")]
+    }) : null;
+    return normalized || { id: aiConversationEntityId(row), status: "DRAFT", messages, proposal };
+  }
+
+  function aiConversationIdentityByLabel(collection, label) {
+    const needle = normalize(String(label || ""));
+    if (!needle) return null;
+    const exact = (collection || []).find((item) => normalize(item?.label || item?.nome || item?.name) === needle);
+    return exact ? { id: exact.id || exact.guid || "", name: exact.label || exact.nome || exact.name || "" } : null;
+  }
+
+  function aiConversationOptionByLabel(collection, value) {
+    const raw = String(value || "").trim();
+    if (!raw) return null;
+    const numeric = /^\d+$/.test(raw) ? Number(raw) : null;
+    const match = (collection || []).find((item) => numeric !== null ? Number(item.value) === numeric : normalize(item.label) === normalize(raw));
+    return match ? { value: match.value, name: match.label } : null;
+  }
+
+  function parseLocalAiConversationText(rawText) {
+    const core = aiConversationCore();
+    if (!core) return { proposal: {}, validation: { ready: false, missing: ["core"], warnings: [] } };
+    const raw = String(rawText || "").trim();
+    if (raw.startsWith("{")) {
+      try {
+        const proposal = core.normalizeProposal(JSON.parse(raw));
+        return { proposal, validation: core.validateProposal(proposal) };
+      } catch (_) {
+        return { proposal: {}, validation: { ready: false, missing: ["JSON válido"], warnings: [] } };
+      }
+    }
+    const valueOf = (key) => {
+      const match = raw.match(new RegExp(`(?:^|\\n)\\s*${key}\\s*:\\s*(.+?)(?=\\n|$)`, "i"));
+      return match ? match[1].trim() : "";
+    };
+    const clientLabel = valueOf("cliente");
+    const requesterLabel = valueOf("solicitante");
+    const passengerLabel = valueOf("passageiro(?:s)?");
+    const proposal = {
+      intent: "schedule",
+      client: aiConversationIdentityByLabel(state.clientes, clientLabel) || { name: clientLabel },
+      requester: aiConversationIdentityByLabel(state.passageiros, requesterLabel) || { name: requesterLabel },
+      passengers: passengerLabel ? passengerLabel.split(/[,;]\\s*/).map((item) => aiConversationIdentityByLabel(state.passageiros, item) || { name: item }) : [],
+      services: [{
+        date: valueOf("data"), time: valueOf("hora"),
+        serviceType: aiConversationOptionByLabel(state.options.tipoServico, valueOf("(?:serviço|servico)")),
+        vehicleType: aiConversationOptionByLabel(state.options.tipoVeiculo, valueOf("(?:veículo|veiculo)")),
+        origin: valueOf("origem"), destination: valueOf("destino"),
+        route: valueOf("trajeto"), notes: valueOf("(?:observação|observacao)")
+      }]
+    };
+    const validation = core.validateProposal(proposal);
+    return { proposal, validation };
+  }
+
+  function aiConversationSummary(session) {
+    const proposal = session?.proposal || {};
+    const service = proposal.services?.[0] || {};
+    const when = [service.date, service.time].filter(Boolean).join(" às ");
+    const route = [service.origin, service.destination].filter(Boolean).join(" → ");
+    return [
+      proposal.client?.name ? `Cliente: ${proposal.client.name}` : "Cliente: pendente",
+      proposal.passengers?.length ? `Passageiro(s): ${proposal.passengers.map((item) => item.name || "sem nome").join(", ")}` : "Passageiro(s): pendente",
+      when ? `Quando: ${when}` : "Quando: pendente",
+      route ? `Rota: ${route}` : "Rota: pendente",
+      proposal.services?.length > 1 ? `Serviços: ${proposal.services.length}` : "Serviço: 1"
+    ].join("\n");
+  }
+
+  function aiConversationFirstQuestion(missing) {
+    const labels = {
+      client: "Qual é o cliente da solicitação?",
+      requester: "Quem é o solicitante?",
+      passengers: "Qual é o passageiro?",
+      services: "Qual serviço deve ser agendado?",
+      "services[0].date": "Qual é a data do serviço? Use AAAA-MM-DD.",
+      "services[0].time": "Qual é o horário do serviço? Use HH:MM.",
+      "services[0].serviceType": "Qual é o tipo de serviço? Não vou inferir.",
+      "services[0].vehicleType": "Qual é o tipo de veículo? Não vou inferir.",
+      "services[0].origin": "Qual é a origem?",
+      "services[0].destination": "Qual é o destino?",
+      "services[0].passengers": "Qual passageiro participa deste serviço?"
+    };
+    return labels[missing?.[0]] || "Envie o dado que falta para eu continuar.";
+  }
+
+  async function loadAiConversation() {
+    if (!el.aiConversationMessages) return;
+    if (!aiConversationCore()) {
+      showAiConversationSetup("Core de conversa não carregado no Web Resource.");
+      return;
+    }
+    if (state.mockMode) {
+      if (el.aiConversationEnvironment) el.aiConversationEnvironment.textContent = "Ambiente: local demonstrativo";
+      state.aiConversation = aiConversationRowToSession(aiConversationStoreRead()) || {
+        id: `mock-${Date.now()}`, status: "DRAFT", inputVersion: 0, processedVersion: 0,
+        originalText: "", messages: [{ role: "assistant", content: "Cole a solicitação do cliente para começar." }], proposal: {}, missing: ["services"], warnings: [], ready: false
+      };
+      renderAiConversation();
+      return;
+    }
+    if (!aiConversationConfig() || !state.xrm) {
+      showAiConversationSetup("A aba está pronta. Publique a tabela de sessão e abra o Web Resource dentro do Dataverse para habilitar o agendamento assíncrono.");
+      return;
+    }
+    if (el.aiConversationEnvironment) el.aiConversationEnvironment.textContent = `Ambiente: ${aiDraftEnvironmentLabel()}`;
+    try {
+      const config = aiConversationConfig();
+      const select = [...new Set(Object.values(config.fields).filter((value) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(String(value))))].join(",");
+      const result = await state.xrm.WebApi.retrieveMultipleRecords(config.entity, `?$select=${select}&$orderby=modifiedon desc&$top=1`);
+      state.aiConversation = aiConversationRowToSession(result.entities?.[0]);
+      if (!state.aiConversation) state.aiConversation = { id: "", status: "DRAFT", inputVersion: 0, processedVersion: 0, messages: [], proposal: {}, missing: ["services"], warnings: [], ready: false };
+      renderAiConversation();
+    } catch (error) {
+      showAiConversationSetup(`Sessão de agendamento indisponível neste ambiente: ${error.message || "erro de conexão"}`);
+      state.aiConversation = state.aiConversation || { id: "", status: "ERROR", inputVersion: 0, processedVersion: 0, messages: [], proposal: {}, missing: ["setup"], warnings: [], ready: false, error: error.message || "erro" };
+      renderAiConversation();
+    }
+  }
+
+  function showAiConversationSetup(message) {
+    if (!el.aiConversationSetup) return;
+    el.aiConversationSetup.hidden = false;
+    el.aiConversationSetup.textContent = message;
+  }
+
+  function renderAiConversation() {
+    if (!el.aiConversationMessages) return;
+    const session = state.aiConversation || { status: "DRAFT", messages: [], proposal: {}, missing: ["services"], warnings: [], ready: false };
+    const status = String(session.status || "DRAFT").toUpperCase();
+    el.aiConversationStatus.textContent = aiConversationStatusLabel(status);
+    el.aiConversationStatus.className = `status-pill ai-conversation-status-${status.toLowerCase()}`;
+    el.aiConversationMessages.replaceChildren();
+    (session.messages || []).forEach((message) => {
+      const item = document.createElement("div");
+      item.className = `ai-message ai-message-${message.role === "user" ? "user" : "assistant"}`;
+      item.textContent = message.content || "";
+      el.aiConversationMessages.appendChild(item);
+    });
+    const validation = aiConversationCore()?.validateProposal(session.proposal || {}) || { ready: false, missing: ["core"], warnings: [] };
+    el.aiConversationReadiness.textContent = validation.ready ? "Pronto" : `${validation.missing.length} pendência(s)`;
+    el.aiConversationReadiness.className = `ai-readiness ${validation.ready ? "is-ready" : "is-blocked"}`;
+    el.aiConversationProposalCards.replaceChildren();
+    const proposal = validation.normalized || {};
+    const fields = [
+      ["Cliente", proposal.client?.name], ["Solicitante", proposal.requester?.name],
+      ["Passageiro(s)", proposal.passengers?.map((item) => item.name).filter(Boolean).join(", ")],
+      ["Serviços", String(proposal.services?.length || 0)]
+    ];
+    (proposal.services || []).forEach((service, index) => fields.push([`Serviço ${index + 1}`, [service.date, service.time, service.origin, service.destination].filter(Boolean).join(" · ")]));
+    fields.forEach(([label, value]) => {
+      const card = document.createElement("div"); card.className = "ai-proposal-card";
+      const strong = document.createElement("strong"); strong.textContent = label;
+      const span = document.createElement("span"); span.textContent = value || "Pendente";
+      card.append(strong, span); el.aiConversationProposalCards.appendChild(card);
+    });
+    const missing = validation.missing || session.missing || [];
+    el.aiConversationMissing.hidden = !missing.length;
+    el.aiConversationMissing.textContent = missing.length ? `Falta confirmar: ${missing.join(", ")}.\n${aiConversationFirstQuestion(missing)}` : "";
+    el.aiConversationWarnings.hidden = !(validation.warnings || session.warnings || []).length;
+    el.aiConversationWarnings.textContent = (validation.warnings || session.warnings || []).join(" ");
+    const canConfirm = validation.ready && !["SCHEDULED", "SCHEDULING"].includes(status);
+    el.aiConversationConfirm.disabled = !canConfirm;
+    el.aiConversationResume.hidden = status !== "ERROR" && status !== "PARTIAL";
+    el.aiConversationConfirmHint.textContent = status === "SCHEDULED" ? "Reserva(s) criada(s). Abra o voucher no formulário para revisar." : "A confirmação libera a criação das reservas.";
+  }
+
+  function startNewAiConversation() {
+    if (state.aiConversationPollingTimer) clearTimeout(state.aiConversationPollingTimer);
+    state.aiConversation = { id: `mock-${Date.now()}`, status: "DRAFT", inputVersion: 0, processedVersion: 0, originalText: "", messages: [{ role: "assistant", content: "Cole a solicitação do cliente para começar." }], proposal: {}, missing: ["services"], warnings: [], ready: false };
+    if (el.aiConversationInput) el.aiConversationInput.value = "";
+    if (state.mockMode) aiConversationStoreWrite(state.aiConversation);
+    renderAiConversation();
+  }
+
+  async function submitAiConversationInput() {
+    const message = String(el.aiConversationInput?.value || "").trim();
+    if (!message) { toast("Cole a mensagem do cliente antes de interpretar.", "error"); return; }
+    const current = state.aiConversation || { id: "", inputVersion: 0, messages: [] };
+    if (AI_CONVERSATION_CORE?.isExplicitConfirmation(message, { awaitingConfirmation: current.ready, version: current.inputVersion, confirmedVersion: current.confirmationVersion })) {
+      await confirmAiConversation(); return;
+    }
+    if (state.mockMode) {
+      const parsed = parseLocalAiConversationText(message);
+      const next = { ...current, originalText: message, inputVersion: Number(current.inputVersion || 0) + 1, processedVersion: Number(current.inputVersion || 0) + 1, proposal: parsed.validation.normalized, status: parsed.validation.ready ? "READY" : "WAITING_USER", missing: parsed.validation.missing, warnings: parsed.validation.warnings, messages: [...(current.messages || []), aiConversationMessage("user", message), aiConversationMessage("assistant", parsed.validation.ready ? `Entendi a solicitação. Confira a proposta e confirme para agendar.\n\n${aiConversationSummary({ proposal: parsed.validation.normalized })}` : aiConversationFirstQuestion(parsed.validation.missing))] };
+      state.aiConversation = next;
+      aiConversationStoreWrite(next);
+      if (el.aiConversationInput) el.aiConversationInput.value = "";
+      renderAiConversation();
+      return;
+    }
+    const config = aiConversationConfig();
+    if (!config || !state.xrm) { showAiConversationSetup("Sessão não configurada no Dataverse; o texto não foi enviado."); return; }
+    const nextVersion = Number(current.inputVersion || 0) + 1;
+    const messages = [...(current.messages || []), aiConversationMessage("user", message)];
+    const payload = {};
+    aiConversationPayloadValue(payload, "name", `Agendamento IA ${new Date().toISOString()}`);
+    aiConversationPayloadValue(payload, "originalText", message);
+    aiConversationPayloadValue(payload, "messagesJson", JSON.stringify(messages));
+    aiConversationPayloadValue(payload, "inputVersion", nextVersion);
+    aiConversationPayloadValue(payload, "status", aiConversationStatusValue("WAITING_AI"));
+    state.aiConversationLoading = true;
+    try {
+      const created = current.id && !String(current.id).startsWith("mock-")
+        ? await state.xrm.WebApi.updateRecord(config.entity, current.id, payload).then(() => ({ id: current.id }))
+        : await state.xrm.WebApi.createRecord(config.entity, payload);
+      state.aiConversation = { ...current, id: cleanGuid(created.id), inputVersion: nextVersion, status: "WAITING_AI", originalText: message, messages };
+      if (el.aiConversationInput) el.aiConversationInput.value = "";
+      renderAiConversation();
+      scheduleAiConversationPoll(1500);
+    } catch (error) {
+      showAiConversationSetup(`Não foi possível criar a sessão: ${error.message || "erro de conexão"}`);
+    } finally { state.aiConversationLoading = false; }
+  }
+
+  async function confirmAiConversation() {
+    const session = state.aiConversation;
+    const validation = aiConversationCore()?.validateProposal(session?.proposal || {});
+    if (!session || !validation?.ready) { toast("Ainda há dados obrigatórios pendentes.", "error"); return; }
+    if (state.mockMode) {
+      state.aiConversation = { ...session, status: "SCHEDULED", confirmationVersion: session.inputVersion, messages: [...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar."), aiConversationMessage("assistant", "Simulação local concluída. Nenhum registro foi criado no Dataverse.")] };
+      aiConversationStoreWrite(state.aiConversation); renderAiConversation();
+      toast("Simulação local concluída. Nenhum registro Dataverse foi criado.", "warning", 7000);
+      return;
+    }
+    const config = aiConversationConfig();
+    if (!config || !state.xrm || !session.id) { showAiConversationSetup("A sessão precisa estar publicada no Dataverse antes da confirmação."); return; }
+    const payload = {};
+    aiConversationPayloadValue(payload, "proposalJson", JSON.stringify(validation.normalized));
+    aiConversationPayloadValue(payload, "missingFields", "");
+    aiConversationPayloadValue(payload, "status", aiConversationStatusValue("SCHEDULING"));
+    aiConversationPayloadValue(payload, "messagesJson", JSON.stringify([...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar.")]));
+    try {
+      await state.xrm.WebApi.updateRecord(config.entity, session.id, payload);
+      state.aiConversation = { ...session, proposal: validation.normalized, status: "SCHEDULING", confirmationVersion: session.inputVersion };
+      renderAiConversation();
+      scheduleAiConversationPoll(1500);
+    } catch (error) { toast(`Não foi possível confirmar: ${error.message || "erro de conexão"}`, "error", 8000); }
+  }
+
+  async function resumeAiConversation() {
+    await loadAiConversation();
+    if (state.aiConversation?.status === "PARTIAL") toast("Sessão parcial carregada. Revise os itens pendentes e confirme novamente.", "warning", 7000);
+  }
+
+  function scheduleAiConversationPoll(delay = 2000) {
+    if (state.aiConversationPollingTimer) clearTimeout(state.aiConversationPollingTimer);
+    if (state.mockMode || !state.aiConversation?.id || String(state.aiConversation.id).startsWith("mock-")) return;
+    state.aiConversationPollingTimer = setTimeout(async () => {
+      try {
+        const config = aiConversationConfig();
+        const row = await state.xrm.WebApi.retrieveRecord(config.entity, state.aiConversation.id);
+        const next = aiConversationRowToSession(row);
+        if (next) { state.aiConversation = next; renderAiConversation(); }
+        if (["WAITING_AI", "SCHEDULING"].includes(String(next?.status || "").toUpperCase())) scheduleAiConversationPoll(Math.min(delay * 2, 10000));
+      } catch (error) { showAiConversationSetup(`Atualização da sessão falhou: ${error.message || "erro"}`); }
+    }, delay);
   }
 
   function handleAiDraftListClick(event) {
