@@ -4269,7 +4269,15 @@
       const response = await fetch(AI_CONVERSATION_LOCAL_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ message, previousProposal: current.proposal || {}, messages })
+        body: JSON.stringify({
+          message,
+          previousProposal: current.proposal || {},
+          messages,
+          referenceData: {
+            serviceTypes: (state.options.tipoServico || []).map((item) => item.label).filter(Boolean),
+            vehicleTypes: (state.options.tipoVeiculo || []).map((item) => item.label).filter(Boolean)
+          }
+        })
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(body.error || `Proxy local retornou HTTP ${response.status}.`);
