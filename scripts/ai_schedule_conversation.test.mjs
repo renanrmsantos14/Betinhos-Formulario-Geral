@@ -28,6 +28,15 @@ assert.equal(incomplete.ready, false);
 assert.ok(incomplete.missing.includes("services[0].date"));
 assert.ok(incomplete.missing.includes("services[0].serviceType"));
 
+const proposedRegistration = core.validateProposal({
+  client: { id: "client-1", name: "Cliente" },
+  requester: { id: "requester-1", name: "Solicitante" },
+  passengers: [{ name: "Pessoa nova", proposedRegistration: { requiresConfirmation: true } }],
+  services: [{ date: "2026-09-14", time: "08:30", serviceType: { value: 202410000 }, vehicleType: { value: 202410001 }, origin: "São Paulo", destination: "GRU" }]
+});
+assert.equal(proposedRegistration.ready, false);
+assert.ok(proposedRegistration.missing.includes("passengers.registrationConfirmation"));
+
 const complete = core.validateProposal({
   client: { id: "client-1", name: "Cliente" },
   requester: { id: "requester-1", name: "Solicitante" },

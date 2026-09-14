@@ -42,7 +42,8 @@
       "inputs": {
         "from": "@outputs('Compose_Proposal')?['passengers']",
         "where": "@empty(item()?['id'])"
-      }
+      },
+      "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
     },
     "Filter_Invalid_Services": {
       "type": "Query",
@@ -50,21 +51,23 @@
       "inputs": {
         "from": "@outputs('Compose_Proposal')?['services']",
         "where": "@or(empty(item()?['date']), empty(item()?['time']), empty(item()?['origin']), empty(item()?['destination']), empty(item()?['serviceType']?['value']), empty(item()?['vehicleType']?['value']))"
-      }
+      },
+      "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
     },
     "Validate_Confirmed_Proposal": {
       "type": "Compose",
       "runAfter": { "Filter_Invalid_Passengers": [ "Succeeded" ], "Filter_Invalid_Services": [ "Succeeded" ] },
-      "inputs": "@and(equals(outputs('Compose_Proposal')?['intent'], 'schedule'), not(empty(outputs('Compose_Proposal')?['client']?['id'])), not(empty(outputs('Compose_Proposal')?['requester']?['id'])), greater(length(outputs('Compose_Proposal')?['passengers']), 0), equals(length(body('Filter_Invalid_Passengers')), 0), greater(length(outputs('Compose_Proposal')?['services']), 0), equals(length(body('Filter_Invalid_Services')), 0))"
+        "inputs": "@and(equals(outputs('Compose_Proposal')?['intent'], 'schedule'), not(empty(outputs('Compose_Proposal')?['client']?['id'])), not(equals(outputs('Compose_Proposal')?['client']?['proposedRegistration']?['requiresConfirmation'], true)), not(empty(outputs('Compose_Proposal')?['requester']?['id'])), not(equals(outputs('Compose_Proposal')?['requester']?['proposedRegistration']?['requiresConfirmation'], true)), greater(length(outputs('Compose_Proposal')?['passengers']), 0), equals(length(body('Filter_Invalid_Passengers')), 0), greater(length(outputs('Compose_Proposal')?['services']), 0), equals(length(body('Filter_Invalid_Services')), 0))"
     },
     "For_each_service": {
       "type": "Foreach",
       "runAfter": { "Validate_Confirmed_Proposal": [ "Succeeded" ] },
       "foreach": "@if(equals(outputs('Validate_Confirmed_Proposal'), true), outputs('Compose_Proposal')?['services'], createArray())",
+      "runtimeConfiguration": { "concurrency": { "repetitions": 1 } },
       "actions": {
         "Find_existing_reservation": {
           "type": "OpenApiConnection",
-          "inputs": {
+            "inputs": {
             "parameters": {
               "entityName": "cr40f_reservadeveculoses",
               "filterRows": "@concat('cr40f_iachaveidempotencia eq ''', triggerOutputs()?['body/cr40f_conversaiaagendamentoid'], ':', string(items('For_each_service')?['ordinal']), '''')",
@@ -75,8 +78,9 @@
               "operationId": "ListRecords",
               "connectionName": "shared_commondataserviceforapps"
             },
-            "authentication": "@parameters('$authentication')"
-          }
+              "authentication": "@parameters('$authentication')"
+            },
+            "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
         },
         "Create_or_reuse_reservation": {
           "type": "If",
@@ -90,7 +94,9 @@
                   "entityName": "cr40f_reservadeveculoses",
                   "item/cr40f_id": "@concat(triggerOutputs()?['body/cr40f_conversaiaagendamentoid'], '-', string(items('For_each_service')?['ordinal']))",
                   "item/cr40f_dataehorriodesada": "@concat(items('For_each_service')?['date'], 'T', items('For_each_service')?['time'], ':00-03:00')",
+                  "item/cr40f_status": 202410004,
                   "item/cr40f_enderecodesaida1": "@items('For_each_service')?['origin']",
+                  "item/new_enderecodesaidapersonalizado": "@items('For_each_service')?['origin']",
                   "item/cr40f_destino": "@items('For_each_service')?['destination']",
                   "item/cr40f_trajeto": "@coalesce(items('For_each_service')?['route'], concat(items('For_each_service')?['origin'], ' / ', items('For_each_service')?['destination']))",
                   "item/cr40f_tipodoservico": "@items('For_each_service')?['serviceType']?['value']",
@@ -104,6 +110,7 @@
                   "item/cr40f_conversaoiaagendamento@odata.bind": "@concat('/cr40f_conversaiaagendamentos(', triggerOutputs()?['body/cr40f_conversaiaagendamentoid'], ')')",
                   "item/cr40f_iaordinalservico": "@int(items('For_each_service')?['ordinal'])",
                   "item/cr40f_iachaveidempotencia": "@concat(triggerOutputs()?['body/cr40f_conversaiaagendamentoid'], ':', string(items('For_each_service')?['ordinal']))",
+                  "item/new_observacaofinal": "@coalesce(items('For_each_service')?['observations'], '')",
                   "item/cr40f_observacaointerna": "Criado pelo agendamento conversacional IA"
                 },
                 "host": {
@@ -112,18 +119,57 @@
                   "connectionName": "shared_commondataserviceforapps"
                 },
                 "authentication": "@parameters('$authentication')"
-              }
+              },
+              "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
             },
             "Append_new_reservation_id": {
               "type": "AppendToArrayVariable",
               "runAfter": { "Create_reservation": [ "Succeeded" ] },
               "inputs": { "name": "ReservationIds", "value": "@outputs('Create_reservation')?['body/cr40f_reservadeveculosid']" }
+            }
+          },
+          "else": {
+            "actions": {
+              "Append_existing_reservation_id": {
+                "type": "AppendToArrayVariable",
+                "inputs": { "name": "ReservationIds", "value": "@first(body('Find_existing_reservation')?['value'])?['cr40f_reservadeveculosid']" }
+              }
+            }
+          }
+        },
+        "Compose_Current_Reservation_Id": {
+          "type": "Compose",
+          "runAfter": { "Create_or_reuse_reservation": [ "Succeeded" ] },
+          "inputs": "@if(equals(length(body('Find_existing_reservation')?['value']), 0), outputs('Create_reservation')?['body/cr40f_reservadeveculosid'], first(body('Find_existing_reservation')?['value'])?['cr40f_reservadeveculosid'])",
+          "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
+        },
+        "For_each_passenger_relation": {
+          "type": "Foreach",
+          "runAfter": { "Compose_Current_Reservation_Id": [ "Succeeded" ] },
+          "foreach": "@outputs('Compose_Proposal')?['passengers']",
+          "runtimeConfiguration": { "concurrency": { "repetitions": 1 } },
+          "actions": {
+            "Find_existing_passenger_relation": {
+              "type": "OpenApiConnection",
+              "inputs": {
+                "parameters": {
+                  "entityName": "cr40f_servicosporpassageiros",
+                  "filterRows": "@concat('_cr40f_geral_value eq ', outputs('Compose_Current_Reservation_Id'), ' and _cr40f_bancodedados_value eq ', items('For_each_passenger_relation')?['id'])",
+                  "topCount": 1
+                },
+                "host": {
+                  "apiId": "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps",
+                  "operationId": "ListRecords",
+                  "connectionName": "shared_commondataserviceforapps"
+                },
+                "authentication": "@parameters('$authentication')"
+              },
+              "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
             },
-            "For_each_passenger_relation": {
-              "type": "Foreach",
-              "runAfter": { "Create_reservation": [ "Succeeded" ] },
-              "foreach": "@outputs('Compose_Proposal')?['passengers']",
-              "runtimeConfiguration": { "concurrency": { "repetitions": 1 } },
+            "Create_passenger_relation_if_missing": {
+              "type": "If",
+              "runAfter": { "Find_existing_passenger_relation": [ "Succeeded" ] },
+              "expression": { "equals": [ "@length(body('Find_existing_passenger_relation')?['value'])", 0 ] },
               "actions": {
                 "Create_passenger_relation": {
                   "type": "OpenApiConnection",
@@ -131,7 +177,7 @@
                     "parameters": {
                       "entityName": "cr40f_servicosporpassageiros",
                       "item/cr40f_ordemdeselecao": "@coalesce(items('For_each_passenger_relation')?['ordinal'], 1)",
-                      "item/cr40f_Geral@odata.bind": "@concat('/cr40f_reservadeveculoses(', outputs('Create_reservation')?['body/cr40f_reservadeveculosid'], ')')",
+                      "item/cr40f_Geral@odata.bind": "@concat('/cr40f_reservadeveculoses(', outputs('Compose_Current_Reservation_Id'), ')')",
                       "item/cr40f_BancodeDados@odata.bind": "@concat('/cr40f_bancodedadoses(', items('For_each_passenger_relation')?['id'], ')')"
                     },
                     "host": {
@@ -143,15 +189,8 @@
                   },
                   "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
                 }
-              }
-            }
-          },
-          "else": {
-            "actions": {
-              "Append_existing_reservation_id": {
-                "type": "AppendToArrayVariable",
-                "inputs": { "name": "ReservationIds", "value": "@first(body('Find_existing_reservation')?['value'])?['cr40f_reservadeveculosid']" }
-              }
+              },
+              "else": { "actions": {} }
             }
           }
         }
@@ -175,8 +214,9 @@
           "operationId": "UpdateOnlyRecord",
           "connectionName": "shared_commondataserviceforapps"
         },
-        "authentication": "@parameters('$authentication')"
-      }
+          "authentication": "@parameters('$authentication')"
+        },
+        "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
     },
     "Update_Session_PartialOrError": {
       "type": "OpenApiConnection",
@@ -195,8 +235,9 @@
           "operationId": "UpdateOnlyRecord",
           "connectionName": "shared_commondataserviceforapps"
         },
-        "authentication": "@parameters('$authentication')"
-      }
+          "authentication": "@parameters('$authentication')"
+        },
+        "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
     }
   }
 }

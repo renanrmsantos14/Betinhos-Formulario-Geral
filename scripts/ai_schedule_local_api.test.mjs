@@ -46,6 +46,7 @@ assert.equal(calls[0].body.reasoning.effort, "none");
 assert.equal(calls[0].body.store, false);
 assert.match(calls[0].body.instructions, /Tipos de serviço disponíveis: Guarulhos, São Paulo/);
 assert.match(calls[0].body.instructions, /Tipos de veículo disponíveis: Executivo, Van/);
+assert.match(calls[0].body.instructions, /proposedRegistration/);
 assert.ok(!calls[0].body.instructions.includes("Tipos de veículo disponíveis: Basico"), "proxy não deve receber lista completa de Choices");
 assert.equal(calls[0].authorization, "Bearer test-key");
 

@@ -8,6 +8,8 @@ assert.match(packageJson.scripts.push, /-ProvisionPlatform/);
 assert.match(push, /Import-EnvFile "\.env\.local"/);
 assert.match(push, /provisionamento idempotente do schema Dataverse/);
 assert.match(push, /criação\/atualização do Custom Connector DeepSeek/);
+assert.match(push, /AI_SCHEDULE_DEEPSEEK_CONNECTOR_ID/);
+assert.match(push, /-DeepSeekConnectorId/);
 assert.match(push, /provisionamento dos dois flows da agenda IA/);
 assert.doesNotMatch(push, /não foram provisionados \(use -ProvisionFlows/);
 

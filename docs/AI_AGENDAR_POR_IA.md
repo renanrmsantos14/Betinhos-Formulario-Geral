@@ -86,6 +86,8 @@ Copy-Item .env.example .env.local
 # edite .env.local e preencha:
 AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE=<logical-name-da-connection-reference-dataverse>
 AI_SCHEDULE_DEEPSEEK_CONNECTION_REFERENCE=<logical-name-da-connection-reference-deepseek>
+# Opcional: ID do connector existente para forçar atualização em vez de criação
+AI_SCHEDULE_DEEPSEEK_CONNECTOR_ID=<guid-do-connector-ou-vazio>
 npm run push
 ```
 
@@ -99,4 +101,4 @@ Para conferir o encadeamento sem autenticar nem alterar o Dataverse, use `npm ru
 
 ## Pendências externas
 
-O primeiro push completo cria/publica a tabela de sessão, os campos adicionais da reserva, o connector e os dois Flows. Depois, valide a conexão do connector, execute um caso anonimizado e confira o voucher em DEV antes de autorizar produção.
+O primeiro push completo cria/publica a tabela de sessão, os campos adicionais da reserva, o connector e os dois Flows. Se o connector já existir, informe `AI_SCHEDULE_DEEPSEEK_CONNECTOR_ID` para o mesmo comando fazer `update` idempotente. Depois, valide a conexão do connector, execute um caso anonimizado e confira o voucher em DEV antes de autorizar produção.

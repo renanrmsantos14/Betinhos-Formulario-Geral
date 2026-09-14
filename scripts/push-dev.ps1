@@ -11,6 +11,7 @@ param(
   [switch] $ProvisionFlows,
   [string] $DataverseConnectionReferenceLogicalName = "",
   [string] $DeepSeekConnectionReferenceLogicalName = "",
+  [string] $DeepSeekConnectorId = "",
   [string] $DeepSeekApiName = "shared_betinhosdeepseek",
   [string] $DeepSeekOperationId = "Responses"
 )
@@ -33,6 +34,7 @@ if ($PSVersionTable.PSEdition -eq "Core" -or $PSHOME -like "*codex-runtimes*") {
   if ($DeepSeekConnectionReferenceLogicalName) { $forward += @("-DeepSeekConnectionReferenceLogicalName", $DeepSeekConnectionReferenceLogicalName) }
   if ($DeepSeekApiName) { $forward += @("-DeepSeekApiName", $DeepSeekApiName) }
   if ($DeepSeekOperationId) { $forward += @("-DeepSeekOperationId", $DeepSeekOperationId) }
+  if ($DeepSeekConnectorId) { $forward += @("-DeepSeekConnectorId", $DeepSeekConnectorId) }
   & $windowsPowerShell @forward
   exit $LASTEXITCODE
 }
@@ -93,6 +95,7 @@ else {
 if ($ProvisionPlatform) {
   if ([string]::IsNullOrWhiteSpace($DataverseConnectionReferenceLogicalName)) { $DataverseConnectionReferenceLogicalName = $env:AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE }
   if ([string]::IsNullOrWhiteSpace($DeepSeekConnectionReferenceLogicalName)) { $DeepSeekConnectionReferenceLogicalName = $env:AI_SCHEDULE_DEEPSEEK_CONNECTION_REFERENCE }
+  if ([string]::IsNullOrWhiteSpace($DeepSeekConnectorId)) { $DeepSeekConnectorId = $env:AI_SCHEDULE_DEEPSEEK_CONNECTOR_ID }
   if ([string]::IsNullOrWhiteSpace($DataverseConnectionReferenceLogicalName) -or [string]::IsNullOrWhiteSpace($DeepSeekConnectionReferenceLogicalName)) {
     throw "Push completo bloqueado: faltam Connection References. Defina AI_SCHEDULE_DATAVERSE_CONNECTION_REFERENCE e AI_SCHEDULE_DEEPSEEK_CONNECTION_REFERENCE em .env.local (arquivo ignorado pelo Git) ou no ambiente do processo. Depois, npm run push executa schema, connector, WebResource e flows sem argumentos extras."
   }
@@ -104,7 +107,7 @@ if ($ProvisionPlatform) {
 
   Step "criação/atualização do Custom Connector DeepSeek"
   $connectorScript = Join-Path $PSScriptRoot "provision-deepseek-connector.ps1"
-  & $connectorScript -EnvironmentUrl $EnvironmentUrl -SolutionUniqueName "AppBetinhos" -WhatIf:$WhatIf
+  & $connectorScript -EnvironmentUrl $EnvironmentUrl -SolutionUniqueName "AppBetinhos" -ConnectorId $DeepSeekConnectorId -WhatIf:$WhatIf
   Assert-Exit "provisionamento do connector"
   $ProvisionFlows = $true
 }

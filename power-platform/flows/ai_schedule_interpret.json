@@ -139,12 +139,14 @@
         "Parse_Primary": [ "Succeeded", "Failed", "Skipped" ],
         "Use_Fallback_On_Low_Confidence": [ "Succeeded", "Failed", "Skipped" ]
       },
-      "inputs": "@coalesce(outputs('Call_DeepSeek_Fallback_Low_Confidence')?['body'], outputs('Call_DeepSeek_Fallback')?['body'], outputs('Call_DeepSeek')?['body'])"
+      "inputs": "@coalesce(outputs('Call_DeepSeek_Fallback_Low_Confidence')?['body'], outputs('Call_DeepSeek_Fallback')?['body'], outputs('Call_DeepSeek')?['body'])",
+      "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
     },
     "Compose_Proposal": {
       "type": "Compose",
       "runAfter": { "Compose_Selected_Response": [ "Succeeded" ] },
-      "inputs": "@coalesce(outputs('Compose_Selected_Response')?['output_text'], outputs('Compose_Selected_Response')?['output'][0]?['content'][0]?['text'], outputs('Compose_Selected_Response')?['choices'][0]?['message']?['content'], string(outputs('Compose_Selected_Response')))"
+      "inputs": "@coalesce(outputs('Compose_Selected_Response')?['output_text'], outputs('Compose_Selected_Response')?['output'][0]?['content'][0]?['text'], outputs('Compose_Selected_Response')?['choices'][0]?['message']?['content'], string(outputs('Compose_Selected_Response')))",
+      "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
     },
     "Parse_Proposal": {
       "type": "ParseJson",
@@ -160,8 +162,9 @@
       "runAfter": { "Parse_Proposal": [ "Succeeded" ] },
       "inputs": {
         "from": "@body('Parse_Proposal')?['passengers']",
-        "where": "@empty(item()?['id'])"
-      }
+        "where": "@or(empty(item()?['id']), equals(item()?['proposedRegistration']?['requiresConfirmation'], true))"
+      },
+      "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
     },
     "Filter_Missing_Services": {
       "type": "Query",
@@ -169,12 +172,14 @@
       "inputs": {
         "from": "@body('Parse_Proposal')?['services']",
         "where": "@or(empty(item()?['date']), empty(item()?['time']), empty(item()?['origin']), empty(item()?['destination']), empty(item()?['serviceType']?['value']), empty(item()?['vehicleType']?['value']))"
-      }
+      },
+      "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
     },
     "Compose_Deterministic_Missing": {
       "type": "Compose",
       "runAfter": { "Filter_Missing_Passengers": [ "Succeeded" ], "Filter_Missing_Services": [ "Succeeded" ] },
-      "inputs": "@union(body('Parse_Proposal')?['missingFields'], if(empty(body('Parse_Proposal')?['client']?['id']), createArray('client.id'), createArray()), if(empty(body('Parse_Proposal')?['requester']?['id']), createArray('requester.id'), createArray()), if(empty(body('Parse_Proposal')?['passengers']), createArray('passengers'), createArray()), if(greater(length(body('Filter_Missing_Passengers')), 0), createArray('passengers.id'), createArray()), if(empty(body('Parse_Proposal')?['services']), createArray('services'), createArray()), if(greater(length(body('Filter_Missing_Services')), 0), createArray('services.required'), createArray()))"
+      "inputs": "@union(body('Parse_Proposal')?['missingFields'], if(and(not(empty(body('Parse_Proposal')?['client']?['proposedRegistration'])), equals(body('Parse_Proposal')?['client']?['proposedRegistration']?['requiresConfirmation'], true)), createArray('client.registrationConfirmation'), createArray()), if(empty(body('Parse_Proposal')?['client']?['id']), createArray('client.id'), createArray()), if(and(not(empty(body('Parse_Proposal')?['requester']?['proposedRegistration'])), equals(body('Parse_Proposal')?['requester']?['proposedRegistration']?['requiresConfirmation'], true)), createArray('requester.registrationConfirmation'), createArray()), if(empty(body('Parse_Proposal')?['requester']?['id']), createArray('requester.id'), createArray()), if(empty(body('Parse_Proposal')?['passengers']), createArray('passengers'), createArray()), if(greater(length(body('Filter_Missing_Passengers')), 0), createArray('passengers.id'), createArray()), if(empty(body('Parse_Proposal')?['services']), createArray('services'), createArray()), if(greater(length(body('Filter_Missing_Services')), 0), createArray('services.required'), createArray()))",
+      "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
     },
     "Update_Session": {
       "type": "OpenApiConnection",
@@ -200,8 +205,9 @@
           "operationId": "UpdateOnlyRecord",
           "connectionName": "shared_commondataserviceforapps"
         },
-        "authentication": "@parameters('$authentication')"
-      }
+      "authentication": "@parameters('$authentication')"
+      },
+      "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
     },
     "Update_Session_Error": {
       "type": "OpenApiConnection",
@@ -221,8 +227,9 @@
           "operationId": "UpdateOnlyRecord",
           "connectionName": "shared_commondataserviceforapps"
         },
-        "authentication": "@parameters('$authentication')"
-      }
+      "authentication": "@parameters('$authentication')"
+      },
+      "runtimeConfiguration": { "secureData": { "properties": [ "inputs", "outputs" ] } }
     }
   }
 }

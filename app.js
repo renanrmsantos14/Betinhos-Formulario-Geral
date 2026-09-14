@@ -1243,6 +1243,7 @@
     el.aiConversationConfirm?.addEventListener("click", confirmAiConversation);
     el.aiConversationVoucher?.addEventListener("click", openAiConversationVoucher);
     el.aiConversationResume?.addEventListener("click", resumeAiConversation);
+    el.aiConversationMissing?.addEventListener("click", openAiRegistrationProposal);
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
     document.addEventListener("dragenter", handleXlsxImportDragEnter);
     document.addEventListener("dragover", handleXlsxImportDragOver);
@@ -4009,7 +4010,7 @@
       error: read("error")
     }) : null;
     if (!normalized) return { id: aiConversationEntityId(row), status: "DRAFT", messages, proposal };
-    const resolvedProposal = aiConversationResolveLocalProposal(normalized.proposal || {});
+    const resolvedProposal = aiConversationResolveLocalProposal(normalized.proposal || {}, "", [], { preserveResolvedIds: true });
     const resolvedValidation = core.validateProposal(resolvedProposal);
     return {
       ...normalized,
@@ -4038,7 +4039,7 @@
   // O modelo sugere rótulos; somente o catálogo carregado no app pode fornecer
   // os valores reais de choice/lookup. IDs recebidos da IA nunca são aceitos
   // sem correspondência local exata.
-  function aiConversationResolveLocalChoice(collection, option) {
+  function aiConversationResolveLocalChoice(collection, option, options = {}) {
     if (!option) return option;
     const label = option.name || option.label || "";
     const rawValue = option.value ?? option.id;
@@ -4049,7 +4050,7 @@
     });
     return match
       ? { value: match.value, id: String(match.value), name: match.label, label: match.label }
-      : { ...option, value: null, id: "", name: label, label };
+      : { ...option, value: options.preserveResolvedIds && rawValue !== null && rawValue !== undefined && rawValue !== "" ? rawValue : null, id: options.preserveResolvedIds && rawValue ? String(rawValue) : "", name: label, label };
   }
 
   function aiConversationChoiceHasContext(message, history, kind) {
@@ -4071,31 +4072,31 @@
     return matches.length === 1 ? { value: matches[0].value, id: String(matches[0].value), name: matches[0].label, label: matches[0].label } : null;
   }
 
-  function aiConversationResolveLocalIdentity(collection, identity) {
+  function aiConversationResolveLocalIdentity(collection, identity, options = {}) {
     if (!identity) return identity;
     const label = identity.name || identity.label || "";
     const match = (collection || []).find((item) => normalize(item.label || item.nome || item.name) === normalize(label));
     return match
       ? { ...identity, id: match.id || match.guid || "", name: match.label || match.nome || match.name || label }
-      : { ...identity, id: "", name: label };
+      : { ...identity, id: options.preserveResolvedIds && identity.id ? identity.id : "", name: label };
   }
 
-  function aiConversationResolveLocalProposal(proposal, message = "", history = []) {
+  function aiConversationResolveLocalProposal(proposal, message = "", history = [], options = {}) {
     const core = aiConversationCore();
     const normalized = core ? core.normalizeProposal(proposal || {}) : (proposal || {});
     return {
       ...normalized,
-      client: aiConversationResolveLocalIdentity(state.clientes, normalized.client),
-      requester: aiConversationResolveLocalIdentity(state.passageiros, normalized.requester),
-      passengers: (normalized.passengers || []).map((passenger) => aiConversationResolveLocalIdentity(state.passageiros, passenger)),
+      client: aiConversationResolveLocalIdentity(state.clientes, normalized.client, options),
+      requester: aiConversationResolveLocalIdentity(state.passageiros, normalized.requester, options),
+      passengers: (normalized.passengers || []).map((passenger) => aiConversationResolveLocalIdentity(state.passageiros, passenger, options)),
       services: (normalized.services || []).map((service) => ({
         ...service,
-        serviceType: aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType)?.value
-          ? aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType)
-          : aiConversationChoiceHint(state.options.tipoServico, message, history, "service") || aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType),
-        vehicleType: aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)?.value
-          ? aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)
-          : aiConversationChoiceHint(state.options.tipoVeiculo, message, history, "vehicle") || aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType)
+        serviceType: aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType, options)?.value
+          ? aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType, options)
+          : aiConversationChoiceHint(state.options.tipoServico, message, history, "service") || aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType, options),
+        vehicleType: aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType, options)?.value
+          ? aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType, options)
+          : aiConversationChoiceHint(state.options.tipoVeiculo, message, history, "vehicle") || aiConversationResolveLocalChoice(state.options.tipoVeiculo, service.vehicleType, options)
       }))
     };
   }
@@ -4194,8 +4195,11 @@
   function aiConversationFirstQuestion(missing) {
     const labels = {
       client: "Qual é o cliente da solicitação?",
+      "client.registrationConfirmation": "O cliente não está cadastrado. Confirme o cadastro separado antes de continuar.",
       requester: "Quem é o solicitante?",
+      "requester.registrationConfirmation": "O solicitante não está cadastrado. Confirme o cadastro separado antes de continuar.",
       passengers: "Qual é o passageiro?",
+      "passengers.registrationConfirmation": "Há passageiro sem cadastro. Confirme o cadastro separado antes de continuar.",
       services: "Qual serviço deve ser agendado?",
       "services[0].date": "Qual é a data do serviço? Use AAAA-MM-DD.",
       "services[0].time": "Qual é o horário do serviço? Use HH:MM.",
@@ -4206,6 +4210,20 @@
       "services[0].passengers": "Qual passageiro participa deste serviço?"
     };
     return labels[missing?.[0]] || "Envie o dado que falta para eu continuar.";
+  }
+
+  function openAiRegistrationProposal(event) {
+    const button = event.target.closest("[data-ai-registration-name]");
+    if (!button) return;
+    const name = String(button.dataset.aiRegistrationName || "").trim();
+    if (!name) return;
+    setTab("bd");
+    if (el.bdNome) {
+      el.bdNome.value = name;
+      el.bdNome.focus();
+      el.bdNome.select?.();
+    }
+    toast(`Cadastro separado aberto para ${name}. Salve e depois atualize a conversa antes de confirmar.`, "warning", 8000);
   }
 
   async function loadAiConversation() {
@@ -4290,6 +4308,12 @@
       ["Serviços", String(proposal.services?.length || 0)],
       ["Confiança", Number.isFinite(proposal.confidence) ? `${Math.round(Math.max(0, Math.min(1, proposal.confidence)) * 100)}% (informativa)` : "Não informada"]
     ];
+    const registrationProposals = [
+      proposal.client,
+      proposal.requester,
+      ...(proposal.passengers || [])
+    ].filter((identity) => identity?.proposedRegistration?.requiresConfirmation);
+    registrationProposals.forEach((identity) => fields.push(["Cadastro pendente", `${identity.name || "Pessoa"} — confirmação separada necessária`]));
     (proposal.services || []).forEach((service, index) => fields.push([`Serviço ${index + 1}`, [service.date, service.time, service.origin, service.destination].filter(Boolean).join(" · ")]));
     fields.forEach(([label, value]) => {
       const card = document.createElement("div"); card.className = "ai-proposal-card";
@@ -4299,8 +4323,21 @@
     });
     const missing = validation.missing || session.missing || [];
     el.aiConversationMissing.hidden = !missing.length;
+    el.aiConversationMissing.replaceChildren();
     const question = proposal.question || (missing.length ? aiConversationFirstQuestion(missing) : "Confira a proposta e confirme para agendar.");
-    el.aiConversationMissing.textContent = missing.length ? `Falta confirmar: ${missing.join(", ")}.\n${question}` : "";
+    if (missing.length) {
+      el.aiConversationMissing.append(document.createTextNode(`Falta confirmar: ${missing.join(", ")}.\n${question}`));
+      const registrations = [proposal.client, proposal.requester, ...(proposal.passengers || [])]
+        .filter((identity) => identity?.proposedRegistration?.requiresConfirmation && identity.name);
+      registrations.forEach((identity) => {
+        const action = document.createElement("button");
+        action.type = "button";
+        action.className = "text-action primary";
+        action.dataset.aiRegistrationName = identity.name;
+        action.textContent = `Abrir cadastro: ${identity.name}`;
+        el.aiConversationMissing.append(document.createElement("br"), action);
+      });
+    }
     el.aiConversationWarnings.hidden = !(validation.warnings || session.warnings || []).length;
     el.aiConversationWarnings.textContent = (validation.warnings || session.warnings || []).join(" ");
     const canConfirm = validation.ready && !["SCHEDULED", "SCHEDULING"].includes(status);

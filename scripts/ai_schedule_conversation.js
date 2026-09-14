@@ -108,16 +108,22 @@
     };
   }
 
+  function requiresRegistrationConfirmation(value) {
+    return value?.proposedRegistration?.requiresConfirmation === true;
+  }
+
   function validateProposal(proposal) {
     const normalized = normalizeProposal(proposal);
     const missing = [];
     const warnings = [];
     if (normalized.intent !== "schedule") missing.push("intent.schedule");
+    if (requiresRegistrationConfirmation(normalized.client)) missing.push("client.registrationConfirmation");
     if (!normalized.client?.id) missing.push("client");
+    if (requiresRegistrationConfirmation(normalized.requester)) missing.push("requester.registrationConfirmation");
     if (!normalized.requester?.id) missing.push("requester");
     if (!normalized.passengers.length) missing.push("passengers");
+    if (normalized.passengers.some(requiresRegistrationConfirmation)) missing.push("passengers.registrationConfirmation");
     if (normalized.passengers.some((passenger) => !passenger?.id)) missing.push("passengers.id");
-    if (normalized.passengers.some((passenger) => passenger?.proposedRegistration?.requiresConfirmation)) missing.push("passengers.registrationConfirmation");
     if (!normalized.services.length) missing.push("services");
     normalized.services.forEach((service, index) => {
       const prefix = `services[${index}]`;
