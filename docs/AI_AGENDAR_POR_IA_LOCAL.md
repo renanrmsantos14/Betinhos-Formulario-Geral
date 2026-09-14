@@ -9,6 +9,6 @@ O servidor local possui um proxy `POST /api/ai-schedule`. O navegador nunca rece
 3. Rode `npm start`.
 4. Abra `http://127.0.0.1:4000/` sem `?mock=1` e use a aba **Agendar por IA**.
 
-O modelo primário é `deepseek-v4-flash`; resposta vazia, JSON inválido, erro transitório ou baixa confiança em uma proposta aparentemente completa usam uma única tentativa com `deepseek-v4-pro`. O proxy envia JSON Mode, desativa thinking e limita a entrada a 12.000 caracteres.
+O modelo primário é `deepseek-v4-flash`; resposta vazia, JSON inválido, erro transitório ou baixa confiança em uma proposta aparentemente completa usam uma única tentativa com `deepseek-v4-pro`. O proxy usa `/responses` com Structured Output (`json_schema`), desativa reasoning e limita a entrada a 12.000 caracteres. Um endpoint compatível com Chat Completions ainda pode ser informado explicitamente em `DEEPSEEK_API_URL`.
 
 Esta etapa liga a interpretação ao DeepSeek. A confirmação no localhost continua sem criar reserva: a gravação real depende da sessão Dataverse e dos fluxos Power Automate DEV descritos em `docs/power-platform/AI_AGENDAR_POR_IA_DEV_FLOW_CONTRACT.md`.

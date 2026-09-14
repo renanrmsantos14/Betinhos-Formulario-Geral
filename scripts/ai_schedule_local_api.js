@@ -6,7 +6,7 @@ const schemaPath = path.join(root, "docs", "power-platform", "ai_schedule_propos
 const proposalSchema = JSON.parse(fs.readFileSync(schemaPath, "utf8"));
 const DEFAULT_MODEL = "deepseek-v4-flash";
 const FALLBACK_MODEL = "deepseek-v4-pro";
-const DEFAULT_ENDPOINT = "https://api.deepseek.com/chat/completions";
+const DEFAULT_ENDPOINT = "https://api.deepseek.com/responses";
 const MAX_INPUT_LENGTH = 12000;
 const MAX_MESSAGES = 24;
 
@@ -79,6 +79,14 @@ function extractContent(body) {
   const content = body?.choices?.[0]?.message?.content;
   if (typeof content === "string") return content.trim();
   if (Array.isArray(content)) return content.map((part) => part?.text || "").join("").trim();
+  if (typeof body?.output_text === "string") return body.output_text.trim();
+  if (Array.isArray(body?.output)) {
+    return body.output.flatMap((item) => Array.isArray(item?.content) ? item.content : [])
+      .filter((part) => part?.type === "output_text" && typeof part.text === "string")
+      .map((part) => part.text)
+      .join("")
+      .trim();
+  }
   return "";
 }
 
@@ -114,17 +122,34 @@ function shouldFallback(proposal) {
 }
 
 async function callDeepSeek({ apiKey, endpoint, model, messages, fetchImpl }) {
+  const responsesApi = /\/responses(?:$|\?)/i.test(endpoint);
+  const requestBody = responsesApi ? {
+    model,
+    instructions: messages.find((item) => item.role === "system")?.content || "",
+    input: messages.filter((item) => item.role !== "system"),
+    text: {
+      format: {
+        type: "json_schema",
+        name: "betinhos_ai_schedule_proposal",
+        schema: proposalSchema
+      }
+    },
+    reasoning: { effort: "none" },
+    max_output_tokens: 2200,
+    store: false,
+    stream: false
+  } : {
+    model,
+    messages,
+    response_format: { type: "json_object" },
+    thinking: { type: "disabled" },
+    max_tokens: 2200,
+    stream: false
+  };
   const response = await fetchImpl(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({
-      model,
-      messages,
-      response_format: { type: "json_object" },
-      thinking: { type: "disabled" },
-      max_tokens: 2200,
-      stream: false
-    })
+    body: JSON.stringify(requestBody)
   });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
