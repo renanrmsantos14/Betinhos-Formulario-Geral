@@ -80,8 +80,8 @@ O alvo é fixo no ambiente DEV `org23b93544`. O script recusa URLs de outros amb
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\push-dev.ps1 -DeviceCode -MetadataPath C:\Users\mendo\Downloads\metadata-AppBetinhos-2026-09-14T19-18-58-216Z.json
 ```
 
-Para conferir o encadeamento sem autenticar nem alterar o Dataverse, use `-WhatIf`. Flows e o Custom Connector DeepSeek continuam pendentes de um pacote solution-aware importável; o push informa essa lacuna e não os declara publicados.
+Para conferir o encadeamento sem autenticar nem alterar o Dataverse, use `-WhatIf`. O provisionador compatível com o padrão do Tela Planner está em `scripts/provision-ai-schedule-flows.ps1`: ele lê duas definições JSON, substitui as Connection References, cria/atualiza os workflows via Web API, desativa versões duplicadas e ativa somente a versão corrente. Execute com `-ProvisionFlows` depois de adicionar `power-platform/flows/ai_schedule_interpret.json` e `power-platform/flows/ai_schedule_schedule.json` e informar as Connection References reais. O script falha se os arquivos ou referências ainda forem placeholders.
 
 ## Pendências externas
 
-Esta entrega não publica tabela, Choice, Custom Connector nem os fluxos no ambiente Power Platform. Após a publicação, atualizar os nomes/valores reais da configuração, testar com mensagens anonimizadas e validar o voucher em DEV antes de autorizar produção.
+Ainda é necessário criar/publicar a tabela de sessão, os campos adicionais da reserva e o Custom Connector na solution DEV. Após isso, adicione as duas definições JSON, rode `npm run push -- -ProvisionFlows -DeviceCode` e valide o voucher em DEV antes de autorizar produção.

@@ -6,7 +6,12 @@ param(
   [switch] $DeviceCode,
   [switch] $NoPublish,
   [switch] $WhatIf,
-  [switch] $RequireManifest
+  [switch] $RequireManifest,
+  [switch] $ProvisionFlows,
+  [string] $DataverseConnectionReferenceLogicalName = "",
+  [string] $DeepSeekConnectionReferenceLogicalName = "",
+  [string] $DeepSeekApiName = "shared_betinhosdeepseek",
+  [string] $DeepSeekOperationId = "Responses"
 )
 
 # O MSAL.PS precisa do Windows PowerShell 5.1 nesta máquina.
@@ -19,6 +24,11 @@ if ($PSVersionTable.PSEdition -eq "Core" -or $PSHOME -like "*codex-runtimes*") {
   if ($NoPublish) { $forward += "-NoPublish" }
   if ($WhatIf) { $forward += "-WhatIf" }
   if ($RequireManifest) { $forward += "-RequireManifest" }
+  if ($ProvisionFlows) { $forward += "-ProvisionFlows" }
+  if ($DataverseConnectionReferenceLogicalName) { $forward += @("-DataverseConnectionReferenceLogicalName", $DataverseConnectionReferenceLogicalName) }
+  if ($DeepSeekConnectionReferenceLogicalName) { $forward += @("-DeepSeekConnectionReferenceLogicalName", $DeepSeekConnectionReferenceLogicalName) }
+  if ($DeepSeekApiName) { $forward += @("-DeepSeekApiName", $DeepSeekApiName) }
+  if ($DeepSeekOperationId) { $forward += @("-DeepSeekOperationId", $DeepSeekOperationId) }
   & $windowsPowerShell @forward
   exit $LASTEXITCODE
 }
@@ -63,5 +73,14 @@ if ($ClientId) { $publishParams.ClientId = $ClientId }
 & $publish @publishParams
 Assert-Exit "publicação do WebResource"
 
+if ($ProvisionFlows) {
+  Step "provisionamento dos dois flows da agenda IA"
+  $flowScript = Join-Path $PSScriptRoot "provision-ai-schedule-flows.ps1"
+  $flowParams = @{ EnvironmentUrl = $EnvironmentUrl; TenantId = $TenantId; ClientId = $ClientId; DataverseConnectionReferenceLogicalName = $DataverseConnectionReferenceLogicalName; DeepSeekConnectionReferenceLogicalName = $DeepSeekConnectionReferenceLogicalName; DeepSeekApiName = $DeepSeekApiName; DeepSeekOperationId = $DeepSeekOperationId; DeviceCode = $DeviceCode; WhatIf = $WhatIf }
+  & $flowScript @flowParams
+  Assert-Exit "provisionamento dos flows"
+}
+
 Step "push concluído: testes, build e WebResource DEV atualizados"
-Step "flows/connector DeepSeek não foram importados: este repositório ainda não contém pacote solution-aware desses artefatos"
+if ($ProvisionFlows) { Step "flows da agenda IA provisionados e ativados" }
+else { Step "flows/connector DeepSeek não foram provisionados (use -ProvisionFlows após adicionar as definições JSON e Connection References)" }
