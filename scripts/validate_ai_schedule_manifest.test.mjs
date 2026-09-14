@@ -19,7 +19,7 @@ const resolved = {
     columns: [{ logicalName: "cr40f_status", type: "Choice" }, { logicalName: "cr40f_versaoentrada", type: "WholeNumber" }]
   },
   reservationTable: {
-    logicalName: "cr40f_reservadeveculos",
+    logicalName: "cr40f_reservadeveculos", entitySetName: "cr40f_reservadeveculoses", primaryNameAttribute: "cr40f_id",
     requiredAdditions: [
       { logicalName: "cr40f_conversaoiaagendamento", type: "Lookup", target: "cr40f_conversaiaagendamento" },
       { logicalName: "cr40f_iaordinalservico", type: "WholeNumber" }
@@ -31,7 +31,7 @@ const resolved = {
 const metadata = {
   tables: [
     { logicalName: resolved.sessionTable.logicalName, entitySetName: resolved.sessionTable.entitySetName, primaryNameAttribute: resolved.sessionTable.primaryNameAttribute, attributes: [{ logicalName: "cr40f_status", type: "Picklist" }, { logicalName: "cr40f_versaoentrada", type: "Integer" }] },
-    { logicalName: resolved.reservationTable.logicalName, attributes: [{ logicalName: "cr40f_conversaoiaagendamento", type: "Lookup", targets: ["cr40f_conversaiaagendamento"] }, { logicalName: "cr40f_iaordinalservico", type: "Integer" }] }
+    { logicalName: resolved.reservationTable.logicalName, entitySetName: resolved.reservationTable.entitySetName, primaryNameAttribute: resolved.reservationTable.primaryNameAttribute, attributes: [{ logicalName: "cr40f_conversaoiaagendamento", type: "Lookup", targets: ["cr40f_conversaiaagendamento"] }, { logicalName: "cr40f_iaordinalservico", type: "Integer" }] }
   ]
 };
 assert.deepEqual(validateManifest(resolved, metadata), { ok: true, errors: [] });

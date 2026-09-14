@@ -76,6 +76,8 @@ function validateMetadata(manifest, metadata, errors) {
     }
   }
   if (reservationTable) {
+    if (reservationTable.entitySetName !== reservation.entitySetName) errors.push(`entitySetName divergente para ${reservation.logicalName}: esperado ${reservation.entitySetName}, recebido ${reservationTable.entitySetName || "vazio"}.`);
+    if (reservationTable.primaryNameAttribute !== reservation.primaryNameAttribute) errors.push(`primaryNameAttribute divergente para ${reservation.logicalName}: esperado ${reservation.primaryNameAttribute}, recebido ${reservationTable.primaryNameAttribute || "vazio"}.`);
     const attributes = metadataAttributeIndex(reservationTable);
     for (const column of reservation.requiredAdditions || []) {
       const actual = attributes.get(String(column.logicalName || "").toLowerCase());
@@ -104,6 +106,8 @@ export function validateManifest(manifest, metadata = null) {
     "sessionTable.entitySetName",
     "sessionTable.primaryNameAttribute",
     "reservationTable.logicalName",
+    "reservationTable.entitySetName",
+    "reservationTable.primaryNameAttribute",
     "connector.name",
     "connector.connectionReference"
   ]) {

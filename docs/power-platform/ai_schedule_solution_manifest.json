@@ -32,6 +32,13 @@
   },
   "reservationTable": {
     "logicalName": "cr40f_reservadeveculos",
+    "entitySetName": "cr40f_reservadeveculoses",
+    "primaryNameAttribute": "cr40f_id",
+    "metadataEvidence": {
+      "source": "metadata-AppBetinhos-2026-09-14T19-18-58-216Z.json",
+      "serviceTypeOptionSet": "cr40f_tipodoservico",
+      "vehicleTypeOptionSet": "cr40f_carrotipodeveiculo"
+    },
     "requiredAdditions": [
       { "logicalName": "cr40f_conversaoiaagendamento", "type": "Lookup", "target": "cr40f_conversaiaagendamento" },
       { "logicalName": "cr40f_iaordinalservico", "type": "WholeNumber" },
