@@ -8805,6 +8805,7 @@ textarea,
             <div class="ai-conversation-confirm">
               <p id="aiConversationConfirmHint" class="muted">A confirmação libera a criação das reservas.</p>
               <button id="aiConversationConfirm" class="button button-primary" type="button" disabled>Confirmar e agendar</button>
+              <button id="aiConversationVoucher" class="button button-secondary" type="button" hidden>Abrir voucher</button>
               <button id="aiConversationResume" class="button button-secondary" type="button" hidden>Retomar pendência</button>
             </div>
           </aside>
@@ -9251,8 +9252,12 @@ textarea,
         status: "cr40f_status",
         inputVersion: "cr40f_versaoentrada",
         processedVersion: "cr40f_versaoprocessada",
+        confirmationRequested: "cr40f_confirmacaosolicitada",
+        confirmationVersion: "cr40f_versaoconfirmada",
         model: "cr40f_modelo",
         attempts: "cr40f_tentativas",
+        inputTokens: "cr40f_inputtokens",
+        outputTokens: "cr40f_outputtokens",
         error: "cr40f_erro",
         createdReservationIds: "cr40f_reservascriadas",
         expiresAt: "cr40f_expiraem"
@@ -10823,8 +10828,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   function identity(value) {
     if (!value) return null;
-    if (typeof value === "string") return { id: idValue(value), name: text(value) };
-    return { id: idValue(value), name: text(value.name || value.label || "") };
+    if (typeof value === "string") return { id: idValue(value), name: text(value), proposedRegistration: null };
+    return {
+      id: idValue(value),
+      name: text(value.name || value.label || ""),
+      proposedRegistration: value.proposedRegistration || value.proposed_registration || null
+    };
   }
 
   function normalizeTime(value) {
@@ -10855,9 +10864,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (typeof value === "object") {
       const id = value.id || value.value || "";
       const name = text(value.name || value.label || "");
-      return { id: idValue(id), value: id, name };
+      return { id: idValue(id), value: id, name, label: name };
     }
-    return { id: "", value: value, name: text(value) };
+    return { id: "", value: value, name: text(value), label: text(value) };
   }
 
   function normalizeService(service) {
@@ -10868,10 +10877,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       time: normalizeTime(item.time || item.hora),
       serviceType: normalizeOption(item.serviceType || item.tipoServico),
       vehicleType: normalizeOption(item.vehicleType || item.tipoVeiculo),
+      timezone: text(item.timezone || "America/Sao_Paulo"),
       origin: text(item.origin || item.origem),
       destination: text(item.destination || item.destino),
       route: text(item.route || item.trajeto),
-      notes: text(item.notes || item.observacoes || item.observacao),
+      notes: text(item.notes || item.observations || item.observacoes || item.observacao),
       passengers: Array.isArray(item.passengers || item.passageiros) ? (item.passengers || item.passageiros).map(identity).filter(Boolean) : []
     };
   }
@@ -10881,11 +10891,16 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const services = Array.isArray(source.services || source.servicos) ? (source.services || source.servicos).map(normalizeService) : [];
     return {
       intent: text(source.intent || source.intencao || "schedule").toLowerCase(),
+      assistantMessage: text(source.assistantMessage || source.mensagemAssistente),
+      question: source.question == null ? null : text(source.question),
+      confidence: Number.isFinite(Number(source.confidence)) ? Number(source.confidence) : null,
       client: identity(source.client || source.cliente),
       requester: identity(source.requester || source.solicitante),
       passengers: Array.isArray(source.passengers || source.passageiros) ? (source.passengers || source.passageiros).map(identity).filter(Boolean) : [],
       services,
       observations: text(source.observations || source.observacoes),
+      missingFields: Array.isArray(source.missingFields) ? source.missingFields.map(text).filter(Boolean) : [],
+      warnings: Array.isArray(source.warnings) ? source.warnings.map(text).filter(Boolean) : [],
       timezone: text(source.timezone || "America/Sao_Paulo")
     };
   }
@@ -10898,6 +10913,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (!normalized.client?.id) missing.push("client");
     if (!normalized.requester?.id) missing.push("requester");
     if (!normalized.passengers.length) missing.push("passengers");
+    if (normalized.passengers.some((passenger) => !passenger?.id)) missing.push("passengers.id");
+    if (normalized.passengers.some((passenger) => passenger?.proposedRegistration?.requiresConfirmation)) missing.push("passengers.registrationConfirmation");
     if (!normalized.services.length) missing.push("services");
     normalized.services.forEach((service, index) => {
       const prefix = `services[${index}]`;
@@ -10909,7 +10926,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       if (!service.destination) missing.push(`${prefix}.destination`);
       if (!service.passengers.length) warnings.push(`${prefix}.passengers ausente; será usado o passageiro da solicitação.`);
     });
-    return { normalized, missing: [...new Set(missing)], warnings: [...new Set(warnings)], ready: missing.length === 0 };
+    const allWarnings = [...normalized.warnings, ...warnings];
+    return { normalized, missing: [...new Set(missing)], warnings: [...new Set(allWarnings)], ready: missing.length === 0 };
   }
 
   function normalizeConfirmationText(value) {
@@ -10917,7 +10935,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   function isExplicitConfirmation(value, context = {}) {
-    if (!context.awaitingConfirmation) return false;
+    if (!context.awaitingConfirmation || context.confirmationRequested !== true) return false;
     if (context.confirmedVersion && context.version && context.confirmedVersion === context.version) return false;
     return CONFIRMATIONS.has(normalizeConfirmationText(value));
   }
@@ -10951,6 +10969,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       warnings: validation.warnings,
       ready: validation.ready,
       confirmationVersion: Number(session.confirmationVersion || 0),
+      confirmationRequested: session.confirmationRequested === true,
       createdReservationIds: Array.isArray(session.createdReservationIds) ? session.createdReservationIds.map(idValue).filter(Boolean) : [],
       error: text(session.error)
     };
@@ -11484,6 +11503,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     aiConversationWarnings: $("aiConversationWarnings"),
     aiConversationConfirmHint: $("aiConversationConfirmHint"),
     aiConversationConfirm: $("aiConversationConfirm"),
+    aiConversationVoucher: $("aiConversationVoucher"),
     aiConversationResume: $("aiConversationResume"),
     tabBd: $("tabBd"),
     tabReturn: $("tabReturn"),
@@ -11549,6 +11569,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     aiConversation: null,
     aiConversationLoading: false,
     aiConversationPollingTimer: null,
+    aiConversationPollStartedAt: 0,
+    aiConversationPollAttempts: 0,
     saveLog: [],
     draftTimer: null,
     draftRestoring: false,
@@ -12208,6 +12230,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.aiConversationNew?.addEventListener("click", startNewAiConversation);
     el.aiConversationSend?.addEventListener("click", submitAiConversationInput);
     el.aiConversationConfirm?.addEventListener("click", confirmAiConversation);
+    el.aiConversationVoucher?.addEventListener("click", openAiConversationVoucher);
     el.aiConversationResume?.addEventListener("click", resumeAiConversation);
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
     document.addEventListener("dragenter", handleXlsxImportDragEnter);
@@ -14944,6 +14967,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       status: aiConversationStatusFromRow(row[aiConversationField("status")]),
       inputVersion: row[aiConversationField("inputVersion")],
       processedVersion: row[aiConversationField("processedVersion")],
+      confirmationRequested: row[aiConversationField("confirmationRequested")] === true || row[aiConversationField("confirmationRequested")] === 1,
+      confirmationVersion: row[aiConversationField("confirmationVersion")],
       originalText: row[aiConversationField("originalText")],
       proposal,
       messages,
@@ -15060,6 +15085,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       const select = [...new Set(Object.values(config.fields).filter((value) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(String(value))))].join(",");
       const result = await state.xrm.WebApi.retrieveMultipleRecords(config.entity, `?$select=${select}&$orderby=modifiedon desc&$top=1`);
       state.aiConversation = aiConversationRowToSession(result.entities?.[0]);
+      state.aiConversationPollStartedAt = 0;
+      state.aiConversationPollAttempts = 0;
       if (!state.aiConversation) state.aiConversation = { id: "", status: "DRAFT", inputVersion: 0, processedVersion: 0, messages: [], proposal: {}, missing: ["services"], warnings: [], ready: false };
       renderAiConversation();
     } catch (error) {
@@ -15111,7 +15138,9 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     el.aiConversationWarnings.hidden = !(validation.warnings || session.warnings || []).length;
     el.aiConversationWarnings.textContent = (validation.warnings || session.warnings || []).join(" ");
     const canConfirm = validation.ready && !["SCHEDULED", "SCHEDULING"].includes(status);
-    el.aiConversationConfirm.disabled = !canConfirm;
+    el.aiConversationConfirm.disabled = !canConfirm || state.aiConversationLoading;
+    const hasCreatedReservations = status === "SCHEDULED" && (session.createdReservationIds || []).length > 0;
+    el.aiConversationVoucher.hidden = !hasCreatedReservations;
     el.aiConversationResume.hidden = status !== "ERROR" && status !== "PARTIAL";
     el.aiConversationConfirmHint.textContent = status === "SCHEDULED" ? "Reserva(s) criada(s). Abra o voucher no formulário para revisar." : "A confirmação libera a criação das reservas.";
   }
@@ -15128,12 +15157,12 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const message = String(el.aiConversationInput?.value || "").trim();
     if (!message) { toast("Cole a mensagem do cliente antes de interpretar.", "error"); return; }
     const current = state.aiConversation || { id: "", inputVersion: 0, messages: [] };
-    if (AI_CONVERSATION_CORE?.isExplicitConfirmation(message, { awaitingConfirmation: current.ready, version: current.inputVersion, confirmedVersion: current.confirmationVersion })) {
+    if (AI_CONVERSATION_CORE?.isExplicitConfirmation(message, { awaitingConfirmation: current.ready, confirmationRequested: current.confirmationRequested, version: current.inputVersion, confirmedVersion: current.confirmationVersion })) {
       await confirmAiConversation(); return;
     }
     if (state.mockMode) {
       const parsed = parseLocalAiConversationText(message);
-      const next = { ...current, originalText: message, inputVersion: Number(current.inputVersion || 0) + 1, processedVersion: Number(current.inputVersion || 0) + 1, proposal: parsed.validation.normalized, status: parsed.validation.ready ? "READY" : "WAITING_USER", missing: parsed.validation.missing, warnings: parsed.validation.warnings, messages: [...(current.messages || []), aiConversationMessage("user", message), aiConversationMessage("assistant", parsed.validation.ready ? `Entendi a solicitação. Confira a proposta e confirme para agendar.\n\n${aiConversationSummary({ proposal: parsed.validation.normalized })}` : aiConversationFirstQuestion(parsed.validation.missing))] };
+      const next = { ...current, originalText: message, inputVersion: Number(current.inputVersion || 0) + 1, processedVersion: Number(current.inputVersion || 0) + 1, confirmationRequested: parsed.validation.ready, confirmationVersion: 0, proposal: parsed.validation.normalized, status: parsed.validation.ready ? "READY" : "WAITING_USER", missing: parsed.validation.missing, warnings: parsed.validation.warnings, messages: [...(current.messages || []), aiConversationMessage("user", message), aiConversationMessage("assistant", parsed.validation.ready ? `Entendi a solicitação. Confira a proposta e confirme para agendar.\n\n${aiConversationSummary({ proposal: parsed.validation.normalized })}` : aiConversationFirstQuestion(parsed.validation.missing))] };
       state.aiConversation = next;
       aiConversationStoreWrite(next);
       if (el.aiConversationInput) el.aiConversationInput.value = "";
@@ -15149,6 +15178,8 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     aiConversationPayloadValue(payload, "originalText", message);
     aiConversationPayloadValue(payload, "messagesJson", JSON.stringify(messages));
     aiConversationPayloadValue(payload, "inputVersion", nextVersion);
+    aiConversationPayloadValue(payload, "confirmationRequested", false);
+    aiConversationPayloadValue(payload, "confirmationVersion", 0);
     aiConversationPayloadValue(payload, "status", aiConversationStatusValue("WAITING_AI"));
     state.aiConversationLoading = true;
     try {
@@ -15165,21 +15196,27 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   }
 
   async function confirmAiConversation() {
+    if (state.aiConversationLoading) return;
     const session = state.aiConversation;
     const validation = aiConversationCore()?.validateProposal(session?.proposal || {});
     if (!session || !validation?.ready) { toast("Ainda há dados obrigatórios pendentes.", "error"); return; }
+    state.aiConversationLoading = true;
+    renderAiConversation();
     if (state.mockMode) {
-      state.aiConversation = { ...session, status: "SCHEDULED", confirmationVersion: session.inputVersion, messages: [...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar."), aiConversationMessage("assistant", "Simulação local concluída. Nenhum registro foi criado no Dataverse.")] };
+      state.aiConversation = { ...session, status: "SCHEDULED", confirmationRequested: false, confirmationVersion: session.inputVersion, messages: [...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar."), aiConversationMessage("assistant", "Simulação local concluída. Nenhum registro foi criado no Dataverse.")] };
       aiConversationStoreWrite(state.aiConversation); renderAiConversation();
+      state.aiConversationLoading = false;
       toast("Simulação local concluída. Nenhum registro Dataverse foi criado.", "warning", 7000);
       return;
     }
     const config = aiConversationConfig();
-    if (!config || !state.xrm || !session.id) { showAiConversationSetup("A sessão precisa estar publicada no Dataverse antes da confirmação."); return; }
+    if (!config || !state.xrm || !session.id) { state.aiConversationLoading = false; renderAiConversation(); showAiConversationSetup("A sessão precisa estar publicada no Dataverse antes da confirmação."); return; }
     const payload = {};
     aiConversationPayloadValue(payload, "proposalJson", JSON.stringify(validation.normalized));
     aiConversationPayloadValue(payload, "missingFields", "");
     aiConversationPayloadValue(payload, "status", aiConversationStatusValue("SCHEDULING"));
+    aiConversationPayloadValue(payload, "confirmationRequested", false);
+    aiConversationPayloadValue(payload, "confirmationVersion", session.inputVersion);
     aiConversationPayloadValue(payload, "messagesJson", JSON.stringify([...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar.")]));
     try {
       await state.xrm.WebApi.updateRecord(config.entity, session.id, payload);
@@ -15187,6 +15224,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       renderAiConversation();
       scheduleAiConversationPoll(1500);
     } catch (error) { toast(`Não foi possível confirmar: ${error.message || "erro de conexão"}`, "error", 8000); }
+    finally { state.aiConversationLoading = false; renderAiConversation(); }
   }
 
   async function resumeAiConversation() {
@@ -15194,9 +15232,69 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if (state.aiConversation?.status === "PARTIAL") toast("Sessão parcial carregada. Revise os itens pendentes e confirme novamente.", "warning", 7000);
   }
 
+  async function openAiConversationVoucher() {
+    const session = state.aiConversation;
+    const reservationIds = [...new Set((session?.createdReservationIds || []).map(cleanGuid).filter(Boolean))];
+    if (!reservationIds.length || !state.xrm || state.mockMode) {
+      toast("O voucher só fica disponível depois que o fluxo DEV registrar as reservas reais.", "warning", 7000);
+      return;
+    }
+    const f = CONFIG.fields.reserva;
+    const select = [f.id, f.readableId, f.dataSaida, f.tipoServico, f.tipoVeiculo, f.destino, f.enderecoView, f.enderecoPersonalizado, f.trajeto, f.obsFinal, f.status]
+      .filter(Boolean).join(",");
+    try {
+      const rows = await Promise.all(reservationIds.map((id) => state.xrm.WebApi.retrieveRecord(CONFIG.entities.reserva, id, `?$select=${select}`)));
+      const generatedAt = new Date();
+      const proposal = session.proposal || {};
+      const passengerSummary = (proposal.passengers || []).map((item) => item.name).filter(Boolean).join("\n") || "Não informado";
+      const services = rows.map((row, index) => {
+        const date = row[f.dataSaida] ? new Date(row[f.dataSaida]) : null;
+        const proposalService = proposal.services?.[index] || {};
+        return {
+          typeLabel: "Serviço confirmado",
+          shortId: String(row[f.readableId] || row[f.id] || reservationIds[index]).slice(-6).toUpperCase(),
+          scheduledAt: date && !Number.isNaN(date.getTime()) ? formatDateTime(date) : `${proposalService.date || "Não informado"} ${proposalService.time || ""}`.trim(),
+          sortTime: date && !Number.isNaN(date.getTime()) ? date.getTime() : index,
+          serviceType: optionLabel("tipoServico", row[f.tipoServico]) || proposalService.serviceType?.label || proposalService.serviceType?.name || "Não informado",
+          vehicleType: optionLabel("tipoVeiculo", row[f.tipoVeiculo]) || proposalService.vehicleType?.label || proposalService.vehicleType?.name || "A confirmar",
+          requester: proposal.requester?.name || "Não informado",
+          passengerSummary,
+          route: String(row[f.trajeto] || `${row[f.enderecoView] || row[f.enderecoPersonalizado] || ""} / ${row[f.destino] || ""}`).trim(),
+          origin: String(row[f.enderecoPersonalizado] || row[f.enderecoView] || proposalService.origin || "Não informado").trim(),
+          destination: String(row[f.destino] || proposalService.destination || "Não informado").trim(),
+          note: String(row[f.obsFinal] || proposal.observations || "").trim()
+        };
+      }).sort((left, right) => left.sortTime - right.sortTime).map((item, index) => ({ ...item, order: index + 1 }));
+      state.lastSuccessVoucher = {
+        reference: buildVoucherReference(generatedAt, services.length),
+        issuedAtLabel: formatVoucherIssuedAt(generatedAt),
+        client: proposal.client?.name || "Não informado",
+        requester: proposal.requester?.name || "Não informado",
+        serviceType: services[0]?.serviceType || "Não informado",
+        vehicleType: services[0]?.vehicleType || "A confirmar",
+        status: "Confirmado",
+        operationCode: "",
+        costCenter: "",
+        passengerSummary,
+        passengerCount: proposal.passengers?.length || 0,
+        preferenceSummary: proposal.observations || "",
+        services
+      };
+      openSuccessVoucher();
+    } catch (error) {
+      toast(`Não foi possível montar o voucher das reservas criadas: ${error.message || "erro de consulta"}`, "error", 8000);
+    }
+  }
+
   function scheduleAiConversationPoll(delay = 2000) {
     if (state.aiConversationPollingTimer) clearTimeout(state.aiConversationPollingTimer);
     if (state.mockMode || !state.aiConversation?.id || String(state.aiConversation.id).startsWith("mock-")) return;
+    if (!state.aiConversationPollStartedAt) state.aiConversationPollStartedAt = Date.now();
+    if (Date.now() - state.aiConversationPollStartedAt > 45000 || state.aiConversationPollAttempts >= 8) {
+      showAiConversationSetup("A sessão ainda está em processamento. Use Atualizar para tentar novamente; o polling automático foi encerrado.");
+      return;
+    }
+    state.aiConversationPollAttempts += 1;
     state.aiConversationPollingTimer = setTimeout(async () => {
       try {
         const config = aiConversationConfig();
@@ -15204,6 +15302,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
         const next = aiConversationRowToSession(row);
         if (next) { state.aiConversation = next; renderAiConversation(); }
         if (["WAITING_AI", "SCHEDULING"].includes(String(next?.status || "").toUpperCase())) scheduleAiConversationPoll(Math.min(delay * 2, 10000));
+        else { state.aiConversationPollStartedAt = 0; state.aiConversationPollAttempts = 0; }
       } catch (error) { showAiConversationSetup(`Atualização da sessão falhou: ${error.message || "erro"}`); }
     }, delay);
   }

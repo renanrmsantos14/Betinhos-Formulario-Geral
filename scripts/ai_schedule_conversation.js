@@ -31,8 +31,12 @@
 
   function identity(value) {
     if (!value) return null;
-    if (typeof value === "string") return { id: idValue(value), name: text(value) };
-    return { id: idValue(value), name: text(value.name || value.label || "") };
+    if (typeof value === "string") return { id: idValue(value), name: text(value), proposedRegistration: null };
+    return {
+      id: idValue(value),
+      name: text(value.name || value.label || ""),
+      proposedRegistration: value.proposedRegistration || value.proposed_registration || null
+    };
   }
 
   function normalizeTime(value) {
@@ -63,9 +67,9 @@
     if (typeof value === "object") {
       const id = value.id || value.value || "";
       const name = text(value.name || value.label || "");
-      return { id: idValue(id), value: id, name };
+      return { id: idValue(id), value: id, name, label: name };
     }
-    return { id: "", value: value, name: text(value) };
+    return { id: "", value: value, name: text(value), label: text(value) };
   }
 
   function normalizeService(service) {
@@ -76,10 +80,11 @@
       time: normalizeTime(item.time || item.hora),
       serviceType: normalizeOption(item.serviceType || item.tipoServico),
       vehicleType: normalizeOption(item.vehicleType || item.tipoVeiculo),
+      timezone: text(item.timezone || "America/Sao_Paulo"),
       origin: text(item.origin || item.origem),
       destination: text(item.destination || item.destino),
       route: text(item.route || item.trajeto),
-      notes: text(item.notes || item.observacoes || item.observacao),
+      notes: text(item.notes || item.observations || item.observacoes || item.observacao),
       passengers: Array.isArray(item.passengers || item.passageiros) ? (item.passengers || item.passageiros).map(identity).filter(Boolean) : []
     };
   }
@@ -89,11 +94,16 @@
     const services = Array.isArray(source.services || source.servicos) ? (source.services || source.servicos).map(normalizeService) : [];
     return {
       intent: text(source.intent || source.intencao || "schedule").toLowerCase(),
+      assistantMessage: text(source.assistantMessage || source.mensagemAssistente),
+      question: source.question == null ? null : text(source.question),
+      confidence: Number.isFinite(Number(source.confidence)) ? Number(source.confidence) : null,
       client: identity(source.client || source.cliente),
       requester: identity(source.requester || source.solicitante),
       passengers: Array.isArray(source.passengers || source.passageiros) ? (source.passengers || source.passageiros).map(identity).filter(Boolean) : [],
       services,
       observations: text(source.observations || source.observacoes),
+      missingFields: Array.isArray(source.missingFields) ? source.missingFields.map(text).filter(Boolean) : [],
+      warnings: Array.isArray(source.warnings) ? source.warnings.map(text).filter(Boolean) : [],
       timezone: text(source.timezone || "America/Sao_Paulo")
     };
   }
@@ -106,6 +116,8 @@
     if (!normalized.client?.id) missing.push("client");
     if (!normalized.requester?.id) missing.push("requester");
     if (!normalized.passengers.length) missing.push("passengers");
+    if (normalized.passengers.some((passenger) => !passenger?.id)) missing.push("passengers.id");
+    if (normalized.passengers.some((passenger) => passenger?.proposedRegistration?.requiresConfirmation)) missing.push("passengers.registrationConfirmation");
     if (!normalized.services.length) missing.push("services");
     normalized.services.forEach((service, index) => {
       const prefix = `services[${index}]`;
@@ -117,7 +129,8 @@
       if (!service.destination) missing.push(`${prefix}.destination`);
       if (!service.passengers.length) warnings.push(`${prefix}.passengers ausente; será usado o passageiro da solicitação.`);
     });
-    return { normalized, missing: [...new Set(missing)], warnings: [...new Set(warnings)], ready: missing.length === 0 };
+    const allWarnings = [...normalized.warnings, ...warnings];
+    return { normalized, missing: [...new Set(missing)], warnings: [...new Set(allWarnings)], ready: missing.length === 0 };
   }
 
   function normalizeConfirmationText(value) {
@@ -125,7 +138,7 @@
   }
 
   function isExplicitConfirmation(value, context = {}) {
-    if (!context.awaitingConfirmation) return false;
+    if (!context.awaitingConfirmation || context.confirmationRequested !== true) return false;
     if (context.confirmedVersion && context.version && context.confirmedVersion === context.version) return false;
     return CONFIRMATIONS.has(normalizeConfirmationText(value));
   }
@@ -159,6 +172,7 @@
       warnings: validation.warnings,
       ready: validation.ready,
       confirmationVersion: Number(session.confirmationVersion || 0),
+      confirmationRequested: session.confirmationRequested === true,
       createdReservationIds: Array.isArray(session.createdReservationIds) ? session.createdReservationIds.map(idValue).filter(Boolean) : [],
       error: text(session.error)
     };

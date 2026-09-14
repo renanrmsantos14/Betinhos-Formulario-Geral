@@ -509,6 +509,7 @@
     aiConversationWarnings: $("aiConversationWarnings"),
     aiConversationConfirmHint: $("aiConversationConfirmHint"),
     aiConversationConfirm: $("aiConversationConfirm"),
+    aiConversationVoucher: $("aiConversationVoucher"),
     aiConversationResume: $("aiConversationResume"),
     tabBd: $("tabBd"),
     tabReturn: $("tabReturn"),
@@ -574,6 +575,8 @@
     aiConversation: null,
     aiConversationLoading: false,
     aiConversationPollingTimer: null,
+    aiConversationPollStartedAt: 0,
+    aiConversationPollAttempts: 0,
     saveLog: [],
     draftTimer: null,
     draftRestoring: false,
@@ -1233,6 +1236,7 @@
     el.aiConversationNew?.addEventListener("click", startNewAiConversation);
     el.aiConversationSend?.addEventListener("click", submitAiConversationInput);
     el.aiConversationConfirm?.addEventListener("click", confirmAiConversation);
+    el.aiConversationVoucher?.addEventListener("click", openAiConversationVoucher);
     el.aiConversationResume?.addEventListener("click", resumeAiConversation);
     el.xlsxImportInput?.addEventListener("change", handleXlsxImportFile);
     document.addEventListener("dragenter", handleXlsxImportDragEnter);
@@ -3961,19 +3965,22 @@
     const parseJson = (value, fallback) => {
       try { return value ? JSON.parse(value) : fallback; } catch (_) { return fallback; }
     };
-    const proposal = parseJson(row[aiConversationField("proposalJson")], {});
-    const messages = parseJson(row[aiConversationField("messagesJson")], []);
+    const read = (key) => row[aiConversationField(key)] ?? row[key];
+    const proposal = parseJson(read("proposalJson"), row.proposal || {});
+    const messages = parseJson(read("messagesJson"), row.messages || []);
     const core = aiConversationCore();
     const normalized = core ? core.normalizeSession({
       id: aiConversationEntityId(row),
-      status: aiConversationStatusFromRow(row[aiConversationField("status")]),
-      inputVersion: row[aiConversationField("inputVersion")],
-      processedVersion: row[aiConversationField("processedVersion")],
-      originalText: row[aiConversationField("originalText")],
+      status: aiConversationStatusFromRow(read("status")),
+      inputVersion: read("inputVersion"),
+      processedVersion: read("processedVersion"),
+      confirmationRequested: read("confirmationRequested") === true || read("confirmationRequested") === 1,
+      confirmationVersion: read("confirmationVersion"),
+      originalText: read("originalText"),
       proposal,
       messages,
-      createdReservationIds: parseJson(row[aiConversationField("createdReservationIds")], []),
-      error: row[aiConversationField("error")]
+      createdReservationIds: parseJson(read("createdReservationIds"), row.createdReservationIds || []),
+      error: read("error")
     }) : null;
     return normalized || { id: aiConversationEntityId(row), status: "DRAFT", messages, proposal };
   }
@@ -4085,6 +4092,8 @@
       const select = [...new Set(Object.values(config.fields).filter((value) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(String(value))))].join(",");
       const result = await state.xrm.WebApi.retrieveMultipleRecords(config.entity, `?$select=${select}&$orderby=modifiedon desc&$top=1`);
       state.aiConversation = aiConversationRowToSession(result.entities?.[0]);
+      state.aiConversationPollStartedAt = 0;
+      state.aiConversationPollAttempts = 0;
       if (!state.aiConversation) state.aiConversation = { id: "", status: "DRAFT", inputVersion: 0, processedVersion: 0, messages: [], proposal: {}, missing: ["services"], warnings: [], ready: false };
       renderAiConversation();
     } catch (error) {
@@ -4136,7 +4145,9 @@
     el.aiConversationWarnings.hidden = !(validation.warnings || session.warnings || []).length;
     el.aiConversationWarnings.textContent = (validation.warnings || session.warnings || []).join(" ");
     const canConfirm = validation.ready && !["SCHEDULED", "SCHEDULING"].includes(status);
-    el.aiConversationConfirm.disabled = !canConfirm;
+    el.aiConversationConfirm.disabled = !canConfirm || state.aiConversationLoading;
+    const hasCreatedReservations = status === "SCHEDULED" && (session.createdReservationIds || []).length > 0;
+    el.aiConversationVoucher.hidden = !hasCreatedReservations;
     el.aiConversationResume.hidden = status !== "ERROR" && status !== "PARTIAL";
     el.aiConversationConfirmHint.textContent = status === "SCHEDULED" ? "Reserva(s) criada(s). Abra o voucher no formulário para revisar." : "A confirmação libera a criação das reservas.";
   }
@@ -4153,12 +4164,13 @@
     const message = String(el.aiConversationInput?.value || "").trim();
     if (!message) { toast("Cole a mensagem do cliente antes de interpretar.", "error"); return; }
     const current = state.aiConversation || { id: "", inputVersion: 0, messages: [] };
-    if (AI_CONVERSATION_CORE?.isExplicitConfirmation(message, { awaitingConfirmation: current.ready, version: current.inputVersion, confirmedVersion: current.confirmationVersion })) {
+    const currentValidation = AI_CONVERSATION_CORE?.validateProposal(current.proposal || {});
+    if (AI_CONVERSATION_CORE?.isExplicitConfirmation(message, { awaitingConfirmation: current.status === "READY" && currentValidation?.ready === true, confirmationRequested: current.confirmationRequested === true, version: current.inputVersion, confirmedVersion: current.confirmationVersion })) {
       await confirmAiConversation(); return;
     }
     if (state.mockMode) {
       const parsed = parseLocalAiConversationText(message);
-      const next = { ...current, originalText: message, inputVersion: Number(current.inputVersion || 0) + 1, processedVersion: Number(current.inputVersion || 0) + 1, proposal: parsed.validation.normalized, status: parsed.validation.ready ? "READY" : "WAITING_USER", missing: parsed.validation.missing, warnings: parsed.validation.warnings, messages: [...(current.messages || []), aiConversationMessage("user", message), aiConversationMessage("assistant", parsed.validation.ready ? `Entendi a solicitação. Confira a proposta e confirme para agendar.\n\n${aiConversationSummary({ proposal: parsed.validation.normalized })}` : aiConversationFirstQuestion(parsed.validation.missing))] };
+      const next = { ...current, originalText: message, inputVersion: Number(current.inputVersion || 0) + 1, processedVersion: Number(current.inputVersion || 0) + 1, confirmationRequested: parsed.validation.ready, confirmationVersion: 0, proposal: parsed.validation.normalized, status: parsed.validation.ready ? "READY" : "WAITING_USER", missing: parsed.validation.missing, warnings: parsed.validation.warnings, messages: [...(current.messages || []), aiConversationMessage("user", message), aiConversationMessage("assistant", parsed.validation.ready ? `Entendi a solicitação. Confira a proposta e confirme para agendar.\n\n${aiConversationSummary({ proposal: parsed.validation.normalized })}` : aiConversationFirstQuestion(parsed.validation.missing))] };
       state.aiConversation = next;
       aiConversationStoreWrite(next);
       if (el.aiConversationInput) el.aiConversationInput.value = "";
@@ -4174,6 +4186,8 @@
     aiConversationPayloadValue(payload, "originalText", message);
     aiConversationPayloadValue(payload, "messagesJson", JSON.stringify(messages));
     aiConversationPayloadValue(payload, "inputVersion", nextVersion);
+    aiConversationPayloadValue(payload, "confirmationRequested", false);
+    aiConversationPayloadValue(payload, "confirmationVersion", 0);
     aiConversationPayloadValue(payload, "status", aiConversationStatusValue("WAITING_AI"));
     state.aiConversationLoading = true;
     try {
@@ -4190,21 +4204,27 @@
   }
 
   async function confirmAiConversation() {
+    if (state.aiConversationLoading) return;
     const session = state.aiConversation;
     const validation = aiConversationCore()?.validateProposal(session?.proposal || {});
     if (!session || !validation?.ready) { toast("Ainda há dados obrigatórios pendentes.", "error"); return; }
+    state.aiConversationLoading = true;
+    renderAiConversation();
     if (state.mockMode) {
-      state.aiConversation = { ...session, status: "SCHEDULED", confirmationVersion: session.inputVersion, messages: [...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar."), aiConversationMessage("assistant", "Simulação local concluída. Nenhum registro foi criado no Dataverse.")] };
+      state.aiConversation = { ...session, status: "SCHEDULED", confirmationRequested: false, confirmationVersion: session.inputVersion, messages: [...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar."), aiConversationMessage("assistant", "Simulação local concluída. Nenhum registro foi criado no Dataverse.")] };
       aiConversationStoreWrite(state.aiConversation); renderAiConversation();
+      state.aiConversationLoading = false;
       toast("Simulação local concluída. Nenhum registro Dataverse foi criado.", "warning", 7000);
       return;
     }
     const config = aiConversationConfig();
-    if (!config || !state.xrm || !session.id) { showAiConversationSetup("A sessão precisa estar publicada no Dataverse antes da confirmação."); return; }
+    if (!config || !state.xrm || !session.id) { state.aiConversationLoading = false; renderAiConversation(); showAiConversationSetup("A sessão precisa estar publicada no Dataverse antes da confirmação."); return; }
     const payload = {};
     aiConversationPayloadValue(payload, "proposalJson", JSON.stringify(validation.normalized));
     aiConversationPayloadValue(payload, "missingFields", "");
     aiConversationPayloadValue(payload, "status", aiConversationStatusValue("SCHEDULING"));
+    aiConversationPayloadValue(payload, "confirmationRequested", false);
+    aiConversationPayloadValue(payload, "confirmationVersion", session.inputVersion);
     aiConversationPayloadValue(payload, "messagesJson", JSON.stringify([...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar.")]));
     try {
       await state.xrm.WebApi.updateRecord(config.entity, session.id, payload);
@@ -4212,6 +4232,7 @@
       renderAiConversation();
       scheduleAiConversationPoll(1500);
     } catch (error) { toast(`Não foi possível confirmar: ${error.message || "erro de conexão"}`, "error", 8000); }
+    finally { state.aiConversationLoading = false; renderAiConversation(); }
   }
 
   async function resumeAiConversation() {
@@ -4219,9 +4240,69 @@
     if (state.aiConversation?.status === "PARTIAL") toast("Sessão parcial carregada. Revise os itens pendentes e confirme novamente.", "warning", 7000);
   }
 
+  async function openAiConversationVoucher() {
+    const session = state.aiConversation;
+    const reservationIds = [...new Set((session?.createdReservationIds || []).map(cleanGuid).filter(Boolean))];
+    if (!reservationIds.length || !state.xrm || state.mockMode) {
+      toast("O voucher só fica disponível depois que o fluxo DEV registrar as reservas reais.", "warning", 7000);
+      return;
+    }
+    const f = CONFIG.fields.reserva;
+    const select = [f.id, f.readableId, f.dataSaida, f.tipoServico, f.tipoVeiculo, f.destino, f.enderecoView, f.enderecoPersonalizado, f.trajeto, f.obsFinal, f.status]
+      .filter(Boolean).join(",");
+    try {
+      const rows = await Promise.all(reservationIds.map((id) => state.xrm.WebApi.retrieveRecord(CONFIG.entities.reserva, id, `?$select=${select}`)));
+      const generatedAt = new Date();
+      const proposal = session.proposal || {};
+      const passengerSummary = (proposal.passengers || []).map((item) => item.name).filter(Boolean).join("\n") || "Não informado";
+      const services = rows.map((row, index) => {
+        const date = row[f.dataSaida] ? new Date(row[f.dataSaida]) : null;
+        const proposalService = proposal.services?.[index] || {};
+        return {
+          typeLabel: "Serviço confirmado",
+          shortId: String(row[f.readableId] || row[f.id] || reservationIds[index]).slice(-6).toUpperCase(),
+          scheduledAt: date && !Number.isNaN(date.getTime()) ? formatDateTime(date) : `${proposalService.date || "Não informado"} ${proposalService.time || ""}`.trim(),
+          sortTime: date && !Number.isNaN(date.getTime()) ? date.getTime() : index,
+          serviceType: optionLabel("tipoServico", row[f.tipoServico]) || proposalService.serviceType?.label || proposalService.serviceType?.name || "Não informado",
+          vehicleType: optionLabel("tipoVeiculo", row[f.tipoVeiculo]) || proposalService.vehicleType?.label || proposalService.vehicleType?.name || "A confirmar",
+          requester: proposal.requester?.name || "Não informado",
+          passengerSummary,
+          route: String(row[f.trajeto] || `${row[f.enderecoView] || row[f.enderecoPersonalizado] || ""} / ${row[f.destino] || ""}`).trim(),
+          origin: String(row[f.enderecoPersonalizado] || row[f.enderecoView] || proposalService.origin || "Não informado").trim(),
+          destination: String(row[f.destino] || proposalService.destination || "Não informado").trim(),
+          note: String(row[f.obsFinal] || proposal.observations || "").trim()
+        };
+      }).sort((left, right) => left.sortTime - right.sortTime).map((item, index) => ({ ...item, order: index + 1 }));
+      state.lastSuccessVoucher = {
+        reference: buildVoucherReference(generatedAt, services.length),
+        issuedAtLabel: formatVoucherIssuedAt(generatedAt),
+        client: proposal.client?.name || "Não informado",
+        requester: proposal.requester?.name || "Não informado",
+        serviceType: services[0]?.serviceType || "Não informado",
+        vehicleType: services[0]?.vehicleType || "A confirmar",
+        status: "Confirmado",
+        operationCode: "",
+        costCenter: "",
+        passengerSummary,
+        passengerCount: proposal.passengers?.length || 0,
+        preferenceSummary: proposal.observations || "",
+        services
+      };
+      openSuccessVoucher();
+    } catch (error) {
+      toast(`Não foi possível montar o voucher das reservas criadas: ${error.message || "erro de consulta"}`, "error", 8000);
+    }
+  }
+
   function scheduleAiConversationPoll(delay = 2000) {
     if (state.aiConversationPollingTimer) clearTimeout(state.aiConversationPollingTimer);
     if (state.mockMode || !state.aiConversation?.id || String(state.aiConversation.id).startsWith("mock-")) return;
+    if (!state.aiConversationPollStartedAt) state.aiConversationPollStartedAt = Date.now();
+    if (Date.now() - state.aiConversationPollStartedAt > 45000 || state.aiConversationPollAttempts >= 8) {
+      showAiConversationSetup("A sessão ainda está em processamento. Use Atualizar para tentar novamente; o polling automático foi encerrado.");
+      return;
+    }
+    state.aiConversationPollAttempts += 1;
     state.aiConversationPollingTimer = setTimeout(async () => {
       try {
         const config = aiConversationConfig();
@@ -4229,6 +4310,7 @@
         const next = aiConversationRowToSession(row);
         if (next) { state.aiConversation = next; renderAiConversation(); }
         if (["WAITING_AI", "SCHEDULING"].includes(String(next?.status || "").toUpperCase())) scheduleAiConversationPoll(Math.min(delay * 2, 10000));
+        else { state.aiConversationPollStartedAt = 0; state.aiConversationPollAttempts = 0; }
       } catch (error) { showAiConversationSetup(`Atualização da sessão falhou: ${error.message || "erro"}`); }
     }, delay);
   }

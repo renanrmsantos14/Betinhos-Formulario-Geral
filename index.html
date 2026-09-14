@@ -361,6 +361,7 @@
             <div class="ai-conversation-confirm">
               <p id="aiConversationConfirmHint" class="muted">A confirmação libera a criação das reservas.</p>
               <button id="aiConversationConfirm" class="button button-primary" type="button" disabled>Confirmar e agendar</button>
+              <button id="aiConversationVoucher" class="button button-secondary" type="button" hidden>Abrir voucher</button>
               <button id="aiConversationResume" class="button button-secondary" type="button" hidden>Retomar pendência</button>
             </div>
           </aside>
@@ -807,8 +808,12 @@
         status: "cr40f_status",
         inputVersion: "cr40f_versaoentrada",
         processedVersion: "cr40f_versaoprocessada",
+        confirmationRequested: "cr40f_confirmacaosolicitada",
+        confirmationVersion: "cr40f_versaoconfirmada",
         model: "cr40f_modelo",
         attempts: "cr40f_tentativas",
+        inputTokens: "cr40f_inputtokens",
+        outputTokens: "cr40f_outputtokens",
         error: "cr40f_erro",
         createdReservationIds: "cr40f_reservascriadas",
         expiresAt: "cr40f_expiraem"
