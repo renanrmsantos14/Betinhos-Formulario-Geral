@@ -66,6 +66,22 @@ Criar dois fluxos na solução DEV:
 - não chamar DeepSeek diretamente do browser;
 - DEV primeiro. Nenhum deploy em PROD ou UAT autenticado foi declarado nesta entrega.
 
+## Push DEV
+
+O comando `npm run push` segue o padrão do Tela Planner e executa, em ordem:
+
+1. `npm run test:ai`;
+2. `npm run build` (atualiza `webresource.html`);
+3. publicação idempotente de `new_formulario_geral.html` na solution `AppBetinhos` (cria se não existir, atualiza se existir e publica o WebResource e a entidade de solicitações).
+
+O alvo é fixo no ambiente DEV `org23b93544`. O script recusa URLs de outros ambientes. Para validar o manifesto antes do push, use `-MetadataPath`:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts\push-dev.ps1 -DeviceCode -MetadataPath C:\Users\mendo\Downloads\metadata-AppBetinhos-2026-09-14T19-18-58-216Z.json
+```
+
+Para conferir o encadeamento sem autenticar nem alterar o Dataverse, use `-WhatIf`. Flows e o Custom Connector DeepSeek continuam pendentes de um pacote solution-aware importável; o push informa essa lacuna e não os declara publicados.
+
 ## Pendências externas
 
 Esta entrega não publica tabela, Choice, Custom Connector nem os fluxos no ambiente Power Platform. Após a publicação, atualizar os nomes/valores reais da configuração, testar com mensagens anonimizadas e validar o voucher em DEV antes de autorizar produção.
