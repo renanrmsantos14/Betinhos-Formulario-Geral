@@ -51,12 +51,12 @@
 
   function normalizeDate(value) {
     const raw = text(value);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-    const match = raw.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/);
-    if (!match) return "";
-    const day = Number(match[1]);
-    const month = Number(match[2]);
-    const year = Number(match[3]);
+    const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    const br = raw.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/);
+    if (!iso && !br) return "";
+    const day = Number(iso ? iso[3] : br[1]);
+    const month = Number(iso ? iso[2] : br[2]);
+    const year = Number(iso ? iso[1] : br[3]);
     const candidate = new Date(Date.UTC(year, month - 1, day));
     if (candidate.getUTCFullYear() !== year || candidate.getUTCMonth() !== month - 1 || candidate.getUTCDate() !== day) return "";
     return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -91,7 +91,8 @@
 
   function normalizeProposal(input) {
     const source = input && typeof input === "object" ? input : {};
-    const services = Array.isArray(source.services || source.servicos) ? (source.services || source.servicos).map(normalizeService) : [];
+    const services = Array.isArray(source.services || source.servicos)
+      ? (source.services || source.servicos).map((service, index) => ({ ...normalizeService(service), ordinal: index + 1 })) : [];
     return {
       intent: text(source.intent || source.intencao || "schedule").toLowerCase(),
       assistantMessage: text(source.assistantMessage || source.mensagemAssistente),
@@ -121,7 +122,7 @@
     if (!normalized.client?.id) missing.push("client");
     if (requiresRegistrationConfirmation(normalized.requester)) missing.push("requester.registrationConfirmation");
     if (!normalized.requester?.id) missing.push("requester");
-    if (!normalized.passengers.length) missing.push("passengers");
+    if (!normalized.passengers.length && normalized.services.some((service) => !service.passengers.length)) missing.push("passengers");
     if (normalized.passengers.some(requiresRegistrationConfirmation)) missing.push("passengers.registrationConfirmation");
     if (normalized.passengers.some((passenger) => !passenger?.id)) missing.push("passengers.id");
     if (!normalized.services.length) missing.push("services");
@@ -133,8 +134,13 @@
       if (!service.vehicleType?.value && !service.vehicleType?.id) missing.push(`${prefix}.vehicleType`);
       if (!service.origin) missing.push(`${prefix}.origin`);
       if (!service.destination) missing.push(`${prefix}.destination`);
-      if (!service.passengers.length) warnings.push(`${prefix}.passengers ausente; será usado o passageiro da solicitação.`);
+      const passengers = service.passengers.length ? service.passengers : normalized.passengers;
+      if (!passengers.length) missing.push(`${prefix}.passengers`);
+      if (passengers.some(requiresRegistrationConfirmation)) missing.push(`${prefix}.passengers.registrationConfirmation`);
+      if (passengers.some((passenger) => !passenger?.id)) missing.push(`${prefix}.passengers.id`);
     });
+    // A lista sugerida pela IA pode ficar obsoleta após a revisão humana.
+    // A prontidão depende apenas dos valores atuais e das regras determinísticas acima.
     const allWarnings = [...normalized.warnings, ...warnings];
     return { normalized, missing: [...new Set(missing)], warnings: [...new Set(allWarnings)], ready: missing.length === 0 };
   }
@@ -192,7 +198,7 @@
         route: service.route || [service.origin, service.destination].filter(Boolean).join(" / "),
         serviceType: service.serviceType, vehicleType: service.vehicleType,
         observations: service.notes || "", client: proposal.client, requester: proposal.requester,
-        passengers: proposal.passengers
+        passengers: service.passengers.length ? service.passengers : proposal.passengers
       };
     });
   }
@@ -210,7 +216,7 @@
           scheduledAt: `${text(record.date)} ${text(record.time)}`.trim(), sortTime: date?.getTime?.() || index,
           serviceType: text(record.serviceType?.label || record.serviceType?.name) || "Não informado",
           vehicleType: text(record.vehicleType?.label || record.vehicleType?.name) || "A confirmar",
-          requester: proposal.requester?.name || "Não informado", passengerSummary: passengers.join("\n") || "Não informado",
+          requester: proposal.requester?.name || "Não informado", passengerSummary: (record.passengers || proposal.passengers).map((passenger) => passenger.name).filter(Boolean).join("\n") || "Não informado",
           route: text(record.route), origin: text(record.origin) || "Não informado",
           destination: text(record.destination) || "Não informado", note: text(record.observations), order: index + 1
         };

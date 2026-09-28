@@ -851,7 +851,8 @@ includes(app, "trajetoCidades", "revisao importada deve permitir revisar trajeto
 includes(app, "dataset.importInputType = type", "campos importados devem expor tipo para largura responsiva");
 includes(app, "dataset.importInputType = \"textarea\"", "textareas importados devem ter tipo proprio no layout");
 includes(app, "textarea.placeholder = \"Ex.: preferir veículo com água, sem paradas, rota direta.\"", "observacao importada deve usar placeholder do formulario comum");
-includes(app, "textarea.maxLength = 500;", "observacao importada deve usar limite do formulario comum");
+excludes(app, "textarea.maxLength = 500;", "textareas importados nao devem limitar caracteres");
+excludes(html, 'maxlength="500"', "observacoes do formulario nao devem limitar caracteres");
 const importHotGridRule = extractCssRule(css, "\n.import-hot-grid {");
 includes(importHotGridRule, "display: flex;", "grade do formulario importado deve usar largura dinamica");
 includes(importHotGridRule, "flex-wrap: wrap;", "grade do formulario importado deve quebrar sem empilhar desnecessariamente");

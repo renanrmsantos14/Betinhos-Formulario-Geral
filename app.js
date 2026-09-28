@@ -191,6 +191,7 @@
   const AI_CONVERSATION_MOCK_KEY = "formulario_geral_mock_ai_conversations_v1";
   const AI_CONVERSATION_LOCAL_KEY = "formulario_geral_local_ai_conversations_v1";
   const AI_CONVERSATION_LOCAL_RESERVATIONS_KEY = "formulario_geral_local_ai_reservations_v1";
+  const AI_CONVERSATION_SESSION_KEY = "formulario_geral_dataverse_ai_session_v1";
   const AI_CONVERSATION_MAX_INPUT_LENGTH = 12000;
   const QUERY_MOCK_MODE = (URL_PARAMS.get("mock") === "1" || URL_PARAMS.get("mockData") === "1");
   const AI_CONVERSATION_LOCAL_MODE = !QUERY_MOCK_MODE && ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
@@ -501,6 +502,15 @@
     aiDraftResume: $("aiDraftResume"),
     aiDraftDiscard: $("aiDraftDiscard"),
     aiConversationEnvironment: $("aiConversationEnvironment"),
+    aiConversationIdentity: $("aiConversationIdentity"),
+    aiConversationProgress: $("aiConversationProgress"),
+    aiConversationToggle: $("aiConversationToggle"),
+    aiConversationThread: $("aiConversationThread"),
+    aiConversationWorkspace: $("aiConversationWorkspace"),
+    aiConversationServiceList: $("aiConversationServiceList"),
+    aiConversationServiceCount: $("aiConversationServiceCount"),
+    aiConversationSave: $("aiConversationSave"),
+    aiConversationStartOver: $("aiConversationStartOver"),
     aiConversationSetup: $("aiConversationSetup"),
     aiConversationRefresh: $("aiConversationRefresh"),
     aiConversationStatus: $("aiConversationStatus"),
@@ -509,6 +519,9 @@
     aiConversationNew: $("aiConversationNew"),
     aiConversationSend: $("aiConversationSend"),
     aiConversationReadiness: $("aiConversationReadiness"),
+    aiConversationProposalTitle: $("aiConversationProposalTitle"),
+    aiConversationProposalSubtitle: $("aiConversationProposalSubtitle"),
+    aiConversationIdentityFields: $("aiConversationIdentityFields"),
     aiConversationProposalCards: $("aiConversationProposalCards"),
     aiConversationMissing: $("aiConversationMissing"),
     aiConversationWarnings: $("aiConversationWarnings"),
@@ -578,6 +591,9 @@
     aiDraftLoading: false,
     aiDraftSourceTab: "email",
     aiConversation: null,
+    aiConversationSelectedService: 0,
+    aiConversationReviewDirty: false,
+    aiConversationThreadTouched: false,
     aiConversationLoading: false,
     aiConversationPollingTimer: null,
     aiConversationPollStartedAt: 0,
@@ -1238,7 +1254,30 @@
     el.aiDraftResume?.addEventListener("click", resumeSelectedAiDraft);
     el.aiDraftDiscard?.addEventListener("click", discardSelectedAiDraft);
     el.aiConversationRefresh?.addEventListener("click", loadAiConversation);
+    el.aiConversationToggle?.addEventListener("click", () => {
+      state.aiConversationThreadTouched = true;
+      const open = el.aiConversationThread.hidden;
+      el.aiConversationThread.hidden = !open;
+      el.aiConversationToggle.setAttribute("aria-expanded", String(open));
+      el.aiConversationToggle.firstChild.textContent = open ? "Ocultar conversa " : "Ver conversa ";
+    });
+    el.aiConversationInput?.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || !(event.ctrlKey || event.metaKey)) return;
+      event.preventDefault();
+      if (!state.aiConversationLoading) submitAiConversationInput();
+    });
+    el.aiConversationServiceList?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-ai-service-index]");
+      if (!button) return;
+      state.aiConversationSelectedService = Number(button.dataset.aiServiceIndex);
+      renderAiConversation();
+    });
+    el.aiConversationProposalCards?.addEventListener("change", updateAiConversationField);
+    el.aiConversationProposalCards?.addEventListener("input", updateAiConversationField);
+    el.aiConversationIdentityFields?.addEventListener("change", updateAiConversationIdentity);
+    el.aiConversationSave?.addEventListener("click", saveAiConversationReview);
     el.aiConversationNew?.addEventListener("click", startNewAiConversation);
+    el.aiConversationStartOver?.addEventListener("click", startNewAiConversation);
     el.aiConversationSend?.addEventListener("click", submitAiConversationInput);
     el.aiConversationConfirm?.addEventListener("click", confirmAiConversation);
     el.aiConversationVoucher?.addEventListener("click", openAiConversationVoucher);
@@ -1615,6 +1654,7 @@
       panel.classList.add("is-status");
     }
     panel.setAttribute("role", "listbox");
+    if (select.multiple) panel.setAttribute("aria-multiselectable", "true");
     panel.dataset.customSelectPanel = "";
     panel.tabIndex = -1;
 
@@ -1775,9 +1815,14 @@
       || options.find((option) => option.selected)
       || options[0];
 
-    setCustomSelectTriggerDisplay(triggerText, selectedOption, nativeSelect);
+    const selectedOptions = nativeSelect.multiple ? options.filter((option) => option.selected) : [];
+    if (nativeSelect.multiple) {
+      triggerText.textContent = selectedOptions.length
+        ? selectedOptions.map((option) => option.textContent.trim()).join(", ")
+        : nativeSelect.dataset.placeholderLabel || "Selecione";
+    } else setCustomSelectTriggerDisplay(triggerText, selectedOption, nativeSelect);
     trigger.removeAttribute("title");
-    triggerText.classList.toggle("is-placeholder", !selectedOption || selectedOption.value === "");
+    triggerText.classList.toggle("is-placeholder", nativeSelect.multiple ? !selectedOptions.length : !selectedOption || selectedOption.value === "");
     if (clearButton) {
       clearButton.hidden = !isCustomSelectClearable(nativeSelect);
     }
@@ -1838,7 +1883,7 @@
       addClassIfPresent(button, `custom-select-option--${nativeSelect.dataset.selectVariant || ""}`);
       button.dataset.value = option.value || "";
       renderCustomSelectOptionContent(button, option);
-      if (String(option.value) === normalizedSelectedValue) {
+      if (nativeSelect.multiple ? option.selected : String(option.value) === normalizedSelectedValue) {
         button.classList.add("is-active");
         button.setAttribute("aria-selected", "true");
       } else {
@@ -1849,11 +1894,16 @@
         event.preventDefault();
         event.stopPropagation();
         if (nativeSelect.disabled || option.disabled) return;
-        nativeSelect.value = button.dataset.value;
+        if (nativeSelect.multiple) option.selected = !option.selected;
+        else nativeSelect.value = button.dataset.value;
         const eventChange = new Event("change", { bubbles: true });
         nativeSelect.dispatchEvent(eventChange);
         const eventInput = new Event("input", { bubbles: true });
         nativeSelect.dispatchEvent(eventInput);
+        if (nativeSelect.multiple) {
+          state.searchInput?.focus();
+          return;
+        }
         closeCustomSelect(nativeSelect);
         setCustomSelectTriggerDisplay(triggerText, option, nativeSelect);
         state.suppressOpenOnFocus = true;
@@ -1912,19 +1962,28 @@
 
   function focusAdjacentFormControl(anchor, direction = 1) {
     const controls = getTabOrderedFormControls(anchor);
-    if (!controls.length) return;
+    if (!controls.length) { anchor?.focus(); return; }
     const currentIndex = controls.indexOf(anchor);
     const nextIndex = currentIndex >= 0
       ? currentIndex + direction
       : (direction > 0 ? 0 : controls.length - 1);
     const next = controls[Math.max(0, Math.min(controls.length - 1, nextIndex))];
-    if (next && next !== anchor) next.focus();
+    const target = next || anchor;
+    if (target === anchor) {
+      const custom = getCustomSelectState(anchor?.closest?.(".custom-select"));
+      if (custom) {
+        custom.suppressOpenOnFocus = true;
+        window.setTimeout(() => { custom.suppressOpenOnFocus = false; }, 0);
+      }
+    }
+    target?.focus();
   }
 
   function handleCommonFormTabNavigation(event) {
     if (event.key !== "Tab" || event.defaultPrevented) return;
     const panel = getKeyboardFormPanel(event.target);
     if (!panel) return;
+    if (panel.id === "tab-panel-ai-schedule") return;
     if (event.target.closest(".custom-select-panel")) return;
     const controls = getTabOrderedFormControls(panel);
     const current = resolveTabOrderedControl(event.target);
@@ -1945,22 +2004,23 @@
   }
 
   function getKeyboardFormPanel(anchor = null) {
-    const panel = anchor?.closest?.("#tab-panel-details, #tab-panel-bd, #tab-panel-return, #tab-panel-repeat");
+    const panel = anchor?.closest?.("#tab-panel-details, #tab-panel-bd, #tab-panel-return, #tab-panel-repeat, #tab-panel-ai-schedule");
     if (panel?.classList?.contains("is-active")) return panel;
-    return document.querySelector("#tab-panel-details.is-active, #tab-panel-bd.is-active, #tab-panel-return.is-active, #tab-panel-repeat.is-active");
+    return document.querySelector("#tab-panel-details.is-active, #tab-panel-bd.is-active, #tab-panel-return.is-active, #tab-panel-repeat.is-active, #tab-panel-ai-schedule.is-active");
   }
 
   function getTabOrderedFormControls(anchor = null) {
     const panel = getKeyboardFormPanel(anchor);
     if (!panel) return [];
-    return Array.from(panel.querySelectorAll(
-      "input:not([type='hidden']), " +
-      "textarea, " +
-      ".custom-select-trigger, " +
-      "#addPassenger, " +
-      "#passengerEmpty, " +
-      "#createPassenger"
-    )).filter((control) => {
+    const selector = panel.id === "tab-panel-ai-schedule"
+      ? "input:not([type='hidden']), textarea, button"
+      : "input:not([type='hidden']), " +
+        "textarea, " +
+        ".custom-select-trigger, " +
+        "#addPassenger, " +
+        "#passengerEmpty, " +
+        "#createPassenger";
+    return Array.from(panel.querySelectorAll(selector)).filter((control) => {
       if (!(control instanceof HTMLElement)) return false;
       if (control.disabled || control.hidden || control.tabIndex < 0) return false;
       if (control.closest("[hidden], .custom-select-panel, .custom-select-clear")) return false;
@@ -3919,9 +3979,9 @@
       WAITING_AI: "Interpretando",
       WAITING_USER: "Aguardando dados",
       READY: "Pronto para confirmar",
-      SCHEDULING: "Agendando",
-      PARTIAL: "Agendamento parcial",
-      SCHEDULED: "Agendado",
+      SCHEDULING: "Registrando",
+      PARTIAL: "Registro parcial",
+      SCHEDULED: "Solicitação criada",
       ERROR: "Erro",
       CANCELLED: "Cancelado"
     };
@@ -3934,6 +3994,32 @@
 
   function aiConversationStoreWrite(session, key = AI_CONVERSATION_MOCK_KEY) {
     try { window.localStorage.setItem(key, JSON.stringify(session)); } catch (_) { /* modo local sem persistencia */ }
+  }
+
+  function aiConversationSessionStorageKey() {
+    try {
+      const context = state.xrm?.Utility?.getGlobalContext?.();
+      const userId = cleanGuid(context?.userSettings?.userId).toLowerCase();
+      const environment = String(context?.getClientUrl?.() || "").replace(/\/$/, "").toLowerCase();
+      return userId && environment ? `${AI_CONVERSATION_SESSION_KEY}:${environment}:${userId}` : "";
+    } catch (_) { return ""; }
+  }
+
+  function aiConversationStoredSessionId() {
+    try {
+      const key = aiConversationSessionStorageKey();
+      const id = key ? cleanGuid(window.localStorage.getItem(key)) : "";
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id) ? id : "";
+    } catch (_) { return ""; }
+  }
+
+  function aiConversationRememberSession(id = "") {
+    try {
+      const key = aiConversationSessionStorageKey();
+      if (!key) return;
+      if (id) window.localStorage.setItem(key, cleanGuid(id));
+      else window.localStorage.removeItem(key);
+    } catch (_) { /* sessão continua em memória */ }
   }
 
   function aiConversationLocalReservationsRead() {
@@ -4014,6 +4100,7 @@
     const resolvedValidation = core.validateProposal(resolvedProposal);
     return {
       ...normalized,
+      status: normalized.status === "WAITING_USER" && resolvedValidation.ready ? "READY" : normalized.status,
       proposal: resolvedValidation.normalized,
       missing: resolvedValidation.missing,
       warnings: resolvedValidation.warnings,
@@ -4091,6 +4178,7 @@
       passengers: (normalized.passengers || []).map((passenger) => aiConversationResolveLocalIdentity(state.passageiros, passenger, options)),
       services: (normalized.services || []).map((service) => ({
         ...service,
+        passengers: (service.passengers || []).map((passenger) => aiConversationResolveLocalIdentity(state.passageiros, passenger, options)),
         serviceType: aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType, options)?.value
           ? aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType, options)
           : aiConversationChoiceHint(state.options.tipoServico, message, history, "service") || aiConversationResolveLocalChoice(state.options.tipoServico, service.serviceType, options),
@@ -4193,12 +4281,17 @@
   }
 
   function aiConversationFirstQuestion(missing) {
+    const first = String(missing?.[0] || "");
+    const serviceMatch = /^services\[(\d+)\]\.(.+)$/.exec(first);
     const labels = {
       client: "Qual é o cliente da solicitação?",
+      "client.id": "Selecione o cliente cadastrado na revisão.",
       "client.registrationConfirmation": "O cliente não está cadastrado. Confirme o cadastro separado antes de continuar.",
       requester: "Quem é o solicitante?",
+      "requester.id": "Selecione o solicitante cadastrado na revisão.",
       "requester.registrationConfirmation": "O solicitante não está cadastrado. Confirme o cadastro separado antes de continuar.",
       passengers: "Qual é o passageiro?",
+      "passengers.id": "Selecione o passageiro cadastrado no serviço.",
       "passengers.registrationConfirmation": "Há passageiro sem cadastro. Confirme o cadastro separado antes de continuar.",
       services: "Qual serviço deve ser agendado?",
       "services[0].date": "Qual é a data do serviço? Use AAAA-MM-DD.",
@@ -4209,7 +4302,9 @@
       "services[0].destination": "Qual é o destino?",
       "services[0].passengers": "Qual passageiro participa deste serviço?"
     };
-    return labels[missing?.[0]] || "Envie o dado que falta para eu continuar.";
+    const key = serviceMatch ? `services[0].${serviceMatch[2]}` : first;
+    const question = labels[key] || "Revise os campos destacados e complete os dados pendentes.";
+    return serviceMatch ? `Serviço ${Number(serviceMatch[1]) + 1}: ${question}` : question;
   }
 
   function openAiRegistrationProposal(event) {
@@ -4228,20 +4323,25 @@
 
   async function loadAiConversation() {
     if (!el.aiConversationMessages) return;
+    if (state.aiConversationReviewDirty) { toast("Salve a revisão antes de atualizar a conversa.", "warning"); return; }
+    if (state.aiConversationPollingTimer) clearTimeout(state.aiConversationPollingTimer);
+    state.aiConversationPollingTimer = null;
     if (!aiConversationCore()) {
       showAiConversationSetup("Core de conversa não carregado no Web Resource.");
       return;
     }
     if (AI_CONVERSATION_LOCAL_MODE) {
+      clearAiConversationSetup();
       if (el.aiConversationEnvironment) el.aiConversationEnvironment.textContent = "Ambiente: localhost · proxy DeepSeek";
       state.aiConversation = aiConversationRowToSession(aiConversationStoreRead(AI_CONVERSATION_LOCAL_KEY)) || {
         id: `local-${Date.now()}`, status: "DRAFT", inputVersion: 0, processedVersion: 0,
-        originalText: "", messages: [{ role: "assistant", content: "Cole a solicitação do cliente para começar. A interpretação será feita pelo DeepSeek no proxy local." }], proposal: {}, missing: ["services"], warnings: [], ready: false
+        originalText: "", messages: [{ role: "assistant", content: "Cole a solicitação do cliente. Eu organizo os dados para sua revisão." }], proposal: {}, missing: ["services"], warnings: [], ready: false
       };
       renderAiConversation();
       return;
     }
     if (state.mockMode) {
+      clearAiConversationSetup();
       if (el.aiConversationEnvironment) el.aiConversationEnvironment.textContent = "Ambiente: local demonstrativo";
       state.aiConversation = aiConversationRowToSession(aiConversationStoreRead()) || {
         id: `mock-${Date.now()}`, status: "DRAFT", inputVersion: 0, processedVersion: 0,
@@ -4255,16 +4355,31 @@
       return;
     }
     if (el.aiConversationEnvironment) el.aiConversationEnvironment.textContent = `Ambiente: ${aiDraftEnvironmentLabel()}`;
+    const sessionId = aiConversationStoredSessionId();
+    if (!sessionId) {
+      clearAiConversationSetup();
+      state.aiConversation ||= { id: "", status: "DRAFT", inputVersion: 0, processedVersion: 0, messages: [], proposal: {}, missing: ["services"], warnings: [], ready: false };
+      renderAiConversation();
+      return;
+    }
     try {
       const config = aiConversationConfig();
       const select = [...new Set(Object.values(config.fields).filter((value) => /^[A-Za-z_][A-Za-z0-9_]*$/.test(String(value))))].join(",");
-      const result = await state.xrm.WebApi.retrieveMultipleRecords(config.entity, `?$select=${select}&$orderby=modifiedon desc&$top=1`);
-      state.aiConversation = aiConversationRowToSession(result.entities?.[0]);
+      const row = await state.xrm.WebApi.retrieveRecord(config.entity, sessionId, `?$select=${select}`);
+      state.aiConversation = aiConversationRowToSession(row);
       state.aiConversationPollStartedAt = 0;
       state.aiConversationPollAttempts = 0;
-      if (!state.aiConversation) state.aiConversation = { id: "", status: "DRAFT", inputVersion: 0, processedVersion: 0, messages: [], proposal: {}, missing: ["services"], warnings: [], ready: false };
+      clearAiConversationSetup();
       renderAiConversation();
+      if (["WAITING_AI", "SCHEDULING"].includes(state.aiConversation?.status)) scheduleAiConversationPoll(1500);
     } catch (error) {
+      if (Number(error.status) === 404) {
+        aiConversationRememberSession();
+        state.aiConversation = { id: "", status: "DRAFT", inputVersion: 0, processedVersion: 0, messages: [], proposal: {}, missing: ["services"], warnings: [], ready: false };
+        clearAiConversationSetup();
+        renderAiConversation();
+        return;
+      }
       showAiConversationSetup(`Sessão de agendamento indisponível neste ambiente: ${error.message || "erro de conexão"}`);
       state.aiConversation = state.aiConversation || { id: "", status: "ERROR", inputVersion: 0, processedVersion: 0, messages: [], proposal: {}, missing: ["setup"], warnings: [], ready: false, error: error.message || "erro" };
       renderAiConversation();
@@ -4277,12 +4392,246 @@
     el.aiConversationSetup.textContent = message;
   }
 
+  function clearAiConversationSetup() {
+    if (!el.aiConversationSetup) return;
+    el.aiConversationSetup.hidden = true;
+    el.aiConversationSetup.textContent = "";
+  }
+
+  function aiConversationDisplayDate(value) {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+    return match ? `${match[3]}/${match[2]}/${match[1]}` : value;
+  }
+
+  function renderAiConversationServiceFields(service, proposal, missing) {
+    const index = state.aiConversationSelectedService;
+    const root = el.aiConversationProposalCards;
+    const addField = (label, key, type = "text", options = null) => {
+      const field = document.createElement("label");
+      const path = `services[${index}].${key}`;
+      const isMissing = missing.some((item) => item === path || item.startsWith(`${path}.`));
+      field.className = `field ai-schedule-field${key === "passengers" ? " is-wide" : ""}${isMissing ? " is-missing" : ""}`;
+      const caption = document.createElement("span"); caption.textContent = label;
+      const input = options ? document.createElement("select") : document.createElement("input");
+      input.dataset.aiField = key;
+      input.setAttribute("aria-label", label);
+      if (isMissing) input.setAttribute("aria-invalid", "true");
+      input.disabled = state.aiConversationLoading || ["WAITING_AI", "SCHEDULED", "SCHEDULING"].includes(String(state.aiConversation?.status || "").toUpperCase());
+      if (key === "passengers") {
+        input.multiple = true;
+        input.dataset.placeholderLabel = "Selecione passageiros";
+      }
+      if (options) {
+        if (key !== "passengers") { const blank = document.createElement("option"); blank.value = ""; blank.textContent = "Selecione"; input.appendChild(blank); }
+        options.forEach((option) => {
+          const item = document.createElement("option"); item.value = String(option.value ?? option.id ?? ""); item.textContent = option.label || option.name || ""; input.appendChild(item);
+        });
+      } else input.type = type;
+      const value = key === "passengers" ? (service.passengers?.[0]?.id || proposal.passengers?.[0]?.id || "")
+        : key === "serviceType" || key === "vehicleType" ? String(service[key]?.value ?? service[key]?.id ?? "") : service[key] || "";
+      if (key === "passengers") {
+        const selected = service.passengers?.length ? service.passengers : proposal.passengers || [];
+        Array.from(input.options).forEach((option) => { option.selected = selected.some((item) => sameId(item.id, option.value)); });
+      } else input.value = value;
+      field.append(caption, input);
+      if (isMissing) {
+        const hint = document.createElement("span");
+        hint.id = `ai-schedule-hint-${index}-${key}`;
+        hint.className = "ai-schedule-field-hint";
+        hint.textContent = `Informe ${label.toLowerCase()} para continuar.`;
+        input.setAttribute("aria-describedby", hint.id);
+        field.appendChild(hint);
+      }
+      root.appendChild(field);
+    };
+    const addHeading = (title) => {
+      const heading = document.createElement("h4");
+      heading.className = "ai-schedule-fields-heading";
+      heading.textContent = title;
+      root.appendChild(heading);
+    };
+    addHeading("Data e trajeto");
+    addField("Data", "date", "date");
+    addField("Horário", "time", "time");
+    addField("Origem", "origin");
+    addField("Destino", "destination");
+    addHeading("Configuração do serviço");
+    addField("Tipo de serviço", "serviceType", "text", state.options.tipoServico);
+    addField("Veículo", "vehicleType", "text", state.options.tipoVeiculo);
+    addField("Passageiros", "passengers", "text", state.passageiros.map((item) => ({ value: item.id, label: item.label })));
+  }
+
+  function renderAiConversationIdentities(proposal, missing) {
+    const root = el.aiConversationIdentityFields;
+    root.replaceChildren();
+    const heading = document.createElement("h4");
+    heading.textContent = "Dados da solicitação";
+    root.appendChild(heading);
+    [["client", "Cliente", state.clientes], ["requester", "Solicitante", state.passageiros]].forEach(([key, label, collection]) => {
+      const field = document.createElement("label");
+      const isMissing = missing.some((item) => item === key || item.startsWith(`${key}.`));
+      field.className = `field ai-schedule-field${isMissing ? " is-missing" : ""}`;
+      const caption = document.createElement("span"); caption.textContent = label;
+      const select = document.createElement("select");
+      select.dataset.aiIdentity = key;
+      if (isMissing) select.setAttribute("aria-invalid", "true");
+      select.disabled = state.aiConversationLoading || ["WAITING_AI", "SCHEDULED", "SCHEDULING"].includes(String(state.aiConversation?.status || "").toUpperCase());
+      const blank = document.createElement("option"); blank.value = ""; blank.textContent = `Selecione ${label.toLowerCase()} cadastrado`;
+      select.appendChild(blank);
+      collection.forEach((item) => {
+        const option = document.createElement("option"); option.value = item.id; option.textContent = item.label;
+        select.appendChild(option);
+      });
+      select.value = collection.some((item) => sameId(item.id, proposal[key]?.id)) ? proposal[key].id : "";
+      field.append(caption, select);
+      if (proposal[key]?.name && !select.value) {
+        const hint = document.createElement("small");
+        hint.textContent = `Identificado como “${proposal[key].name}”; selecione o cadastro correspondente.`;
+        field.appendChild(hint);
+      }
+      root.appendChild(field);
+    });
+  }
+
+  function updateAiConversationIdentity(event) {
+    const select = event.target.closest("[data-ai-identity]");
+    const session = state.aiConversation;
+    if (!select || !session?.proposal?.services?.length || state.aiConversationLoading || ["WAITING_AI", "SCHEDULED", "SCHEDULING"].includes(String(session.status || "").toUpperCase())) return;
+    const key = select.dataset.aiIdentity;
+    const collection = key === "client" ? state.clientes : state.passageiros;
+    const selected = collection.find((item) => sameId(item.id, select.value));
+    const proposal = { ...session.proposal, [key]: selected ? { id: selected.id, name: selected.label } : null };
+    proposal.missingFields = (proposal.missingFields || []).filter((path) => path !== key && !path.startsWith(`${key}.`));
+    state.aiConversation = { ...session, proposal };
+    state.aiConversationReviewDirty = true;
+    renderAiConversation();
+  }
+
+  function updateAiConversationField(event) {
+    const input = event.target.closest("[data-ai-field]");
+    if (!input || (event.type === "input" && input.tagName === "SELECT")) return;
+    const session = state.aiConversation;
+    const index = state.aiConversationSelectedService;
+    if (!session?.proposal?.services?.[index] || state.aiConversationLoading || ["WAITING_AI", "SCHEDULED", "SCHEDULING"].includes(String(session.status || "").toUpperCase())) return;
+    const key = input.dataset.aiField;
+    const proposal = { ...session.proposal, services: session.proposal.services.map((item) => ({ ...item })) };
+    const service = proposal.services[index];
+    if (key === "passengers") {
+      service.passengers = Array.from(input.selectedOptions).map((option) => state.passageiros.find((item) => sameId(item.id, option.value))).filter(Boolean).map((item) => ({ id: item.id, name: item.label }));
+      if (proposal.services.every((item) => item.passengers?.length)) {
+        proposal.passengers = proposal.services.flatMap((item) => item.passengers)
+          .filter((passenger, position, all) => all.findIndex((item) => sameId(item.id, passenger.id)) === position);
+      }
+    } else if (key === "serviceType" || key === "vehicleType") {
+      const collection = key === "serviceType" ? state.options.tipoServico : state.options.tipoVeiculo;
+      const option = collection.find((item) => String(item.value) === input.value);
+      service[key] = option ? { value: option.value, id: String(option.value), name: option.label, label: option.label } : null;
+    } else service[key] = input.value;
+    proposal.missingFields = (proposal.missingFields || []).filter((path) => path !== `services[${index}].${key}`
+      && !(key === "passengers" && proposal.services.every((item) => item.passengers?.length) && (path === "passengers" || path.startsWith("passengers."))));
+    state.aiConversation = { ...session, proposal };
+    state.aiConversationReviewDirty = true;
+    updateAiConversationProgress(2, String(session.status || "DRAFT").toUpperCase());
+    if (event.type === "change" && (key === "serviceType" || key === "vehicleType")) renderAiConversation();
+    else {
+      el.aiConversationSave.disabled = false;
+      el.aiConversationSave.hidden = false;
+      el.aiConversationConfirm.disabled = true;
+      el.aiConversationConfirm.hidden = true;
+      el.aiConversationConfirmHint.textContent = "Revisão não salva. Salve antes de confirmar.";
+      const validation = aiConversationCore()?.validateProposal(proposal);
+      if (validation) {
+        const pending = validation.missing.length;
+        el.aiConversationReadiness.textContent = pending ? `${pending} pendência${pending === 1 ? "" : "s"}` : "Pronto para salvar";
+        el.aiConversationReadiness.classList.toggle("is-ready", !pending);
+        el.aiConversationReadiness.classList.toggle("is-blocked", Boolean(pending));
+        const fieldPath = `services[${index}].${key}`;
+        const fieldMissing = validation.missing.some((path) => path === fieldPath || path.startsWith(`${fieldPath}.`));
+        input.closest(".ai-schedule-field")?.classList.toggle("is-missing", fieldMissing);
+        if (fieldMissing) input.setAttribute("aria-invalid", "true");
+        else input.removeAttribute("aria-invalid");
+        const serviceIssues = validation.missing.filter((path) => path.startsWith(`services[${index}].`));
+        const serviceButton = el.aiConversationServiceList.querySelector(`[data-ai-service-index="${index}"]`);
+        const badge = serviceButton?.querySelector(".ai-schedule-service-status");
+        if (badge) {
+          badge.textContent = serviceIssues.length ? `${serviceIssues.length} pendência${serviceIssues.length === 1 ? "" : "s"}` : "Pronto";
+          badge.classList.toggle("is-pending", Boolean(serviceIssues.length));
+        }
+        if (serviceButton) {
+          const current = proposal.services[index];
+          const date = `${current.date ? aiConversationDisplayDate(current.date) : "Data pendente"}  •  ${current.time || "Horário pendente"}`;
+          const route = `${current.origin || "Origem pendente"} → ${current.destination || "Destino pendente"}`;
+          const passengers = (current.passengers?.length ? current.passengers : proposal.passengers || []).map((item) => item.name).filter(Boolean).join(", ") || "Passageiro pendente";
+          serviceButton.title = [date, route, passengers].join(" · ");
+        }
+      }
+    }
+  }
+
+  async function saveAiConversationReview() {
+    const session = state.aiConversation;
+    if (!session?.proposal?.services?.length || !state.aiConversationReviewDirty || ["WAITING_AI", "SCHEDULED", "SCHEDULING"].includes(String(session.status || "").toUpperCase())) return;
+    const validation = aiConversationCore().validateProposal(session.proposal);
+    const next = { ...session, proposal: validation.normalized, missing: validation.missing, warnings: validation.warnings, error: "", status: validation.ready ? "READY" : "WAITING_USER" };
+    state.aiConversationLoading = true;
+    renderAiConversation();
+    try {
+      if (AI_CONVERSATION_LOCAL_MODE) aiConversationStoreWrite(next, AI_CONVERSATION_LOCAL_KEY);
+      else if (state.mockMode) aiConversationStoreWrite(next);
+      else {
+        const config = aiConversationConfig();
+        if (!config || !state.xrm || !session.id) throw new Error("Sessão Dataverse indisponível.");
+        const payload = {};
+        aiConversationPayloadValue(payload, "proposalJson", JSON.stringify(validation.normalized));
+        aiConversationPayloadValue(payload, "missingFields", validation.missing.join(", "));
+        aiConversationPayloadValue(payload, "status", aiConversationStatusValue(next.status));
+        await state.xrm.WebApi.updateRecord(config.entity, session.id, payload);
+      }
+      state.aiConversation = next;
+      state.aiConversationReviewDirty = false;
+      clearAiConversationSetup();
+      toast("Revisão salva.", "success");
+    } catch (error) { toast(`Não foi possível salvar a revisão: ${error.message || "erro"}`, "error", 8000); }
+    finally { state.aiConversationLoading = false; renderAiConversation(); }
+  }
+
+  function resetAiScheduleSelects() {
+    [el.aiConversationIdentityFields, el.aiConversationProposalCards].forEach((root) => {
+      root.querySelectorAll("select.custom-select-native").forEach((select) => {
+        const custom = customSelectRoots.get(select);
+        if (!custom) return;
+        closeCustomSelect(select);
+        custom.panel.remove();
+        customSelectRoots.delete(select);
+      });
+    });
+  }
+
+  function initializeAiScheduleSelects() {
+    [el.aiConversationIdentityFields, el.aiConversationProposalCards].forEach((root) => {
+      root.querySelectorAll("select").forEach((select) => ensureCustomSelect(select));
+    });
+  }
+
+  function updateAiConversationProgress(activeStep, status) {
+    el.aiConversationProgress.querySelectorAll("[data-ai-step]").forEach((step) => {
+      const number = Number(step.dataset.aiStep);
+      step.dataset.state = status === "SCHEDULED" || number < activeStep ? "complete" : number === activeStep ? "current" : "upcoming";
+      if (number === activeStep && status !== "SCHEDULED") step.setAttribute("aria-current", "step");
+      else step.removeAttribute("aria-current");
+    });
+  }
+
   function renderAiConversation() {
     if (!el.aiConversationMessages) return;
     const session = state.aiConversation || { status: "DRAFT", messages: [], proposal: {}, missing: ["services"], warnings: [], ready: false };
     const status = String(session.status || "DRAFT").toUpperCase();
-    el.aiConversationStatus.textContent = aiConversationStatusLabel(status);
+    const isSimulation = state.mockMode || AI_CONVERSATION_LOCAL_MODE;
+    el.aiConversationStatus.textContent = status === "SCHEDULED" && isSimulation ? "Simulação concluída" : aiConversationStatusLabel(status);
     el.aiConversationStatus.className = `status-pill ai-conversation-status-${status.toLowerCase()}`;
+    const messageScrollTop = el.aiConversationMessages.scrollTop;
+    const followLatestMessage = el.aiConversationMessages.scrollHeight - messageScrollTop - el.aiConversationMessages.clientHeight < 48;
+    el.aiConversationMessages.hidden = false;
     el.aiConversationMessages.replaceChildren();
     (session.messages || []).forEach((message) => {
       const item = document.createElement("div");
@@ -4298,35 +4647,81 @@
       item.textContent = assistantMessage;
       el.aiConversationMessages.appendChild(item);
     }
-    el.aiConversationReadiness.textContent = validation.ready ? "Pronto" : `${validation.missing.length} pendência(s)`;
-    el.aiConversationReadiness.className = `ai-readiness ${validation.ready ? "is-ready" : "is-blocked"}`;
-    el.aiConversationProposalCards.replaceChildren();
+    if (!el.aiConversationMessages.childElementCount) {
+      const empty = document.createElement("p");
+      empty.className = "ai-conversation-empty";
+      empty.textContent = "Cole a solicitação do cliente para começar.";
+      el.aiConversationMessages.appendChild(empty);
+    }
+    el.aiConversationMessages.scrollTop = followLatestMessage ? el.aiConversationMessages.scrollHeight : messageScrollTop;
     const proposal = validation.normalized || {};
-    const fields = [
-      ["Cliente", proposal.client?.name], ["Solicitante", proposal.requester?.name],
-      ["Passageiro(s)", proposal.passengers?.map((item) => item.name).filter(Boolean).join(", ")],
-      ["Serviços", String(proposal.services?.length || 0)],
-      ["Confiança", Number.isFinite(proposal.confidence) ? `${Math.round(Math.max(0, Math.min(1, proposal.confidence)) * 100)}% (informativa)` : "Não informada"]
-    ];
-    const registrationProposals = [
-      proposal.client,
-      proposal.requester,
-      ...(proposal.passengers || [])
-    ].filter((identity) => identity?.proposedRegistration?.requiresConfirmation);
-    registrationProposals.forEach((identity) => fields.push(["Cadastro pendente", `${identity.name || "Pessoa"} — confirmação separada necessária`]));
-    (proposal.services || []).forEach((service, index) => fields.push([`Serviço ${index + 1}`, [service.date, service.time, service.origin, service.destination].filter(Boolean).join(" · ")]));
-    fields.forEach(([label, value]) => {
-      const card = document.createElement("div"); card.className = "ai-proposal-card";
-      const strong = document.createElement("strong"); strong.textContent = label;
-      const span = document.createElement("span"); span.textContent = value || "Pendente";
-      card.append(strong, span); el.aiConversationProposalCards.appendChild(card);
+    const missing = validation.missing || [];
+    const countLabel = `${missing.length} pendência${missing.length === 1 ? "" : "s"}`;
+    const retryFailedSchedule = status === "ERROR" && Number(session.confirmationVersion || 0) > 0
+      && Number(session.confirmationVersion) === Number(session.inputVersion);
+    const canConfirm = validation.ready && (["READY", "PARTIAL"].includes(status) || retryFailedSchedule);
+    const showConfirm = canConfirm && !state.aiConversationReviewDirty;
+    el.aiConversationReadiness.textContent = status === "SCHEDULED" ? (state.mockMode || AI_CONVERSATION_LOCAL_MODE ? "Simulação concluída" : "Solicitação criada")
+      : status === "SCHEDULING" ? "Registrando" : status === "WAITING_AI" ? "Interpretando"
+      : status === "PARTIAL" ? "Registro parcial" : status === "ERROR" ? "Precisa de atenção"
+      : !proposal.services?.length ? "Aguardando dados"
+      : validation.ready && state.aiConversationReviewDirty ? "Pronto para salvar"
+      : showConfirm ? "Pronto para confirmar" : validation.ready ? "Dados completos" : countLabel;
+    el.aiConversationReadiness.className = `ai-readiness ${status === "SCHEDULED" || showConfirm ? "is-ready" : "is-blocked"}`;
+    el.aiConversationIdentity.textContent = [proposal.client?.name && `Cliente: ${proposal.client.name}`, proposal.requester?.name && `Solicitante: ${proposal.requester.name}`].filter(Boolean).join("  •  ");
+    el.aiConversationServiceList.replaceChildren();
+    const services = proposal.services || [];
+    const activeStep = status === "SCHEDULED" || status === "SCHEDULING" || showConfirm ? 3 : services.length ? 2 : 1;
+    updateAiConversationProgress(activeStep, status);
+    el.aiConversationWorkspace.hidden = false;
+    if (!services.length && !state.aiConversationThreadTouched) {
+      el.aiConversationThread.hidden = false;
+      el.aiConversationToggle.setAttribute("aria-expanded", "true");
+      el.aiConversationToggle.firstChild.textContent = "Ocultar conversa ";
+    }
+    if (state.aiConversationSelectedService >= services.length) state.aiConversationSelectedService = 0;
+    el.aiConversationServiceCount.textContent = services.length ? `${services.length} serviço${services.length === 1 ? "" : "s"} identificado${services.length === 1 ? "" : "s"}` : "Aguardando pedido";
+    if (!services.length) { const empty = document.createElement("p"); empty.className = "ai-schedule-empty-list"; empty.textContent = "Nenhum serviço identificado"; el.aiConversationServiceList.appendChild(empty); }
+    services.forEach((service, index) => {
+      const issues = missing.filter((path) => path.startsWith(`services[${index}].`));
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `ai-schedule-service${index === state.aiConversationSelectedService ? " is-selected" : ""}`;
+      button.dataset.aiServiceIndex = String(index);
+      button.setAttribute("aria-current", index === state.aiConversationSelectedService ? "true" : "false");
+      const head = document.createElement("span"); head.className = "ai-schedule-service-head";
+      const title = document.createElement("strong"); title.textContent = `Serviço ${index + 1}`;
+      const badge = document.createElement("span"); badge.className = `ai-schedule-service-status${issues.length ? " is-pending" : ""}`;
+      badge.textContent = status === "SCHEDULED" ? "Solicitado" : issues.length ? `${issues.length} pendência${issues.length === 1 ? "" : "s"}` : "Pronto";
+      head.append(title, badge);
+      const date = document.createElement("span"); date.className = "ai-schedule-service-meta"; date.textContent = `${service.date ? aiConversationDisplayDate(service.date) : "Data pendente"}  •  ${service.time || "Horário pendente"}`;
+      const route = document.createElement("span"); route.className = "ai-schedule-service-meta"; route.textContent = `${service.origin || "Origem pendente"} → ${service.destination || "Destino pendente"}`;
+      const pax = document.createElement("span"); pax.className = "ai-schedule-service-meta"; pax.textContent = (service.passengers?.length ? service.passengers : proposal.passengers || []).map((item) => item.name).filter(Boolean).join(", ") || "Passageiro pendente";
+      button.title = [date.textContent, route.textContent, pax.textContent].join(" · ");
+      button.append(head, date, route, pax); el.aiConversationServiceList.appendChild(button);
     });
-    const missing = validation.missing || session.missing || [];
-    el.aiConversationMissing.hidden = !missing.length;
+    resetAiScheduleSelects();
+    el.aiConversationProposalCards.replaceChildren();
+    const selected = services[state.aiConversationSelectedService];
+    el.aiConversationProposalTitle.textContent = selected ? `Serviço ${state.aiConversationSelectedService + 1}` : "Revisão do pedido";
+    el.aiConversationProposalSubtitle.textContent = selected ? "Revise e complete os dados do serviço." : "Confira os dados depois de enviar a solicitação.";
+    el.aiConversationIdentityFields.hidden = !selected;
+    if (selected) renderAiConversationIdentities(proposal, missing);
+    if (selected) renderAiConversationServiceFields(selected, proposal, missing);
+    else {
+      const empty = document.createElement("div");
+      empty.className = "ai-schedule-empty";
+      const title = document.createElement("h4"); title.textContent = "Nenhum serviço para revisar";
+      const description = document.createElement("p"); description.textContent = "Envie o pedido na conversa. Os serviços identificados aparecerão aqui para conferência.";
+      empty.append(title, description);
+      el.aiConversationProposalCards.appendChild(empty);
+    }
+    initializeAiScheduleSelects();
+    el.aiConversationMissing.hidden = !missing.length || !services.length;
     el.aiConversationMissing.replaceChildren();
-    const question = proposal.question || (missing.length ? aiConversationFirstQuestion(missing) : "Confira a proposta e confirme para agendar.");
+    const question = missing.length ? aiConversationFirstQuestion(missing) : "Confira a proposta e confirme para registrar.";
     if (missing.length) {
-      el.aiConversationMissing.append(document.createTextNode(`Falta confirmar: ${missing.join(", ")}.\n${question}`));
+      el.aiConversationMissing.append(document.createTextNode(question));
       const registrations = [proposal.client, proposal.requester, ...(proposal.passengers || [])]
         .filter((identity) => identity?.proposedRegistration?.requiresConfirmation && identity.name);
       registrations.forEach((identity) => {
@@ -4338,33 +4733,79 @@
         el.aiConversationMissing.append(document.createElement("br"), action);
       });
     }
-    el.aiConversationWarnings.hidden = !(validation.warnings || session.warnings || []).length;
-    el.aiConversationWarnings.textContent = (validation.warnings || session.warnings || []).join(" ");
-    const canConfirm = validation.ready && !["SCHEDULED", "SCHEDULING"].includes(status);
-    el.aiConversationConfirm.disabled = !canConfirm || state.aiConversationLoading;
-    const hasCreatedReservations = status === "SCHEDULED" && (session.createdReservationIds || []).length > 0;
+    const warningMessages = [...(validation.warnings || session.warnings || [])];
+    if (["ERROR", "PARTIAL"].includes(status) && session.error) warningMessages.unshift(session.error);
+    el.aiConversationWarnings.hidden = !warningMessages.length;
+    el.aiConversationWarnings.textContent = warningMessages.join(" ");
+    el.aiConversationConfirm.disabled = !showConfirm || state.aiConversationLoading;
+    el.aiConversationConfirm.textContent = status === "SCHEDULED" ? "Concluído"
+      : status === "PARTIAL" ? "Concluir serviços pendentes"
+      : retryFailedSchedule ? "Tentar registrar novamente"
+      : isSimulation ? `Simular ${services.length} agendamento${services.length === 1 ? "" : "s"}`
+      : services.length ? `Confirmar e registrar ${services.length} serviço${services.length === 1 ? "" : "s"}` : "Confirmar e registrar";
+    el.aiConversationSave.disabled = !state.aiConversationReviewDirty || state.aiConversationLoading;
+    el.aiConversationSave.hidden = !services.length || !state.aiConversationReviewDirty || status === "SCHEDULED";
+    el.aiConversationConfirm.hidden = !showConfirm;
+    el.aiConversationStartOver.hidden = status !== "SCHEDULED";
+    el.aiConversationSend.disabled = state.aiConversationLoading || ["WAITING_AI", "SCHEDULED", "SCHEDULING"].includes(status);
+    el.aiConversationInput.disabled = state.aiConversationLoading || ["WAITING_AI", "SCHEDULED", "SCHEDULING"].includes(status);
+    el.aiConversationThread.setAttribute("aria-busy", String(state.aiConversationLoading || status === "WAITING_AI"));
+    const hasCreatedReservations = ["SCHEDULED", "PARTIAL"].includes(status) && (session.createdReservationIds || []).length > 0;
     el.aiConversationVoucher.hidden = !hasCreatedReservations;
-    el.aiConversationResume.hidden = status !== "ERROR" && status !== "PARTIAL";
+    el.aiConversationVoucher.textContent = status === "PARTIAL" ? "Ver serviços criados" : "Abrir voucher";
+    el.aiConversationResume.hidden = status !== "ERROR" || showConfirm;
     el.aiConversationConfirmHint.textContent = status === "SCHEDULED"
-      ? (AI_CONVERSATION_LOCAL_MODE ? "Confirmação registrada no localhost; simulação local criada. Abra o voucher para revisar." : "Reserva(s) criada(s). Abra o voucher no formulário para revisar.")
-      : "A confirmação libera a criação das reservas.";
+      ? (AI_CONVERSATION_LOCAL_MODE ? "Confirmação registrada no localhost; simulação local criada. Abra o voucher para revisar." : state.mockMode ? "Simulação local concluída. Nenhum registro foi criado no Dataverse." : "Solicitação registrada com status Solicitado. Abra o voucher para revisar.")
+      : status === "SCHEDULING" ? "Registro em andamento. Aguarde o resultado."
+      : status === "PARTIAL" ? "Alguns serviços foram criados. Confira o erro e conclua os restantes."
+      : status === "ERROR" ? "Não foi possível concluir. Confira o erro e tente novamente."
+      : state.aiConversationReviewDirty ? "Revisão não salva. Salve antes de confirmar."
+      : status === "WAITING_AI" ? "Interpretando a solicitação. Aguarde a resposta da IA."
+      : !services.length ? "Cole a solicitação na conversa para começar."
+      : missing.length ? `${countLabel} no total. Resolva as pendências para confirmar o agendamento.`
+      : isSimulation ? "Dados prontos. A confirmação cria apenas uma simulação local."
+      : "Todos os serviços prontos para confirmação humana.";
   }
 
   function startNewAiConversation() {
+    if (["WAITING_AI", "SCHEDULING"].includes(String(state.aiConversation?.status || "").toUpperCase())) {
+      toast("Aguarde o processamento antes de iniciar outra solicitação.", "warning");
+      return;
+    }
+    const hasCurrentRequest = (state.aiConversation?.messages || []).some((message) => message.role === "user")
+      || Boolean(state.aiConversation?.proposal?.services?.length);
+    if (hasCurrentRequest && String(state.aiConversation?.status || "").toUpperCase() !== "SCHEDULED") {
+      const prompt = state.aiConversationReviewDirty
+        ? "Descartar as alterações não salvas e iniciar outra solicitação?"
+        : "Iniciar outra solicitação? A conversa atual deixará de aparecer nesta aba.";
+      if (!window.confirm(prompt)) return;
+    }
     if (state.aiConversationPollingTimer) clearTimeout(state.aiConversationPollingTimer);
+    state.aiConversationPollingTimer = null;
+    state.aiConversationPollStartedAt = 0;
+    state.aiConversationPollAttempts = 0;
+    aiConversationRememberSession();
+    clearAiConversationSetup();
+    state.aiConversationReviewDirty = false;
+    state.aiConversationSelectedService = 0;
+    state.aiConversationThreadTouched = false;
+    el.aiConversationThread.hidden = false;
+    el.aiConversationToggle.setAttribute("aria-expanded", "true");
+    el.aiConversationToggle.firstChild.textContent = "Ocultar conversa ";
     const local = AI_CONVERSATION_LOCAL_MODE;
-    state.aiConversation = { id: `${local ? "local" : "mock"}-${Date.now()}`, status: "DRAFT", inputVersion: 0, processedVersion: 0, originalText: "", messages: [{ role: "assistant", content: local ? "Cole a solicitação do cliente para começar. A interpretação será feita pelo DeepSeek no proxy local." : "Cole a solicitação do cliente para começar." }], proposal: {}, missing: ["services"], warnings: [], ready: false };
+    state.aiConversation = { id: `${local ? "local" : "mock"}-${Date.now()}`, status: "DRAFT", inputVersion: 0, processedVersion: 0, originalText: "", messages: [{ role: "assistant", content: "Cole a solicitação do cliente. Eu organizo os dados para sua revisão." }], proposal: {}, missing: ["services"], warnings: [], ready: false };
     if (el.aiConversationInput) el.aiConversationInput.value = "";
     if (local) aiConversationStoreWrite(state.aiConversation, AI_CONVERSATION_LOCAL_KEY);
     else if (state.mockMode) aiConversationStoreWrite(state.aiConversation);
     renderAiConversation();
+    el.aiConversationInput?.focus();
   }
 
   async function submitLocalAiConversationInput(message, current) {
     const nextVersion = Number(current.inputVersion || 0) + 1;
     const messages = [...(current.messages || []), aiConversationMessage("user", message)];
     state.aiConversationLoading = true;
-    state.aiConversation = { ...current, status: "WAITING_AI", inputVersion: nextVersion, messages };
+    state.aiConversation = { ...current, status: "WAITING_AI", inputVersion: nextVersion, originalText: current.originalText || message, messages };
     renderAiConversation();
     try {
       const response = await fetch(AI_CONVERSATION_LOCAL_ENDPOINT, {
@@ -4403,6 +4844,7 @@
       };
       state.aiConversation = next;
       aiConversationStoreWrite(next, AI_CONVERSATION_LOCAL_KEY);
+      clearAiConversationSetup();
       if (el.aiConversationInput) el.aiConversationInput.value = "";
     } catch (error) {
       const failed = { ...state.aiConversation, status: "ERROR", error: error.message || "Falha no proxy local.", messages: [...messages, aiConversationMessage("assistant", `Não consegui interpretar agora: ${error.message || "falha no proxy local."}`)] };
@@ -4416,6 +4858,9 @@
   }
 
   async function submitAiConversationInput() {
+    if (state.aiConversationLoading) return;
+    if (["WAITING_AI", "SCHEDULING", "SCHEDULED"].includes(String(state.aiConversation?.status || "").toUpperCase())) return;
+    if (state.aiConversationReviewDirty) { toast("Salve a revisão antes de enviar outra mensagem.", "warning"); return; }
     const message = String(el.aiConversationInput?.value || "").trim();
     if (!message) { toast("Cole a mensagem do cliente antes de interpretar.", "error"); return; }
     if (message.length > AI_CONVERSATION_MAX_INPUT_LENGTH) {
@@ -4436,6 +4881,7 @@
       const next = { ...current, originalText: current.originalText || message, inputVersion: Number(current.inputVersion || 0) + 1, processedVersion: Number(current.inputVersion || 0) + 1, confirmationRequested: parsed.validation.ready, confirmationVersion: 0, proposal: parsed.validation.normalized, status: parsed.validation.ready ? "READY" : "WAITING_USER", missing: parsed.validation.missing, warnings: parsed.validation.warnings, messages: [...(current.messages || []), aiConversationMessage("user", message), aiConversationMessage("assistant", parsed.validation.ready ? `Entendi a solicitação. Confira a proposta e confirme para agendar.\n\n${aiConversationSummary({ proposal: parsed.validation.normalized })}` : aiConversationFirstQuestion(parsed.validation.missing))] };
       state.aiConversation = next;
       aiConversationStoreWrite(next);
+      clearAiConversationSetup();
       if (el.aiConversationInput) el.aiConversationInput.value = "";
       renderAiConversation();
       return;
@@ -4458,6 +4904,8 @@
         ? await state.xrm.WebApi.updateRecord(config.entity, current.id, payload).then(() => ({ id: current.id }))
         : await state.xrm.WebApi.createRecord(config.entity, payload);
       state.aiConversation = { ...current, id: cleanGuid(created.id), inputVersion: nextVersion, status: "WAITING_AI", originalText: current.originalText || message, messages };
+      aiConversationRememberSession(state.aiConversation.id);
+      clearAiConversationSetup();
       if (el.aiConversationInput) el.aiConversationInput.value = "";
       renderAiConversation();
       scheduleAiConversationPoll(1500);
@@ -4470,7 +4918,13 @@
     if (state.aiConversationLoading) return;
     const session = state.aiConversation;
     const validation = aiConversationCore()?.validateProposal(session?.proposal || {});
-    if (!session || !validation?.ready) { toast("Ainda há dados obrigatórios pendentes.", "error"); return; }
+    const status = String(session?.status || "").toUpperCase();
+    const retryFailedSchedule = status === "ERROR" && Number(session?.confirmationVersion || 0) > 0
+      && Number(session.confirmationVersion) === Number(session.inputVersion);
+    if (!session || !(status === "READY" || status === "PARTIAL" || retryFailedSchedule) || !validation?.ready || state.aiConversationReviewDirty) {
+      toast("Aguarde a interpretação e salve a revisão antes de confirmar.", "warning");
+      return;
+    }
     state.aiConversationLoading = true;
     renderAiConversation();
     if (AI_CONVERSATION_LOCAL_MODE) {
@@ -4491,7 +4945,7 @@
       return;
     }
     if (state.mockMode) {
-      state.aiConversation = { ...session, status: "SCHEDULED", confirmationRequested: false, confirmationVersion: session.inputVersion, messages: [...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar."), aiConversationMessage("assistant", "Simulação local concluída. Nenhum registro foi criado no Dataverse.")] };
+      state.aiConversation = { ...session, status: "SCHEDULED", confirmationRequested: false, confirmationVersion: session.inputVersion, messages: [...(session.messages || []), aiConversationMessage("user", "Confirmo os dados. Pode registrar a solicitação."), aiConversationMessage("assistant", "Simulação local concluída. Nenhum registro foi criado no Dataverse.")] };
       aiConversationStoreWrite(state.aiConversation); renderAiConversation();
       state.aiConversationLoading = false;
       toast("Simulação local concluída. Nenhum registro Dataverse foi criado.", "warning", 7000);
@@ -4505,10 +4959,11 @@
     aiConversationPayloadValue(payload, "status", aiConversationStatusValue("SCHEDULING"));
     aiConversationPayloadValue(payload, "confirmationRequested", false);
     aiConversationPayloadValue(payload, "confirmationVersion", session.inputVersion);
-    aiConversationPayloadValue(payload, "messagesJson", JSON.stringify([...(session.messages || []), aiConversationMessage("user", "Confirmo. Pode agendar.")]));
+    aiConversationPayloadValue(payload, "messagesJson", JSON.stringify([...(session.messages || []), aiConversationMessage("user", "Confirmo os dados. Pode registrar a solicitação.")]));
     try {
       await state.xrm.WebApi.updateRecord(config.entity, session.id, payload);
       state.aiConversation = { ...session, proposal: validation.normalized, status: "SCHEDULING", confirmationVersion: session.inputVersion };
+      clearAiConversationSetup();
       renderAiConversation();
       scheduleAiConversationPoll(1500);
     } catch (error) { toast(`Não foi possível confirmar: ${error.message || "erro de conexão"}`, "error", 8000); }
@@ -4517,7 +4972,17 @@
 
   async function resumeAiConversation() {
     await loadAiConversation();
-    if (state.aiConversation?.status === "PARTIAL") toast("Sessão parcial carregada. Revise os itens pendentes e confirme novamente.", "warning", 7000);
+    if (!el.aiConversationSetup.hidden) return;
+    const session = state.aiConversation;
+    if (session?.status !== "ERROR") return;
+    const retryText = session.originalText || [...(session.messages || [])].reverse().find((item) => item.role === "user")?.content;
+    if (retryText && !session.proposal?.services?.length) {
+      el.aiConversationInput.value = retryText;
+      await submitAiConversationInput();
+    } else {
+      el.aiConversationWorkspace?.scrollIntoView({ block: "start", behavior: "smooth" });
+      toast("Revise o erro e os dados do serviço. Salve as correções para tentar novamente.", "warning", 7000);
+    }
   }
 
   async function openAiConversationVoucher() {
@@ -4548,8 +5013,9 @@
       const services = rows.map((row, index) => {
         const date = row[f.dataSaida] ? new Date(row[f.dataSaida]) : null;
         const proposalService = proposal.services?.[index] || {};
+        const operationStatus = optionLabel("statusOperacao", row[f.status]);
         return {
-          typeLabel: "Serviço confirmado",
+          typeLabel: operationStatus === "Solicitado" ? "Serviço solicitado" : operationStatus === "Confirmado" ? "Serviço confirmado" : "Serviço registrado",
           shortId: String(row[f.readableId] || row[f.id] || reservationIds[index]).slice(-6).toUpperCase(),
           scheduledAt: date && !Number.isNaN(date.getTime()) ? formatDateTime(date) : `${proposalService.date || "Não informado"} ${proposalService.time || ""}`.trim(),
           sortTime: date && !Number.isNaN(date.getTime()) ? date.getTime() : index,
@@ -4570,7 +5036,7 @@
         requester: proposal.requester?.name || "Não informado",
         serviceType: services[0]?.serviceType || "Não informado",
         vehicleType: services[0]?.vehicleType || "A confirmar",
-        status: "Confirmado",
+        status: String(session.status || "").toUpperCase() === "PARTIAL" ? "Parcial" : optionLabel("statusOperacao", rows[0]?.[f.status]) || "Solicitado",
         operationCode: "",
         costCenter: "",
         passengerSummary,
@@ -4587,6 +5053,7 @@
   function scheduleAiConversationPoll(delay = 2000) {
     if (state.aiConversationPollingTimer) clearTimeout(state.aiConversationPollingTimer);
     if (state.mockMode || !state.aiConversation?.id || String(state.aiConversation.id).startsWith("mock-")) return;
+    const sessionId = state.aiConversation.id;
     if (!state.aiConversationPollStartedAt) state.aiConversationPollStartedAt = Date.now();
     if (Date.now() - state.aiConversationPollStartedAt > 45000 || state.aiConversationPollAttempts >= 8) {
       showAiConversationSetup("A sessão ainda está em processamento. Use Atualizar para tentar novamente; o polling automático foi encerrado.");
@@ -4594,14 +5061,25 @@
     }
     state.aiConversationPollAttempts += 1;
     state.aiConversationPollingTimer = setTimeout(async () => {
+      state.aiConversationPollingTimer = null;
+      if (state.aiConversation?.id !== sessionId) return;
       try {
         const config = aiConversationConfig();
-        const row = await state.xrm.WebApi.retrieveRecord(config.entity, state.aiConversation.id);
+        const row = await state.xrm.WebApi.retrieveRecord(config.entity, sessionId);
+        if (state.aiConversation?.id !== sessionId) return;
         const next = aiConversationRowToSession(row);
-        if (next) { state.aiConversation = next; renderAiConversation(); }
+        if (!next) throw new Error("Resposta vazia do Dataverse.");
+        state.aiConversation = next;
+        clearAiConversationSetup();
+        renderAiConversation();
         if (["WAITING_AI", "SCHEDULING"].includes(String(next?.status || "").toUpperCase())) scheduleAiConversationPoll(Math.min(delay * 2, 10000));
         else { state.aiConversationPollStartedAt = 0; state.aiConversationPollAttempts = 0; }
-      } catch (error) { showAiConversationSetup(`Atualização da sessão falhou: ${error.message || "erro"}`); }
+      } catch (error) {
+        if (state.aiConversation?.id !== sessionId) return;
+        if (state.aiConversationPollAttempts >= 8 || Date.now() - state.aiConversationPollStartedAt > 45000) {
+          showAiConversationSetup(`Atualização da sessão falhou: ${error.message || "erro"}. Use Atualizar para tentar novamente.`);
+        } else scheduleAiConversationPoll(Math.min(delay * 2, 10000));
+      }
     }, delay);
   }
 
@@ -7537,6 +8015,7 @@
       return;
     }
     state.currentTab = tab;
+    document.body.classList.toggle("is-ai-schedule-tab", tab === "ai-schedule");
     el.tabs.forEach((button) => {
       const isActive = button.dataset.tab === tab;
       button.classList.toggle("is-active", isActive);
@@ -11451,7 +11930,6 @@
     const textarea = document.createElement("textarea");
     textarea.rows = 2;
     if (options.obs) {
-      textarea.maxLength = 500;
       textarea.placeholder = "Ex.: preferir veículo com água, sem paradas, rota direta.";
     }
     textarea.value = value ?? "";
@@ -11492,7 +11970,6 @@
     });
     const textarea = document.createElement("textarea");
     textarea.rows = 2;
-    textarea.maxLength = 500;
     textarea.placeholder = "Ex.: preferir veículo com água, sem paradas, rota direta.";
     textarea.value = obs[current] || "";
     textarea.dataset.importObservationText = "1";
@@ -15051,7 +15528,7 @@
     </article>`;
   }
 
-  function renderVoucherServiceSummary(services) {
+  function renderVoucherServiceSummary(services, status) {
     const first = services[0];
     if (!first) return "";
     const last = services[services.length - 1];
@@ -15065,7 +15542,7 @@
       .join("; ");
     return `<section class="voucher-description">
       <span>Resumo executivo</span>
-      <h2>Transporte confirmado</h2>
+      <h2>${status === "Solicitado" ? "Transporte solicitado" : status === "Confirmado" ? "Transporte confirmado" : "Transporte registrado"}</h2>
       <p>Serviço(s) terrestre(s) programado(s) para <strong>${escapeVoucherHtml(period)}</strong>.</p>
       <p>${escapeVoucherHtml(routeList || first.route || "Não informado")}</p>
     </section>`;
@@ -15074,6 +15551,9 @@
   function buildSuccessVoucherHtml(voucher) {
     const firstPageServices = voucher.services.slice(0, 4);
     const continuationPages = chunkVoucherItems(voucher.services.slice(4), 5);
+    const isConfirmed = voucher.status === "Confirmado";
+    const isRequested = voucher.status === "Solicitado";
+    const documentTitle = isRequested ? "Serviço solicitado" : isConfirmed ? "Serviço confirmado" : "Serviço registrado";
     const preferenceBlock = voucher.preferenceSummary
       ? `<div class="voucher-observation">
           <span>Perfil / preferências informadas:</span>
@@ -15090,8 +15570,8 @@
           </div>
         </div>
         <div class="voucher-document-title">
-          <span>Confirmação executiva</span>
-          <h1>Serviço confirmado</h1>
+          <span>${isRequested ? "Solicitação executiva" : isConfirmed ? "Confirmação executiva" : "Registro operacional"}</span>
+          <h1>${documentTitle}</h1>
         </div>
       </header>
       <main class="voucher-page-body">
@@ -15108,14 +15588,14 @@
             <div><span>Serviços</span><strong>${escapeVoucherHtml(String(voucher.services.length))}</strong></div>
           </div>
         </section>
-        ${renderVoucherServiceSummary(voucher.services)}
+        ${renderVoucherServiceSummary(voucher.services, voucher.status)}
         <section class="voucher-service-stack">
           ${firstPageServices.map(renderVoucherServiceRow).join("")}
         </section>
         ${preferenceBlock}
       </main>
       <footer class="voucher-footer">
-        <p>Documento de confirmação operacional. Valores, cobrança e forma de pagamento constam apenas no recibo ou faturamento oficial.</p>
+        <p>${isConfirmed ? "Documento de confirmação operacional." : "Documento de solicitação operacional. Consulte o status antes de operar."} Valores, cobrança e forma de pagamento constam apenas no recibo ou faturamento oficial.</p>
         <div class="voucher-contact-grid">
           <span>Júnior de Paula</span><strong>Concierge (Bilingual)</strong><span>+55 12 99723 6961</span><span>junior@betinhos.com.br</span>
           <span>Deborah Keila</span><strong>Operations Manager</strong><span>+55 12 99615 9093</span><span>deborah.keila@betinhos.com.br</span>

@@ -50,6 +50,7 @@
         "destination": { "type": "string", "maxLength": 500 },
         "serviceType": { "$ref": "#/$defs/choice" },
         "vehicleType": { "$ref": "#/$defs/choice" },
+        "passengers": { "type": "array", "maxItems": 50, "items": { "$ref": "#/$defs/identity" } },
         "observations": { "type": "string", "maxLength": 2000 }
       }
     }

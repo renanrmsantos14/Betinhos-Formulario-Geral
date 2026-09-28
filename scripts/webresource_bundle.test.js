@@ -252,7 +252,8 @@ assert.ok(!html.includes("Janela da PG"), "bundle nao deve exibir Janela da PG")
 assert.ok(!html.includes(".import-timeline"), "bundle nao deve manter CSS do bloco Janela da PG");
 assert.ok(html.includes("dataset.importInputType = type"), "bundle deve expor tipo dos campos importados");
 assert.ok(html.includes("textarea.placeholder = \"Ex.: preferir veículo com água, sem paradas, rota direta.\""), "bundle deve usar placeholder comum na observacao importada");
-assert.ok(html.includes("textarea.maxLength = 500;"), "bundle deve usar limite comum na observacao importada");
+assert.ok(!html.includes("textarea.maxLength = 500;"), "bundle nao deve limitar caracteres dos textareas importados");
+assert.ok(!html.includes('maxlength="500"'), "bundle nao deve limitar caracteres das observacoes");
 assert.ok(html.includes(".import-field[data-import-input-type=\"datetime-local\"]"), "bundle deve aplicar largura especifica em DateTime importado");
 assert.ok(html.includes("var(--datetime-field-width)"), "bundle deve reutilizar token DateTime do formulario principal");
 assert.ok(html.includes(".import-field[data-import-input-type=\"date\"]"), "bundle deve aplicar largura especifica em Date importado");

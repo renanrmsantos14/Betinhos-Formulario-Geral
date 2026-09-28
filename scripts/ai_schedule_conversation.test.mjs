@@ -16,6 +16,8 @@ assert.ok(core, "core de conversa deve exportar API global");
 assert.equal(schema.$schema, "https://json-schema.org/draft/2020-12/schema");
 assert.ok(schema.required.includes("services"), "schema deve exigir serviços");
 assert.equal(core.normalizeDate("14/09/2026"), "2026-09-14");
+assert.equal(core.normalizeDate("2026-02-30"), "");
+assert.equal(core.normalizeDate("2028-02-29"), "2028-02-29");
 assert.equal(core.normalizeTime("8h30"), "08:30");
 
 const incomplete = core.validateProposal({
@@ -25,6 +27,7 @@ const incomplete = core.validateProposal({
   services: [{ origin: "São Paulo", destination: "GRU" }]
 });
 assert.equal(incomplete.ready, false);
+assert.equal(core.validateProposal({ ...incomplete.normalized, services: [{ ...incomplete.normalized.services[0], date: "2026-02-30" }] }).ready, false);
 assert.ok(incomplete.missing.includes("services[0].date"));
 assert.ok(incomplete.missing.includes("services[0].serviceType"));
 
@@ -47,6 +50,7 @@ const complete = core.validateProposal({
   }]
 });
 assert.equal(complete.ready, true);
+assert.equal(core.validateProposal({ ...complete.normalized, missingFields: ["serviceType", "services[0].vehicleType"] }).ready, true);
 assert.equal(core.nextStatus(complete), core.STATUS.READY);
 assert.equal(core.isExplicitConfirmation("Pode ser!", { awaitingConfirmation: true, confirmationRequested: true, version: 2 }), true);
 assert.equal(core.isExplicitConfirmation("Pode ser!", { awaitingConfirmation: true, confirmationRequested: false, version: 2 }), false);
@@ -63,6 +67,22 @@ const localVoucher = core.buildLocalVoucher({ session: localSession, reservation
 assert.equal(localVoucher.services.length, localRecords.length);
 assert.equal(localVoucher.services[0].shortId, localRecords[0].id.slice(-6).toUpperCase());
 assert.match(localVoucher.status, /localhost/);
+
+const multiService = core.validateProposal({
+  ...complete.normalized,
+  passengers: [],
+  services: [
+    { ...complete.normalized.services[0], ordinal: 1, passengers: [{ id: "passenger-1", name: "Ana" }] },
+    { ...complete.normalized.services[0], ordinal: 2, passengers: [{ id: "passenger-2", name: "Carlos" }] }
+  ]
+});
+assert.equal(multiService.ready, true);
+assert.deepEqual(core.normalizeProposal({ ...complete.normalized, services: [{ ...complete.normalized.services[0], ordinal: 1 }, { ...complete.normalized.services[0], ordinal: 1 }] }).services.map((item) => item.ordinal), [1, 2]);
+const multiRecords = core.buildLocalReservationRecords({ session: { id: "multi", proposal: multiService.normalized } });
+assert.equal(multiRecords[0].passengers[0].name, "Ana");
+assert.equal(multiRecords[1].passengers[0].name, "Carlos");
+const multiVoucher = core.buildLocalVoucher({ session: { proposal: multiService.normalized }, reservations: multiRecords });
+assert.equal(multiVoucher.services[1].passengerSummary, "Carlos");
 
 const session = core.normalizeSession({ id: "s1", inputVersion: 3, proposal: complete.normalized });
 assert.equal(session.ready, true);

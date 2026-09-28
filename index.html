@@ -174,7 +174,7 @@
                   <button type="button" class="seg" data-obs="final" role="tab" aria-selected="false">Final</button>
                   <button type="button" class="seg" data-obs="passageiro" role="tab" aria-selected="false">Pref Pax</button>
                 </div>
-                <textarea id="observacao" rows="2" maxlength="500" placeholder="Ex.: preferir veículo com água, sem paradas, rota direta."></textarea>
+                <textarea id="observacao" rows="2" placeholder="Ex.: preferir veículo com água, sem paradas, rota direta."></textarea>
               </div>
             </div>
           </section>
@@ -328,43 +328,52 @@
       </section>
 
       <section id="tab-panel-ai-schedule" class="panel ai-conversation-panel" data-panel="ai-schedule" aria-labelledby="aiConversationTitle" hidden>
-        <div class="panel-header ai-conversation-header">
-          <div>
-            <p class="eyebrow">Confirmação humana obrigatória</p>
-            <h2 id="aiConversationTitle">Agendar por IA</h2>
-            <p class="muted">Cole a mensagem do cliente. A IA organiza os dados, pergunta o que faltar e só agenda depois da sua confirmação.</p>
-          </div>
-          <div class="ai-conversation-head-actions">
-            <span id="aiConversationEnvironment" class="ai-environment-badge" aria-live="polite"></span>
-            <button id="aiConversationRefresh" class="button button-secondary" type="button">Atualizar</button>
-          </div>
+        <div class="ai-schedule-topbar">
+          <h2 id="aiConversationTitle">Agendar por IA</h2>
+          <p id="aiConversationIdentity" class="ai-schedule-identity"></p>
+          <button id="aiConversationToggle" class="ai-schedule-conversation-toggle" type="button" aria-expanded="false" aria-controls="aiConversationThread">Ver conversa <span class="ai-schedule-conversation-chevron" aria-hidden="true"></span></button>
+          <span id="aiConversationReadiness" class="ai-readiness" aria-live="polite"></span>
         </div>
+        <ol id="aiConversationProgress" class="ai-schedule-progress" aria-label="Etapas do agendamento">
+          <li data-ai-step="1"><span aria-hidden="true">1</span>Pedido</li>
+          <li data-ai-step="2"><span aria-hidden="true">2</span>Revisão</li>
+          <li data-ai-step="3"><span aria-hidden="true">3</span>Confirmação</li>
+        </ol>
         <div id="aiConversationSetup" class="notice" hidden></div>
-        <div class="ai-conversation-layout">
-          <section class="ai-conversation-thread" aria-labelledby="aiConversationThreadTitle">
-            <div class="ai-subsection-head"><h3 id="aiConversationThreadTitle">Conversa</h3><span id="aiConversationStatus" class="status-pill" aria-live="polite"></span></div>
-            <div id="aiConversationMessages" class="ai-conversation-messages" aria-live="polite"></div>
-            <label class="field ai-conversation-input-field">
-              <span>Mensagem ou solicitação do cliente</span>
-              <textarea id="aiConversationInput" rows="7" placeholder="Ex.: Cliente: Embraer\nPassageiro: Ana Souza\nData: 2026-09-14\nHora: 08:30\nOrigem: São Paulo\nDestino: GRU\nServiço: 202410000\nVeículo: 202410001"></textarea>
-            </label>
-            <div class="ai-conversation-actions">
-              <button id="aiConversationNew" class="button button-secondary" type="button">Nova conversa</button>
-              <button id="aiConversationSend" class="button button-primary" type="button">Interpretar solicitação</button>
+        <div class="ai-schedule-layout">
+          <div class="ai-schedule-main">
+            <div id="aiConversationWorkspace" class="ai-schedule-workspace">
+              <div class="ai-schedule-service-strip">
+                <div class="ai-schedule-service-strip-head"><h3>Serviços da solicitação</h3><span id="aiConversationServiceCount" class="muted"></span></div>
+                <nav id="aiConversationServiceList" class="ai-schedule-service-list" aria-label="Serviços da solicitação"></nav>
+              </div>
+              <section class="ai-schedule-editor" aria-labelledby="aiConversationProposalTitle">
+                <header class="ai-schedule-editor-head"><h3 id="aiConversationProposalTitle">Revisão do pedido</h3><p id="aiConversationProposalSubtitle">Revise e complete os dados do serviço.</p></header>
+                <div id="aiConversationIdentityFields" class="ai-schedule-identity-fields" hidden></div>
+                <div id="aiConversationProposalCards" class="ai-schedule-fields"></div>
+                <div id="aiConversationMissing" class="notice notice-warning" hidden></div>
+                <div id="aiConversationWarnings" class="notice" hidden></div>
+              </section>
             </div>
-          </section>
-          <aside class="ai-conversation-proposal" aria-labelledby="aiConversationProposalTitle">
-            <div class="ai-subsection-head"><h3 id="aiConversationProposalTitle">Proposta estruturada</h3><span id="aiConversationReadiness" class="ai-readiness"></span></div>
-            <div id="aiConversationProposalCards" class="ai-proposal-cards"></div>
-            <div id="aiConversationMissing" class="notice notice-warning" hidden></div>
-            <div id="aiConversationWarnings" class="notice" hidden></div>
             <div class="ai-conversation-confirm">
-              <p id="aiConversationConfirmHint" class="muted">A confirmação libera a criação das reservas.</p>
+              <p id="aiConversationConfirmHint" class="muted">Cole uma solicitação na conversa para começar.</p>
+              <button id="aiConversationSave" class="button button-secondary" type="button" disabled>Salvar revisão</button>
               <button id="aiConversationConfirm" class="button button-primary" type="button" disabled>Confirmar e agendar</button>
+              <button id="aiConversationStartOver" class="button button-secondary" type="button" hidden>Nova solicitação</button>
               <button id="aiConversationVoucher" class="button button-secondary" type="button" hidden>Abrir voucher</button>
               <button id="aiConversationResume" class="button button-secondary" type="button" hidden>Retomar pendência</button>
             </div>
-          </aside>
+          </div>
+          <section id="aiConversationThread" class="ai-conversation-thread" aria-labelledby="aiConversationThreadTitle" hidden>
+            <div class="ai-subsection-head"><h3 id="aiConversationThreadTitle">Conversa</h3><span id="aiConversationStatus" class="status-pill" aria-live="polite"></span></div>
+            <div id="aiConversationMessages" class="ai-conversation-messages" aria-live="polite"></div>
+            <div class="ai-conversation-composer">
+              <label class="ai-conversation-input-field"><span>Mensagem ou solicitação do cliente</span><textarea id="aiConversationInput" rows="3" placeholder="Escreva ou cole a solicitação do cliente…" aria-describedby="aiConversationInputHelp"></textarea></label>
+              <div class="ai-conversation-actions"><button id="aiConversationRefresh" class="button button-secondary" type="button">Atualizar</button><button id="aiConversationNew" class="button button-secondary" type="button">Nova conversa</button><button id="aiConversationSend" class="button button-primary" type="button" aria-label="Enviar mensagem">Enviar <svg viewBox="0 0 20 20" focusable="false" aria-hidden="true"><path d="M10 15V4m-4 4 4-4 4 4"></path></svg></button></div>
+            </div>
+            <p id="aiConversationInputHelp" class="ai-conversation-input-help">Ctrl+Enter para enviar. Revise os dados antes de agendar.</p>
+            <span id="aiConversationEnvironment" class="ai-environment-badge" aria-live="polite"></span>
+          </section>
         </div>
       </section>
 
@@ -507,7 +516,7 @@
                 <button type="button" class="seg" data-ret-obs="final" role="tab" aria-selected="false">Final</button>
                 <button type="button" class="seg" data-ret-obs="passageiro" role="tab" aria-selected="false">Pref Pax</button>
               </div>
-              <textarea id="retornoObservacao" rows="2" maxlength="500" placeholder="Ex.: retorno com horário flexível, sem paradas, etc."></textarea>
+              <textarea id="retornoObservacao" rows="2" placeholder="Ex.: retorno com horário flexível, sem paradas, etc."></textarea>
             </div>
           </div>
         </section>
@@ -552,7 +561,7 @@
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.13.5</span>
+        <span>v</span><span id="codeVersionText">1.13.15</span>
       </footer>
     </main>
 
