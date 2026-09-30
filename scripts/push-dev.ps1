@@ -12,7 +12,7 @@ param(
   [string] $DataverseConnectionReferenceLogicalName = "",
   [string] $DeepSeekConnectionReferenceLogicalName = "",
   [string] $DeepSeekConnectorId = "",
-  [string] $DeepSeekApiName = "shared_betinhosdeepseek",
+  [string] $DeepSeekApiName = "shared_new-5fbetinhos-20deepseek-5f30e351431b40001e",
   [string] $DeepSeekOperationId = "Responses"
 )
 

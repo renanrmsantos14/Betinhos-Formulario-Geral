@@ -4,7 +4,7 @@ param(
   [string] $ClientId = "",
   [string] $DataverseConnectionReferenceLogicalName = "",
   [string] $DeepSeekConnectionReferenceLogicalName = "",
-  [string] $DeepSeekApiName = "shared_betinhosdeepseek",
+  [string] $DeepSeekApiName = "shared_new-5fbetinhos-20deepseek-5f30e351431b40001e",
   [string] $DeepSeekOperationId = "Responses",
   [string] $DefinitionDirectory = "power-platform\flows",
   [string] $InterpretFlowName = "Betinhos | IA | Interpretar conversa",
@@ -53,11 +53,21 @@ foreach ($definition in $definitions) {
 function Replace-Token([string] $Text, [string] $Token, [string] $Value) {
   return $Text.Replace($Token, $Value)
 }
+function Remove-ParseJsonPatterns($Node) {
+  if ($Node -is [System.Array]) { foreach ($item in $Node) { Remove-ParseJsonPatterns $item }; return }
+  if ($Node -isnot [pscustomobject]) { return }
+  foreach ($property in @($Node.PSObject.Properties)) {
+    if ($property.Name -in @("pattern", "patternProperties")) { $Node.PSObject.Properties.Remove($property.Name) }
+    else { Remove-ParseJsonPatterns $property.Value }
+  }
+}
 function Read-Definition([string] $Path) {
   $text = Get-Content -LiteralPath $Path -Raw -Encoding UTF8
   $schemaPath = Join-Path $root "docs\power-platform\ai_schedule_proposal.schema.json"
   if (-not (Test-Path -LiteralPath $schemaPath -PathType Leaf)) { throw "Schema da proposta não encontrado: $schemaPath" }
   $schemaObject = Get-Content -LiteralPath $schemaPath -Raw -Encoding UTF8 | ConvertFrom-Json
+  $parseSchema = $schemaObject | ConvertTo-Json -Depth 100 | ConvertFrom-Json
+  Remove-ParseJsonPatterns $parseSchema
   $text = Replace-Token $text "__DV_CONNECTION_REF__" $DataverseConnectionReferenceLogicalName
   $text = Replace-Token $text "__DEEPSEEK_CONNECTION_REF__" $DeepSeekConnectionReferenceLogicalName
   $text = Replace-Token $text "__DEEPSEEK_API_NAME__" $DeepSeekApiName
@@ -73,10 +83,10 @@ function Read-Definition([string] $Path) {
     if ($schemaSlot -eq "__AI_SCHEDULE_SCHEMA_JSON__") { $definition.actions.Call_DeepSeek_Fallback.inputs.parameters.body.text.format.schema = $schemaObject }
   }
   if ($definition.actions.PSObject.Properties.Name -contains "Parse_Proposal") {
-    if ($definition.actions.Parse_Proposal.inputs.schema -eq "__AI_SCHEDULE_SCHEMA_JSON__") { $definition.actions.Parse_Proposal.inputs.schema = $schemaObject }
+    if ($definition.actions.Parse_Proposal.inputs.schema -eq "__AI_SCHEDULE_SCHEMA_JSON__") { $definition.actions.Parse_Proposal.inputs.schema = $parseSchema }
   }
   if ($definition.actions.PSObject.Properties.Name -contains "Parse_Primary") {
-    if ($definition.actions.Parse_Primary.inputs.schema -eq "__AI_SCHEDULE_SCHEMA_JSON__") { $definition.actions.Parse_Primary.inputs.schema = $schemaObject }
+    if ($definition.actions.Parse_Primary.inputs.schema -eq "__AI_SCHEDULE_SCHEMA_JSON__") { $definition.actions.Parse_Primary.inputs.schema = $parseSchema }
   }
   if ($definition.actions.PSObject.Properties.Name -contains "Use_Fallback_On_Low_Confidence") {
     $fallbackAction = $definition.actions.Use_Fallback_On_Low_Confidence.actions.Call_DeepSeek_Fallback_Low_Confidence
@@ -135,9 +145,12 @@ function Invoke-Dataverse([string] $Uri, [string] $Method = "Get", [string] $Bod
 
 function Ensure-ConnectionReference([string] $LogicalName, [string] $Role) {
   $escaped = Escape-OData $LogicalName
-  $rows = @((Invoke-Dataverse "$apiBaseUrl/connectionreferences?`$select=connectionreferenceid,connectionreferencelogicalname&`$filter=connectionreferencelogicalname eq '$escaped'").value)
+  $rows = @((Invoke-Dataverse "$apiBaseUrl/connectionreferences?`$select=connectionreferenceid,connectionreferencelogicalname,connectorid&`$filter=connectionreferencelogicalname eq '$escaped'").value)
   if ($rows.Count -ne 1) {
     throw "Connection Reference $Role '$LogicalName' não encontrada no DEV. Crie-a dentro da solution AppBetinhos e vincule a conexão real antes de executar npm run push."
+  }
+  if ($Role -eq "DeepSeek" -and $rows[0].connectorid -ne "/providers/Microsoft.PowerApps/apis/$DeepSeekApiName") {
+    throw "Connection Reference DeepSeek '$LogicalName' aponta para '$($rows[0].connectorid)', mas o flow usa '$DeepSeekApiName'."
   }
   Write-Step "Connection Reference $Role validada: $LogicalName"
 }
