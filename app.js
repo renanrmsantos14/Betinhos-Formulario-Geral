@@ -684,7 +684,11 @@
     initializeCustomSelects();
     syncDateTimeFieldRowWidths();
     setLoading(false);
-    focusInitialCommonFormField();
+    if (!getValidPassengerRows().length) {
+      addPassengerRow();
+    } else {
+      focusInitialCommonFormField();
+    }
     if (state.mockMode) {
       toast(AI_CONVERSATION_LOCAL_MODE ? "Localhost ativo: a aba Agendar por IA usa o proxy DeepSeek." : "Modo local ativo: dados mock gerados para teste completo da experiência.", "warning", 7000);
       return;
