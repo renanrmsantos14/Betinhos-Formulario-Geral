@@ -10465,7 +10465,7 @@ body.is-ai-schedule-tab .top-actions { visibility: hidden; pointer-events: none;
       </section>
 
       <footer class="code-version" aria-label="Versão do código">
-        <span>v</span><span id="codeVersionText">1.15.1</span>
+        <span>v</span><span id="codeVersionText">1.15.2</span>
       </footer>
     </main>
 
@@ -13225,7 +13225,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     initializeCustomSelects();
     syncDateTimeFieldRowWidths();
     setLoading(false);
-    focusInitialCommonFormField();
+    if (!getValidPassengerRows().length) {
+      addPassengerRow();
+    } else {
+      focusInitialCommonFormField();
+    }
     if (state.mockMode) {
       toast(AI_CONVERSATION_LOCAL_MODE ? "Localhost ativo: a aba Agendar por IA usa o proxy DeepSeek." : "Modo local ativo: dados mock gerados para teste completo da experiência.", "warning", 7000);
       return;
