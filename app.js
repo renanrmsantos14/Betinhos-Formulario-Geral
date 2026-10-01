@@ -3690,6 +3690,16 @@
     return labels[String(raw)] || String(raw || "Pendente");
   }
 
+  function aiDraftStatusTone(row) {
+    const label = normalize(aiDraftStatusLabel(row));
+    if (label.startsWith("agendad")) return "done";
+    if (label.startsWith("pront")) return "ready";
+    if (label.startsWith("bloquead")) return "blocked";
+    if (label.startsWith("erro")) return "error";
+    if (label.startsWith("descartad")) return "muted";
+    return "pending";
+  }
+
   function aiDraftId(row) {
     return aiDraftValue(row, "id") || row?.["@odata.etag"] || "";
   }
@@ -3957,6 +3967,7 @@
         title.textContent = `${aiDraftValue(draft, "legType") || "Trecho"} · ${leg.origin || "origem?"} → ${leg.destination || "destino?"}`;
         const itemMeta = document.createElement("span");
         itemMeta.textContent = aiDraftStatusLabel(draft);
+        itemMeta.dataset.tone = aiDraftStatusTone(draft);
         button.append(title, itemMeta);
         section.appendChild(button);
       });
@@ -5098,6 +5109,7 @@
     el.aiDraftTitle.textContent = aiDraftValue(draft, "subject") || "Solicitação sem assunto";
     el.aiDraftMeta.textContent = [aiDraftValue(draft, "sender"), aiDraftValue(draft, "receivedAt")].filter(Boolean).join(" · ");
     el.aiDraftStatus.textContent = aiDraftStatusLabel(draft);
+    el.aiDraftStatus.dataset.tone = aiDraftStatusTone(draft);
     const leg = parseAiDraftJson(draft, "legJson");
     const extraction = aiDraftExtractionForRow(draft);
     const candidates = aiDraftCandidateGroups(draft, extraction);
